@@ -84,3 +84,10 @@
   architecture. Public probe `build-probe-84249aa65e8d413c9cd57b0d0cac4333`
   built with both compilers on both architectures. Each result ran in
   the test sandbox and matched the expected output.
+- Built the macOS ARM64 decompiler from the pinned Ghidra archive.
+  The shared installation exported public `bitstats` raw C, p-code,
+  control flow, imports, and string references. The public headless
+  tests checked the `main` startup evidence and the unresolved target
+  of a modified indirect call.
+- Started the Standard-tier Astra Corpus Author in a separate external
+  worktree. The author keeps source-side evidence and case data private.

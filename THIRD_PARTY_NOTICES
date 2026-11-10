@@ -31,5 +31,6 @@ Ninja, Apache-2.0. https://github.com/ninja-build/ninja/blob/master/COPYING
 pkgconf, ISC. https://github.com/pkgconf/pkgconf/blob/main/COPYING
 GLib, LGPL-2.1-or-later. https://github.com/GNOME/glib/blob/main/COPYING
 Ghidra, Apache-2.0. Bundled components have separate notices. https://github.com/NationalSecurityAgency/ghidra/blob/Ghidra_12.2_build/NOTICE
+Gson 2.13.2, Apache-2.0. Bundled with Ghidra. https://github.com/google/gson/blob/gson-parent-2.13.2/LICENSE
 Eclipse Temurin OpenJDK, GPL-2.0 with the Classpath Exception where designated. https://github.com/openjdk/jdk25u/blob/master/LICENSE
 OpenAI Codex CLI, Apache-2.0. https://github.com/openai/codex/blob/main/LICENSE

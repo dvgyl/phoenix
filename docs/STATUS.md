@@ -17,10 +17,10 @@ The workspace uses the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
 
 ## Next actions
 
-1. Integrate the Ghidra exporter and the reviewed integrity checks.
-2. Install the native Ghidra decompiler from the pinned source.
-3. Build and test the first public binary-to-C reconstruction.
-4. Assign T0 corpus work to a separate Standard-tier Corpus Author.
+1. Verify the revised integrity checks with an independent review.
+2. Build and test the first public binary-to-C reconstruction.
+3. Add an evaluator that rebuilds and tests projects independently.
+4. Check the separate Corpus Author's T0 handoff metadata.
 5. Run the M1 evaluation and report the Ghidra-raw baseline.
 
 The Standard-tier Codex provider passed public run
@@ -35,3 +35,7 @@ Runtime restrictions remain the job of the test sandbox.
 Public build probe `build-probe-84249aa65e8d413c9cd57b0d0cac4333`
 built one CMake project with GCC and Clang on x86-64 and AArch64.
 All four builds returned the expected output in the Linux sandbox.
+
+The Ghidra exporter passed its public headless tests with the native
+ARM64 decompiler. The separate Standard-tier Corpus Author is preparing
+the T0 batch.

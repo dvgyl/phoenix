@@ -26,6 +26,7 @@ projects used in the workspace and the local quality checks.
 | QEMU TCG plugin interface | Observe original instruction execution | [QEMU 8.2 plugin API](https://qemu.readthedocs.io/en/v8.2.10/devel/tcg-plugins.html) |
 | Meson, Ninja, pkgconf, and GLib | Build the pinned QEMU release | [Meson](https://github.com/mesonbuild/meson), [Ninja](https://github.com/ninja-build/ninja), [pkgconf](https://github.com/pkgconf/pkgconf), [GLib](https://github.com/GNOME/glib) |
 | Ghidra 12.2 | Export program evidence and decompiled C | [Release](https://github.com/NationalSecurityAgency/ghidra/releases/tag/Ghidra_12.2_build), [headless analyzer guide](https://github.com/NationalSecurityAgency/ghidra/blob/Ghidra_12.2_build/Ghidra/RuntimeScripts/support/analyzeHeadlessREADME.md) |
+| Gson 2.13.2 | Write JSON in the headless exporter through the library bundled with Ghidra | [License](https://github.com/google/gson/blob/gson-parent-2.13.2/LICENSE) |
 | Temurin 25.0.5+8 | Run the pinned Ghidra release | [Official release](https://github.com/adoptium/temurin25-binaries/releases/tag/jdk-25.0.5%2B8) |
 | Codex CLI and OpenAI Responses API | Standard-tier reconstruction and repair requests | [Non-interactive Codex](https://learn.chatgpt.com/docs/non-interactive-mode), [Responses API](https://developers.openai.com/api/reference/resources/responses/methods/create) |
 | ELF specification | Validate file structure and dynamic linkage | [Section headers](https://gabi.xinuos.com/v42/elf/03-sheader.html), [dynamic linking](https://gabi.xinuos.com/v42/elf/08-dynamic.html) |

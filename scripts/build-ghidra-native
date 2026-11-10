@@ -1,0 +1,31 @@
+#!/bin/sh
+set -eu
+
+if [ "$(uname -s):$(uname -m)" != Darwin:arm64 ]; then
+    printf '%s\n' 'This command requires macOS on Apple Silicon.' >&2
+    exit 1
+fi
+
+: "${PHOENIX_ROOT:?Source the Phoenix workspace environment.}"
+: "${GHIDRA_INSTALL_DIR:?Set the Ghidra installation directory.}"
+: "${TMPDIR:?Set the Phoenix temporary directory.}"
+version=$(awk -F '"' '/^ghidra = / { print $2 }' "$(dirname "$0")/../tools.lock")
+feature="$GHIDRA_INSTALL_DIR/ghidra_${version}_PUBLIC/Ghidra/Features/Decompiler"
+developer=$(xcode-select -p)
+compiler="$developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+export SDKROOT="$developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+
+work=$(mktemp -d "$TMPDIR/phoenix-ghidra.XXXXXXXX")
+trap 'rm -rf "$work"' 0
+cp -R "$feature/src/decompile/cpp" "$work/cpp"
+make -C "$work/cpp" -j 2 "CXX=$compiler -std=c++11" \
+    'ARCH_TYPE=-arch arm64' 'ADDITIONAL_FLAGS=-mmacosx-version-min=11.0 -w' \
+    'OPT_CXXFLAGS=-O0' ghidra_opt
+
+destination="$feature/os/mac_arm_64"
+mkdir -p "$destination"
+staged=$(mktemp "$destination/.decompile.XXXXXXXX")
+trap 'rm -rf "$work"; rm -f "$staged"' 0
+install -m 755 "$work/cpp/ghidra_opt" "$staged"
+mv -f "$staged" "$destination/decompile"
+shasum -a 256 "$destination/decompile"

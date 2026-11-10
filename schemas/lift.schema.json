@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Phoenix lift export",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "image_base", "main", "functions", "imports", "strings", "data_references", "call_edges"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "image_base": {"$ref": "#/$defs/address"},
+    "main": {"anyOf": [{"$ref": "#/$defs/main_evidence"}, {"type": "null"}]},
+    "functions": {"type": "array", "items": {"$ref": "#/$defs/function"}},
+    "imports": {"type": "array", "items": {"$ref": "#/$defs/import"}},
+    "strings": {"type": "array", "items": {"$ref": "#/$defs/string"}},
+    "data_references": {"type": "array", "items": {"$ref": "#/$defs/data_reference"}},
+    "call_edges": {"type": "array", "items": {"$ref": "#/$defs/call_edge"}}
+  },
+  "$defs": {
+    "main_evidence": {
+      "description": "Executable address passed in RDI to the glibc startup function.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entry", "startup", "setup", "call"],
+      "properties": {
+        "entry": {"$ref": "#/$defs/address"},
+        "startup": {"$ref": "#/$defs/address"},
+        "setup": {"$ref": "#/$defs/address"},
+        "call": {"$ref": "#/$defs/address"}
+      }
+    },
+    "address": {
+      "description": "Ghidra address space and unsigned hexadecimal offset.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["space", "offset"],
+      "properties": {
+        "space": {"type": "string", "minLength": 1},
+        "offset": {"type": "string", "pattern": "^0x(?:0|[1-9a-f][0-9a-f]{0,15})$"}
+      }
+    },
+    "optional_address": {"anyOf": [{"$ref": "#/$defs/address"}, {"type": "null"}]},
+    "range": {
+      "description": "Inclusive address range.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": {"$ref": "#/$defs/address"},
+        "end": {"$ref": "#/$defs/address"}
+      }
+    },
+    "operand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["address", "size", "definition"],
+      "properties": {
+        "address": {"$ref": "#/$defs/address"},
+        "size": {"type": "integer", "minimum": 0},
+        "definition": {"$ref": "#/$defs/optional_sequence"}
+      }
+    },
+    "sequence": {
+      "description": "Ghidra sequence address and operation number. Raw and analyzed p-code use separate sequences.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["address", "index"],
+      "properties": {
+        "address": {"$ref": "#/$defs/address"},
+        "index": {"type": "integer", "minimum": 0}
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "opcode", "output", "inputs"],
+      "properties": {
+        "sequence": {"$ref": "#/$defs/sequence"},
+        "opcode": {"type": "string"},
+        "output": {"anyOf": [{"$ref": "#/$defs/operand"}, {"type": "null"}]},
+        "inputs": {"type": "array", "items": {"$ref": "#/$defs/operand"}}
+      }
+    },
+    "optional_sequence": {"anyOf": [{"$ref": "#/$defs/sequence"}, {"type": "null"}]},
+    "instruction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["address", "size", "text", "pcode"],
+      "properties": {
+        "address": {"$ref": "#/$defs/address"},
+        "size": {"type": "integer", "minimum": 1},
+        "text": {"type": "string"},
+        "pcode": {"type": "array", "items": {"$ref": "#/$defs/operation"}}
+      }
+    },
+    "statement": {
+      "description": "Decompiler statement markup. Address bounds can span gaps.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "start", "end", "operation"],
+      "properties": {
+        "text": {"type": "string"},
+        "start": {"$ref": "#/$defs/optional_address"},
+        "end": {"$ref": "#/$defs/optional_address"},
+        "operation": {"$ref": "#/$defs/optional_sequence"}
+      }
+    },
+    "decompilation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_c", "status", "diagnostic", "analyzed_pcode", "statements"],
+      "properties": {
+        "raw_c": {"type": ["string", "null"]},
+        "status": {"enum": ["ok", "timeout", "incomplete"]},
+        "diagnostic": {"type": ["string", "null"]},
+        "analyzed_pcode": {"type": "array", "items": {"$ref": "#/$defs/operation"}},
+        "statements": {"type": "array", "items": {"$ref": "#/$defs/statement"}}
+      }
+    },
+    "signature": {
+      "description": "Ghidra listing signature. Types use Ghidra data type paths.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["calling_convention", "return_type", "parameters", "variadic"],
+      "properties": {
+        "calling_convention": {"type": ["string", "null"]},
+        "return_type": {"type": "string"},
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "type"],
+            "properties": {"name": {"type": "string"}, "type": {"type": "string"}}
+          }
+        },
+        "variadic": {"type": "boolean"}
+      }
+    },
+    "block": {
+      "description": "Instruction block. Ranges include only addresses in the function body.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entry", "ranges"],
+      "properties": {
+        "entry": {"$ref": "#/$defs/address"},
+        "ranges": {"type": "array", "items": {"$ref": "#/$defs/range"}}
+      }
+    },
+    "flow_edge": {
+      "description": "Control flow without calls. The destination block can be outside the function.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from_block", "to_block", "site", "target", "kind"],
+      "properties": {
+        "from_block": {"$ref": "#/$defs/address"},
+        "to_block": {"$ref": "#/$defs/address"},
+        "site": {"$ref": "#/$defs/address"},
+        "target": {"$ref": "#/$defs/address"},
+        "kind": {"type": "string"}
+      }
+    },
+    "function": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entry", "name", "signature", "thunk_target", "ranges", "decompilation", "instructions", "blocks", "flow_edges"],
+      "properties": {
+        "entry": {"$ref": "#/$defs/address"},
+        "name": {"type": "string"},
+        "signature": {"$ref": "#/$defs/signature"},
+        "thunk_target": {"$ref": "#/$defs/optional_address"},
+        "ranges": {"type": "array", "items": {"$ref": "#/$defs/range"}},
+        "decompilation": {"$ref": "#/$defs/decompilation"},
+        "instructions": {"type": "array", "items": {"$ref": "#/$defs/instruction"}},
+        "blocks": {"type": "array", "items": {"$ref": "#/$defs/block"}},
+        "flow_edges": {"type": "array", "items": {"$ref": "#/$defs/flow_edge"}}
+      }
+    },
+    "import": {
+      "description": "External symbol. The address in the external library can be unknown.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["address", "library", "name", "library_address"],
+      "properties": {
+        "address": {"$ref": "#/$defs/address"},
+        "library": {"type": "string"},
+        "name": {"type": ["string", "null"]},
+        "library_address": {"$ref": "#/$defs/optional_address"}
+      }
+    },
+    "string": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["address", "value", "type", "size"],
+      "properties": {
+        "address": {"$ref": "#/$defs/address"},
+        "value": {"type": "string"},
+        "type": {"type": "string"},
+        "size": {"type": "integer", "minimum": 1}
+      }
+    },
+    "data_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "kind", "operand_index"],
+      "properties": {
+        "from": {"$ref": "#/$defs/address"},
+        "to": {"$ref": "#/$defs/address"},
+        "kind": {"type": "string"},
+        "operand_index": {"type": "integer"}
+      }
+    },
+    "call_edge": {
+      "description": "The target is null when Ghidra has no destination. The caller is null outside a known function.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caller", "site", "target", "kind", "indirect"],
+      "properties": {
+        "caller": {"$ref": "#/$defs/optional_address"},
+        "site": {"$ref": "#/$defs/address"},
+        "target": {"$ref": "#/$defs/optional_address"},
+        "kind": {"type": "string"},
+        "indirect": {"type": "boolean"}
+      }
+    }
+  }
+}
