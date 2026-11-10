@@ -22,10 +22,13 @@ and the integrity checks in
 `m1-public-hardened-e675da21dc2a43f4ba29dd132b067fd4`.
 The copied-byte negative controls also passed.
 
-The follow-up implementation adds development integrity repair,
+The latest Astra preflight held the follow-up for accounting and
+development evidence defects. Two separate Astra worktrees are
+fixing those paths. The follow-up implementation adds development integrity repair,
 checker identity binding, replay lineage preservation, and model log
-identity checks. It also adds package-only Ubuntu download fallback.
-The signed repository probe passed on both Linux worker images.
+identity checks. The package-only Ubuntu fallback passed its signed repository probe.
+New builds then failed on signed snapshot indexes. The previous image
+recipes are restored so that local builds can reuse the verified cache.
 Full Linux integration and independent review of this candidate are
 pending. There is no M1 tag.
 

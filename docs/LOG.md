@@ -229,3 +229,15 @@
 - The integrated follow-up passed 295 tests with 21 opt-in skips.
   Evaluator line coverage was 89.88%. Ruff and strict mypy also passed.
   The new worker and checker image builds remain pending.
+- The next Astra preflight held `e07ec17` for cost accounting and
+  development evidence defects. Synthetic tests showed charge erasure
+  through an invalid ledger transition, a live model mismatch, mutable
+  package costs, trusted saved differences, and annotation changes
+  after source testing. Two separate Astra worktrees are fixing these
+  paths with synthetic regression tests.
+- The package fallback reached an upstream signed-index outage. Both
+  native CI jobs failed on indexes, and the local build also stopped.
+  Direct probes of the official DNS addresses returned intermittent
+  successes, timeouts, and server errors. Restored the previous pinned
+  image recipes to use their verified local build cache. ADR 0015 records
+  the decision. Clean native builds still depend on the snapshot service.

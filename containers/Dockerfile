@@ -5,22 +5,14 @@ FROM ${UBUNTU_BASE} AS toolchain
 ARG UBUNTU_SNAPSHOT
 ARG TARGETARCH
 ADD --checksum=sha256:641de77d8f142cfd62a1a6f964ba67b20754d3337c480efb529d086075a06c9a \
-    https://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_20240203_all.deb \
+    https://snapshot.ubuntu.com/ubuntu/20261107T000000Z/pool/main/c/ca-certificates/ca-certificates_20240203_all.deb \
     /opt/ubuntu-ca.deb
 RUN dpkg-deb -x /opt/ubuntu-ca.deb /opt/ubuntu-ca && \
     mkdir -p /etc/ssl/certs && \
     cat /opt/ubuntu-ca/usr/share/ca-certificates/mozilla/*.crt > /etc/ssl/certs/ca-certificates.crt && \
     rm -rf /opt/ubuntu-ca /opt/ubuntu-ca.deb
-RUN case "$TARGETARCH" in \
-        amd64) pool=https://archive.ubuntu.com/ubuntu/ ;; \
-        arm64) pool=https://ports.ubuntu.com/ubuntu-ports/ ;; \
-        *) printf 'Unsupported target architecture %s.\n' "$TARGETARCH" >&2; exit 2 ;; \
-    esac && \
-    printf '%s\t%s\n' \
-        "https://snapshot.ubuntu.com/ubuntu/$UBUNTU_SNAPSHOT/" 'priority:1' \
-        "$pool" 'priority:2 type:deb' > /etc/apt/phoenix.mirrors && \
-    printf '%s\n' 'Types: deb' \
-        'URIs: mirror+file:/etc/apt/phoenix.mirrors' \
+RUN printf '%s\n' 'Types: deb' \
+        "URIs: https://snapshot.ubuntu.com/ubuntu/$UBUNTU_SNAPSHOT/" \
         'Suites: noble noble-updates noble-security' 'Components: main universe' \
         'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
         'Check-Valid-Until: no' > /etc/apt/sources.list.d/ubuntu.sources && \
