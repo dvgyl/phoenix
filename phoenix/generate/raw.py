@@ -29,8 +29,8 @@ typedef long long longlong;
 typedef unsigned long long ulonglong;
 typedef void code(void);
 
-extern int __printf_chk(int, const void *, ...);
-extern int __fprintf_chk(FILE *, int, const void *, ...);
+extern int __printf_chk(int, const char *, ...);
+extern int __fprintf_chk(FILE *, int, const char *, ...);
 extern char **environ;
 """
 

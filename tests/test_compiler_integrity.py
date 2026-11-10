@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from phoenix.generate.raw import _COMPATIBILITY
 from phoenix_eval.build import PROJECT_CMAKE, build_project
 from phoenix_eval.case import Invocation
 from phoenix_eval.docker import Engine, run_cases
@@ -445,6 +446,43 @@ def test_accepts_runtime_values_and_reports_direct_calls(
         b"PUBLIC_TEST".hex(),
         b"0".hex(),
     }
+
+
+@pytest.mark.parametrize("compiler", list(Compiler))
+def test_raw_compatibility_builds_with_fortified_stdio(
+    arch: str, compiler: Compiler, tmp_path: Path
+) -> None:
+    engine = Engine(arch)
+    if (
+        arch == "amd64"
+        and platform.system() == "Darwin"
+        and platform.machine() == "arm64"
+    ):
+        engine = Engine.ROSETTA
+    image = subprocess.check_output(
+        ["docker", "image", "inspect", "--format", "{{.Id}}", f"phoenix-worker:{arch}"],
+        timeout=10,
+        text=True,
+    ).strip()
+    project = tmp_path / "project"
+    (project / "src").mkdir(parents=True)
+    (project / "include").mkdir()
+    (project / "CMakeLists.txt").write_text(PROJECT_CMAKE)
+    (project / "include/compat.h").write_text(_COMPATIBILITY)
+    (project / "src/program.c").write_text(
+        "#ifndef _FORTIFY_SOURCE\n#define _FORTIFY_SOURCE 2\n#endif\n"
+        '#include "compat.h"\n'
+        "int main(void) {\n"
+        '    if (__printf_chk(1, "%s", "public stdout\\n") < 0) return 1;\n'
+        '    if (__fprintf_chk(stderr, 1, "%s", "public stderr\\n") < 0) return 1;\n'
+        "    return 0;\n}\n"
+    )
+    rebuilt = tmp_path / "rebuilt.elf"
+    result = build_project(project, rebuilt, engine, compiler, image=image)
+    assert result.executable == rebuilt, result.diagnostics
+    assert run_cases(rebuilt, (Invocation(),), engine, image=image) == (
+        Outcome(b"public stdout\n", b"public stderr\n", Exited(0), TreeSnapshot()),
+    )
 
 
 def test_records_library_added_bytes_and_external_function_references(
