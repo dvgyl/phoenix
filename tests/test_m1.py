@@ -12,10 +12,17 @@ from phoenix_eval.build import PROJECT_CMAKE
 from phoenix_eval.case import Invocation
 from phoenix_eval.corpus import Variant
 from phoenix_eval.integrity import IntegrityError
+from phoenix_eval.model_ledger import LedgerIdentity, freeze_identity
 from phoenix_eval.pair import PairReport
 from phoenix_eval.platforms import RuntimeEvidence
 from phoenix_eval.provenance import BuildEvidence
-from phoenix_eval.submission import Method, Submission, freeze_project, project_path
+from phoenix_eval.submission import (
+    Method,
+    Submission,
+    freeze_package_report,
+    freeze_project,
+    project_path,
+)
 from phoenix_eval.toolchain import Compiler
 
 
@@ -63,6 +70,7 @@ def test_freezes_every_submission_before_opening_cases(
         _config: m1._Configuration,
         _dev_outputs: frozenset[bytes],
         _origin_bytes: bytes | None,
+        _model_ledger: LedgerIdentity,
     ) -> dict[str, object]:
         assert opened
         return {
@@ -189,7 +197,11 @@ def test_measurement_does_not_pass_with_incomplete_integrity_evidence(
     snapshot = run / "submissions" / task.key / "project"
     snapshot.parent.mkdir(parents=True)
     submission = Submission(
-        "phoenix", task.key, freeze_project(project, snapshot), None
+        "phoenix",
+        task.key,
+        freeze_project(project, snapshot),
+        None,
+        report_sha256=freeze_package_report(project, snapshot.parent),
     )
     monkeypatch.setattr(
         m1, "evaluate_pair", lambda *_: PairReport(1, 1, 0, 0, {}, 1, 1, (), True)
@@ -214,6 +226,7 @@ def test_measurement_does_not_pass_with_incomplete_integrity_evidence(
         "checker_images": {},
         "runtime": {},
     }
+    freeze_identity(tmp_path, run, "pipeline")
     result = m1._measure(
         tmp_path,
         run,

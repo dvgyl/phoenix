@@ -1,5 +1,6 @@
 import hashlib
 import json
+import math
 import os
 import subprocess
 import sys
@@ -35,6 +36,7 @@ class Submission:
     replay_of: str | None = None
     development_sha256: str | None = None
     origin_sha256: str | None = None
+    report_sha256: str | None = None
 
 
 def write_report(path: Path, data: object) -> None:
@@ -93,6 +95,35 @@ def read_origin(path: Path, expected: str) -> bytes:
     return data
 
 
+def read_package_report(path: Path, expected: str) -> dict[str, object]:
+    content = path.read_bytes()
+    if hashlib.sha256(content).hexdigest() != expected:
+        raise SubmissionError("The package report changed after submission.")
+    data = json.loads(content)
+    if not isinstance(data, dict):
+        raise SubmissionError("The package report is invalid.")
+    seconds = data.get("wall_seconds")
+    if (
+        (not isinstance(seconds, (int, float)) or isinstance(seconds, bool))
+        or not math.isfinite(seconds)
+        or seconds < 0
+    ):
+        raise SubmissionError("The package report time is invalid.")
+    return data
+
+
+def freeze_package_report(project: Path, directory: Path) -> str:
+    content = (project / "phoenix_report.json").read_bytes()
+    digest = hashlib.sha256(content).hexdigest()
+    target = directory / "report.json"
+    if target.exists():
+        read_package_report(target, digest)
+    else:
+        target.write_bytes(content)
+        read_package_report(target, digest)
+    return digest
+
+
 def _existing_submission(
     path: Path, snapshot: Path, method: Method, key: str, replay_of: str | None
 ) -> Submission:
@@ -105,6 +136,7 @@ def _existing_submission(
         replay_of,
         data.get("development_sha256"),
         data.get("origin_sha256"),
+        data.get("report_sha256"),
     )
     if (
         data["method"] != method
@@ -118,6 +150,10 @@ def _existing_submission(
         raise SubmissionError("The source snapshot changed after submission.")
     if submission.origin_sha256 is not None:
         read_origin(snapshot.parent / "origin.json", submission.origin_sha256)
+    if submission.source_sha256 is not None:
+        if submission.report_sha256 is None:
+            raise SubmissionError("The submission has no bound package report.")
+        read_package_report(snapshot.parent / "report.json", submission.report_sha256)
     return submission
 
 
@@ -203,6 +239,7 @@ def submit(
         project = project_path(workspace, pipeline_run, key)
         try:
             digest = freeze_project(project, snapshot)
+            report_digest = freeze_package_report(project, directory)
             development_digest = None
             if method == "phoenix":
                 development = (
@@ -229,6 +266,7 @@ def submit(
                 replay_pipeline_run,
                 development_digest,
                 origin_sha,
+                report_digest,
             )
     write_report(record, asdict(submission))
     return submission

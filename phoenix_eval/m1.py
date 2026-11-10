@@ -22,6 +22,8 @@ from phoenix_eval.integrity import (
 )
 from phoenix_eval.m0 import SEED
 from phoenix_eval.model_ledger import (
+    LedgerIdentity,
+    bound_summary,
     freeze_identity,
     read_identity,
     require_no_replay_ledger,
@@ -41,8 +43,8 @@ from phoenix_eval.provenance import (
 from phoenix_eval.submission import (
     Method,
     Submission,
-    project_path,
     read_origin,
+    read_package_report,
     source_digest,
     submit,
     write_report,
@@ -181,6 +183,7 @@ def _measure(
     config: _Configuration,
     dev_outputs: frozenset[bytes] = frozenset(),
     origin_bytes: bytes | None = None,
+    model_ledger: LedgerIdentity | None = None,
 ) -> dict[str, object]:
     variant = task.variant
     result: dict[str, object] = {
@@ -188,6 +191,7 @@ def _measure(
         "method": task.method,
         "source_sha256": submission.source_sha256,
         "fully_successful": False,
+        "model": asdict(bound_summary(workspace, run, task.key, model_ledger)),
     }
     if submission.source_sha256 is None:
         return {**result, "failure_category": submission.category}
@@ -199,13 +203,11 @@ def _measure(
     original = read_program(binary)
     if sha256(original).hexdigest() != variant.sha256:
         raise ValueError("The original bytes do not match the release manifest.")
-    original_project = project_path(workspace, pipeline_run, task.key)
-    record = json.loads(
-        (original_project / "phoenix_report.json").read_text(encoding="utf-8")
-    )
+    if submission.report_sha256 is None:
+        raise ValueError("The submission has no bound package report.")
+    record = read_package_report(directory / "report.json", submission.report_sha256)
     if record.get("sha256") != variant.sha256 or record.get("method") != task.method:
         raise ValueError("The project report does not match the input hash and method.")
-    result["model"] = record["llm"]
     result["reconstruction_seconds"] = record["wall_seconds"]
     builds = directory / f"build-{uuid4().hex}"
     builds.mkdir(mode=0o700)
@@ -403,6 +405,7 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
             config,
             development.get(task.variant.key, frozenset()),
             origins.get(task.variant.key),
+            model_ledger,
         )
         for task in tasks
     ]

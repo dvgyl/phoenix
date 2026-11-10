@@ -55,6 +55,7 @@ def test_submission_resumes_after_the_provider_reports_a_limit(
     original = workspace / "sealed/release/case.elf"
     project = project_path(workspace, "pipeline", "case")
     _project(project)
+    (project / "phoenix_report.json").write_text('{"wall_seconds": 1}')
     development = workspace / "runs/pipeline/case/analyze/cases.json"
     development.parent.mkdir()
     outcome = Outcome(b"public", b"", Exited(0), TreeSnapshot())

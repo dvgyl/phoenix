@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol
 
+from phoenix_eval.model_ledger import TokenUsage, completion_charge
+
 
 class Model(StrEnum):
     SOL = "gpt-6.1-sol"
@@ -71,15 +73,7 @@ class Provider(Protocol):
 
 
 def cost_nanodollars(model: Model, usage: Usage) -> int:
-    input_rate, cache_rate, output_rate = (
-        (2_000, 100, 10_000) if model is Model.SOL else (10_000, 500, 50_000)
-    )
-    if usage.input_tokens > 272_000:
-        input_rate *= 2
-        cache_rate *= 2
-        output_rate = output_rate * 3 // 2
-    return (
-        (usage.input_tokens - usage.cached_input_tokens) * input_rate
-        + usage.cached_input_tokens * cache_rate
-        + usage.output_tokens * output_rate
+    return completion_charge(
+        model,
+        TokenUsage(usage.input_tokens, usage.cached_input_tokens, usage.output_tokens),
     )
