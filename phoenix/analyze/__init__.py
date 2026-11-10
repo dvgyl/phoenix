@@ -8,6 +8,7 @@ from pathlib import Path
 from phoenix_eval.case import CaseResult, Invocation
 from phoenix_eval.coverage import BlockInventory, inspect_x86, mutate_inputs
 from phoenix_eval.docker import MAX_BATCH, Engine, WorkerError, run_batch
+from phoenix_eval.elf import elf_sections
 from phoenix_eval.outcome import EntryKind, Outcome, TreeEntry, TreeSnapshot
 
 __all__ = ["Analysis", "DevelopmentCase", "analyze"]
@@ -16,6 +17,7 @@ _OPTION = re.compile(
     rb"(?<=[\x00\s\[(])(?:--[a-zA-Z0-9][a-zA-Z0-9-]{0,23}|-[a-zA-Z])"
     rb"(?=[\x00\s=,\])])"
 )
+_WORD = re.compile(rb"(?:^|\0)([A-Za-z][A-Za-z0-9_.-]{1,23})(?=\0)")
 
 
 @dataclass(frozen=True)
@@ -47,8 +49,12 @@ def _seeds(binary: Path) -> tuple[Invocation, ...]:
         Invocation(stdin=b"\x00\x01\x7f\x80\xff\n"),
         Invocation(args=(file.path,), tree=TreeSnapshot(entries=(file,))),
     )
-    with binary.open("rb") as stream:
-        evidence = stream.read(1024 * 1024)
+    binary_data = binary.read_bytes()
+    try:
+        rodata = elf_sections(binary_data, ".rodata").get(".rodata")
+    except ValueError:
+        rodata = None
+    evidence = rodata.data if rodata is not None else binary_data[: 1024 * 1024]
     hints: dict[Invocation, None] = {}
     for match in _OPTION.finditer(evidence):
         hint = Invocation((match[0].decode("ascii"),))
@@ -56,7 +62,17 @@ def _seeds(binary: Path) -> tuple[Invocation, ...]:
             hints[hint] = None
             if len(hints) == 6:
                 break
-    return seeds + tuple(hints)
+    words = []
+    if rodata is not None:
+        values = dict.fromkeys(
+            match[1].decode("ascii") for match in _WORD.finditer(evidence)
+        )
+        for value in tuple(values)[:8]:
+            words.append(Invocation((value,), stdin=text))
+            if value.endswith((".txt", ".csv", ".dat")):
+                entry = TreeEntry(value, EntryKind.FILE, 0o644, text)
+                words.append(Invocation((value,), tree=TreeSnapshot(entries=(entry,))))
+    return tuple(dict.fromkeys((*seeds, *hints, *words)))
 
 
 def _run(

@@ -12,6 +12,15 @@ from phoenix_eval.toolchain import Compiler
 
 _SOURCE_LIMIT = 4 * 1024 * 1024
 _EXECUTABLE_LIMIT = 16 * 1024 * 1024
+PROJECT_CMAKE = """cmake_minimum_required(VERSION 3.22)
+project(phoenix_rebuild LANGUAGES C)
+add_executable(program src/program.c)
+target_include_directories(program PRIVATE include)
+target_compile_definitions(program PRIVATE _POSIX_C_SOURCE=200809L)
+target_compile_options(program PRIVATE -Wall -Wextra)
+set_target_properties(program PROPERTIES
+    C_STANDARD 11 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+"""
 _BUILD_SCRIPT = f"""
 tar -xf -
 status=0
@@ -40,7 +49,7 @@ class BuildResult:
     diagnostics: str
 
 
-def _archive(project: Path) -> bytes:
+def project_files(project: Path) -> dict[str, bytes]:
     source = project / "src"
     include = project / "include"
     if not source.is_dir() or source.is_symlink():
@@ -51,18 +60,25 @@ def _archive(project: Path) -> bytes:
     if not sources:
         raise ValueError("The project needs at least one C source file.")
     files = [project / "CMakeLists.txt", *sources, *sorted(include.glob("*.h"))]
-    output = BytesIO()
+    contents = {}
     remaining = _SOURCE_LIMIT
+    for file in files:
+        if file.is_symlink() or not file.is_file():
+            raise ValueError("Project inputs must be regular files.")
+        with file.open("rb") as stream:
+            data = stream.read(remaining + 1)
+        remaining -= len(data)
+        if remaining < 0:
+            raise ValueError("The source archive exceeds the build limit.")
+        contents[file.relative_to(project).as_posix()] = data
+    return contents
+
+
+def project_archive(project: Path) -> bytes:
+    output = BytesIO()
     with tarfile.open(fileobj=output, mode="w") as archive:
-        for file in files:
-            if file.is_symlink() or not file.is_file():
-                raise ValueError("Project inputs must be regular files.")
-            with file.open("rb") as stream:
-                data = stream.read(remaining + 1)
-            remaining -= len(data)
-            if remaining < 0:
-                raise ValueError("The source archive exceeds the build limit.")
-            entry = tarfile.TarInfo(f"project/{file.relative_to(project).as_posix()}")
+        for name, data in project_files(project).items():
+            entry = tarfile.TarInfo(f"project/{name}")
             entry.size = len(data)
             entry.mode = 0o644
             entry.mtime = 1794268800
@@ -80,7 +96,7 @@ def build_project(
 ) -> BuildResult:
     if engine is Engine.QEMU_X86_64:
         raise ValueError("Use a compiler image to build the program.")
-    payload = _archive(project)
+    payload = project_archive(project)
     name = f"phoenix-build-{uuid4().hex}"
     docker = docker_cli()
     command = (

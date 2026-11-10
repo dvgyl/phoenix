@@ -17,11 +17,11 @@ The workspace uses the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
 
 ## Next actions
 
-1. Replace the integrity scanner's token checks with compiler evidence.
-2. Verify the command-line reconstruction and replay on a public ELF.
-3. Add an evaluator that rebuilds and tests projects independently.
-4. Implement the mechanical Ghidra-raw baseline.
-5. Run the M1 evaluation and report the Ghidra-raw baseline.
+1. Verify the integrated Clang checker on both Linux architectures.
+2. Run the independent evaluator and source checks on public projects.
+3. Review the evaluator and integrity controls with GPT-6 Astra.
+4. Run the sealed T0 evaluation and report the Ghidra-raw baseline.
+5. Replay the evaluation and review the exact candidate commit.
 
 The Standard-tier Codex provider passed public run
 `provider-probe-9d3b7e1b24ab4fe2b161b48952045086`. The ingestion,
@@ -45,3 +45,11 @@ programs. The lead agent checked the release binary hashes.
 Public probe `public-reconstruction-24660e35059f42e2914b967546600bfb`
 built the decompiled `bitstats` project four ways. All 10 public cases
 matched in each build.
+
+Public CLI run `m1-public-656fa7d8-38f2-4c69-86eb-72e612730d7a`
+passed five generated development cases across four builds. Replay run
+`m1-replay-656fa7d8-38f2-4c69-86eb-72e612730d7a` reproduced the C and
+CMake files and preserved the model ledger.
+
+Public probe `ghidra-raw-public-55e5cf11170c4257ba1d48e5cfe3851a`
+built the raw baseline four ways and matched 10 public cases.

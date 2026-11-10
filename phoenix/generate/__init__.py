@@ -6,16 +6,7 @@ from textwrap import dedent, indent
 
 from phoenix.llm.provider import Model, Request
 from phoenix.recover import Program
-
-_CMAKE = """cmake_minimum_required(VERSION 3.22)
-project(phoenix_rebuild LANGUAGES C)
-add_executable(program src/program.c)
-target_include_directories(program PRIVATE include)
-target_compile_definitions(program PRIVATE _POSIX_C_SOURCE=200809L)
-target_compile_options(program PRIVATE -Wall -Wextra)
-set_target_properties(program PROPERTIES
-    C_STANDARD 11 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
-"""
+from phoenix_eval.build import PROJECT_CMAKE
 
 _INSTRUCTIONS = """Clean up the supplied Ghidra decompilation of a benign CLI.
 Use the supplied binary evidence to preserve each function's behavior. Keep
@@ -82,6 +73,14 @@ def request_candidate(
         },
         "imports": program.imports,
         "strings": {hex(address): value for address, value in program.strings},
+        "referenced_data": {
+            hex(item.address): {
+                "section": item.section,
+                "bytes_hex": item.bytes_hex,
+                "ascii_candidate": item.ascii_candidate,
+            }
+            for item in program.data
+        },
     }
     payload = json.dumps(evidence, ensure_ascii=True)
     prompt = f"{_INSTRUCTIONS}\nBinary evidence\n{payload}"
@@ -146,7 +145,7 @@ def write_project(
 ) -> None:
     (project / "src").mkdir(parents=True, exist_ok=True)
     (project / "include").mkdir(exist_ok=True)
-    (project / "CMakeLists.txt").write_text(_CMAKE, encoding="utf-8")
+    (project / "CMakeLists.txt").write_text(PROJECT_CMAKE, encoding="utf-8")
     declarations = candidate.declarations.strip()
     prototypes = "\n".join(f"{item.signature};" for item in candidate.functions)
     definitions = []

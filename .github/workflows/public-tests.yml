@@ -30,6 +30,10 @@ jobs:
       - run: uv sync --locked
       - run: ./scripts/check
       - run: ./scripts/build-worker "${{ matrix.architecture }}"
+      - run: ./scripts/build-integrity "${{ matrix.architecture }}"
+      - run: uv run --locked pytest -q tests/test_compiler_integrity.py
+        env:
+          PHOENIX_COMPILER_INTEGRITY_ARCHES: ${{ matrix.architecture }}
       - run: |
           uv run --locked phoenix-eval m0 \
             --mode "native-${{ matrix.architecture }}" \

@@ -4,6 +4,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict, cast
 
+from phoenix_eval.coverage import read_executable_bounds
+from phoenix_eval.elf import elf_sections
+
 
 class RecoveryError(ValueError):
     pass
@@ -98,6 +101,14 @@ class Function:
 
 
 @dataclass(frozen=True, slots=True)
+class DataEvidence:
+    address: int
+    section: str
+    bytes_hex: str
+    ascii_candidate: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class Program:
     startup: int
     main: int
@@ -106,6 +117,7 @@ class Program:
     functions: tuple[Function, ...]
     imports: tuple[str, ...]
     strings: tuple[tuple[int, str], ...]
+    data: tuple[DataEvidence, ...] = ()
 
 
 def _address(location: _Location | None) -> int | None:
@@ -194,7 +206,58 @@ def _recover_function(entry: int, main: int, function: _Function) -> Function:
     )
 
 
-def recover(lift: Path) -> Program:
+def _data_evidence(
+    binary: Path,
+    startup: int,
+    export: _Export,
+    functions: dict[int, _Function],
+    reachable: set[int],
+) -> tuple[DataEvidence, ...]:
+    sites = {
+        _ram(instruction["address"])
+        for entry in reachable
+        for instruction in functions[entry]["instructions"]
+    }
+    references = sorted(
+        {
+            target
+            for ref in export["data_references"]
+            if _address(ref["from"]) in sites
+            and (target := _address(ref["to"])) is not None
+        }
+    )
+    original = binary.read_bytes()
+    link_entry, _ = read_executable_bounds(original)
+    bias = startup - link_entry
+    regions = elf_sections(original, ".rodata", ".data")
+    evidence = []
+    for name, region in regions.items():
+        offsets = [
+            address - bias - region.address
+            for address in references
+            if 0 <= address - bias - region.address < len(region.data)
+        ]
+        if not offsets:
+            continue
+        for start, end in zip(offsets, (*offsets[1:], len(region.data)), strict=True):
+            data = region.data[start : min(end, start + 96)]
+            text, nul, _ = data.partition(b"\0")
+            ascii_candidate = (
+                text.decode("ascii")
+                if text
+                and nul
+                and all(32 <= byte < 127 or byte in b"\r\n\t" for byte in text)
+                else None
+            )
+            evidence.append(
+                DataEvidence(
+                    bias + region.address + start, name, data.hex(), ascii_candidate
+                )
+            )
+    return tuple(evidence)
+
+
+def recover(lift: Path, binary: Path | None = None) -> Program:
     export = cast(_Export, json.loads(lift.read_text(encoding="utf-8")))
     if export.get("schema_version") != 1:
         raise RecoveryError("The lift uses an unsupported schema version.")
@@ -206,8 +269,9 @@ def recover(lift: Path) -> Program:
     if main not in functions:
         raise RecoveryError("The lift has no body for the glibc main entry.")
     reachable = _reachable(main, functions, export)
+    startup = _ram(evidence["startup"])
     return Program(
-        startup=_ram(evidence["startup"]),
+        startup=startup,
         main=main,
         main_setup=_ram(evidence["setup"]),
         main_call=_ram(evidence["call"]),
@@ -220,5 +284,10 @@ def recover(lift: Path) -> Program:
             (address, item["value"])
             for item in export["strings"]
             if (address := _address(item["address"])) is not None
+        ),
+        data=(
+            _data_evidence(binary, startup, export, functions, reachable)
+            if binary is not None
+            else ()
         ),
     )

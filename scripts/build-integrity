@@ -1,0 +1,52 @@
+#!/bin/sh
+set -eu
+
+case "$#:${1:-}" in
+    1:amd64|1:arm64) architecture=$1 ;;
+    *) printf '%s\n' 'Specify amd64 or arm64.' >&2; exit 2 ;;
+esac
+if [ -n "${DOCKER_CONTEXT:-}" ]; then
+    printf '%s\n' 'Clear the Docker context override before building the checker.' >&2
+    exit 2
+fi
+cd "$(dirname "$0")/.."
+
+locked() {
+    value=$(sed -n "s/^$1 = \"\(.*\)\"$/\1/p" tools.lock)
+    if [ -z "$value" ]; then
+        printf 'Missing pin for %s.\n' "$1" >&2
+        exit 2
+    fi
+    printf '%s\n' "$value"
+}
+
+base=$(locked ubuntu_base)
+snapshot=$(locked ubuntu_snapshot)
+clang=$(locked clang18_deb)
+libclang=$(locked libclang_cpp18_deb)
+libllvm=$(locked libllvm18_deb)
+libclang_dev=$(locked libclang18_dev_deb)
+llvm_dev=$(locked llvm18_dev_deb)
+digest=$(uv run --locked python -m phoenix_eval.provenance --integrity)
+
+docker_cli() {
+    if [ -n "${DOCKER_HOST:-}" ]; then
+        docker --host "$DOCKER_HOST" "$@"
+    else
+        docker "$@"
+    fi
+}
+
+COPYFILE_DISABLE=1 tar --format ustar -C containers -cf - Dockerfile.integrity c-integrity.cc |
+    docker_cli buildx build --load --platform "linux/$architecture" \
+        --build-arg "UBUNTU_BASE=$base" --build-arg "UBUNTU_SNAPSHOT=$snapshot" \
+        --build-arg "CLANG18_DEB=$clang" --build-arg "LIBCLANG_CPP18_DEB=$libclang" \
+        --build-arg "LIBLLVM18_DEB=$libllvm" --build-arg "LIBCLANG18_DEV_DEB=$libclang_dev" \
+        --build-arg "LLVM18_DEV_DEB=$llvm_dev" \
+        --label "org.phoenix.integrity-source-sha256=$digest" \
+        -f Dockerfile.integrity -t "phoenix-c-integrity:$architecture" -
+
+if [ "$(uv run --locked python -m phoenix_eval.provenance --integrity)" != "$digest" ]; then
+    printf '%s\n' 'Checker sources changed during the build. Build the image again.' >&2
+    exit 1
+fi

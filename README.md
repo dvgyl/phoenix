@@ -61,3 +61,21 @@ the recorded checkout and worker images.
 uv run --locked phoenix run --resume "$phoenix_run"
 uv run --locked phoenix run --replay "$phoenix_run"
 ```
+
+## Evaluate the sealed T0 batch
+
+Use the agent-sealed release and the held-out archive in the workspace.
+Build the source checker images for the current checkout. The evaluator
+saves the submitted projects before it opens the held-out archive.
+It tests GCC and Clang builds on x86-64 and AArch64, and records failure
+categories, coverage, and the Ghidra-raw baseline.
+
+```sh
+./scripts/build-integrity amd64
+./scripts/build-integrity arm64
+uv run --locked phoenix-eval m1 --run-id m1-t0
+uv run --locked phoenix-eval --replay m1-t0
+```
+
+If the model service reaches a limit, run the first evaluation command
+again with the same run ID. The evaluator keeps the completed submissions.

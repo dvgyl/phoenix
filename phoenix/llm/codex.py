@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import cast
 
 from phoenix.llm.provider import Completion, ProviderError, Request, RetryLater, Usage
+from phoenix_eval.protection import guarded_command, inherited_guard
 
 _CONTEXT_LIMIT = 64_000
 _MODEL_OUTPUT_LIMIT = 128_000
@@ -39,20 +40,12 @@ class CodexProvider:
         return Usage(_CONTEXT_LIMIT, 0, _MODEL_OUTPUT_LIMIT)
 
     def _command(self, request: Request) -> tuple[str, ...]:
-        rules = "".join(
-            "(deny file-read* file-write* (subpath "
-            f"{json.dumps(str(self.workspace / name))}))"
-            for name in ("sealed", "holdout")
-        )
         features = tuple(
             argument
             for feature in _DISABLED_FEATURES
             for argument in ("--disable", feature)
         )
-        return (
-            "/usr/bin/sandbox-exec",
-            "-p",
-            f"(version 1)(allow default){rules}",
+        command = (
             "codex",
             "exec",
             "--ephemeral",
@@ -76,6 +69,9 @@ class CodexProvider:
             *features,
             "-",
         )
+        if inherited_guard(self.workspace):
+            return command
+        return guarded_command(self.workspace, command)
 
     def complete(self, request: Request) -> Completion:
         if platform.system() != "Darwin":

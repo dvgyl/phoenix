@@ -7,6 +7,7 @@ import phoenix.analyze as stage
 from phoenix_eval.case import CaseFailure, CaseResult, FailureKind, Invocation
 from phoenix_eval.coverage import BlockInventory
 from phoenix_eval.docker import Engine, WorkerError
+from phoenix_eval.elf import Section
 from phoenix_eval.outcome import EntryKind, Exited, Outcome, TreeEntry, TreeSnapshot
 from phoenix_eval.trace import CodeTrace
 
@@ -162,3 +163,22 @@ def test_analysis_requires_pinned_images(
 ) -> None:
     with pytest.raises(ValueError, match="pinned amd64"):
         stage.analyze(tmp_path / "unused", images, seed=0)
+
+
+def test_seeds_use_argument_and_filename_literals(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    binary = tmp_path / "synthetic"
+    binary.write_bytes(b"fixture")
+    monkeypatch.setattr(
+        stage,
+        "elf_sections",
+        lambda *_: {".rodata": Section(0, b"\0convert\0notes.txt\0")},
+    )
+    cases = stage._seeds(binary)
+    assert any(case.args == ("convert",) and case.stdin for case in cases)
+    assert any(
+        case.args == ("notes.txt",) and case.tree.entries[0].path == "notes.txt"
+        for case in cases
+        if case.tree.entries
+    )

@@ -45,16 +45,21 @@ def docker_cli() -> tuple[str, ...]:
     return ("docker", "--host", endpoint) if endpoint else ("docker",)
 
 
-def freeze_images(engines: tuple[Engine, ...], source_digest: str) -> dict[str, str]:
+def freeze_images(
+    engines: tuple[Engine, ...],
+    source_digest: str,
+    *,
+    repository: str = "phoenix-worker",
+    source_label: str = IMAGE_SOURCE_LABEL,
+) -> dict[str, str]:
     platforms = tuple(dict.fromkeys(engine.platform for engine in engines))
     result = subprocess.run(
         (
             *docker_cli(),
             "image",
             "inspect",
-            "--format={{.Id}} "
-            f'{{{{ index .Config.Labels "{IMAGE_SOURCE_LABEL}" }}}}',
-            *(f"phoenix-worker:{platform}" for platform in platforms),
+            f'--format={{{{.Id}}}} {{{{ index .Config.Labels "{source_label}" }}}}',
+            *(f"{repository}:{platform}" for platform in platforms),
         ),
         capture_output=True,
         text=True,
@@ -67,7 +72,9 @@ def freeze_images(engines: tuple[Engine, ...], source_digest: str) -> dict[str, 
         if not re.fullmatch(r"sha256:[a-f0-9]{64}", image):
             raise WorkerError("Docker returned an invalid worker image ID.")
         if digest.strip() != source_digest:
-            raise WorkerError(f"Rebuild the {platform} worker image for this checkout.")
+            raise WorkerError(
+                f"Rebuild the {platform} image for {repository} in this checkout."
+            )
         ids[platform] = image
     return ids
 

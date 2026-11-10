@@ -25,7 +25,7 @@ from phoenix.llm.provider import (
     RetryLater,
     Usage,
 )
-from phoenix.pipeline import Settings, reconstruct, write_json
+from phoenix.pipeline import Method, Settings, reconstruct, write_json
 from phoenix_eval.docker import Engine, WorkerError, freeze_images
 from phoenix_eval.m0 import SEED
 from phoenix_eval.platforms import verify_runtime
@@ -46,6 +46,8 @@ class _RunRecord(TypedDict):
     java_home: str
     repair_limit: int
     astra_repair: bool
+    method: str
+    replay_from: str | None
     provider: str
     budget_binary: int
     budget_run: int
@@ -132,7 +134,9 @@ def _locked_run(
     record_path = directory / "run.json"
     previous = _load_record(source / key / "run.json") if source is not None else None
     if record_path.exists() and not args.resume:
-        raise ValueError("Use --resume for an existing binary ID.")
+        local = _load_record(record_path)
+        if not args.replay or source is None or local.get("replay_from") != source.name:
+            raise ValueError("Use --resume for an existing binary ID.")
     if not args.resume:
         assert args.binary is not None or source is not None
         requested = (
@@ -174,6 +178,7 @@ def _locked_run(
             Path(previous["java_home"]),
             previous["repair_limit"],
             previous["astra_repair"],
+            Method(previous.get("method", Method.PHOENIX)),
         )
         budget = Budget(previous["budget_binary"], previous["budget_run"])
     else:
@@ -185,6 +190,7 @@ def _locked_run(
             (args.java_home or java).resolve(),
             args.max_repairs,
             args.astra_repair,
+            args.method,
         )
         budget = Budget(args.budget_binary, args.budget_run)
 
@@ -211,6 +217,8 @@ def _locked_run(
         "java_home": str(settings.java_home),
         "repair_limit": settings.repair_limit,
         "astra_repair": settings.astra_repair,
+        "method": settings.method,
+        "replay_from": source.name if args.replay and source is not None else None,
         "provider": selected.name,
         "budget_binary": budget.per_binary,
         "budget_run": budget.per_run,
@@ -288,6 +296,9 @@ def main() -> int:
     run.add_argument("--ghidra", type=Path)
     run.add_argument("--java-home", type=Path)
     run.add_argument("--seed", type=int, default=SEED)
+    run.add_argument(
+        "--method", type=Method, choices=list(Method), default=Method.PHOENIX
+    )
     run.add_argument("--max-repairs", type=int, default=20)
     run.add_argument("--astra-repair", action="store_true")
     run.add_argument("--budget-binary", type=_dollars, default=5 * NANODOLLARS)

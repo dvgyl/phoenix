@@ -2,6 +2,7 @@ import json
 import sys
 import time
 from dataclasses import asdict, dataclass
+from enum import StrEnum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import TypedDict, cast
@@ -14,6 +15,7 @@ from phoenix.generate import (
     request_candidate,
     write_project,
 )
+from phoenix.generate.raw import write_raw_project
 from phoenix.ingest import BinaryMetadata
 from phoenix.lift import lift_binary
 from phoenix.llm.ledger import BudgetExceeded, Ledger
@@ -57,6 +59,11 @@ class _SavedCheck(TypedDict):
     differences: list[list[str]]
 
 
+class Method(StrEnum):
+    PHOENIX = "phoenix"
+    GHIDRA_RAW = "ghidra-raw"
+
+
 @dataclass(frozen=True, slots=True)
 class Settings:
     images: dict[str, str]
@@ -65,6 +72,7 @@ class Settings:
     java_home: Path
     repair_limit: int
     astra_repair: bool
+    method: Method = Method.PHOENIX
 
     def __post_init__(self) -> None:
         if not 0 <= self.repair_limit <= 20:
@@ -227,12 +235,30 @@ def reconstruct(
     replay: bool = False,
 ) -> Reconstruction:
     directory = run / key
-    analysis = _analyze(binary, directory / "analyze/cases.json", settings)
+    analysis = (
+        _analyze(binary, directory / "analyze/cases.json", settings)
+        if settings.method is Method.PHOENIX
+        else None
+    )
     export = directory / "lift/lift.json"
     if not export.is_file():
         lift_binary(binary, export, settings.ghidra, settings.java_home)
-    program = recover(export)
+    program = recover(export, binary)
     write_json(directory / "recover/program.json", asdict(program))
+    output = directory / "package" / "out" / key
+    if analysis is None:
+        write_raw_project(output, program, binary)
+        write_json(
+            output / "phoenix_report.json",
+            {
+                "run_id": run.name,
+                "sha256": metadata.sha256,
+                "method": settings.method,
+                "wall_seconds": round(time.time() - started, 3),
+                "llm": asdict(ledger.summary(key)),
+            },
+        )
+        return Reconstruction(output, True)
 
     previous: Candidate | None = None
     difference = ""
@@ -314,7 +340,6 @@ def reconstruct(
         program,
         tuple(analysis.cases[index].expected for index in sorted(passed)),
     )
-    output = directory / "package" / "out" / key
     package_project(
         output,
         program,
@@ -325,6 +350,7 @@ def reconstruct(
             "run_id": run.name,
             "sha256": metadata.sha256,
             "seed": settings.seed,
+            "method": settings.method,
             "images": settings.images,
             "replayed": replay,
             "stop": stop,

@@ -119,3 +119,17 @@
   8 of 8. The author's worktree could not create the Git index lock.
   The lead agent staged the author's exact archive commitments from
   the worktree. The source and held-out archives remain private.
+- Ran `phoenix run`, resume, and replay on public `bitstats` at
+  `efc821b4976e4a2e1fdd85565cdf48318ec60b3b`. The replay generated
+  identical C and CMake files. The original model log stayed unchanged.
+- The Ghidra-raw public probe matched 10 cases across four builds.
+  Its compatibility header adds C types, declarations, and an entry
+  wrapper. The decompiled function bodies stay intact.
+- Added an independent evaluator. It freezes source snapshots before
+  opening the committed held-out archive. Its child process can read the
+  stripped release but cannot open the protected paths. A Standard-tier
+  public model request passed inside this file guard.
+- The compiler checker worktree passed its first ARM64 test batch.
+  macOS swap growth forced two Phoenix VM stops. One stop interrupted
+  the checker's image load. The VM now has 2 GiB of memory. The lead
+  agent took over the final checker builds and tests.
