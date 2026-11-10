@@ -18,3 +18,6 @@
   reviewer reported a Priority-tier subreview. Do not use that review
   for the milestone gate. Disable nested agents, Fast mode, and
   Ultrafast mode in the replacement review process.
+- The managed worktree tool has no per-call location. Create Phoenix
+  agent worktrees with Git at the required external-drive path. Keep
+  the desktop app's global worktree location for other projects.

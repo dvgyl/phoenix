@@ -65,3 +65,6 @@
 - macOS swap growth reduced internal free space. Stopping the idle
   Phoenix VM restored free space above the baseline. Use 4 GiB for
   the next VM session.
+- Verified the published Ghidra 12.2 and Temurin 25.0.5+8 archive hashes
+  and recorded both licenses before use. The tools will be installed
+  on the external drive.
