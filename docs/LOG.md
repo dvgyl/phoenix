@@ -79,3 +79,8 @@
 - Integrated the ingestion worktree. It validates the ELF format,
   dynamic glibc linkage evidence, and stripping. A read-only check
   accepted the public `bitstats` ELF and reproduced its SHA-256.
+- Added a CMake project builder that the pipeline and evaluator can
+  share. It builds in an isolated Linux container and checks the output
+  architecture. Public probe `build-probe-84249aa65e8d413c9cd57b0d0cac4333`
+  built with both compilers on both architectures. Each result ran in
+  the test sandbox and matched the expected output.

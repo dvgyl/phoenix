@@ -1,0 +1,155 @@
+import re
+import subprocess
+import tarfile
+from dataclasses import dataclass
+from io import BytesIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from uuid import uuid4
+
+from phoenix_eval.docker import Engine, docker_cli
+from phoenix_eval.toolchain import Compiler
+
+_SOURCE_LIMIT = 4 * 1024 * 1024
+_EXECUTABLE_LIMIT = 16 * 1024 * 1024
+_BUILD_SCRIPT = f"""
+tar -xf -
+status=0
+{{
+    cmake -S project -B build -DCMAKE_C_COMPILER="$1" -DCMAKE_C_STANDARD=11 \
+        -DCMAKE_C_STANDARD_REQUIRED=ON -DCMAKE_C_EXTENSIONS=OFF \
+        '-DCMAKE_C_FLAGS=-Wall -Wextra' &&
+    cmake --build build --parallel 2
+}} >build.log 2>&1 || status=$?
+if [ "$(wc -c <build.log)" -gt 1048576 ]; then
+    printf '%s\\n' 'The build log exceeds its size limit.' >&2
+    exit 1
+fi
+cat build.log >&2
+[ "$status" -eq 0 ]
+head -c {_EXECUTABLE_LIMIT + 1} build/program
+"""
+
+
+@dataclass(frozen=True)
+class BuildResult:
+    engine: Engine
+    compiler: Compiler
+    executable: Path | None
+    warnings: int
+    diagnostics: str
+
+
+def _archive(project: Path) -> bytes:
+    source = project / "src"
+    include = project / "include"
+    if not source.is_dir() or source.is_symlink():
+        raise ValueError("The project needs a regular source directory.")
+    if include.is_symlink() or (include.exists() and not include.is_dir()):
+        raise ValueError("The header path must be a regular directory.")
+    sources = sorted(source.glob("*.c"))
+    if not sources:
+        raise ValueError("The project needs at least one C source file.")
+    files = [project / "CMakeLists.txt", *sources, *sorted(include.glob("*.h"))]
+    output = BytesIO()
+    remaining = _SOURCE_LIMIT
+    with tarfile.open(fileobj=output, mode="w") as archive:
+        for file in files:
+            if file.is_symlink() or not file.is_file():
+                raise ValueError("Project inputs must be regular files.")
+            with file.open("rb") as stream:
+                data = stream.read(remaining + 1)
+            remaining -= len(data)
+            if remaining < 0:
+                raise ValueError("The source archive exceeds the build limit.")
+            entry = tarfile.TarInfo(f"project/{file.relative_to(project).as_posix()}")
+            entry.size = len(data)
+            entry.mode = 0o644
+            entry.mtime = 1794268800
+            archive.addfile(entry, BytesIO(data))
+    return output.getvalue()
+
+
+def build_project(
+    project: Path,
+    destination: Path,
+    engine: Engine,
+    compiler: Compiler,
+    *,
+    image: str | None = None,
+) -> BuildResult:
+    if engine is Engine.QEMU_X86_64:
+        raise ValueError("Use a compiler image to build the program.")
+    payload = _archive(project)
+    name = f"phoenix-build-{uuid4().hex}"
+    docker = docker_cli()
+    command = (
+        *docker,
+        "run",
+        "--rm",
+        "--interactive",
+        "--pull=never",
+        "--network=none",
+        "--read-only",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--pids-limit=64",
+        "--memory=1536m",
+        "--memory-swap=1536m",
+        "--user=19704:19704",
+        "--tmpfs=/work:rw,exec,nosuid,nodev,size=256m,uid=19704,gid=19704,mode=0700",
+        "--workdir=/work",
+        "--env=TMPDIR=/work",
+        "--env=HOME=/nonexistent",
+        "--env=SOURCE_DATE_EPOCH=1794268800",
+        "--entrypoint=/bin/sh",
+        f"--platform=linux/{engine.platform}",
+        f"--name={name}",
+        image or f"phoenix-worker:{engine.platform}",
+        "-ec",
+        _BUILD_SCRIPT,
+        "build-project",
+        compiler,
+    )
+    try:
+        finished = subprocess.run(
+            command,
+            input=payload,
+            capture_output=True,
+            timeout=180,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        subprocess.run(
+            (*docker, "rm", "-f", name),
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+        return BuildResult(
+            engine, compiler, None, 0, "The build exceeded its time limit."
+        )
+    diagnostics = finished.stderr.decode("utf-8", errors="replace")
+    warnings = len(re.findall(r"(?m)^.*?\bwarning:", diagnostics))
+    program = finished.stdout
+    machine = 62 if engine.platform == "amd64" else 183
+    if (
+        finished.returncode
+        or not 20 <= len(program) <= _EXECUTABLE_LIMIT
+        or not program.startswith(b"\x7fELF\x02\x01")
+        or int.from_bytes(program[18:20], "little") != machine
+    ):
+        return BuildResult(
+            engine,
+            compiler,
+            None,
+            warnings,
+            diagnostics or "The build did not emit a valid ELF.",
+        )
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(dir=destination.parent) as scratch:
+        temporary = Path(scratch) / "program"
+        temporary.write_bytes(program)
+        temporary.chmod(0o600)
+        temporary.replace(destination)
+    return BuildResult(engine, compiler, destination, warnings, diagnostics)
