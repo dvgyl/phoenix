@@ -17,7 +17,10 @@ project(phoenix_rebuild LANGUAGES C)
 add_executable(program src/program.c)
 target_include_directories(program PRIVATE include)
 target_compile_definitions(program PRIVATE _POSIX_C_SOURCE=200809L)
-target_compile_options(program PRIVATE -Wall -Wextra)
+target_compile_options(program PRIVATE -Wall -Wextra -fstack-protector-all)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_options(program PRIVATE LINKER:-z,relro,-z,now)
+endif()
 set_target_properties(program PROPERTIES
     C_STANDARD 11 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
 """
