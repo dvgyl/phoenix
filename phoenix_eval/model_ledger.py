@@ -281,6 +281,19 @@ def bound_summary(
 ) -> ModelSummary:
     if identity is None:
         identity = read_identity(run / "model-ledger.json")
+    return summarize(_bound_events(workspace, identity), binary)
+
+
+def bound_summaries(
+    workspace: Path, keys: tuple[str, ...], identity: LedgerIdentity
+) -> dict[str, ModelSummary]:
+    events = _bound_events(workspace, identity)
+    if len(keys) != len(set(keys)) or any(event.binary not in keys for event in events):
+        raise ValueError("The model ledger task keys do not match the fixed roster.")
+    return {key: summarize(events, key) for key in keys}
+
+
+def _bound_events(workspace: Path, identity: LedgerIdentity) -> tuple[ModelEvent, ...]:
     path = workspace / "runs" / identity["pipeline_run"] / "llm.jsonl"
     verify_identity(workspace, identity)
     content = path.read_bytes() if identity["sha256"] is not None else b""
@@ -289,4 +302,4 @@ def bound_summary(
         and hashlib.sha256(content).hexdigest() != identity["sha256"]
     ):
         raise ValueError("The model ledger changed after submission.")
-    return summarize(read_events(content.decode("utf-8").splitlines()), binary)
+    return read_events(content.decode("utf-8").splitlines())

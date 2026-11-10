@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+from dataclasses import asdict
 from hashlib import sha256
 from pathlib import Path
 
@@ -12,7 +13,7 @@ from phoenix_eval.build import PROJECT_CMAKE
 from phoenix_eval.case import Invocation
 from phoenix_eval.corpus import Variant
 from phoenix_eval.integrity import IntegrityError
-from phoenix_eval.model_ledger import LedgerIdentity, freeze_identity
+from phoenix_eval.model_ledger import LedgerIdentity, bound_summary, freeze_identity
 from phoenix_eval.pair import PairReport
 from phoenix_eval.platforms import RuntimeEvidence
 from phoenix_eval.provenance import BuildEvidence
@@ -22,6 +23,7 @@ from phoenix_eval.submission import (
     freeze_package_report,
     freeze_project,
     project_path,
+    write_report,
 )
 from phoenix_eval.toolchain import Compiler
 
@@ -49,7 +51,9 @@ def test_freezes_every_submission_before_opening_cases(
     ) -> Submission:
         assert not opened or replay_pipeline_run is not None
         submitted.append((key, replay_pipeline_run))
-        return Submission(method, key, "b" * 64, None, replay_pipeline_run, "d" * 64)
+        result = Submission(method, key, "b" * 64, None, replay_pipeline_run, "d" * 64)
+        write_report(directory / "capture/submission.json", asdict(result))
+        return result
 
     def cases(
         path: Path, digest: str, names: set[str]
@@ -77,6 +81,7 @@ def test_freezes_every_submission_before_opening_cases(
             "method": task.method,
             "fully_successful": task.method == "phoenix",
             "behavior": {"tuple": (True, False)},
+            "model": asdict(bound_summary(_workspace, run, task.key, _model_ledger)),
             "reconstruction_seconds": 1 if run.name == "initial" else 2,
         }
 

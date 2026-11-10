@@ -10,6 +10,7 @@ from typing import TypedDict, cast
 from uuid import uuid4
 
 from phoenix_eval.build import snapshot_project
+from phoenix_eval.capture_binding import freeze_binding, open_binding, verify_binding
 from phoenix_eval.case import Invocation
 from phoenix_eval.corpus import Variant, committed_hash, heldout_cases, t0_manifest
 from phoenix_eval.development import DevelopmentError, verify_development
@@ -23,6 +24,7 @@ from phoenix_eval.integrity import (
 from phoenix_eval.m0 import SEED
 from phoenix_eval.model_ledger import (
     LedgerIdentity,
+    bound_summaries,
     bound_summary,
     freeze_identity,
     read_identity,
@@ -279,6 +281,12 @@ def _stable_records(records: list[dict[str, object]]) -> str:
     return json.dumps(stable, ensure_ascii=True, sort_keys=True)
 
 
+def _same_json(left: object, right: object) -> bool:
+    return json.dumps(left, sort_keys=True, allow_nan=False) == json.dumps(
+        right, sort_keys=True, allow_nan=False
+    )
+
+
 def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bool]:
     release = workspace / "sealed/release/t0"
     variants, release_hash = t0_manifest(release)
@@ -288,16 +296,23 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         "configuration": config,
         "replay_of": replay.name if replay is not None else None,
     }
-    if (
-        config_file.exists()
-        and json.loads(config_file.read_text(encoding="utf-8")) != plan
+    if config_file.exists() and not _same_json(
+        json.loads(config_file.read_text(encoding="utf-8")), plan
     ):
         raise ValueError("The evaluation configuration changed after it was recorded.")
     prior = None
     if replay is not None:
         prior = json.loads((replay / "m1.json").read_text(encoding="utf-8"))
-        if prior["configuration"] != config:
+        if not _same_json(prior["configuration"], config):
             raise ValueError("Replay requires the same evaluation configuration.")
+    tasks = tuple(
+        Task(variant, method)
+        for variant in variants
+        if variant.flag == "-O0"
+        for method in METHODS
+    )
+    keys = tuple(task.key for task in tasks)
+    capture_binding = open_binding(run, keys)
     write_report(config_file, plan)
     pipeline_run = f"{run.name}-rebuild"
     replay_pipeline = f"{replay.name}-rebuild" if replay is not None else None
@@ -309,11 +324,15 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         verify_identity(workspace, saved_identity)
     completed_report = run / "m1.json"
     if completed_report.exists():
+        if capture_binding is None:
+            raise ValueError("The completed report has no frozen capture binding.")
+        completed = json.loads(completed_report.read_text(encoding="utf-8"))
+        if not _same_json(completed.get("configuration"), config):
+            raise ValueError(
+                "The completed report has a different evaluation configuration."
+            )
         completed_identity = read_identity(identity_file)
-        if (
-            json.loads(completed_report.read_text(encoding="utf-8")).get("model_ledger")
-            != completed_identity
-        ):
+        if not _same_json(completed.get("model_ledger"), completed_identity):
             raise ValueError(
                 "The completed report has a different model ledger identity."
             )
@@ -322,19 +341,15 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         if (
             original_identity["pipeline_run"] != replay_pipeline
             or prior is None
-            or prior.get("model_ledger") != original_identity
+            or not _same_json(prior.get("model_ledger"), original_identity)
         ):
             raise ValueError(
                 "The replay model ledger identity does not match its origin."
             )
         verify_identity(workspace, original_identity)
+        if open_binding(replay, keys) is None:
+            raise ValueError("Replay requires a frozen capture binding at its origin.")
         require_no_replay_ledger(workspace, pipeline_run)
-    tasks = tuple(
-        Task(variant, method)
-        for variant in variants
-        if variant.flag == "-O0"
-        for method in METHODS
-    )
     submissions = {
         task.key: submit(
             workspace,
@@ -351,7 +366,9 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         verify_identity(workspace, original_identity)
         require_no_replay_ledger(workspace, pipeline_run)
     model_ledger = freeze_identity(workspace, run, replay_pipeline or pipeline_run)
-    if _configuration(workspace, release_hash) != config:
+    model_summaries = bound_summaries(workspace, keys, model_ledger)
+    capture_binding = freeze_binding(run, keys, capture_binding)
+    if not _same_json(_configuration(workspace, release_hash), config):
         raise ValueError("The evaluation configuration changed before measurement.")
     if t0_manifest(release) != (variants, release_hash):
         raise ValueError("The released binaries changed before measurement.")
@@ -389,6 +406,7 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
     verify_identity(workspace, model_ledger)
     if replay is not None:
         require_no_replay_ledger(workspace, pipeline_run)
+    verify_binding(run, keys, capture_binding)
     cases = heldout_cases(
         workspace / "holdout/t0-inputs.tar.gz",
         config["heldout_archive_sha256"],
@@ -413,6 +431,16 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
     verify_identity(workspace, model_ledger)
     if read_identity(identity_file) != model_ledger:
         raise ValueError("The model ledger identity changed during measurement.")
+    verify_binding(run, keys, capture_binding)
+    if bound_summaries(
+        workspace, keys, model_ledger
+    ) != model_summaries or not _same_json(
+        [record.get("model") for record in records],
+        [asdict(model_summaries[key]) for key in keys],
+    ):
+        raise ValueError(
+            "The reported model summaries do not reconcile with the ledger."
+        )
     if replay is not None:
         require_no_replay_ledger(workspace, pipeline_run)
     scores = _scores(records)

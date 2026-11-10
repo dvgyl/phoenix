@@ -396,3 +396,107 @@
   Astra milestone, algorithm, and integrity roles remain required.
   All new CLI workers request Standard service. Fast mode and nested
   agents are disabled. Source and held-out material stay private.
+
+## 2026-11-10. Evaluation capture binding and complete accounting
+
+- Worked only in `worktrees/m1-follow-up-review-e07ec17` at `baae648`.
+  Main remained frozen. No commit, push, delegation, or real evaluation ran.
+- Reproduced inherited findings R3 and R4 with the actual M1 coordinator and
+  synthetic captures, opaque bytes, and archives. R3 replaced a completed
+  report's source hash after a source and checkpoint change. R4 omitted a valid
+  task charge while the complete model log hash still matched. These probes
+  do not establish real source manipulation, real costs, or a budget bypass.
+- Added a separate capture binding for the complete ordered task roster and
+  every captured file. Check it on resume, before archive access, and before
+  report publication. Preserve atomic capture and freeze publication.
+- Added strict roster validation for the complete model log. Require each
+  reported summary to match the corresponding complete-log summary. Preserve
+  failed-call reservations and all existing accounting validation.
+- ADR 0021 records the data shape and compatibility limits. Older checkpoints
+  without the binding cannot migrate to this engine. Historical runs must use
+  their recorded revisions. Schema-1 report fields and scoring remain unchanged.
+- Synthetic regression and property tests cover replacement, interruption,
+  archive access, completed-report preservation, replay, and full accounting.
+  Detailed commands and outcomes are in
+  `$PHOENIX_ROOT/audit/evaluation-freeze-accounting`.
+- The focused suite passed 167 tests. Ruff, format, and strict mypy passed.
+  `scripts/check` reported 442 passed, 25 skipped, and one failure. Evaluator
+  coverage was 90.29%. The unchanged nested sandbox test failed because the
+  outer guard denied `sandbox_apply`. It was not excluded or modified.
+- Independent Sol review, Astra closure review, the full parent gate, combined
+  M2 integration review, and new candidate measurements remain parent gates.
+  No benchmark score or M1 acceptance is claimed.
+
+## 2026-11-10. Capture schema and replay type correction
+
+- The parent full gate for the initial binding correction passed 443 tests
+  with 25 opt-in skips. The unchanged protection test passed outside the
+  reviewer's outer sandbox. Evaluator line coverage was 90.29%.
+- Independent Astra review closed R3 and R4 within their isolated scope.
+  Independent Sol review held the binding reader. Boolean and floating-point
+  schema values and duplicate JSON fields were accepted. Eight rejection
+  regressions failed before the correction and passed after it.
+- The binding reader now rejects repeated fields at each JSON object. It
+  requires an integer schema value of 1. Raw binding bytes remain the frozen
+  identity. There is no checkpoint migration or retrospective binding.
+- Astra also found that the separate M2 stable projection used Python
+  dictionary equality for configuration values. The parent reproduced the
+  same weakness in M1. An integer and equal float, or a Boolean and equal
+  integer, could compare as equal. Two M1 rejection regressions failed.
+- Configuration and model-summary comparisons now use JSON serialization
+  with sorted keys and non-finite values prohibited. This preserves JSON
+  types. Existing stable result fields and exact model lookup are unchanged.
+- The corrected focused suite passed 52 tests. The parent full gate passed
+  453 tests with 25 opt-in skips and 90.39% evaluator line coverage. Ruff,
+  format and strict mypy passed. Evidence is in
+  `audit/evaluation-freeze-schema-fix/` outside the repository.
+- Fresh independent Sol and Astra review remain required for this exact
+  correction. Combined M2 integration and new measurements remain open.
+- At unchanged main `baae648`, public pipeline checks passed for both methods
+  in all four build configurations. Native CI run 42883642379 passed. The
+  native AMD64 and ARM64 M0 reports matched the current Mac M0 report.
+- Original `m1-t0-baae648` finished with Phoenix 17/20 and raw 8/20 fully
+  successful. Phoenix retained two `embedded_text` failures and one behavior
+  failure. Raw retained 12 compiler failures. Both methods had 792 eligible
+  cases, zero emulator disagreements and zero evaluation errors. Coverage
+  was 790/1079 recovered block entries. Its exact replay is active.
+- The original model ledger has 69 calls and $1.4249648 API-equivalent cost.
+  Its SHA-256 is
+  `56f1b86a7056cb03d2a3607ac4dae09bdbd1e6051f4baafa845fd9ed4a73851e`.
+  Unknown-cost reservations are zero. This run predates automatic capture
+  binding. No retrospective binding or milestone acceptance is claimed.
+
+## 2026-11-10. Completed M1 resume configuration check
+
+- Fresh independent Sol review passed the nine-file shared candidate.
+  It ran 65 fresh coordinator checks and 205 selected regressions.
+- Fresh Astra review held A-F1. Completed M1 resume checked ledger identity
+  but omitted the saved report configuration. Equal integer/float and
+  false/zero substitutions opened the archive and replaced the altered
+  report. The parent reproduced both failed rejection requirements.
+- The coordinator now reads the completed report once and compares its
+  configuration before capture reuse or archive access. It uses the existing
+  type-preserving JSON comparison. Ledger identity is checked as before.
+- Both rejection cases now pass. Tests also require no new capture, no
+  archive read and unchanged report bytes. The focused suite passed 54 tests.
+  The full parent gate passed 455 tests with 25 opt-in skips and 90.40%
+  evaluator line coverage. Ruff, format, strict mypy and protection passed.
+- Evidence is in `audit/evaluation-completed-resume-fix/`. Fresh Sol and
+  Astra review of this exact correction remain open. Prior HOLD reports
+  remain intact. Main and its active exact M1 replay remain unchanged.
+
+## 2026-11-10. Final shared evaluation review
+
+- Fresh independent Astra review passed the exact final nine-file candidate.
+  It reran six prior rejection requirements, 37 fresh coordinator controls,
+  68 preservation cases and 281 selected regressions. A-F1 is closed.
+- A different fresh independent Sol review also passed the exact candidate.
+  It ran 40 fresh probes and 281 selected regressions. Both reviewers checked
+  unchanged hashes before and after review. Both retained their separate
+  outer-guard protection failure. The parent full gate passed that test.
+- Reports are in `audit/evaluation-resume-closure-astra/` and
+  `audit/evaluation-resume-final-sol/`. Earlier HOLD reports remain intact.
+- Retained the reviewed correction on its branch. Main stays at `baae648`
+  through its active exact replay. The correction still needs public/native
+  checks, a new original evaluation, exact replay and milestone review.
+  Combined M2 integration also requires a full gate and fresh reviews.
