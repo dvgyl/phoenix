@@ -6,6 +6,7 @@ requires-python = ">=3.12,<3.13"
 dependencies = []
 
 [project.scripts]
+phoenix = "phoenix.__main__:main"
 phoenix-eval = "phoenix_eval.__main__:main"
 
 [build-system]
@@ -14,6 +15,7 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 module-root = ""
+module-name = ["phoenix", "phoenix_eval", "ghidra_scripts"]
 
 [dependency-groups]
 dev = [

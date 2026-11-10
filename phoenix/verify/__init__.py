@@ -34,6 +34,18 @@ class Verification:
     def passed(self) -> bool:
         return len(self.passed_cases) == self.case_count
 
+    @property
+    def quality(self) -> tuple[int, int, int]:
+        return (
+            len(self.passed_cases),
+            sum(check.build.executable is not None for check in self.checks),
+            sum(
+                not differences
+                for check in self.checks
+                for differences in check.differences
+            ),
+        )
+
 
 def mismatch(expected: Outcome, actual: CaseResult) -> tuple[str, ...]:
     if isinstance(actual, CaseFailure):

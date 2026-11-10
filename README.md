@@ -35,3 +35,29 @@ uv run --locked phoenix-eval m0 --mode apple-silicon --runs "$PHOENIX_ROOT/runs"
 
 The command prints the path to its JSON report. The report contains the
 run ID, seed, exact outcome hashes, and mutation counts.
+
+## Rebuild a public executable
+
+Install the Ghidra and Java versions in `tools.lock`. On Apple Silicon,
+build the Ghidra native component from the pinned archive. Build both
+worker images for the current checkout.
+
+```sh
+./scripts/build-ghidra-native
+./scripts/build-worker amd64
+./scripts/build-worker arm64
+phoenix_run="public-$(uuidgen | tr '[:upper:]' '[:lower:]')"
+uv run --locked phoenix run "$PHOENIX_ROOT/runs/PUBLIC/bitstats-original.elf" \
+  --run-id "$phoenix_run"
+```
+
+Replace `PUBLIC` with the public M0 run ID. The command prints the
+project path. It saves its checkpoints and model log in the run directory.
+Use `--resume` after an interruption. Use `--replay` to rebuild with the
+saved model responses. Both commands use the saved binary and require
+the recorded checkout and worker images.
+
+```sh
+uv run --locked phoenix run --resume "$phoenix_run"
+uv run --locked phoenix run --replay "$phoenix_run"
+```

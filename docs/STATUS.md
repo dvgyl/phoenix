@@ -18,7 +18,7 @@ The workspace uses the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
 ## Next actions
 
 1. Replace the integrity scanner's token checks with compiler evidence.
-2. Connect analysis, reconstruction, repair, and replay through the command line.
+2. Verify the command-line reconstruction and replay on a public ELF.
 3. Add an evaluator that rebuilds and tests projects independently.
 4. Check the separate Corpus Author's T0 handoff metadata.
 5. Run the M1 evaluation and report the Ghidra-raw baseline.
@@ -42,4 +42,4 @@ the T0 batch.
 
 Public probe `public-reconstruction-24660e35059f42e2914b967546600bfb`
 built the decompiled `bitstats` project four ways. All 10 public cases
-matched in each build. This probe did not use held-out inputs.
+matched in each build.

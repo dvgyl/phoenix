@@ -18,7 +18,7 @@ pre-commit, MIT. https://github.com/pre-commit/pre-commit/blob/main/LICENSE
 Ubuntu 24.04. Package notices are under /usr/share/doc in the image.
 Docker Engine and Buildx, Apache-2.0. https://github.com/moby/moby and https://github.com/docker/buildx
 GCC, GPL-3.0-or-later. GCC runtime components have a runtime library exception where specified. https://gcc.gnu.org/
-Clang and LLVM, Apache-2.0 with LLVM exceptions. https://llvm.org/LICENSE.txt
+Clang, Clang LibTooling, and LLVM, Apache-2.0 with LLVM exceptions. https://llvm.org/LICENSE.txt
 CMake, BSD-3-Clause. https://gitlab.kitware.com/cmake/cmake/-/blob/master/Copyright.txt
 GNU Binutils, GPL-3.0-or-later. https://www.gnu.org/software/binutils/
 libseccomp, LGPL-2.1. https://github.com/seccomp/libseccomp/blob/main/LICENSE

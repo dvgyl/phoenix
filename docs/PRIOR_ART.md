@@ -19,6 +19,7 @@ projects used in the workspace and the local quality checks.
 | Ubuntu 24.04 | Pinned Linux image and package archive | [Ubuntu images](https://github.com/docker-library/official-images/blob/master/library/ubuntu), [Ubuntu Snapshot Service](https://snapshot.ubuntu.com/) |
 | Docker Engine and Buildx | Isolated workers and architecture-specific images | [Moby](https://github.com/moby/moby), [Buildx](https://github.com/docker/buildx) |
 | GCC, Clang, CMake, and GNU Binutils | Build and strip public test executables | [GCC](https://gcc.gnu.org/), [Clang](https://clang.llvm.org/), [CMake](https://cmake.org/), [GNU Binutils](https://www.gnu.org/software/binutils/) |
+| Clang LibTooling and LLVM | Resolve C declarations and their stored data for integrity checks | [Clang LibTooling 18.1.3](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/clang/docs/LibTooling.rst), [LLVM license](https://llvm.org/LICENSE.txt) |
 | Linux seccomp | Restrict system calls in the test process | [Linux kernel documentation](https://kernel.org/doc/html/latest/userspace-api/seccomp_filter.html) |
 | QEMU user mode | Independent execution of x86-64 programs | [QEMU](https://www.qemu.org/docs/master/user/main.html) |
 | Bubblewrap | Design comparison for per-test isolation | [Bubblewrap](https://github.com/containers/bubblewrap) |

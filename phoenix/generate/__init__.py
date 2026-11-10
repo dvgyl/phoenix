@@ -62,6 +62,7 @@ def request_candidate(
     *,
     previous: Candidate | None = None,
     difference: str = "",
+    round_number: int = 0,
     model: Model = Model.SOL,
 ) -> Request:
     evidence = {
@@ -85,7 +86,10 @@ def request_candidate(
     payload = json.dumps(evidence, ensure_ascii=True)
     prompt = f"{_INSTRUCTIONS}\nBinary evidence\n{payload}"
     if difference:
-        prompt += "\nRevise the previous reconstruction to address this dev failure."
+        prompt += (
+            f"\nRepair round {round_number}. Revise the previous reconstruction "
+            "to address this development failure."
+        )
         if previous is not None:
             prompt += "\nPrevious reconstruction\n" + json.dumps(asdict(previous))
         prompt += "\nFailure\n" + difference

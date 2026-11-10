@@ -104,3 +104,11 @@
   array storage. The scanner is not ready for scoring. The first
   follow-up review could not apply its nested macOS sandbox. The
   replacement used one outer sandbox that blocks the protected paths.
+- Added `phoenix run` with private per-stage checkpoints, resume, and
+  replay. Resume binds the saved input hash, checkout, and image IDs.
+  Replay uses a read-only model ledger. The command backs off when the
+  provider reports a usage limit and keeps the stage artifacts.
+- Chose compiler-resolved C storage checks after two token-scan reviews.
+  ADR 0007 records the pinned Clang interface and the limits of byte
+  checks. The independent evaluator and compiler checker are in
+  separate worktrees.
