@@ -9,6 +9,7 @@ from phoenix_eval.coverage import PublicCoverage
 from phoenix_eval.docker import Engine
 from phoenix_eval.outcome import Exited, Outcome, Signaled, TreeSnapshot
 from phoenix_eval.platforms import RuntimeEvidence
+from phoenix_eval.provenance import BuildEvidence
 from phoenix_eval.toolchain import Compiler
 
 EMPTY = Outcome(b"", b"", Exited(0), TreeSnapshot())
@@ -42,6 +43,7 @@ def test_m0_requires_valid_mutant_differences(
                 Outcome(b"", b"", Signaled(15), TreeSnapshot()),
                 Outcome(b"", b"", Exited(143), TreeSnapshot()),
                 CaseFailure(FailureKind.SNAPSHOT, "FIFO"),
+                CaseFailure(FailureKind.TIMEOUT, "Timeout."),
                 EMPTY,
             )
         if "-mutant-" in binary.name:
@@ -62,9 +64,12 @@ def test_m0_requires_valid_mutant_differences(
         lambda _: RuntimeEvidence("arm64", "29.5", "rosetta", "native"),
     )
     monkeypatch.setattr(
-        m0, "freeze_images", lambda _: {"amd64": "x86-image", "arm64": "arm-image"}
+        m0, "freeze_images", lambda *_: {"amd64": "x86-image", "arm64": "arm-image"}
     )
     monkeypatch.setattr(m0, "measure_public", lambda *_: PublicCoverage(2, 1, 1))
+    monkeypatch.setattr(
+        m0, "evaluator_build", lambda: BuildEvidence("commit", "digest")
+    )
     monkeypatch.setattr(m0, "build_public", build)
     monkeypatch.setattr(m0, "run_batch", run)
     path, passed = m0.evaluate(tmp_path, tmp_path, mode)

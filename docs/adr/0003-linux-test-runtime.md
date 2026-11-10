@@ -42,3 +42,14 @@ privileges before it executes the program. Docker's seccomp profile and
 the launcher's additional seccomp filter apply to the target. A private
 status channel preserves signals across the namespace supervisor. The
 worker kills the process group if the case exceeds its wall time.
+
+The Apple Silicon check records all binary format registrations. It
+rejects any other active magic rule that could match an x86-64 ELF.
+The check and the Docker commands use the workspace Colima socket.
+The evaluator rejects a Docker context override.
+
+Each worker image records a hash of the worker and build sources.
+Before evaluation, Phoenix checks that hash and saves the exact image
+IDs. The report also records the evaluator commit. The native report
+comparison checks the commit, source hash, seed, case counts, and exact
+outcome hashes. Use the same comparison for the Mac report.

@@ -43,3 +43,13 @@
   a real public probe.
 - The public evaluation now pins worker image IDs for the full run.
   The development case generator keeps mutations that add coverage.
+- Apple Silicon run `m0-b4ff3a1a02104fc1bb49bd9057262c4c` passed
+  the local harness. It matched 16 cases and detected 20 of 20 mutation
+  builds. The native ARM64 CI report matched both Mac outcome hashes.
+- The Astra review blocked the candidate because the emulator and
+  worker image checks could accept a different handler or stale image.
+  The reviewer also reported a nested Priority-tier subreview.
+- The replacement candidate checks all active binary handlers and
+  binds Docker commands to the verified endpoint. It requires an
+  image source hash and checks QEMU in the sandbox gate. All three
+  engines passed a separate timeout probe and ran the next case.

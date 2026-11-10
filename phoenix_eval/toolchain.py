@@ -3,7 +3,7 @@ import subprocess
 from enum import StrEnum
 from pathlib import Path
 
-from phoenix_eval.docker import Engine
+from phoenix_eval.docker import Engine, docker_cli
 
 
 class Compiler(StrEnum):
@@ -26,7 +26,7 @@ def build_public(
         raise ValueError("The mutation number cannot be negative.")
     result = subprocess.run(
         (
-            "docker",
+            *docker_cli(),
             "run",
             "--rm",
             "--interactive",

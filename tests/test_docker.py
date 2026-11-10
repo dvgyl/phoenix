@@ -6,7 +6,7 @@ from hypothesis import example, given, settings
 from hypothesis import strategies as st
 
 from phoenix_eval.case import Invocation
-from phoenix_eval.docker import Engine, WorkerError, run_batch
+from phoenix_eval.docker import Engine, WorkerError, freeze_images, run_batch
 from phoenix_eval.outcome import Exited, Outcome, TreeSnapshot
 from phoenix_eval.wire import decode_invocation, encode_result
 
@@ -18,6 +18,7 @@ def test_target_arguments_go_to_worker_stdin(args: list[str]) -> None:
     from tempfile import TemporaryDirectory
 
     with TemporaryDirectory() as root, pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.delenv("DOCKER_HOST", raising=False)
         binary = Path(root) / "program"
         binary.write_bytes(b"binary")
         expected = Outcome(b"stdout", b"stderr", Exited(17), TreeSnapshot())
@@ -71,3 +72,16 @@ def test_worker_rejects_incomplete_responses(
     monkeypatch.setattr("phoenix_eval.docker.subprocess.run", fake_docker)
     with pytest.raises(WorkerError, match="invalid result|wrong number"):
         run_batch(binary, (Invocation(),), Engine.AMD64)
+
+
+def test_worker_image_must_match_checkout_sources(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import subprocess
+
+    image = "sha256:" + "1" * 64
+    result = subprocess.CompletedProcess(("docker",), 0, f"{image} current-source\n")
+    monkeypatch.setattr(subprocess, "run", lambda *_, **__: result)
+    assert freeze_images((Engine.ROSETTA,), "current-source") == {"amd64": image}
+    with pytest.raises(WorkerError, match="Rebuild the amd64"):
+        freeze_images((Engine.AMD64,), "different-source")

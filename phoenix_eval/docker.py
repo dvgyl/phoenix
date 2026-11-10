@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import subprocess
 from base64 import b64encode
@@ -8,6 +9,7 @@ from tempfile import TemporaryFile
 from uuid import uuid4
 
 from phoenix_eval.case import CaseResult, Invocation, WorkerRuntime
+from phoenix_eval.provenance import IMAGE_SOURCE_LABEL
 from phoenix_eval.wire import PROTOCOL_VERSION, decode_result, encode_invocation
 from phoenix_eval.worker import MAX_PROGRAM_BYTES, WALL_SECONDS
 
@@ -37,14 +39,20 @@ class WorkerError(RuntimeError):
     pass
 
 
-def freeze_images(engines: tuple[Engine, ...]) -> dict[str, str]:
+def docker_cli() -> tuple[str, ...]:
+    endpoint = os.environ.get("DOCKER_HOST")
+    return ("docker", "--host", endpoint) if endpoint else ("docker",)
+
+
+def freeze_images(engines: tuple[Engine, ...], source_digest: str) -> dict[str, str]:
     platforms = tuple(dict.fromkeys(engine.platform for engine in engines))
     result = subprocess.run(
         (
-            "docker",
+            *docker_cli(),
             "image",
             "inspect",
-            "--format={{.Id}}",
+            "--format={{.Id}} "
+            f'{{{{ index .Config.Labels "{IMAGE_SOURCE_LABEL}" }}}}',
             *(f"phoenix-worker:{platform}" for platform in platforms),
         ),
         capture_output=True,
@@ -52,10 +60,15 @@ def freeze_images(engines: tuple[Engine, ...]) -> dict[str, str]:
         check=True,
         timeout=15,
     )
-    ids = result.stdout.splitlines()
-    if any(not re.fullmatch(r"sha256:[a-f0-9]{64}", image) for image in ids):
-        raise WorkerError("Docker returned an invalid worker image ID.")
-    return dict(zip(platforms, ids, strict=True))
+    ids = {}
+    for platform, line in zip(platforms, result.stdout.splitlines(), strict=True):
+        image, _, digest = line.partition(" ")
+        if not re.fullmatch(r"sha256:[a-f0-9]{64}", image):
+            raise WorkerError("Docker returned an invalid worker image ID.")
+        if digest.strip() != source_digest:
+            raise WorkerError(f"Rebuild the {platform} worker image for this checkout.")
+        ids[platform] = image
+    return ids
 
 
 def docker_args(
@@ -67,7 +80,7 @@ def docker_args(
         else ()
     )
     return (
-        "docker",
+        *docker_cli(),
         "run",
         "--rm",
         "--interactive",
@@ -89,6 +102,7 @@ def docker_args(
         "--cap-add=SETGID",
         "--cap-add=CHOWN",
         "--cap-add=FOWNER",
+        "--cap-add=KILL",
         "--cap-add=FSETID",
         "--cap-add=DAC_OVERRIDE",
         "--security-opt=no-new-privileges",
@@ -141,7 +155,7 @@ def run_batch(
             )
         except subprocess.TimeoutExpired as exc:
             subprocess.run(
-                ("docker", "rm", "-f", name),
+                (*docker_cli(), "rm", "-f", name),
                 capture_output=True,
                 timeout=10,
                 check=False,

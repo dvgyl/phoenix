@@ -6,7 +6,7 @@ from pathlib import Path
 from struct import unpack_from
 
 from phoenix_eval.case import CaseResult, Invocation
-from phoenix_eval.docker import Engine, run_batch
+from phoenix_eval.docker import Engine, docker_cli, run_batch
 from phoenix_eval.outcome import EntryKind, Outcome
 from phoenix_eval.trace import CodeTrace
 from phoenix_eval.wire import encode_invocation
@@ -93,7 +93,7 @@ def inspect_x86(binary: Path, image: str | None = None) -> BlockInventory:
     entry, link_start = read_executable_bounds(program)
     listing = subprocess.run(
         (
-            "docker",
+            *docker_cli(),
             "run",
             "--rm",
             "--interactive",

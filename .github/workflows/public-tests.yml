@@ -47,29 +47,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         with:
           pattern: public-*
           path: reports
-      - run: |
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          def outcomes(architecture):
-              files = list(Path("reports", f"public-{architecture}").rglob("m0.json"))
-              assert len(files) == 1, f"Expected one report for {architecture}."
-              report = json.loads(files[0].read_text())
-              assert report["behavior_checks_passed"]
-              assert report["mode"] == f"native-{architecture}"
-              return report["seed"], {
-                  program["program"]: program["outcome_sha256"]
-                  for program in report["programs"]
-              }
-
-          seed, amd64 = outcomes("amd64")
-          arm_seed, arm64 = outcomes("arm64")
-          assert amd64 and seed == arm_seed and amd64 == arm64, (
-              "The native architectures produced different public outcomes."
-          )
-          PY
+      - run: python3 -m phoenix_eval.reports reports/public-amd64 reports/public-arm64

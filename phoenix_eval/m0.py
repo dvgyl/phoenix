@@ -21,6 +21,7 @@ from phoenix_eval.outcome import (
     compare,
 )
 from phoenix_eval.platforms import verify_runtime
+from phoenix_eval.provenance import evaluator_build
 from phoenix_eval.toolchain import Compiler, build_public
 from phoenix_eval.wire import encode_result
 
@@ -140,12 +141,18 @@ def _mismatch(original: CaseResult, rebuild: CaseResult) -> bool:
     )
 
 
-def _probe(corpus: Path, work: Path, engine: Engine, image: str) -> bool:
-    executable = work / f"runprobe-{engine.value}.elf"
-    build_public(corpus / "runprobe.c", executable, engine, Compiler.GCC, image=image)
+def _probe(work: Path, executable: Path, engine: Engine, image: str) -> bool:
     cases = tuple(
         Invocation(args)
-        for args in ((), ("escape",), ("signal",), ("exit",), ("fifo",), ("policy",))
+        for args in (
+            (),
+            ("escape",),
+            ("signal",),
+            ("exit",),
+            ("fifo",),
+            ("wait",),
+            ("policy",),
+        )
     )
     result = run_batch(executable, cases, engine, image=image)
     (work / f"probe-{engine.value}.jsonl").write_text(
@@ -161,7 +168,9 @@ def _probe(corpus: Path, work: Path, engine: Engine, image: str) -> bool:
         )
         and isinstance(result[4], CaseFailure)
         and result[4].kind is FailureKind.SNAPSHOT
-        and result[5] == _output()
+        and isinstance(result[5], CaseFailure)
+        and result[5].kind is FailureKind.TIMEOUT
+        and result[6] == _output()
     )
 
 
@@ -169,7 +178,8 @@ def evaluate(
     corpus: Path, runs: Path, mode: Mode, seed: int = SEED
 ) -> tuple[Path, bool]:
     runtime = verify_runtime(mode)
-    images = freeze_images(mode.engines)
+    provenance = evaluator_build()
+    images = freeze_images(mode.engines, provenance.worker_source_sha256)
     run_id = f"m0-{uuid4().hex}"
     work = runs / run_id
     work.mkdir(parents=True)
@@ -177,9 +187,27 @@ def evaluate(
     native_engines = tuple(
         engine for engine in mode.engines if engine is not Engine.QEMU_X86_64
     )
+    probe_binaries = {}
+    for engine in native_engines:
+        executable = work / f"runprobe-{engine.value}.elf"
+        build_public(
+            corpus / "runprobe.c",
+            executable,
+            engine,
+            Compiler.GCC,
+            image=images[engine.platform],
+        )
+        probe_binaries[engine.platform] = executable
     probes = {
-        engine: _probe(corpus, work, engine, images[engine.platform])
-        for engine in native_engines
+        engine: _probe(
+            work,
+            probe_binaries[
+                "amd64" if engine is Engine.QEMU_X86_64 else engine.platform
+            ],
+            engine,
+            images[engine.platform],
+        )
+        for engine in mode.engines
     }
 
     def run(
@@ -322,6 +350,7 @@ def evaluate(
                 "mode": mode,
                 "runtime": asdict(runtime),
                 "worker_images": images,
+                "evaluator": asdict(provenance),
                 "seed": seed,
                 "self_trials": TRIALS,
                 "sandbox_probes": probes,

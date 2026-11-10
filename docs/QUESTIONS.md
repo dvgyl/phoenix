@@ -14,3 +14,7 @@
 - The optional test environment overlay can add values. Reject changes
   to the fixed environment and loader or emulator controls. This keeps
   the sandbox policy the same for the original and rebuild.
+- The first M0 candidate review process used the Standard tier, but its
+  reviewer reported a Priority-tier subreview. Do not use that review
+  for the milestone gate. Disable nested agents, Fast mode, and
+  Ultrafast mode in the replacement review process.

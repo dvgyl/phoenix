@@ -26,6 +26,11 @@ int main(int argc, char **argv) {
         }
         return open("/program", O_WRONLY) == -1 ? 0 : 6;
     }
+    if (strcmp(argv[1], "wait") == 0) {
+        for (;;) {
+            pause();
+        }
+    }
     if (strcmp(argv[1], "policy") == 0) {
         struct rlimit cpu;
         struct rlimit memory;
