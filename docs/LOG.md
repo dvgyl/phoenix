@@ -168,3 +168,64 @@
   checks the summary hash on resume. Repair feedback gives output
   positions and lengths. It keeps original output bytes in the test
   artifacts.
+
+## 2026-11-10 M1 first sealed measurement
+
+- Run `m1-t0-ce6a34d` completed at the reviewed `ce6a34d` revision.
+  Phoenix scored 0 of 20 fully successful variants. Ghidra-raw also
+  scored 0 of 20. Phoenix passed behavior on 19 variants. Ghidra-raw
+  passed behavior on 8. Every submission failed integrity.
+- Both methods evaluated 792 original cases. All were eligible. The
+  oracle reported zero emulator disagreements and evaluation errors.
+  Coverage was 790 of 1,079 recovered block entries.
+- Exact replay `m1-t0-replay-ce6a34d` reproduced the stable records.
+  The original model log retained SHA-256
+  `4180ee08ac59dd63131533e5f636a7e84e1e83627ba737deaf4569fb49023ccc`.
+  Replay created no model log. A wrapper used zsh's reserved `status`
+  variable after evaluation and stopped before its final check. The
+  lead checked the log hash and absence separately, then fixed the
+  wrapper variable.
+- A Standard-configured Astra review held the M1 tag for the threshold
+  miss. It found no demonstrated false score in that report. It also
+  reproduced a replay-lineage defect and acceptance of altered cached
+  model metadata. The follow-up code preserves replay on resume and
+  binds evaluation to a frozen model log identity.
+- The first native ARM64 CI run passed. Three native x86-64 attempts
+  stopped on snapshot package delivery. One rejected a wrong CA
+  bootstrap hash. The other two received HTTP 503 for package files.
+  Standard-configured Astra diagnosed the package transport. A separate
+  Sol worktree added APT's package-only mirror fallback.
+- A synthetic signed repository tested the fallback on APT 2.8.3 in
+  both pinned Linux images. It accepted correct package bytes and
+  rejected a same-size mutation. An unavailable index and a modified
+  index signature both stopped the update. The fallback received no
+  index requests.
+- The signing probe used the installed GnuPG 2.5.21 tool before its
+  prior-art and license entries were added. The entries and ADR now
+  record that test-only use. The tool occupies 15,784 KiB on the host.
+- Public `-O0` binaries reproduced the byte-match issue. The GCC
+  `bitstats` comparison shared 166 bytes of C runtime startup code.
+  The largest match in the public matrix was 297 bytes. The strict
+  64-byte rejection remains in force.
+- Public run `m1-public-hardened-e675da21dc2a43f4ba29dd132b067fd4`
+  tested four public original variants against the hardened CMake
+  profile. All behavior and integrity checks passed. The checker
+  detected typed initializers with 64 and 65 copied code bytes.
+- A separate Sol worktree added the development integrity check
+  required by SPEC.md section 4.2. Behavior and integrity must both pass
+  before repair stops. The evaluator keeps its independent check.
+- The lead reviewed each returned diff and ran the full local gates.
+  The development integrity branch passed 254 tests with 21 opt-in
+  skips. The model log branch passed 285 tests with 21 opt-in skips.
+  Their parent-process gates included the protection test that the
+  outer-sandboxed workers could not run.
+- The original Downloads attachment paths were missing after compaction.
+  The lead read the unchanged repository copies of AGENTS.md and
+  SPEC.md. Both have been tracked since commit `2623d48`.
+- A Standard-configured Sol survey checked QEMU register and memory
+  APIs and AFL++ QEMU mode against the current runner. The proposed
+  first trace experiment uses public fixtures and a separate trace
+  runner. No additional tracing tool was installed.
+- The integrated follow-up passed 295 tests with 21 opt-in skips.
+  Evaluator line coverage was 89.88%. Ruff and strict mypy also passed.
+  The new worker and checker image builds remain pending.
