@@ -47,11 +47,11 @@ is 11/12. The T1 archive hashes are committed before reconstruction.
 M2 work remains isolated. The public trace fixture builder now works
 without a shared host mount. All 16 builds and static plans passed.
 Its host gate passed 496 tests. The observer image and live calibration
-remain pending. Independent review held the static lift extension for
-storage validation defects. A separate Astra worker is fixing them.
+remain pending. The static lift extension passed fresh independent review after
+its storage validation fixes. Its parent gate passed 489 tests.
 The parent live switch check confirmed separate arrays of 13 destinations
-and 12 labels for both compilers. A dedicated T2 author has started
-private design work. Its Linux validation remains gated until replay ends.
+and 12 labels for both compilers. The T2 author ended with one incomplete draft and zero validated variants.
+A fresh author must continue privately after the resource gate opens.
 T3 candidates remain unqualified after the metadata survey.
 
 The internal-drive free-space baseline is 14,432,616 KiB.
@@ -65,3 +65,10 @@ The dedicated Colima VM has four CPUs and 2 GiB of memory.
 3. Integrate the committed T1 hashes after the main revision freeze ends.
 4. Complete public trace runtime calibration and static evidence review.
 5. Build M2 recovery from validated public evidence and evaluate T0 and T1.
+
+## Thread handoff
+
+The owner requested a new-thread handoff. Read `docs/HANDOFF.md`.
+The M2 matrix writer has stopped with partial code and a failed lint gate.
+M1 replay and its read-only Astra review were active at handoff. Check their
+current process and report state. Main stays at efcad05 through exact replay.

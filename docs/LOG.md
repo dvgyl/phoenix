@@ -414,3 +414,24 @@
   label counts. Ghidra exports the default destination without a label.
   The corrected check confirmed 13 destinations and 12 labels, preserving
   both arrays separately. No target execution was used for this check.
+
+## 2026-11-10. Owner-requested thread handoff
+
+- Prepared `docs/HANDOFF.md` for a new thread. Main remains at efcad05
+  while the exact M1 replay and read-only final review run.
+- Stopped the M2 matrix writer and confirmed its process and children ended.
+  Its two partial files remain in its worktree. The handoff gate fails
+  Ruff on a long line and an undefined `Scope` annotation. Later checks
+  remain pending. Public-source backups preserve these files and the
+  26-file trace prototype outside the repository.
+- The T2 author had already ended with FAIL, one draft, zero accepted
+  programs and zero validated variants. Its final archives were absent.
+  The private source remains available to a fresh author. The lead read
+  only its permitted aggregate handoff.
+- The bounded static evidence extension passed fresh Astra closure review.
+  Local commits f9e4020 and 8964db0 preserve it. The parent gate passed
+  489 tests, 26 skips, and 90.06% evaluator coverage. The optional internal
+  naming correction preserved every field in the public comparison export.
+- The handoff branch preserves the main revision freeze. It also carries
+  the already published T1 hash commitments. The next thread must check
+  the actual replay and review files before any M1 tag or main advance.
