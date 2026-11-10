@@ -53,3 +53,15 @@
   binds Docker commands to the verified endpoint. It requires an
   image source hash and checks QEMU in the sandbox gate. All three
   engines passed a separate timeout probe and ran the next case.
+- Standard-tier GPT-6 Astra passed the code review of
+  `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`. The replacement review
+  disabled nested agents and both faster service tiers.
+- Mac run `m0-46d58c78e11c4b2793a510f1fe00237f` passed on the same
+  commit. Each original matched itself in three trials. Rosetta,
+  QEMU, and AArch64 passed their sandbox and timeout checks.
+- Native x86-64 and ARM64 passed in GitHub Actions run 42794652145.
+  The saved comparison at `audit/m0-ci-4ef231a/compare-all.json` in the
+  external workspace contains all three run IDs and matching hashes.
+- macOS swap growth reduced internal free space. Stopping the idle
+  Phoenix VM restored free space above the baseline. Use 4 GiB for
+  the next VM session.

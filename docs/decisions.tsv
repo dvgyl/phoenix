@@ -11,3 +11,4 @@ ts	phase	decision	why	evidence	result
 2026-11-10T09:40:53Z	coverage	Normalize trace addresses with the executable load segment.	QEMU reports the interpreter entry for a dynamic ELF.	docs/adr/0004-code-coverage.md	A real stripped x86-64 probe reached its original entry.
 2026-11-10T09:54:19Z	review	Keep the M0 tag closed after Astra review.	Handler, endpoint, and image evidence could identify the wrong runtime.	docs/LOG.md	Added checks for all three findings and the QEMU sandbox gate.
 2026-11-10T09:54:19Z	timeout	Check that every worker continues after a case times out.	The sandbox must terminate stalled tests before it starts another case.	corpus_public/runprobe.c	Rosetta, QEMU, and ARM64 passed a separate timeout and follow-on probe.
+2026-11-10T10:12:47Z	m0	Accept and tag the exact reviewed M0 commit.	The Mac run and both native CI jobs passed and matched the same revision.	docs/STATUS.md	M0 passed at 4ef231a.
