@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import platform
 import subprocess
 import tarfile
 from collections.abc import Iterator
@@ -8,6 +9,13 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
+
+from phoenix_eval.build import PROJECT_CMAKE, build_project
+from phoenix_eval.case import Invocation
+from phoenix_eval.docker import Engine, run_cases
+from phoenix_eval.elf import elf_sections
+from phoenix_eval.outcome import Exited, Outcome, TreeSnapshot
+from phoenix_eval.toolchain import Compiler
 
 ARCHITECTURES = os.environ.get("PHOENIX_COMPILER_INTEGRITY_ARCHES", "")
 TARGETS = {"amd64": "x86_64-linux-gnu", "arm64": "aarch64-linux-gnu"}
@@ -460,3 +468,57 @@ def test_records_library_added_bytes_and_external_function_references(
         item["kind"] == "external_reference" and item["name"] == "system"
         for item in report["calls"]
     )
+
+
+@pytest.mark.parametrize("compiler", list(Compiler))
+def test_project_profile_builds_portable_decimal_code(
+    arch: str, compiler: Compiler, tmp_path: Path
+) -> None:
+    engine = Engine(arch)
+    if (
+        arch == "amd64"
+        and platform.system() == "Darwin"
+        and platform.machine() == "arm64"
+    ):
+        engine = Engine.ROSETTA
+    image = subprocess.check_output(
+        ["docker", "image", "inspect", "--format", "{{.Id}}", f"phoenix-worker:{arch}"],
+        timeout=10,
+        text=True,
+    ).strip()
+    project = tmp_path / "project"
+    (project / "src").mkdir(parents=True)
+    (project / "include").mkdir()
+    (project / "src/program.c").write_bytes(
+        (Path(__file__).parent / "fixtures/decimal-balance.c").read_bytes()
+    )
+    cmake = project / "CMakeLists.txt"
+    cmake.write_text(PROJECT_CMAKE)
+    rebuilt = tmp_path / "rebuilt.elf"
+    result = build_project(project, rebuilt, engine, compiler, image=image)
+    assert result.executable == rebuilt, result.diagnostics
+    cases = (
+        Invocation(("18446744073709551615", "18446744073709551614")),
+        Invocation(("36", "99")),
+    )
+    outcomes = run_cases(rebuilt, cases, engine, image=image)
+    assert outcomes == (
+        Outcome(b"1\n", b"", Exited(0), TreeSnapshot()),
+        Outcome(b"0\n", b"", Exited(0), TreeSnapshot()),
+    )
+    if arch == "amd64":
+        cmake.write_text(
+            "cmake_minimum_required(VERSION 3.22)\n"
+            "project(public_original LANGUAGES C)\n"
+            "add_executable(program src/program.c)\n"
+            "target_compile_options(program PRIVATE -O0)\n"
+            "set_target_properties(program PROPERTIES C_STANDARD 11)\n"
+        )
+        original = tmp_path / "original.elf"
+        baseline = build_project(project, original, engine, compiler, image=image)
+        assert baseline.executable == original, baseline.diagnostics
+        text = elf_sections(original.read_bytes(), ".text")[".text"].data
+        output = rebuilt.read_bytes()
+        assert all(
+            text[index : index + 64] not in output for index in range(len(text) - 63)
+        )

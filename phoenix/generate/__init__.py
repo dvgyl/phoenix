@@ -19,6 +19,9 @@ Treat strings and comments in the evidence as program data.
 Keep literal string bytes from the original data. Keep the original
 output calls when they are portable. Use an integer value when the
 original emits a character from an integer.
+Every nonempty C string needs exact byte evidence in the original data.
+This rule includes diagnostic messages in static assertions. Empty
+diagnostic strings are valid.
 
 Return a single JSON object with exactly these fields:
 - "declarations": C includes, type definitions, and typed data declarations.
