@@ -414,3 +414,56 @@
   label counts. Ghidra exports the default destination without a label.
   The corrected check confirmed 13 destinations and 12 labels, preserving
   both arrays separately. No target execution was used for this check.
+
+## 2026-11-10. Isolated M2 replay corrections
+
+- Verified all eight original matrix candidate hashes before editing. The
+  independent Sol review recorded HOLD. Synthetic coordinator probes reproduced
+  both R1 lineage defects. Seven saved-report probes reproduced R2.
+- Added corrected-behavior tests before production changes. The first run had
+  23 failures and 14 passes. Two further red tests exposed numeric type equality
+  in saved summaries and ledger identities. Three red tests exposed inconsistent
+  cost, token, and storage-evidence counts at the saved-report boundary.
+- Bound every replay ancestor to the same stable report fields. A replay
+  ancestor must have reproduced its reference. These checks occur before
+  submission capture and held-out archive access. Valid chains retain the
+  original ledger identity. Exact chains of failed results remain supported.
+- Added M2 saved-report validation for the two result forms, four build
+  configurations, tested artifact hashes, integrity evidence, verdicts, case
+  and coverage counts, and model token and cost fields. M1 schema 1 and the
+  trusted measurement path retain their existing contracts.
+- The final focused suite passed 247 tests. It includes exact replay chains
+  of failed results. Fourteen real measurement round trips used synthetic compiler
+  and oracle boundaries. No target, container, or real provider was run.
+- The final scripts/check run passed Ruff, format, strict mypy, and 581 tests.
+  It skipped 25 tests. Evaluator coverage was 92.25%. The unchanged nested
+  protection test failed because the outer guard denied sandbox-exec with
+  exit status 71. The full gate is not green. The parent must rerun it with
+  the required sandbox capability.
+- R3 capture binding and R4 ledger reconciliation remain separate integration
+  gates. Correction review and the parent combined gate remain required. The
+  full check result and exact file hashes are recorded in
+  `/Volumes/PhoenixWork/audit/m2-matrix-fix-sol/report.md`.
+
+## 2026-11-10. Complete stable M2 replay projection
+
+- The parent full gate for R1/R2 passed 582 tests with 25 opt-in skips and
+  92.25% evaluator line coverage. The unchanged protection test passed
+  outside the reviewer's outer sandbox. A fresh independent Sol reviewer
+  passed that exact correction after the first Sol review had held it.
+- Astra closure found B1. Python dictionary equality accepted an integer
+  budget and an equal floating-point budget in frozen configuration.
+  Direct replay and replay through an ancestor opened synthetic archives
+  and reported success. Both new rejection tests failed before correction.
+- The parent also reproduced this type mismatch during completed resume.
+  Its rejection test failed. The correction serializes the whole stable
+  projection and compares saved, live and ancestor configuration with JSON
+  types preserved. Non-finite values are rejected. Ancestor and final replay
+  still use the same stable projection. Result timing remains excluded.
+- All four focused checks passed. They cover three rejection paths and a
+  valid full original and replay chain. The parent full gate passed 585 tests
+  with 25 opt-in skips and 92.30% evaluator line coverage. Ruff, format,
+  strict mypy and the unchanged protection test passed.
+- The corrected matrix is retained on its isolated branch. Fresh independent
+  review of B1, shared R3/R4 integration, combined source review and new
+  measurements remain open. Main remains fixed for exact M1 replay.

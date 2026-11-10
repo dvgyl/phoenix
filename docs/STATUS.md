@@ -1,67 +1,66 @@
 # Phoenix status
 
 M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
-M1 remains open. The corrected run meets its numerical threshold.
-Exact replay and final independent Astra review remain active at
-`efcad059d362bc61a4069268e1122d74e89c6054`.
+M1 and the v1 goal remain open. Main is fixed at `baae648` during exact
+replay `m1-t0-replay-baae648`. No M1 tag exists.
 
-| Method | Behavior passed | Integrity passed | Fully successful |
-| --- | --- | --- | --- |
-| Phoenix | 19/20 | 18/20 | 17/20 |
-| Ghidra-raw | 8/20 | 8/20 | 8/20 |
+Original `m1-t0-baae648` scored Phoenix 17/20 and raw 8/20 fully successful.
+Phoenix retained two `embedded_text` failures and one behavior failure.
+Raw retained 12 compiler failures. Both methods had 792 eligible cases,
+zero emulator disagreements and zero evaluation errors. Coverage was
+790/1079 recovered block entries. Model use was 69 calls and $1.4249648
+API-equivalent cost, with zero unknown-cost reservations.
 
-These are the `-O0` results from `m1-t0-efcad05`. Two Phoenix variants
-failed the exact-byte check. One failed behavior. Twelve raw variants
-failed compilation. All 792 original cases per method were eligible.
-There were zero emulator disagreements and evaluation errors.
-Tests reached 790 of 1,079 recovered block entries. This measure is
-separate from source branch adequacy.
+The earlier `efcad05` original had the same success counts. Its replay
+changed one stable failure record and recorded `reproduced=false`.
+Astra held that milestone. The CMake feedback timing correction is on main.
+Earlier original and replay reports remain intact.
 
-The original model log has SHA-256
-`728cf1a3f10b21b54c7c747f7dabbbaada85c68b286110d5b865bfe77dd23f44`.
-It records 80 calls and $1.603504 of API-equivalent model cost.
-There are zero unknown-cost reservations. Median reconstruction time
-was 51.893 seconds across all 20 Phoenix variants, including failures
-and waits. Replay `m1-t0-replay-efcad05` is active. Main and accepted
-image IDs stay fixed through that replay.
+The current main public pipeline passed both methods in all four build
+configurations. Native CI passed and both native M0 reports matched the
+Mac M0 report `m0-93e7c011124d4017b5908b8284535b1f`.
+[CI run 42883642379](https://github.com/dvgyl/phoenix/actions/runs/42883642379).
 
-The earlier `m1-t0-5695148` result remains Phoenix 17/20 and raw 0/20.
-Its exact replay reproduced all stable fields. Final review held that
-revision because its raw header conflicted with fortified glibc.
-The correction passed the 393-test host gate and all 48 Linux
-compiler-integrity checks. The first run, `m1-t0-ce6a34d`, remains
-zero fully successful variants for both methods. Its replay also passed.
+This branch contains the isolated M2 evaluation matrix. It captures 260
+method tasks for 130 T0/T1 variants before archive access. Independent
+Sol review first held R1 replay lineage and R2 saved evidence. Their
+correction passed a different independent Sol review. The parent gate
+passed 582 tests with 25 opt-in skips and 92.25% evaluator line coverage.
 
-Both native CI jobs passed at the current revision after package-delivery
-retries. The correct checksum pins stayed fixed. Native x86-64 and ARM64
-outcomes match Mac M0 run `m0-43bba34c9d8d426aa1c029de0e5071c1`.
-[CI run 42859828267](https://github.com/dvgyl/phoenix/actions/runs/42859828267).
+Astra then found B1. Equal integer and floating-point configuration values
+could pass Python dictionary equality. The parent reproduced this in direct
+replay, ancestor replay and completed resume. The new correction serializes
+the complete stable M2 projection and compares configuration with JSON types
+preserved. Rejection tests failed before each correction. The parent full
+gate passed 585 tests with 25 opt-in skips and 92.30% evaluator line coverage.
+Fresh independent review of this exact correction remains required.
 
-The separate author completed T1 with 15 programs and 90 variants.
-The lead checked release hashes and ELF contracts. Private sources
-and inputs remain sealed. Source sizes are 304 to 316 C LOC.
-This limited size range must remain visible in the final report.
-Minimum source branch coverage is 184/197. Minimum mutation detection
-is 11/12. The T1 archive hashes are committed before reconstruction.
+The separate shared-engine correction binds the ordered capture roster and
+reconciles the full model ledger. It has not been integrated here. Combined
+source review and a complete parent gate are required before sealed M2 use.
+No M2 benchmark result or acceptance is claimed.
 
-M2 work remains isolated. The public trace fixture builder now works
-without a shared host mount. All 16 builds and static plans passed.
-Its host gate passed 496 tests. The observer image and live calibration
-remain pending. Independent review held the static lift extension for
-storage validation defects. A separate Astra worker is fixing them.
-The parent live switch check confirmed separate arrays of 13 destinations
-and 12 labels for both compilers. A dedicated T2 author has started
-private design work. Its Linux validation remains gated until replay ends.
-T3 candidates remain unqualified after the metadata survey.
+T1 is sealed with 15 programs and 90 variants. Sources contain 304 to 316 C
+LOC. This limited size range must remain visible in the final report.
+Minimum source branch coverage is 184/197. Minimum mutation detection is
+11/12. Source and input archive commitments precede reconstruction.
+
+The isolated observer calibration passed 96 positive cases three times and
+rejected eight mutants. Both later API and register controls rejected invalid
+traces. The reusable command has source and host review PASS. Its fresh
+Linux run remains pending. Static lift evidence has Astra review PASS.
+A separate Astra task is designing production recovery and localization.
+A private Astra author is preparing T2. Its Linux gate remains closed while
+M1 uses the VM. T3 qualification remains open. Private material stays sealed.
 
 The internal-drive free-space baseline is 14,432,616 KiB.
-The workspace is the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
+The workspace is the external APFS mount `/Volumes/PhoenixWork`.
 The dedicated Colima VM has four CPUs and 2 GiB of memory.
 
 ## Next actions
 
-1. Finish exact M1 replay and verify stable fields and the full model log.
-2. Obtain final exact milestone review before tagging M1.
-3. Integrate the committed T1 hashes after the main revision freeze ends.
-4. Complete public trace runtime calibration and static evidence review.
-5. Build M2 recovery from validated public evidence and evaluate T0 and T1.
+1. Complete exact M1 replay and verify every stable field and model-log byte.
+2. Review the latest shared correction and typed M2 replay correction.
+3. Integrate reviewed shared guards and require combined review before use.
+4. Complete M1 acceptance, then integrate T1 and production M2 work.
+5. Continue through M3, T3 qualification, M4, publication and section 9.
