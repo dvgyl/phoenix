@@ -22,15 +22,20 @@ and the integrity checks in
 `m1-public-hardened-e675da21dc2a43f4ba29dd132b067fd4`.
 The copied-byte negative controls also passed.
 
-The latest Astra preflight held the follow-up for accounting and
-development evidence defects. Two separate Astra worktrees are
-fixing those paths. The follow-up implementation adds development integrity repair,
-checker identity binding, replay lineage preservation, and model log
-identity checks. The package-only Ubuntu fallback passed its signed repository probe.
+The accounting and development evidence fixes are integrated. The
+combined local gate passed 367 tests with 90.00% evaluator coverage.
+Source packages now preserve the exact tested snapshot. Source comments
+record generation-time confidence, and the report gives final confidence.
+
+The public decimal control passed behavior and integrity with the fixed
+optimized profile. Its Docker regression failed under the previous
+profile and passed under the new profile across both compilers and
+architectures. Independent review and a new sealed run are pending.
+
+The package-only Ubuntu fallback passed its signed repository probe.
 New builds then failed on signed snapshot indexes. The previous image
-recipes are restored so that local builds can reuse the verified cache.
-Full Linux integration and independent review of this candidate are
-pending. There is no M1 tag.
+recipes are restored and successfully reused the verified local cache.
+Clean native builds still depend on the snapshot service.
 
 Native ARM64 CI passed for `ce6a34d`. Three x86-64 attempts stopped on
 Ubuntu package delivery. The first M0 native outcome comparison remains

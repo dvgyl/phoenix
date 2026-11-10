@@ -241,3 +241,42 @@
   successes, timeouts, and server errors. Restored the previous pinned
   image recipes to use their verified local build cache. ADR 0015 records
   the decision. Clean native builds still depend on the snapshot service.
+- The restored image recipes built both worker images and both checker
+  images from the verified cache at `9878356`. The pinned source
+  checkers passed all 40 integration tests across the two architectures.
+- Normal public CLI run `m1-public-cli-9878356` passed behavior and
+  integrity. Its replay and plain resume preserved the original model
+  log and created no replay log.
+- Public controls run
+  `m1-public-controls-e07-84666602217d4729a9ef1ca72314462d`
+  used the reconstruction library with retained worker and checker
+  images. All six variants passed their fixed public behavior cases.
+  Five passed development integrity. The GCC decimal variant reached
+  the repair limit on a byte match and unsupported diagnostic strings.
+  The probe's first summary used the wrong integrity field name. Its
+  corrected aggregate reads the saved package reports.
+- Public run `m1-public-decimal-profile-5f0189f210fd4772ab5155335d0fb73a`
+  compared the same candidate with empty static-assertion messages at
+  `-O0` and `-O2`. Both passed behavior across four builds. The first
+  failed the exact-byte check, and the second passed integrity.
+- Added a fixed optimized profile and explicit literal constraints.
+  The durable Docker regression failed at the byte-window assertion on
+  the previous GCC profile. All four compiler and architecture tests
+  passed under the new profile.
+- Integrated the Astra accounting fix. Complete histories have one
+  start and at most one terminal event per attempt. Live and cached
+  responses use the same validation. The evaluator derives tokens
+  and costs from the bound log, including failed submissions. It freezes
+  package report metadata separately.
+- Integrated the Astra development evidence fix. Checkpoint loading
+  derives differences from outcomes and binds the development cases.
+  Verification requires all four distinct build configurations. Packaging
+  copies the exact tested source snapshot. Historical source comments
+  direct the reader to the report for final function confidence.
+- The combined parent-process gate passed 367 tests with 23 opt-in
+  skips and 90.00% evaluator line coverage. The new independent review
+  and Linux public integration run remain pending.
+- Recorded the upstream reuse survey with pinned source references,
+  licenses, and open permission questions. Primary papers qualify
+  several claims in the specification's prior-art table. Optional
+  experiments stay on public fixtures.
