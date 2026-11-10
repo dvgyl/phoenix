@@ -530,3 +530,40 @@
   A separate Sol worker is implementing the stripped-binary evidence adapter
   from the completed Astra design. Private Astra authors are preparing T2
   and qualifying T3. Their sources and detailed logs remain sealed.
+
+## 2026-11-10. Accept M1 at the measured revision
+
+- The guarded original and exact replay at `6897e47` each returned
+  Phoenix 17/20 and Ghidra-raw 8/20 fully successful. The threshold is
+  16/20 Phoenix variants. All 40 stable rows and all stable report fields
+  match. Each method measured 792 eligible cases with no emulator
+  disagreements or evaluation errors. Coverage is 790/1079 recovered
+  block entries.
+- Phoenix retains two `embedded_text` failures and one behavior failure.
+  Raw retains 12 variants with compiler errors. Phoenix compiled 80/80
+  rebuilds with eight warnings. Raw compiled 48/80 rebuilds. Every
+  compiled raw rebuild matched its eligible cases.
+- The parent checked the checkpoint hashes and report fields for all 40
+  rows in each run. Both bindings stayed unchanged. Every model summary
+  reconciles with the complete original log. The log stayed unchanged
+  at SHA-256
+  `ceed478c6f304e4cb388bc6b8599b475ea5e8b701f9d76e1d1b3c7024a2771db`.
+  Replay created no model log. Original cost is $1.7865956 API-equivalent
+  across 86 calls, with no unknown-cost reservations.
+- Public pipeline checks passed for both methods in all four build
+  configurations. Native CI run 42905864046 passed. Both native M0
+  reports match Mac run `m0-3df6909b7713419c9e23110752fb9c4f`.
+- Independent Astra and Sol passed the exact measured source and frozen
+  evidence. The known pre-freeze checkpoint defect and the later
+  synthetic retry defect do not invalidate these checked results.
+  Both actual invocations exited zero with no recorded rejected attempt
+  or restart. Preserve the defects and correct them before future sealed
+  measurement. The verdict does not claim general filesystem integrity.
+- The `m1` tag identifies the measured commit only. Do not assign these
+  results to a later evaluator revision. Earlier HOLDs remain valid for
+  their own runs. Frozen category, binding, and review evidence is under
+  `audit/m1/final-6897e47/` and both milestone review directories outside
+  the repository. No sealed source or held-out input was published.
+- The Linux VM then built all 16 public E1 fixtures. Private T2 validation
+  now has the VM. Host static checks passed the exact E1 fixture matrix.
+  M2 evaluation and production recovery remain open.
