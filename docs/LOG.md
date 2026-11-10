@@ -396,3 +396,57 @@
   Astra milestone, algorithm, and integrity roles remain required.
   All new CLI workers request Standard service. Fast mode and nested
   agents are disabled. Source and held-out material stay private.
+
+## 2026-11-10. U1 stripped-binary evidence candidate
+
+- Worked only on `agent/m2-production-recovery` at `50a077f` in the
+  assigned build-hardening worktree. Read the full instructions, design,
+  implementation plan, and installed API probe. Recorded ADR0022 before
+  implementation. No child agent, commit, push, tag, provider, or Docker
+  command ran. Main and the accepted images stayed separate.
+- Added a checked mapping companion and a commit record. The exact input
+  binary and completed lift bind the source spans. The optional launcher
+  runs analysis with one CPU and at most 512 MiB of Java heap. Its default
+  path and legacy `Program` address meanings retain their behavior.
+- Added immutable records for the bounded static index, ELF address proof,
+  versioned import bindings, and static plan candidate. Import admission
+  requires agreeing call/thunk and dynamic relocation evidence. Names from
+  function labels and instruction text do not select behavior. Provider
+  ownership and actual libc implementation entry remain unknown.
+- The installed API declarations passed `javap`. The new exporter compiled
+  and ran on four fixed public PIE fixtures and two fixed switch fixtures.
+  Original-byte witnesses passed. The saved GCC and Clang switch lift
+  digests stayed equal to their previous exports. Their 13 targets and 12
+  labels remain separate. Changed data spans remain explicit gaps.
+- Focused checks passed 152 tests with two opt-in skips. The full local gate
+  passed Ruff, format, and strict mypy. Pytest retained one nested sandbox
+  failure, 548 passes, and 26 skips. Evaluator line coverage was 90.06%.
+  The outer guard refused nested `sandbox-exec`. That test was not changed
+  or excluded. The parent must repeat the full gate outside this guard.
+- Preserved earlier failed checks. These include the duplicate test-module
+  import, one changed gap expectation, and Ruff reading a deliberately
+  invalid test-copy configuration in scratch storage. Test scratch now uses
+  a cache directory under `tmp/m2-production-u1`. No gate rule changed.
+- Prepared a public Linux fixture builder for PIE, ET_EXEC, PLT/GOT calls,
+  and a second executable segment. It has not run in Linux. E1 remains
+  open. No production trace or U2 switch reconstruction ran. The next
+  substantive unit must prove the guarded immutable table expression and
+  then make it change a rebuilt public switch. Independent review remains
+  pending. The complete record is in `audit/m2-production-u1/report.md`.
+
+## 2026-11-10. Parent U1 verification
+
+- Verified all eleven writer implementation hashes before changing progress
+  documents. Read the mapping publisher, Java exporter, index, address proof,
+  import reader and candidate planner. The feature remains opt-in.
+- The complete parent gate passed 549 tests with 26 opt-in skips and 90.06%
+  evaluator line coverage. Ruff, format, strict mypy and the unchanged
+  protection test passed. The writer's separate outer-guard failure remains
+  in its original log. No test was excluded or changed for that condition.
+- Preserved the writer's reports and evidence. Parent records are under
+  `$PHOENIX_ROOT/audit/m2-production-u1/`. The writer also retained public
+  scratch artifacts under this worktree's `audit/` and `tmp/`. Those files
+  must not enter the source commit.
+- Fresh independent Sol and Astra reviews remain queued. Linux acceptance
+  checks remain open while the guarded M1 original and replay own the VM.
+  No production observation, switch reconstruction or M2 result is claimed.

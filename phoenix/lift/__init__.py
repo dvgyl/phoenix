@@ -23,8 +23,11 @@ def lift_binary(
     java_home: Path,
     *,
     max_heap_mib: int | None = None,
+    mapping_companion: bool = False,
 ) -> LiftResult:
     """Write a lift JSON file to output and return its absolute path."""
+    if mapping_companion and max_heap_mib is None:
+        max_heap_mib = 512
     if max_heap_mib is not None and (
         type(max_heap_mib) is not int or not 1 <= max_heap_mib <= 512
     ):
@@ -40,6 +43,8 @@ def lift_binary(
     if binary == output:
         raise ValueError("The output path must differ from the binary path.")
 
+    if mapping_companion and output.name != "lift.json":
+        raise ValueError("A mapping companion requires the filename lift.json.")
     output.parent.mkdir(parents=True, exist_ok=True)
     with (
         TemporaryDirectory(prefix="phoenix-lift-") as directory,
@@ -79,6 +84,7 @@ def lift_binary(
                 "-import",
                 str(binary),
                 "-readOnly",
+                *(["-max-cpu", "1"] if mapping_companion else []),
                 "-scriptPath",
                 str(script_dir),
                 "-log",
@@ -88,6 +94,16 @@ def lift_binary(
                 "-postScript",
                 "ExportLift.java",
                 str(staged),
+                *(
+                    [
+                        "-postScript",
+                        "ExportMapping.java",
+                        str(Path(staging) / "mapping.json"),
+                        str(staged),
+                    ]
+                    if mapping_companion
+                    else []
+                ),
             ],
             cwd=work,
             env=env,
@@ -97,10 +113,23 @@ def lift_binary(
             errors="replace",
             check=False,
         )
+        if mapping_companion:
+            (output.parent / "ghidra.log").write_text(process.stdout, encoding="utf-8")
         if process.returncode != 0 or not staged.is_file():
             raise LiftError(
                 f"Ghidra did not complete the lift (exit {process.returncode}).\n"
                 f"{process.stdout[-12000:]}"
             )
-        staged.replace(output)
+        if mapping_companion:
+            from phoenix.lift.mapping import bounded_read, publish_companion
+
+            mapping = Path(staging) / "mapping.json"
+            if not mapping.is_file():
+                raise LiftError("Ghidra did not complete the mapping companion.")
+            record = publish_companion(staged, mapping, bounded_read(binary))
+            staged.replace(output)
+            mapping.replace(output.parent / "mapping.json")
+            record.replace(output.parent / "evidence-commit.json")
+        else:
+            staged.replace(output)
     return LiftResult(export_path=output)

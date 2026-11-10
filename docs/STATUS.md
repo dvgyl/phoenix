@@ -1,9 +1,9 @@
 # Phoenix status
 
 M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
-M1 remains open. Final Astra review held `efcad05` because exact replay
-changed one stable failure record. Matching success counts did not satisfy
-the replay requirement. There is no M1 tag.
+M1 remains open. Exact `baae648` replay reproduced all stable fields.
+Main is fixed at `6897e47` during a new guarded original and replay.
+There is no M1 tag.
 
 | Method | Behavior passed | Integrity passed | Fully successful |
 | --- | --- | --- | --- |
@@ -38,10 +38,10 @@ fully successful variants for both methods and reproduced on replay.
 Its raw score includes the support-header defect corrected at `ff4e427`.
 The later `efcad05` review closed that header finding.
 
-Native CI at `efcad05` passed and matched the current Mac M0 public
-outcomes on both native architectures.
-[CI run 42859828267](https://github.com/dvgyl/phoenix/actions/runs/42859828267).
-The corrected candidate still needs its own checks and exact evaluation.
+Native CI and the current Mac M0 passed at `6897e47`. All three reports
+match in revision, source hash, seed, cases and outcomes.
+[CI run 42905864046](https://github.com/dvgyl/phoenix/actions/runs/42905864046).
+The guarded M1 original is active. Its exact replay remains required.
 
 T1 is sealed with 15 programs and 90 variants. Its archive commitments
 are pushed on `agent/t1-commitments`. Integration waits for M1 acceptance.
@@ -61,10 +61,28 @@ Every major work block requires a fresh independent GPT-6.1 Sol review.
 Milestone and integrity reviews also require Astra. CLI workers use
 Standard service with Fast mode and nested agents disabled.
 
+## Separate U1 candidate
+
+`agent/m2-production-recovery` has an uncommitted U1 evidence adapter.
+It is disabled by default. Main remains separate for M1. ADR0022 records
+the mapping, static index, import checks, and static plan candidate.
+Public static Ghidra checks passed for four PIE fixtures and both saved
+switch fixtures. Changed data spans remain unavailable byte evidence.
+The switch arrays still have 13 targets and 12 labels. No target ran.
+
+The writer retained a nested-sandbox test failure under its outer guard.
+The complete parent gate passed 549 tests with 26 opt-in skips and 90.06%
+evaluator line coverage. Ruff, format, strict mypy and the unchanged
+protection tests passed. These are software checks, not evaluation scores.
+Parent evidence is under `$PHOENIX_ROOT/audit/m2-production-u1/`.
+Fresh independent Sol and Astra reviews remain pending. Linux ET_EXEC,
+PLT/GOT, and multiple-executable-segment gates remain pending. The public
+builder is ready. Production observation and U2 are disabled.
+
 ## Next actions
 
-1. Verify the CMake feedback correction and its independent Sol review.
-2. Check the corrected public pipeline and native CI.
-3. Measure a new M1 candidate, replay it exactly, and obtain Astra review.
-4. Complete observer controls and independent M2 evaluator review.
+1. Complete the guarded M1 original and exact replay on unchanged main.
+2. Obtain milestone review before tagging or M2 integration.
+3. Finish the combined evaluator and fresh observer evidence reviews.
+4. Review U1 independently, then run its pending public Linux fixture gates.
 5. Integrate verified M2 work after M1, then continue through M4 and section 9.
