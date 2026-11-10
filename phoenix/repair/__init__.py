@@ -4,10 +4,10 @@ from pathlib import Path
 from phoenix.package import reached_functions
 from phoenix.recover import Program
 from phoenix.verify import Check, Verification, mismatch
-from phoenix_eval.case import Invocation
+from phoenix_eval.case import CaseFailure, CaseResult, Invocation
 from phoenix_eval.docker import Engine, run_cases
 from phoenix_eval.outcome import Outcome
-from phoenix_eval.wire import encode_invocation, encode_result
+from phoenix_eval.wire import encode_invocation
 
 
 def _smaller(case: Invocation) -> tuple[Invocation, ...]:
@@ -29,9 +29,9 @@ def _minimize(
     expected: Outcome,
     index: int,
     images: dict[str, str],
-) -> tuple[Invocation, Outcome, str]:
+) -> tuple[Invocation, Outcome, CaseResult]:
     assert check.build.executable is not None
-    actual = encode_result(check.outcomes[index])
+    actual = check.outcomes[index]
     candidates = _smaller(case)
     if not candidates:
         return case, expected, actual
@@ -49,8 +49,29 @@ def _minimize(
             and left == right
             and mismatch(left, result) == check.differences[index]
         ):
-            return candidate, left, encode_result(result)
+            return candidate, left, result
     return case, expected, actual
+
+
+def _output_differences(expected: Outcome, actual: CaseResult) -> str:
+    if isinstance(actual, CaseFailure):
+        return f"The rebuild reported sandbox category {actual.kind}."
+    lines = []
+    for stream, left, right in (
+        ("stdout", expected.stdout, actual.stdout),
+        ("stderr", expected.stderr, actual.stderr),
+    ):
+        if left == right:
+            continue
+        index = next(
+            (index for index, (a, b) in enumerate(zip(left, right)) if a != b),
+            min(len(left), len(right)),
+        )
+        lines.append(
+            f"{stream} first differs at byte {index}. The original has {len(left)} "
+            f"bytes. The rebuild has {len(right)} bytes."
+        )
+    return "\n".join(lines)
 
 
 def feedback(
@@ -81,8 +102,7 @@ def feedback(
                 f"Categories {', '.join(kinds)}\n"
                 f"Functions reached by the original dev case {functions}\n"
                 f"Development input {encode_invocation(case)}\n"
-                f"Original {encode_result(replace(outcome, trace=None))}\n"
-                f"Rebuild {actual}"
+                f"{_output_differences(outcome, actual)}"
             )
             return details[:8_000]
     raise ValueError("No development failure is available for repair.")

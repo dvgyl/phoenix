@@ -22,10 +22,10 @@ scan cannot establish the absence of a loader, emulator, or output
 lookup table. Apply separate controls before using the integrity result
 to score a binary.
 
-Require original data evidence for nonzero initialized arrays, including
-short arrays. Check literal data passed directly to output and buffer
-copy functions. Record the newline that `puts` adds. Keep the source
-literal separate so the evaluator can check its original data evidence.
+Require original data evidence for nonzero initialized arrays and
+nonempty string literals. This includes literals used through pointers
+and indexed literals. Record the newline that `puts` adds to a direct
+literal. Keep the literal payload separate from the emitted bytes.
 
 Check external function references as well as direct calls. Require the
 same function set and bound the source branch, loop, and switch counts
@@ -39,3 +39,9 @@ evaluation. Check the built executable hash again before its byte scan.
 Freeze and validate the development invocations before the evaluator
 opens the held-out archive. Both x86-64 engines must reproduce their
 saved original outcomes.
+
+Bind the raw lift summary to the original executable hash. Freeze its
+bytes before measurement and check its hash on resume. Repair requests
+include the development input, the divergence category, and the first
+differing output position and lengths. Keep original output bytes in
+the local test record.

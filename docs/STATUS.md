@@ -60,3 +60,8 @@ Ghidra-raw. It exposed a missing `chmod` allowlist entry and an invalid
 raw format-pointer declaration. Public probe
 `m1-public-integrity-fix-7bf237b0737344e8ad00b00796254157` passed both
 behavior and source checks after those fixes.
+
+Public run `m1-integrated-public-b7ec0dfd2f364770b14e01a0aa327b9d`
+passed behavior and integrity for Phoenix and Ghidra-raw. The
+`m1-public-O0-lift-a6495697f6ac428dac2ab00146b2739c` probe recovered
+`main` from GCC and Clang builds of both public programs.

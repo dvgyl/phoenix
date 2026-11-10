@@ -3,6 +3,7 @@ import sys
 import time
 from dataclasses import asdict, dataclass
 from enum import StrEnum
+from hashlib import sha256
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import TypedDict, cast
@@ -244,9 +245,17 @@ def reconstruct(
     if not export.is_file():
         lift_binary(binary, export, settings.ghidra, settings.java_home)
     program = recover(export, binary)
-    write_json(directory / "recover/program.json", asdict(program))
+    recovered = directory / "recover/program.json"
+    write_json(recovered, asdict(program))
     output = directory / "package" / "out" / key
     if analysis is None:
+        write_json(
+            directory / "recover/evidence.json",
+            {
+                "sha256": sha256(recovered.read_bytes()).hexdigest(),
+                "binary_sha256": metadata.sha256,
+            },
+        )
         write_raw_project(output, program, binary)
         write_json(
             output / "phoenix_report.json",

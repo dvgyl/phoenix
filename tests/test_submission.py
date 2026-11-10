@@ -1,5 +1,6 @@
 import json
 import subprocess
+from hashlib import sha256
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -15,6 +16,7 @@ from phoenix_eval.submission import (
     SubmissionError,
     freeze_project,
     project_path,
+    read_origin,
     submit,
 )
 from phoenix_eval.wire import encode_invocation, encode_result
@@ -90,3 +92,43 @@ def test_submission_resumes_after_the_provider_reports_a_limit(
             workspace, directory, "pipeline", "case", original, "phoenix", "previous"
         )
     assert runner.call_count == 2
+
+
+@pytest.mark.parametrize("change_before_freeze", [True, False])
+def test_raw_lift_summary_is_bound_before_measurement(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change_before_freeze: bool
+) -> None:
+    directory = tmp_path / "runs/measure/submissions/raw"
+    original = tmp_path / "original.elf"
+    original.write_bytes(b"synthetic original")
+    lift = tmp_path / "runs/pipeline/raw/recover"
+    lift.mkdir(parents=True)
+    origin = b'{"functions": []}'
+    digest = sha256(origin).hexdigest()
+    (lift / "program.json").write_bytes(b"changed" if change_before_freeze else origin)
+    (lift / "evidence.json").write_text(
+        json.dumps(
+            {
+                "sha256": digest,
+                "binary_sha256": sha256(original.read_bytes()).hexdigest(),
+            }
+        )
+    )
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess((), 2))
+    )
+    monkeypatch.setattr(
+        "phoenix_eval.submission.guarded_command", lambda _, command, **_unused: command
+    )
+    if change_before_freeze:
+        with pytest.raises(SubmissionError, match="summary changed"):
+            submit(tmp_path, directory, "pipeline", "raw", original, "ghidra-raw")
+    else:
+        result = submit(tmp_path, directory, "pipeline", "raw", original, "ghidra-raw")
+        assert result.origin_sha256 == digest
+        snapshot = directory / "origin.json"
+        (lift / "program.json").write_bytes(b"changed")
+        assert read_origin(snapshot, digest) == origin
+        snapshot.write_bytes(b"changed")
+        with pytest.raises(SubmissionError, match="summary changed"):
+            submit(tmp_path, directory, "pipeline", "raw", original, "ghidra-raw")

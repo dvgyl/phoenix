@@ -156,3 +156,15 @@
   AArch64. The local quality gate passed 241 tests and reached 88.95%
   evaluator line coverage. The opt-in compiler and Ghidra tests run
   separately from the local gate.
+- Run `m1-integrated-public-b7ec0dfd2f364770b14e01a0aa327b9d` passed
+  behavior and integrity for both public programs and both methods.
+  A separate public probe recovered `main` from all four GCC and Clang
+  `-O0` variants.
+- The first compiler-based follow-up review closed the byte, development
+  oracle, implementation identity, and replay findings. It found that
+  a string pointer or string index could bypass the literal check.
+  The policy now requires original data for every nonempty literal.
+  The evaluator freezes the raw lift summary with its input hash and
+  checks the summary hash on resume. Repair feedback gives output
+  positions and lengths. It keeps original output bytes in the test
+  artifacts.

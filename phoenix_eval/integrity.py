@@ -102,9 +102,9 @@ class IntegrityError(ValueError):
         self.category = category
 
 
-def original_shapes(path: Path, *, raw: bool) -> tuple[FunctionShape, ...]:
+def original_shapes(data: bytes, *, raw: bool) -> tuple[FunctionShape, ...]:
     try:
-        document = json.loads(path.read_text(encoding="utf-8"))
+        document = json.loads(data)
         functions = []
         for item in document["functions"]:
             name = item["ghidra_name" if raw else "name"]
@@ -176,7 +176,6 @@ def compiler_evidence(
                     "literal_storage",
                     "storage",
                     "constant_output",
-                    "output_literal",
                 )
                 or name not in files
                 or not name.endswith((".c", ".h"))
@@ -373,10 +372,9 @@ def check_integrity(
             payload = record.data
             if _matches_text(windows, payload):
                 categories["embedded_text"] += 1
-            if record.kind == "output_literal":
+            if record.kind == "literal":
                 if payload and not any(payload in section for section in data_sections):
-                    categories["unproven_output_literal"] += 1
-                continue
+                    categories["unproven_literal"] += 1
             if record.kind in ("literal", "constant_output"):
                 if (
                     len(payload) > 32

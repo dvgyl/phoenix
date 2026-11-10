@@ -83,6 +83,7 @@ def test_checks_literal_payload_and_object_size_separately() -> None:
     )
     assert report.categories == {
         "memorized_output": 2,
+        "unproven_literal": 2,
         "unproven_constant_table": 2,
         "unjustified_blob": 2,
     }
@@ -118,7 +119,11 @@ def test_checks_short_tables_and_the_newline_added_by_puts() -> None:
     report = check_integrity(
         b"", SOURCE, (b"",) * 4, _evidence(records), frozenset((output,)), ORIGIN
     )
-    assert report.categories == {"memorized_output": 2, "unproven_constant_table": 2}
+    assert report.categories == {
+        "memorized_output": 2,
+        "unproven_literal": 2,
+        "unproven_constant_table": 2,
+    }
 
 
 def test_preserves_output_provenance_when_the_library_adds_a_newline(
@@ -142,14 +147,14 @@ def test_preserves_output_provenance_when_the_library_adds_a_newline(
 
 def test_rejects_added_control_flow_and_split_unproven_output() -> None:
     records = (
-        Storage("output_literal", ARTIFACT, 0, b"first new chunk", ""),
-        Storage("output_literal", ARTIFACT, 0, b"second new chunk", ""),
+        Storage("literal", ARTIFACT, 0, b"first new chunk", ""),
+        Storage("literal", ARTIFACT, 0, b"second new chunk", ""),
     )
     evidence = _evidence(records, functions=(FunctionShape("main", 0, 1, 1),))
     report = check_integrity(b"", SOURCE, (b"",) * 4, evidence, frozenset(), ORIGIN)
     assert report.categories == {
         "unproven_control_flow": 2,
-        "unproven_output_literal": 4,
+        "unproven_literal": 4,
     }
 
 

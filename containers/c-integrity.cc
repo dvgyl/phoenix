@@ -247,13 +247,6 @@ class Inventory : public RecursiveASTVisitor<Inventory> {
     std::vector<const StringLiteral *> literals;
     ControlShape *currentShape = nullptr;
 
-    static bool usesOutputData(StringRef name) {
-        return name == "puts" || name == "fputs" || name == "fwrite" || name == "write" ||
-               name == "printf" || name == "fprintf" || name == "sprintf" || name == "snprintf" ||
-               name == "__printf_chk" || name == "__fprintf_chk" || name == "memcpy" ||
-               name == "memmove" || name == "strcpy" || name == "strncpy" || name == "strcat" ||
-               name == "strncat";
-    }
 
     bool record(StringRef kind, SourceLocation loc, StringRef bytes,
                 StringRef name = {}, StringRef type = {}, json::Array tokens = {},
@@ -486,14 +479,6 @@ public:
             else
                 fact["kind"] = callee->getBuiltinID() ? "builtin" : "external_linkage";
             fact["name"] = callee->getNameAsString();
-            if (!definition && usesOutputData(callee->getName())) {
-                for (auto *arg : call->arguments()) {
-                    const auto *literal = dyn_cast<StringLiteral>(arg->IgnoreParenImpCasts());
-                    if (literal && literal->getCharByteWidth() == 1 &&
-                        !record("output_literal", call->getExprLoc(), literal->getBytes()))
-                        return false;
-                }
-            }
             if (!definition && callee->getName() == "puts" && call->getNumArgs() == 1) {
                 const auto *literal = dyn_cast<StringLiteral>(
                     call->getArg(0)->IgnoreParenImpCasts());

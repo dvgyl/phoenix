@@ -62,6 +62,7 @@ def test_freezes_every_submission_before_opening_cases(
         _cases: tuple[Invocation, ...],
         _config: m1._Configuration,
         _dev_outputs: frozenset[bytes],
+        _origin_bytes: bytes | None,
     ) -> dict[str, object]:
         assert opened
         return {

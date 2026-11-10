@@ -10,10 +10,12 @@ from typing import Literal
 
 from phoenix_eval.build import PROJECT_CMAKE, project_files
 from phoenix_eval.development import freeze_development
+from phoenix_eval.docker import read_program
 from phoenix_eval.protection import GUARD_ENV, GUARD_PROBE, guarded_command
 from phoenix_eval.provenance import CHECKOUT
 
 type Method = Literal["phoenix", "ghidra-raw"]
+_ORIGIN_LIMIT = 8 * 1024 * 1024
 
 
 class EvaluationPending(RuntimeError):
@@ -32,6 +34,7 @@ class Submission:
     category: str | None
     replay_of: str | None = None
     development_sha256: str | None = None
+    origin_sha256: str | None = None
 
 
 def write_report(path: Path, data: object) -> None:
@@ -80,6 +83,16 @@ def project_path(workspace: Path, pipeline_run: str, key: str) -> Path:
     return workspace / "runs" / pipeline_run / key / "package/out" / key
 
 
+def read_origin(path: Path, expected: str) -> bytes:
+    with path.open("rb") as stream:
+        data = stream.read(_ORIGIN_LIMIT + 1)
+    if not 0 < len(data) <= _ORIGIN_LIMIT:
+        raise SubmissionError("The raw lift summary size is invalid.")
+    if hashlib.sha256(data).hexdigest() != expected:
+        raise SubmissionError("The raw lift summary changed after submission.")
+    return data
+
+
 def _existing_submission(
     path: Path, snapshot: Path, method: Method, key: str, replay_of: str | None
 ) -> Submission:
@@ -91,6 +104,7 @@ def _existing_submission(
         data["category"],
         replay_of,
         data.get("development_sha256"),
+        data.get("origin_sha256"),
     )
     if (
         data["method"] != method
@@ -102,6 +116,8 @@ def _existing_submission(
         source_digest(project_files(snapshot)) != submission.source_sha256
     ):
         raise SubmissionError("The source snapshot changed after submission.")
+    if submission.origin_sha256 is not None:
+        read_origin(snapshot.parent / "origin.json", submission.origin_sha256)
     return submission
 
 
@@ -155,9 +171,33 @@ def submit(
         raise EvaluationPending(
             "The model service is unavailable. Resume the evaluation."
         )
+    origin_sha = None
+    if method == "ghidra-raw":
+        lift = workspace / "runs" / pipeline_run / key / "recover"
+        evidence = lift / "evidence.json"
+        if evidence.is_file():
+            try:
+                binding = json.loads(evidence.read_text(encoding="utf-8"))
+                original_sha, origin_sha = (
+                    binding["binary_sha256"],
+                    str(binding["sha256"]),
+                )
+            except (KeyError, TypeError, ValueError):
+                raise SubmissionError("The raw lift identity is invalid.") from None
+            if original_sha != hashlib.sha256(read_program(binary)).hexdigest():
+                raise SubmissionError(
+                    "The raw lift summary has a different original hash."
+                )
+            origin = read_origin(lift / "program.json", origin_sha)
+            (directory / "origin.json").write_bytes(origin)
     if result.returncode not in (0, 1):
         submission = Submission(
-            method, key, None, "pipeline-failed", replay_pipeline_run
+            method,
+            key,
+            None,
+            "pipeline-failed",
+            replay_pipeline_run,
+            origin_sha256=origin_sha,
         )
     else:
         project = project_path(workspace, pipeline_run, key)
@@ -173,11 +213,22 @@ def submit(
                 )
         except (OSError, ValueError):
             submission = Submission(
-                method, key, None, "invalid-project", replay_pipeline_run
+                method,
+                key,
+                None,
+                "invalid-project",
+                replay_pipeline_run,
+                origin_sha256=origin_sha,
             )
         else:
             submission = Submission(
-                method, key, digest, None, replay_pipeline_run, development_digest
+                method,
+                key,
+                digest,
+                None,
+                replay_pipeline_run,
+                development_digest,
+                origin_sha,
             )
     write_report(record, asdict(submission))
     return submission

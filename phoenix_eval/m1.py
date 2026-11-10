@@ -36,6 +36,7 @@ from phoenix_eval.submission import (
     Method,
     Submission,
     project_path,
+    read_origin,
     source_digest,
     submit,
     write_report,
@@ -171,6 +172,7 @@ def _measure(
     cases: tuple[Invocation, ...],
     config: _Configuration,
     dev_outputs: frozenset[bytes] = frozenset(),
+    origin_bytes: bytes | None = None,
 ) -> dict[str, object]:
     variant = task.variant
     result: dict[str, object] = {
@@ -203,13 +205,11 @@ def _measure(
     result["behavior"] = asdict(pair)
     try:
         evidence = inspect_project(snapshot, config["checker_images"])
-        raw_task = Task(variant, "ghidra-raw")
-        raw_directory = workspace / "runs" / pipeline_run / raw_task.key
-        _validate_pipeline_record(raw_directory, raw_task, submission.replay_of, config)
-        origin = original_shapes(
-            raw_directory / "recover/program.json",
-            raw=task.method == "ghidra-raw",
-        )
+        if origin_bytes is None:
+            raise IntegrityError(
+                "The frozen lift summary is missing.", "incomplete_origin"
+            )
+        origin = original_shapes(origin_bytes, raw=task.method == "ghidra-raw")
         executables = []
         for build in pair.builds:
             if build.executable_sha256 is None:
@@ -319,14 +319,19 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         if variant.flag == "-O0"
     }
     development = {}
+    origins = {}
     for task in tasks:
         submission = submissions[task.key]
-        if submission.source_sha256 is not None:
+        if submission.source_sha256 is not None or submission.origin_sha256 is not None:
             _validate_pipeline_record(
                 workspace / "runs" / pipeline_run / task.key,
                 task,
                 replay_pipeline,
                 config,
+            )
+        if task.method == "ghidra-raw" and submission.origin_sha256 is not None:
+            origins[task.variant.key] = read_origin(
+                run / "submissions" / task.key / "origin.json", submission.origin_sha256
             )
         if task.method == "phoenix" and submission.source_sha256 is not None:
             digest = submission.development_sha256
@@ -354,6 +359,7 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
             cases[task.variant.name],
             config,
             development.get(task.variant.key, frozenset()),
+            origins.get(task.variant.key),
         )
         for task in tasks
     ]
