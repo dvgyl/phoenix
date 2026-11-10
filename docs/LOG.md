@@ -91,3 +91,16 @@
   of a modified indirect call.
 - Started the Standard-tier Astra Corpus Author in a separate external
   worktree. The author keeps source-side evidence and case data private.
+- Public probe `public-reconstruction-24660e35059f42e2914b967546600bfb`
+  sent the decompiled `bitstats` function and static evidence to the
+  Standard-tier runtime model. Its portable C project built four ways
+  with zero warnings. Each build matched the 10 public cases. Both
+  x86-64 emulators agreed on the original outcomes.
+- Integrated the development analysis worktree after checking the code
+  and tests. Analysis accepts only matched emulator outcomes with a
+  valid QEMU trace. It keeps input variety and coverage gains.
+- The revised token scanner passed the first four adversarial probes.
+  A second review found problems with aliases, macro expansion, and
+  array storage. The scanner is not ready for scoring. The first
+  follow-up review could not apply its nested macOS sandbox. The
+  replacement used one outer sandbox that blocks the protected paths.

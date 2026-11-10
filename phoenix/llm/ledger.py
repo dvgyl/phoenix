@@ -39,6 +39,14 @@ class ReplayMissing(ProviderError):
     pass
 
 
+@dataclass(frozen=True, slots=True)
+class LedgerSummary:
+    calls: int
+    usage: Usage
+    cost_nanodollars: int
+    unknown_cost_reservations: int
+
+
 def _append(stream: TextIO, event: dict[str, object]) -> None:
     stream.seek(0, os.SEEK_END)
     stream.write(json.dumps(event, ensure_ascii=True, sort_keys=True) + "\n")
@@ -50,6 +58,36 @@ class Ledger:
     def __init__(self, run_directory: Path, budget: Budget = Budget()) -> None:
         self.path = run_directory / "llm.jsonl"
         self.budget = budget
+
+    def summary(self, binary: str) -> LedgerSummary:
+        if not self.path.is_file():
+            return LedgerSummary(0, Usage(0, 0, 0), 0, 0)
+        latest = {}
+        with self.path.open(encoding="utf-8") as stream:
+            fcntl.flock(stream, fcntl.LOCK_SH)
+            for line in stream:
+                event = json.loads(line)
+                if event["binary"] == binary:
+                    latest[event["attempt"]] = event
+        measured = [event for event in latest.values() if "completion" in event]
+        usage = Usage(
+            sum(event["completion"]["usage"]["input_tokens"] for event in measured),
+            sum(
+                event["completion"]["usage"]["cached_input_tokens"]
+                for event in measured
+            ),
+            sum(event["completion"]["usage"]["output_tokens"] for event in measured),
+        )
+        return LedgerSummary(
+            calls=len(measured),
+            usage=usage,
+            cost_nanodollars=sum(event["cost_nanodollars"] for event in measured),
+            unknown_cost_reservations=sum(
+                event["cost_nanodollars"]
+                for event in latest.values()
+                if "completion" not in event
+            ),
+        )
 
     def call(
         self,
@@ -65,10 +103,12 @@ class Ledger:
         ).hexdigest()
         if replay and not self.path.is_file():
             raise ReplayMissing("The run has no recorded model responses.")
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        descriptor = os.open(self.path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
-        with os.fdopen(descriptor, "r+", encoding="utf-8") as stream:
-            fcntl.flock(stream, fcntl.LOCK_EX)
+        if not replay:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+        flags = os.O_RDONLY if replay else os.O_RDWR | os.O_CREAT
+        descriptor = os.open(self.path, flags | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(descriptor, "r" if replay else "r+", encoding="utf-8") as stream:
+            fcntl.flock(stream, fcntl.LOCK_SH if replay else fcntl.LOCK_EX)
             latest = {}
             for line in stream:
                 event = json.loads(line)

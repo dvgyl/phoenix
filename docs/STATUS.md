@@ -17,8 +17,8 @@ The workspace uses the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
 
 ## Next actions
 
-1. Verify the revised integrity checks with an independent review.
-2. Build and test the first public binary-to-C reconstruction.
+1. Replace the integrity scanner's token checks with compiler evidence.
+2. Connect analysis, reconstruction, repair, and replay through the command line.
 3. Add an evaluator that rebuilds and tests projects independently.
 4. Check the separate Corpus Author's T0 handoff metadata.
 5. Run the M1 evaluation and report the Ghidra-raw baseline.
@@ -39,3 +39,7 @@ All four builds returned the expected output in the Linux sandbox.
 The Ghidra exporter passed its public headless tests with the native
 ARM64 decompiler. The separate Standard-tier Corpus Author is preparing
 the T0 batch.
+
+Public probe `public-reconstruction-24660e35059f42e2914b967546600bfb`
+built the decompiled `bitstats` project four ways. All 10 public cases
+matched in each build. This probe did not use held-out inputs.

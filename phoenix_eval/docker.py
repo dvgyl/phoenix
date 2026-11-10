@@ -4,6 +4,7 @@ import re
 import subprocess
 from base64 import b64encode
 from enum import StrEnum
+from itertools import batched
 from pathlib import Path
 from tempfile import TemporaryFile
 from uuid import uuid4
@@ -175,3 +176,18 @@ def run_batch(
     if len(results) != len(cases):
         raise WorkerError("The Docker worker returned the wrong number of results.")
     return results
+
+
+def run_cases(
+    binary: Path,
+    cases: tuple[Invocation, ...],
+    engine: Engine,
+    *,
+    trace: bool = False,
+    image: str | None = None,
+) -> tuple[CaseResult, ...]:
+    return tuple(
+        result
+        for batch in batched(cases, MAX_BATCH)
+        for result in run_batch(binary, batch, engine, trace=trace, image=image)
+    )
