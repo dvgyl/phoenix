@@ -3,7 +3,7 @@
 import json
 from dataclasses import asdict, dataclass
 
-from phoenix.lift.index import LiftIndex
+from phoenix.lift.index import LiftIndex, call_transfer_kind
 from phoenix.lift.mapping import GhidraVA, MappingError
 from phoenix.recover.addresses import AddressProof, ElfVA, synthetic_external_target
 from phoenix.recover.imports import ImportBinding
@@ -104,6 +104,14 @@ def make_candidate(
         if edge.site not in witnesses or edge.caller != witnesses[edge.site].owner:
             gaps.append((edge.site, "unavailable_or_conflicting_edge_owner"))
             continue
+        if edge.kind == "call":
+            call_instruction = lift.instructions.get(edge.site)
+            if (
+                call_instruction is None
+                or call_transfer_kind(call_instruction, edge.target) is None
+            ):
+                gaps.append((edge.site, "conflicting_call_target"))
+                continue
         target = edge.target
         if target is None:
             resolved = StaticTarget("unknown", None, None)

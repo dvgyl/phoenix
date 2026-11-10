@@ -49,6 +49,7 @@ def lift_binary(
         raise ValueError("A mapping companion requires the filename lift.json.")
     if mapping_companion:
         from phoenix.lift.mapping import (
+            MappingError,
             bounded_read,
             check_publication_paths,
             publish_generation,
@@ -137,10 +138,16 @@ def lift_binary(
         if mapping_companion:
             mapping = Path(staging) / "mapping.json"
             if not mapping.is_file():
-                raise LiftError("Ghidra did not complete the mapping companion.")
-            output = publish_generation(
-                staged, output.parent, binary, original, process.stdout
-            )
+                raise LiftError(
+                    f"Ghidra did not complete the mapping companion.\n"
+                    f"{process.stdout[-12000:]}"
+                )
+            try:
+                output = publish_generation(
+                    staged, output.parent, binary, original, process.stdout
+                )
+            except MappingError as error:
+                raise MappingError(f"{error}\n{process.stdout[-12000:]}") from error
         else:
             staged.replace(output)
     return LiftResult(export_path=output)

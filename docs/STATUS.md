@@ -81,6 +81,14 @@ line coverage. Two fresh Ghidra analyses of public GCC and Clang switch
 fixtures preserved the original binary, lift, and address proof hashes.
 They published a complete generation through the new path. No target ran.
 
+Fresh Sol confirmed the seven earlier fixes and both selector checks.
+It held two more findings. The static plan now rejects a direct call
+target that disagrees with the raw operation. Failed mapping or lift
+validation retains the Ghidra diagnostic without changing the prior
+generation. The corrected parent gate passed 581 tests with 26 opt-in
+skips and 90.06% evaluator line coverage. All six saved exports retained
+1,172 witnesses and 80 named import bindings.
+
 The code remains opt-in. Fresh independent Sol and Astra reviews and the
 expanded E1 Linux fixture checks remain open.
 [Tracked review findings](https://github.com/dvgyl/phoenix/issues/7).

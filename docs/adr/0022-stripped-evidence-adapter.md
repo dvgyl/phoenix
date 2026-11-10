@@ -84,3 +84,8 @@ because U1 provides no observer or executable wire plan. Unsupported raw
 transfer forms and missing instruction bodies retain gaps. The existing
 Ghidra synthetic external thunk entries remain Ghidra metadata. They do
 not become original instruction witnesses.
+
+A failed validation retains the bounded Ghidra diagnostic in the error.
+It does not change the prior selection or its diagnostic file. A resolved
+call edge must agree with the raw transfer operation at its exact site.
+An instruction witness for a different target does not prove the edge.

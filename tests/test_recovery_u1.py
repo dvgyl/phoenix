@@ -539,8 +539,13 @@ def test_physical_thunk_target_requires_exact_owned_witness(fault: str) -> None:
 
 def test_local_target_requires_exact_instruction_start() -> None:
     binary, document = fixture()
-    document["call_edges"][0]["target"] = loc(0x100101)
-    lift, _, proof = evidence(binary, document)
+    target = loc(0x100101)
+    document["call_edges"][0]["target"] = target
+    call = document["functions"][0]["instructions"][0]["pcode"][0]
+    call["inputs"][0]["address"] = target
+    changed = bytearray(binary)
+    pack_into("<i", changed, 0x101, 0x101 - 0x105)
+    lift, _, proof = evidence(bytes(changed), document)
     site = next(
         site
         for site in make_candidate(lift, proof, ()).sites
@@ -928,6 +933,40 @@ def test_failed_refresh_keeps_last_generation(
     assert first.export_path.read_bytes() == raw
 
 
+@pytest.mark.parametrize("fault", ["mapping", "validation"])
+def test_failed_refresh_preserves_diagnostic_without_changing_selection(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str
+) -> None:
+    from phoenix.lift import LiftError
+
+    original, document = fixture()
+    binary, installation, java = fake_install(tmp_path, "")
+    binary.write_bytes(original)
+    raw = raw_json(document)
+    output = tmp_path / "published" / "lift.json"
+    mock_export(monkeypatch, original, raw)
+    first = lift_binary(binary, output, installation, java, mapping_companion=True)
+    saved_log = first.export_path.with_name("ghidra.log").read_bytes()
+    diagnostic = "The second public export has a distinct diagnostic."
+
+    def launch(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        post_script = args.index("-postScript")
+        Path(args[post_script + 2]).write_bytes(raw if fault == "mapping" else b"{}")
+        if fault == "validation":
+            Path(args[post_script + 5]).write_bytes(
+                raw_json(mapping_wire(original, b"{}"))
+            )
+        return subprocess.CompletedProcess(args, 0, diagnostic)
+
+    monkeypatch.setattr("phoenix.lift.subprocess.run", launch)
+    error = LiftError if fault == "mapping" else MappingError
+    with pytest.raises(error) as caught:
+        lift_binary(binary, output, installation, java, mapping_companion=True)
+    assert diagnostic in str(caught.value)
+    assert read_companion(output.parent, original)[0] == raw
+    assert first.export_path.with_name("ghidra.log").read_bytes() == saved_log
+
+
 @pytest.mark.parametrize(
     "name, alias",
     [
@@ -1071,6 +1110,20 @@ def test_nonexecuting_bss_and_gap_instructions_are_unavailable(address: int) -> 
     assert (address, "unavailable_function_entry") in make_candidate(
         lift, proof, ()
     ).gaps
+
+
+def test_conflicting_call_edge_does_not_supply_a_static_target() -> None:
+    binary, document = fixture()
+    site = GhidraVA(0x100100)
+    document["call_edges"][0]["target"] = loc(0x100105)
+    lift, _, proof = evidence(binary, document)
+    assert proof.witness(GhidraVA(0x100105)).elf == 0x105
+    bindings = bind_imports(binary, lift, proof)
+    assert bindings[0].gap == "conflicting_call_target"
+    candidate = make_candidate(lift, proof, bindings)
+    call = next(record for record in candidate.sites if record.ghidra == site)
+    assert call.static_targets == ()
+    assert (site, "conflicting_call_target") in candidate.gaps
 
 
 def test_conflicting_edge_owner_does_not_supply_a_static_target() -> None:

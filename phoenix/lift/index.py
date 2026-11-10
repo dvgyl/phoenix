@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 from types import MappingProxyType
+from typing import Literal
 
 from phoenix.lift.evidence import StaticEvidence, parse_static_evidence
 from phoenix.lift.mapping import (
@@ -87,6 +88,23 @@ class StaticEdge:
     indirect: bool | None = None
     from_block: GhidraVA | None = None
     to_block: GhidraVA | None = None
+
+
+def call_transfer_kind(
+    instruction: Instruction, target: Location | None
+) -> Literal["direct", "indirect"] | None:
+    direct = [op for op in instruction.pcode if op.opcode == "CALL"]
+    indirect = any(op.opcode in ("CALLIND", "BRANCHIND") for op in instruction.pcode)
+    if direct:
+        if (
+            len(direct) == 1
+            and not indirect
+            and len(direct[0].inputs) == 1
+            and direct[0].inputs[0].address == target
+        ):
+            return "direct"
+        return None
+    return "indirect" if indirect else None
 
 
 @dataclass(frozen=True, slots=True)

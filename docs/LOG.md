@@ -476,3 +476,27 @@
 - The hardening checkpoint remains opt-in and outside main. Fresh independent
   Sol and Astra reviews and expanded Linux E1 checks remain open. Evidence
   is in `audit/m2-production-u1-hardening/`. Worktree scratch stays untracked.
+
+## 2026-11-10. Reject conflicting direct call evidence and retain diagnostics
+
+- Fresh Sol confirmed all seven original U1 corrections and both selector
+  controls at `defc6c1`. It held a call edge that disagreed with its raw
+  operation and two failed refresh paths that lost the new diagnostic.
+- The parent reproduced all three negative requirements. The planner and
+  import binder now share the raw call transfer check. A conflicting edge
+  supplies no static target and leaves a gap. Missing mapping and invalid
+  lift errors retain the bounded Ghidra output. The previous selected
+  generation and its diagnostic stay unchanged.
+- The first focused run exposed a fixture that changed only its edge when
+  it intended to test a matching call to an instruction interior. The test
+  now changes the machine displacement and raw operation as well. Both
+  the conflicting edge and the matching interior case retain separate
+  tests. An initial full gate caught one test-visible type assignment.
+  The final U1 suite passed 84 tests. The full parent gate passed 581
+  tests with 26 opt-in skips and 90.06% evaluator line coverage.
+- Rechecked six saved public exports. They retain 1,172 instruction
+  witnesses, 308 plan sites, 80 named import bindings, and six legacy
+  results. The nine earlier regression observations remain corrected.
+  Evidence is in `audit/m2-production-u1-closure/`.
+- The opt-in checkpoint stays outside main. Fresh independent Sol and
+  Astra reviews and the expanded E1 Linux checks remain required.

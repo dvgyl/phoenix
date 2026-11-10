@@ -11,6 +11,7 @@ from phoenix.lift.index import (
     Location,
     Operation,
     StaticEdge,
+    call_transfer_kind,
 )
 from phoenix.lift.mapping import GhidraVA, MappingError
 from phoenix.recover.addresses import (
@@ -460,22 +461,13 @@ def _binding(
         return ImportBinding(
             edge.site, edge.caller, None, None, None, (), "unavailable_instruction"
         )
-    direct = [
-        operation.inputs[0].address
-        for operation in instruction.pcode
-        if operation.opcode == "CALL" and operation.inputs
-    ]
-    indirect = any(
-        operation.opcode in ("CALLIND", "BRANCHIND") for operation in instruction.pcode
-    )
-    if (direct and (indirect or len(direct) != 1 or direct[0] != edge.target)) or (
-        not direct and not indirect
-    ):
+    transfer = call_transfer_kind(instruction, edge.target)
+    if transfer is None:
         return ImportBinding(
             edge.site, edge.caller, None, None, None, (), "conflicting_call_target"
         )
     path: list[GhidraVA] = []
-    transfer_site = edge.site if indirect and not direct else None
+    transfer_site = edge.site if transfer == "indirect" else None
     target = edge.target
     seen: set[Location] = set()
     gap = "unknown_import"
@@ -495,7 +487,7 @@ def _binding(
         if synthetic is not None:
             target = synthetic
             continue
-        if not direct and not path:
+        if transfer != "direct" and not path:
             gap = "unproven_indirect_thunk_target"
             break
         proof.witness(address, owner=address)
