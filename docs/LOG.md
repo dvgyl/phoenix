@@ -293,3 +293,69 @@
 - The new interruption regression failed on the previous code for both
   methods with `invalid-project`. The fixed parent gate passed 392
   tests with 23 opt-in skips and 90.01% evaluator line coverage.
+
+## 2026-11-10. M1 measurement, replay, and baseline correction
+
+- Re-read the complete repository instructions and specification after
+  compaction. Main was clean and pushed at `5695148`. All four worker
+  and checker image builds passed from the verified cache.
+- Independent Astra preflight passed that revision. The lead ran its
+  80 synthetic regression tests. All passed. The Linux compiler-integrity
+  suite passed all 44 checks.
+- Public run `m1-public-matrix-5695148-e8d8134ccd5a40a4b60e3f63d06cac95`
+  used the normal guarded command path. It covered 14 original variants
+  and both methods. Phoenix passed behavior and integrity for all 14.
+  Raw passed zero. All submissions were captured before measurement.
+- Native CI run `42837009179` passed on both architectures after one
+  ARM64 retry for Ubuntu snapshot HTTP 503 errors. Mac M0 run
+  `m0-661c1aae6ac84a3a86a37e6f466217a3` matched native x86-64 run
+  `m0-ac3140b377c248ce89abf2c45219f1f0` and native ARM64 run
+  `m0-40f1d15a47364e52a205d9145defb376`. The scripted comparison is
+  saved under `audit/m1/ci-5695148/compare-all.json` in the workspace.
+- Sealed run `m1-t0-5695148` scored 17 of 20 fully successful Phoenix
+  variants. Behavior passed for 19, and integrity passed for 18.
+  Two variants failed `embedded_text`. One failed behavior. Raw scored
+  zero fully successful variants and zero behavior passes.
+- Both methods had 792 eligible original cases, zero emulator
+  disagreements, and zero evaluation errors. Coverage was 790 of 1,079
+  recovered block entries. The first `ce6a34d` result and its replay
+  remain in the record.
+- Replay `m1-t0-replay-5695148` reproduced every stable result field.
+  The complete original model log SHA-256 stayed
+  `13fea13ce172e21cb02fc4ffa864a5cef8759d79d9c90ce4f40efce529ed0e6b`.
+  The replay created no model log. Original accounting was 66 calls
+  and $1.5418888 of API-equivalent model cost, with zero unknown-cost
+  reservations. Median reconstruction time was 46.676 seconds across
+  the 20 Phoenix variants. Timing is excluded from stable replay fields.
+- Final independent Astra review held the milestone. The raw header
+  declared two format arguments as `const void *`. Fortified glibc
+  declares them as `const char *`. This support-code defect prevented
+  every GCC baseline build at the fixed profile. The raw zero score
+  needs a corrected measurement. The review preserved the Phoenix score
+  and all three Phoenix failures. The declarations are in the
+  [glibc 2.39 header](https://raw.githubusercontent.com/bminor/glibc/glibc-2.39/libio/bits/stdio2-decl.h).
+- Corrected the declarations at `ff4e427`. A public host syntax
+  regression failed before the change. The same defect failed all four
+  Linux compiler and architecture combinations. After correction, the
+  host gate passed 393 tests with 25 opt-in skips and 90.01% evaluator
+  coverage. All 48 Linux compiler-integrity checks passed. The fixed
+  build profile and all integrity thresholds retain their values.
+- Main stayed fixed during exact measurement and replay. The next
+  candidate needs a public command check, independent preflight, sealed
+  measurement, replay, and final milestone review.
+- A separate Standard-configured Astra task designed a public trace
+  experiment. A Sol worker prepared its isolated prototype. Parent host
+  verification passed 423 tests. Independent review found a build context
+  error and three calibration or reporting defects. A fresh Astra worker
+  is fixing those findings in the separate worktree. Runtime calibration
+  and production integration remain pending.
+- A metadata-only Sol survey found the official `gpt-6.1-sol` knowledge
+  cutoff of 2026-04-30. The lead checked the same model page. Seven T3
+  metadata candidates remain unqualified. A separate author must check
+  publication history and the full input contract before selection.
+  [Official model page](https://developers.openai.com/api/docs/models/gpt-6.1-sol).
+- A dedicated Astra Corpus Author started private T1 preparation. Its
+  guard passed synthetic allow and deny checks. Source and held-out
+  contents stay in its private namespaces. Linux validation was gated
+  until the M1 replay and public compiler regression completed. Only
+  aggregate status and permitted release metadata reach the lead.
