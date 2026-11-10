@@ -500,3 +500,33 @@
   through its active exact replay. The correction still needs public/native
   checks, a new original evaluation, exact replay and milestone review.
   Combined M2 integration also requires a full gate and fresh reviews.
+
+## 2026-11-10. Exact timing-correction replay and shared integration
+
+- Exact replay `m1-t0-replay-baae648` reproduced every stable field from
+  `m1-t0-baae648`. Both retain Phoenix 17/20 and raw 8/20 fully successful.
+  Phoenix retains two `embedded_text` failures and one behavior failure.
+  Raw retains 12 compiler failures. Both methods have 792 eligible cases,
+  zero emulator disagreements and zero evaluation errors. Recovered block
+  coverage remains 790/1079.
+- The original model log stayed unchanged at SHA-256
+  `56f1b86a7056cb03d2a3607ac4dae09bdbd1e6051f4baafa845fd9ed4a73851e`.
+  Replay created no model log. All 40 per-task summaries reconcile with
+  the complete log. Original use is 69 calls and $1.4249648 API-equivalent
+  cost, with zero unknown-cost reservations.
+- An independent read-only capture observation remained unchanged. It was
+  made during the original run. It does not prove a freeze before held-out
+  access. No historical run file was modified or given a new binding.
+  Full evidence is in `audit/m1/final-baae648/`.
+- Kept main and accepted images fixed until exact replay and these checks
+  finished. Then integrated reviewed shared correction `05d362f` by a
+  fast-forward merge. The parent gate and both fresh independent reviews
+  passed. A new guarded original and exact replay are still required.
+  No M1 tag or milestone acceptance is claimed.
+- Pushed matrix `11da284` and observer helper `c76cc59` on separate branches.
+  Final matrix Sol and Astra reviews passed. Its merge with the shared
+  guards is isolated and uncommitted. Combined review remains open.
+- Started the reusable observer controls after the replay released the VM.
+  A separate Sol worker is implementing the stripped-binary evidence adapter
+  from the completed Astra design. Private Astra authors are preparing T2
+  and qualifying T3. Their sources and detailed logs remain sealed.
