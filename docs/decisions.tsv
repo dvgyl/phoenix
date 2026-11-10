@@ -3,3 +3,4 @@ ts	phase	decision	why	evidence	result
 2026-11-10T08:47:12Z	storage	Mount a case-sensitive APFS sparse image on the external drive.	The external drive uses exFAT.	docs/adr/0001-host-environment.md	Confirmed case-sensitive APFS at /Volumes/PhoenixWork.
 2026-11-10T08:52:41Z	runtime	Enable Rosetta after installing the system package.	Rosetta and explicit QEMU must be independent on Apple Silicon.	docs/adr/0001-host-environment.md	The VM reports Rosetta enabled and automatic x86 QEMU disabled.
 2026-11-10T08:52:42Z	outcomes	Compare immutable outcomes and canonical directory trees.	Directory entry order must not affect a comparison.	tests/test_outcome.py	Local quality checks passed.
+2026-11-10T08:55:50Z	sandbox	Use per-test chroot with limited Docker capabilities.	The default Docker policy denied a nested namespace.	docs/adr/0003-linux-test-runtime.md	Rosetta works. Chroot isolation verification is pending.

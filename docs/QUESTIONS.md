@@ -11,3 +11,6 @@
 - Codex lists a Priority tier for explicit model overrides in its
   subagent tool. For Standard-only reviews, use a separate Codex CLI
   process with the requested model and an explicit default service tier.
+- The optional test environment overlay can add values. Reject changes
+  to the fixed environment and loader or emulator controls. This keeps
+  the sandbox policy the same for the original and rebuild.

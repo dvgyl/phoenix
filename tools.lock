@@ -5,3 +5,7 @@ colima = "0.10.3"
 lima = "2.2.1"
 docker_cli = "29.7.2"
 source_date_epoch = 1794268800
+docker_engine = "29.5.2"
+buildx = "0.38.2"
+ubuntu_base = "ubuntu@sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852"
+ubuntu_snapshot = "20261107T000000Z"

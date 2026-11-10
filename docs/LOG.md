@@ -15,3 +15,7 @@
   a disabled QEMU x86-64 registration.
 - Added exact outcome comparison. The first quality gate passed 14
   tests, Ruff, and strict mypy.
+- Confirmed x86-64 execution through Rosetta in an amd64 container.
+- The default Docker policy rejected nested namespace creation. Recorded
+  an alternate chroot design for per-test isolation.
+- Added a versioned test protocol. The quality gate passed 29 tests.
