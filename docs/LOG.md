@@ -500,3 +500,138 @@
   through its active exact replay. The correction still needs public/native
   checks, a new original evaluation, exact replay and milestone review.
   Combined M2 integration also requires a full gate and fresh reviews.
+
+## 2026-11-10. Corrected M1 measurement and M2 preparation
+
+- Re-read all governing documents after compaction. Main stayed clean at
+  `efcad05`. Storage remained above the internal-drive threshold.
+- Native CI run `42859828267` passed on its third transport attempt.
+  Earlier attempts rejected incorrect CA package bytes. The pinned hash
+  stayed fixed. The exact native outcome hashes match Mac M0 run
+  `m0-43bba34c9d8d426aa1c029de0e5071c1`.
+- Corrected sealed run `m1-t0-efcad05` scored Phoenix 17/20 fully
+  successful and Ghidra-raw 8/20. Phoenix behavior passed for 19 and
+  integrity passed for 18. Two variants failed `embedded_text`. One
+  failed behavior. Twelve raw variants failed compilation.
+- Both methods had 792 eligible original cases, zero emulator
+  disagreements, and zero evaluation errors. Recovered block entry
+  coverage remained 790/1079. All earlier failed or held runs remain.
+- The original full model log SHA-256 is
+  `728cf1a3f10b21b54c7c747f7dabbbaada85c68b286110d5b865bfe77dd23f44`.
+  It records 80 calls and $1.603504 of API-equivalent cost. There are
+  zero unknown reservations. Median reconstruction time was 51.893
+  seconds across all 20 Phoenix variants. Exact replay and final Astra
+  review are active. No M1 tag was made.
+- The dedicated T1 author completed 15 programs and 90 stripped variants.
+  The lead checked the manifest, all release hashes, ELF contracts and
+  aggregate adequacy records. Only permitted metadata was opened.
+  Minimum branch coverage was 184/197. Minimum mutation detection was
+  11/12. One of 180 non-equivalent mutants survived. Source sizes are
+  304 to 316 C LOC. This narrow range is a report limitation.
+- The lead committed the author's T1 archive hashes in a separate public
+  worktree before any T1 reconstruction. Main remains fixed through M1
+  replay. Neither source archives nor held-out contents were opened.
+- A fresh T2 author started private design under a separate guard. The
+  contract requires 10 independent multi-file programs with a size spread
+  across 1,500 to 6,000 real C LOC and at least 20 meaningful mutants each.
+  Linux validation is gated until M1 replay finishes. An initial brief
+  named the wrong archive root. The lead stopped that process, corrected
+  the root to `t2/cases`, and launched a fresh author. No private output
+  was read.
+- The public trace prototype passed independent source review for runtime
+  experimentation. The real fixture build then exposed a host bind-mount
+  assumption and a missing writable Clang temporary path. The lead
+  reproduced both failures and corrected the fixture transport. All 16
+  builds and static plans passed. The parent gate passed 496 tests with
+  23 skips and 90.01% evaluator coverage. Live trace calibration remains
+  pending in its separate worktree.
+- The static lift extension passed the parent host gate with 454 tests,
+  26 skips, and 90.06% evaluator coverage. Isolated parent Ghidra runs
+  preserved every legacy export field and recovery output. Independent
+  review then found invalid storage intervals and register-base records
+  that its new reader accepted. A fresh Astra worker is fixing them.
+- A new public switch fixture retained indirect jumps under both pinned
+  compilers. The first parent check incorrectly required equal target and
+  label counts. Ghidra exports the default destination without a label.
+  The corrected check confirmed 13 destinations and 12 labels, preserving
+  both arrays separately. No target execution was used for this check.
+
+## 2026-11-10. Isolated M2 replay corrections
+
+- Verified all eight original matrix candidate hashes before editing. The
+  independent Sol review recorded HOLD. Synthetic coordinator probes reproduced
+  both R1 lineage defects. Seven saved-report probes reproduced R2.
+- Added corrected-behavior tests before production changes. The first run had
+  23 failures and 14 passes. Two further red tests exposed numeric type equality
+  in saved summaries and ledger identities. Three red tests exposed inconsistent
+  cost, token, and storage-evidence counts at the saved-report boundary.
+- Bound every replay ancestor to the same stable report fields. A replay
+  ancestor must have reproduced its reference. These checks occur before
+  submission capture and held-out archive access. Valid chains retain the
+  original ledger identity. Exact chains of failed results remain supported.
+- Added M2 saved-report validation for the two result forms, four build
+  configurations, tested artifact hashes, integrity evidence, verdicts, case
+  and coverage counts, and model token and cost fields. M1 schema 1 and the
+  trusted measurement path retain their existing contracts.
+- The final focused suite passed 247 tests. It includes exact replay chains
+  of failed results. Fourteen real measurement round trips used synthetic compiler
+  and oracle boundaries. No target, container, or real provider was run.
+- The final scripts/check run passed Ruff, format, strict mypy, and 581 tests.
+  It skipped 25 tests. Evaluator coverage was 92.25%. The unchanged nested
+  protection test failed because the outer guard denied sandbox-exec with
+  exit status 71. The full gate is not green. The parent must rerun it with
+  the required sandbox capability.
+- R3 capture binding and R4 ledger reconciliation remain separate integration
+  gates. Correction review and the parent combined gate remain required. The
+  full check result and exact file hashes are recorded in
+  `/Volumes/PhoenixWork/audit/m2-matrix-fix-sol/report.md`.
+
+## 2026-11-10. Complete stable M2 replay projection
+
+- The parent full gate for R1/R2 passed 582 tests with 25 opt-in skips and
+  92.25% evaluator line coverage. The unchanged protection test passed
+  outside the reviewer's outer sandbox. A fresh independent Sol reviewer
+  passed that exact correction after the first Sol review had held it.
+- Astra closure found B1. Python dictionary equality accepted an integer
+  budget and an equal floating-point budget in frozen configuration.
+  Direct replay and replay through an ancestor opened synthetic archives
+  and reported success. Both new rejection tests failed before correction.
+- The parent also reproduced this type mismatch during completed resume.
+  Its rejection test failed. The correction serializes the whole stable
+  projection and compares saved, live and ancestor configuration with JSON
+  types preserved. Non-finite values are rejected. Ancestor and final replay
+  still use the same stable projection. Result timing remains excluded.
+- All four focused checks passed. They cover three rejection paths and a
+  valid full original and replay chain. The parent full gate passed 585 tests
+  with 25 opt-in skips and 92.30% evaluator line coverage. Ruff, format,
+  strict mypy and the unchanged protection test passed.
+- The corrected matrix is retained on its isolated branch. Fresh independent
+  review of B1, shared R3/R4 integration, combined source review and new
+  measurements remain open. Main remains fixed for exact M1 replay.
+
+## 2026-11-10. Combined evaluation capture guards
+
+- Started this isolated merge from reviewed shared correction `05d362f`.
+  Merged reviewed matrix `11da284`. Preserved the T1 hash commitments.
+  Resolved coordinator and progress-document conflicts. Kept both histories.
+- The coordinator builds the complete ordered task roster before opening its
+  binding. It freezes all 260 M2 captures and full-log summaries before any
+  archive read. It checks the binding and log before each archive and before
+  publication. It reconciles every task summary with the full ledger.
+- Each replay ancestor now retains its own capture binding. A modified root
+  capture cannot pass through an unchanged intermediate replay. M1 task keys,
+  report fields and acceptance rules retain their definitions.
+- Added eight integration checks. Seven negative requirements failed against
+  exact previous matrix `11da284`. They cover both archive barriers, unknown
+  charged and zero-charge attempts, direct and ancestor capture replacement,
+  and charge transfer with the aggregate unchanged. The eighth checks the
+  full 260-key roster and 130 synthetic model calls before each archive.
+- The focused integration suite passed all eight tests. The initial combined
+  selection passed 146 tests. The parent full gate passed 655 tests with 25
+  opt-in skips and 92.27% evaluator line coverage. Ruff, format, strict mypy
+  and protection passed. Evidence is in `audit/m2-evaluation-guarded/`.
+- Fresh independent Sol and Astra reviews of this combined source are queued.
+  The source stays outside main. No sealed M2 result or acceptance is claimed.
+- Main advanced only after the `baae648` exact replay and ledger checks passed.
+  Current main `6897e47` has public/native checks active. Original and replay
+  measurements with the new automatic guard remain required before M1.

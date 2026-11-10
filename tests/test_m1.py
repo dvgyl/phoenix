@@ -253,6 +253,19 @@ def test_cli_replay_dispatches_the_recorded_evaluation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     report = tmp_path / "m1.json"
+    saved = tmp_path / "runs/recorded/m1.json"
+    saved.parent.mkdir(parents=True)
+    saved.write_text(
+        json.dumps(
+            {
+                "run_id": "recorded",
+                "configuration": {"schema": 1},
+                "results": [],
+                "scores": {},
+                "accepted": False,
+            }
+        )
+    )
 
     def evaluate(workspace: Path, run_id: str, replay_id: str) -> tuple[Path, bool]:
         assert workspace == tmp_path

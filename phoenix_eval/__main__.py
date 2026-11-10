@@ -7,7 +7,8 @@ from uuid import uuid4
 
 from phoenix_eval.docker import WorkerError
 from phoenix_eval.m0 import SEED, Mode, evaluate
-from phoenix_eval.m1 import evaluate_t0
+from phoenix_eval.m1 import _directory, evaluate_m2, evaluate_t0
+from phoenix_eval.m2 import recorded_kind
 from phoenix_eval.submission import EvaluationPending
 
 
@@ -23,19 +24,37 @@ def main() -> int:
     m1 = commands.add_parser("m1", help="Evaluate the sealed T0 -O0 variants.")
     m1.add_argument("--run-id")
     m1.add_argument("--replay", metavar="RUN_ID")
+    m2 = commands.add_parser("m2", help="Evaluate the full T0 and T1 release matrix.")
+    m2.add_argument("--run-id")
+    m2.add_argument("--replay", metavar="RUN_ID")
     args = parser.parse_args()
     if args.command == "m0" and not args.replay_run:
         report, passed = evaluate(args.corpus, args.runs, args.mode, args.seed)
-    elif (args.command == "m1" and not args.replay_run) or (
+    elif (args.command in ("m1", "m2") and not args.replay_run) or (
         args.command is None and args.replay_run
     ):
         workspace = os.environ.get("PHOENIX_ROOT")
         if not workspace:
             parser.error("Source the Phoenix workspace environment.")
-        run_id = getattr(args, "run_id", None) or f"m1-{uuid4().hex}"
+        run_id = (
+            getattr(args, "run_id", None) or f"{args.command or 'replay'}-{uuid4().hex}"
+        )
         replay = args.replay_run or getattr(args, "replay", None)
         try:
-            report, passed = evaluate_t0(Path(workspace), run_id, replay)
+            kind = args.command
+            if replay is not None:
+                recorded = recorded_kind(
+                    _directory(Path(workspace).resolve() / "runs", replay)
+                )
+                if kind is not None and kind != recorded:
+                    raise ValueError(
+                        "The replay report kind does not match the command."
+                    )
+                kind = recorded
+            if getattr(args, "run_id", None) is None:
+                run_id = f"{kind}-{uuid4().hex}"
+            evaluator = evaluate_m2 if kind == "m2" else evaluate_t0
+            report, passed = evaluator(Path(workspace), run_id, replay)
         except EvaluationPending as error:
             print(f"Run {run_id} is pending. {error}", file=sys.stderr)
             return 75
