@@ -1,59 +1,70 @@
 # Phoenix status
 
 M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
-M1 remains open. Final Astra review held `5695148` because the generated
-Ghidra-raw header conflicts with fortified glibc declarations. The measured
-Phoenix score meets the numerical threshold. The baseline needs correction
-and a new measurement before the milestone can pass.
+M1 remains open. Final Astra review held `efcad05` because exact replay
+changed one stable failure record. Matching success counts did not satisfy
+the replay requirement. There is no M1 tag.
 
 | Method | Behavior passed | Integrity passed | Fully successful |
 | --- | --- | --- | --- |
 | Phoenix | 19/20 | 18/20 | 17/20 |
-| Ghidra-raw | 0/20 | 0/20 | 0/20 |
+| Ghidra-raw | 8/20 | 8/20 | 8/20 |
 
-These are the `-O0` results from `m1-t0-5695148`. Two Phoenix variants
-failed the exact-byte check. One failed behavior. The baseline compiled
-zero GCC builds and eight Clang builds per architecture. Its support-header
-defect prevents a fair comparison at this revision.
+These are the original `-O0` results from `m1-t0-efcad05`. Two Phoenix
+variants failed `embedded_text`. One failed behavior. Twelve raw variants
+had compiler failures. All 80 Phoenix builds compiled with zero warnings.
+Both methods had 792 eligible cases, zero emulator disagreements, and
+zero evaluation errors. Coverage reached 790 of 1,079 recovered block
+entries. Source branch adequacy is a separate measure.
 
-Replay `m1-t0-replay-5695148` reproduced every stable result field.
-The original model log stayed unchanged, and the replay created no model
-log. All 792 original cases per method were eligible. There were zero
-emulator disagreements and evaluation errors. Tests reached 790 of 1,079
-recovered block entries. Source branch adequacy is recorded separately.
+Replay `m1-t0-replay-efcad05` has `reproduced=false`. It retains 17/20
+Phoenix successes and 8/20 raw successes. One original Phoenix behavior
+failure became `pipeline-failed`, with no source or measurement record.
+The other 39 stable records match. The replay measured only 754 Phoenix
+variant-case pairs. The full original model log stayed unchanged.
+The replay created no model log. Both frozen reports remain intact.
 
-The first sealed run, `m1-t0-ce6a34d`, remains in the record. It scored
-zero fully successful variants for both methods. Its exact replay also
-reproduced that result.
+Independent Sol diagnosis reproduced the cause. CMake elapsed times
+entered compiler-failure feedback and changed the next repair prompt.
+Exact model-ledger lookup correctly rejected that unrecorded request.
+The correction removes only the two known CMake timing suffixes from
+model feedback before truncation. Raw diagnostics and exact ledger checks
+retain their values. The old replay remains failed evidence.
+[Tracked defect](https://github.com/dvgyl/phoenix/issues/1).
 
-The header correction is committed at `ff4e427`. It uses the glibc format
-argument types. The public regression failed with the old declarations
-on both compilers and architectures. The correction passed the 393-test
-host gate and all 48 Linux compiler-integrity checks. A new independent
-preflight review and sealed measurement are pending.
+Earlier results also remain in the record. `m1-t0-ce6a34d` scored zero
+fully successful variants for both methods and reproduced on replay.
+`m1-t0-5695148` scored Phoenix 17/20 and raw 0/20 and reproduced on replay.
+Its raw score includes the support-header defect corrected at `ff4e427`.
+The later `efcad05` review closed that header finding.
 
-The earlier public matrix at `5695148` passed all 14 Phoenix variants.
-Raw passed zero variants with the defective header. The fixed optimized
-profile and the 64-byte integrity threshold remain in force.
+Native CI at `efcad05` passed and matched the current Mac M0 public
+outcomes on both native architectures.
+[CI run 42859828267](https://github.com/dvgyl/phoenix/actions/runs/42859828267).
+The corrected candidate still needs its own checks and exact evaluation.
 
-Both native CI jobs passed at `5695148` after an ARM64 package-delivery
-retry. Their exact public outcome hashes match the current Mac M0 run,
-`m0-661c1aae6ac84a3a86a37e6f466217a3`.
-[CI run 42837009179](https://github.com/dvgyl/phoenix/actions/runs/42837009179).
+T1 is sealed with 15 programs and 90 variants. Its archive commitments
+are pushed on `agent/t1-commitments`. Integration waits for M1 acceptance.
+A fresh private Astra author has resumed incomplete T2 preparation.
+The source and held-out inputs stay private. T3 qualification is pending.
 
-A separate author is preparing the private T1 batch. The public trace
-prototype is in a separate worktree with review fixes in progress.
-Its Linux calibration is pending. T3 candidate qualification also remains
-pending after the metadata survey.
+Verified static lift evidence awaits integration after M1. The separate
+public observer calibration passed its fixed positive and mutant controls.
+Wrong-API and missing-register runtime controls remain open. Its source
+and runtime evidence need fresh review. The M2 evaluator is in its
+separate worktree, with synthetic checks and review in progress.
 
 The internal-drive free-space baseline is 14,432,616 KiB.
 The workspace is the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
 The dedicated Colima VM has four CPUs and 2 GiB of memory.
+Every major work block requires a fresh independent GPT-6.1 Sol review.
+Milestone and integrity reviews also require Astra. CLI workers use
+Standard service with Fast mode and nested agents disabled.
 
 ## Next actions
 
-1. Verify the corrected raw public pipeline and obtain preflight review.
-2. Measure the corrected M1 candidate on the fixed sealed T0 batch.
-3. Replay and review that exact result before any M1 tag.
-4. Complete public trace calibration and review before M2 integration.
-5. Finish the private T1 adequacy checks and commit only its archive hashes.
+1. Verify the CMake feedback correction and its independent Sol review.
+2. Check the corrected public pipeline and native CI.
+3. Measure a new M1 candidate, replay it exactly, and obtain Astra review.
+4. Complete observer controls and independent M2 evaluator review.
+5. Integrate verified M2 work after M1, then continue through M4 and section 9.

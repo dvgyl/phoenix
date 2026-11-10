@@ -359,3 +359,40 @@
   contents stay in its private namespaces. Linux validation was gated
   until the M1 replay and public compiler regression completed. Only
   aggregate status and permitted release metadata reach the lead.
+
+## 2026-11-10. Exact replay failure and repair feedback correction
+
+- Continued from `origin/agent/thread-handoff`. Main stayed at `efcad05`
+  until its replay checks and final Astra review finished.
+- Original run `m1-t0-efcad05` scored Phoenix 17/20 and raw 8/20 fully
+  successful. Phoenix had two integrity failures and one behavior failure.
+  The corrected raw header closed the earlier baseline review finding.
+- Replay `m1-t0-replay-efcad05` did not reproduce. One stable record changed
+  from a measured behavior failure to `pipeline-failed`. The other 39
+  records matched. Final independent Astra review returned HOLD.
+  Matching success counts did not satisfy the exact replay requirement.
+- The full original model log stayed unchanged at SHA-256
+  `728cf1a3f10b21b54c7c747f7dabbbaada85c68b286110d5b865bfe77dd23f44`.
+  Replay created no model log. Both frozen reports remain intact.
+- An independent Standard-service Sol worker proved the development cause.
+  CMake elapsed-time text changed the next repair request. Exact ledger
+  lookup correctly raised `ReplayMissing`. The parent reran all six
+  synthetic diagnosis tests. All six passed without provider calls.
+- A separate Sol worker removed only the known CMake timing suffixes from
+  failed-build feedback before truncation. Raw diagnostics retain their
+  values. No source, outcome, ledger, or integrity check was relaxed.
+- The regression first produced six expected `ReplayMissing` failures.
+  The corrected focused suite passed all nine tests. The parent full
+  quality gate passed 401 tests with 25 opt-in skips and 90.01% evaluator
+  coverage. The unchanged protection test passed in the parent process.
+- A fresh independent Standard-service Sol reviewer passed the exact diff.
+  It ran the nine focused tests and 28 independent probes. It reproduced
+  the six timing failures with the base function. This review does not
+  certify M1. A new candidate measurement and exact replay are required.
+- The defect is tracked in
+  [issue 1](https://github.com/dvgyl/phoenix/issues/1).
+  Full review and test evidence remain under `audit/m1/` in the workspace.
+- Established a fresh independent Sol review after every major work block.
+  Astra milestone, algorithm, and integrity roles remain required.
+  All new CLI workers request Standard service. Fast mode and nested
+  agents are disabled. Source and held-out material stay private.
