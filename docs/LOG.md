@@ -280,3 +280,16 @@
   licenses, and open permission questions. Primary papers qualify
   several claims in the specification's prior-art table. Optional
   experiments stay on public fixtures.
+- Astra verified closure of all five earlier preflight findings at
+  `6c73a7a`. It found one new recovery defect. An interruption during
+  report capture could turn a valid project into a permanent failure.
+- Submission evidence now stages in a private directory. One rename
+  publishes the source, report, development evidence, raw lift, and
+  submission record together. Interruptions and I/O faults before or
+  after publication converge to a valid completed capture on resume.
+- The evaluator now records wall time from the first pipeline invocation
+  through final pipeline completion, including waits. Failed tasks have
+  timing records too. Invalid timers stop capture.
+- The new interruption regression failed on the previous code for both
+  methods with `invalid-project`. The fixed parent gate passed 392
+  tests with 23 opt-in skips and 90.01% evaluator line coverage.

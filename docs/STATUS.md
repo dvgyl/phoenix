@@ -23,14 +23,16 @@ and the integrity checks in
 The copied-byte negative controls also passed.
 
 The accounting and development evidence fixes are integrated. The
-combined local gate passed 367 tests with 90.00% evaluator coverage.
+combined local gate passed 392 tests with 90.01% evaluator coverage.
 Source packages now preserve the exact tested snapshot. Source comments
 record generation-time confidence, and the report gives final confidence.
 
 The public decimal control passed behavior and integrity with the fixed
 optimized profile. Its Docker regression failed under the previous
 profile and passed under the new profile across both compilers and
-architectures. Independent review and a new sealed run are pending.
+architectures. Astra closed the five prior findings and found a submission recovery
+defect. Atomic capture and evaluator timing are now implemented.
+Independent review and a new sealed run are pending.
 
 The package-only Ubuntu fallback passed its signed repository probe.
 New builds then failed on signed snapshot indexes. The previous image
