@@ -1,9 +1,21 @@
 # Phoenix status
 
 M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
-M1 remains open. Run `m1-t0-baae648` reproduced every stable field on exact
-replay. The reviewed capture-binding and accounting correction is now on
-main. It needs its own original run and replay. There is no M1 tag.
+M1 remains open. The guarded original `m1-t0-6897e47` measured Phoenix
+17/20 fully successful and Ghidra-raw 8/20. All 40 report rows match their
+bound checkpoints and model summaries. Exact replay runs on the same main
+revision and images. There is no M1 tag.
+
+This branch isolates the capture consistency correction. Independent Sol
+confirmed the original mismatch correction. It held a symbolic link loop
+that produced a traceback on interrupted resume. The parent reproduced that
+case and the same error during freeze. All three targeted rejection checks
+passed in the first correction. A second Sol review reproduced a concurrent
+replacement between the path checks. Strict physical path resolution now
+covers the freeze path as well as resume. Four targeted checks passed.
+The parent gate passed 520 tests with 25 opt-in skips and 90.55% evaluator
+line coverage. Fresh independent Sol and Astra reviews passed this correction.
+The branch stays separate while main completes exact M1 replay.
 
 | Method | Behavior passed | Integrity passed | Fully successful |
 | --- | --- | --- | --- |
@@ -81,6 +93,27 @@ The dedicated Colima VM has four CPUs and 2 GiB of memory.
 Every major work block requires a fresh independent GPT-6.1 Sol review.
 Milestone and integrity reviews also require Astra. CLI workers use
 Standard service with Fast mode and nested agents disabled.
+
+## Isolated C-F2 correction
+
+C-F2 remains under review in `agent/evaluation-capture-consistency`, based on
+`6897e47`. Synthetic M1 coordinator tests reproduced three contradictions
+between returned submissions and checkpoint bytes during later capture.
+The candidate compares both evidence sources before the freeze. One bounded
+reader validates checkpoint metadata and hashes the same bytes. Submission
+resume uses that reader too. The public report schema remains 1.
+
+The final focused suite passed 217 tests. The final `scripts/check` passed
+Ruff, format, and strict mypy. Its test run had 516 passes, 25 opt-in skips,
+and one failure. The outer guard blocked the unchanged nested protection
+test. Evaluator line coverage was 90.52%. Nonregular checkpoint rejection
+also closes the file descriptor. All failed logs remain available.
+
+The parent must run the complete gate outside the outer guard. Fresh Sol and
+Astra review remain required. C-F1 belongs to the separate M2 branch. Main
+and its active original and replay remain unchanged and were not inspected.
+No real-run certification, M1 acceptance, sealed M2 approval, or tag is claimed.
+Evidence is in `/Volumes/PhoenixWork/audit/evaluation-capture-consistency/`.
 
 ## Next actions
 

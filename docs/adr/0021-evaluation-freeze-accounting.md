@@ -120,3 +120,59 @@ The two M2-only findings, R1 and R2, are outside this change. Independent Sol
 review, Astra closure review, the full parent gate, combined M2 integration
 review, and new candidate measurements remain required. This change does not
 establish M1 acceptance or any benchmark score.
+
+
+## C-F2. Compare returned submissions with checkpoint bytes
+
+The later combined M2 review identified C-F2 in the shared capture boundary.
+Three synthetic M1 coordinator tests reproduced the defect at `6897e47`.
+A later capture changed an earlier checkpoint before the batch freeze. The
+coordinator retained the original `Submission`. The binding hashed the changed
+checkpoint correctly. The report then used the old source identity or failure
+category. The failure-category test used the real `_measure` branch.
+This is partial replacement before freeze. It does not establish manipulation
+of any real run.
+
+Pass the returned submission map to `freeze_binding`. Require its keys to
+match the ordered roster. For each checkpoint, `read_submission` returns the
+parsed `Submission` and the SHA-256 of the same bytes. Compare that value with
+the returned submission before publishing a frozen binding. Keep the original
+returned value for measurement. A contradiction stops before archive access.
+
+The reader rejects symbolic links and nonregular files. Strict physical path
+resolution reports a symbolic link loop as an input error on Python 3.12.
+The freeze rejects a symbolic link and uses the same strict physical path
+resolution. This controls the error if a replacement occurs between checks.
+The reader opens the file with `O_NOFOLLOW` and `O_NONBLOCK`. It checks the descriptor type before wrapping
+it in a stream. Nonregular descriptors are closed. It reads at most 65,537
+bytes and rejects content longer than 65,536 bytes. It parses that buffer and
+hashes that buffer without another file read.
+
+The metadata must contain exactly the `Submission` fields. The reader rejects
+repeated fields, invalid field types, invalid digests, unsupported methods,
+and contradictory source and failure status. Failed submissions retain either
+`pipeline-failed` or `invalid-project`. Their origin evidence can remain bound.
+Both normal submission resume and capture binding use this metadata parser.
+Existing source, package report, and origin checks still run on resume.
+
+Reconstruction time uses the existing `_seconds` normalization. Valid integers
+and floating-point values can represent the same time. Boolean, negative, and
+non-finite times remain invalid. Reconstruction time is still excluded from
+stable replay comparisons. JSON whitespace does not change the parsed value,
+but the binding records the exact checkpoint byte digest.
+
+Existing checks still verify the binding immediately before archive access
+and before report publication. A test replaces a checkpoint after its bytes
+have been read. The binding retains the digest of the validated buffer. The
+next check rejects the replacement before archive access.
+
+Capture interruption, freeze interruption, completed resume, exact replay,
+complete roster accounting, model lookup, and public report schema 1 retain
+their definitions. Old bindings are not backfilled. C-F1 replay ancestry is
+M2-only and belongs to a separate correction.
+
+For the M2 merge, apply the shared `submission.py` and `capture_binding.py`
+changes. Pass `submissions` as the fourth `freeze_binding` argument in M2's
+shared coordinator. Keep M2's coordinator and replay ancestry changes.
+Port the focused shared tests and update direct calls to the required freeze
+argument. Do not replace M2's complete `m1.py` with this M1 file.

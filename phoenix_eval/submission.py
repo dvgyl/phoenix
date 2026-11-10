@@ -2,10 +2,12 @@ import hashlib
 import json
 import math
 import os
+import re
+import stat
 import subprocess
 import sys
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Literal
@@ -18,6 +20,7 @@ from phoenix_eval.provenance import CHECKOUT
 
 type Method = Literal["phoenix", "ghidra-raw"]
 _ORIGIN_LIMIT = 8 * 1024 * 1024
+_CHECKPOINT_LIMIT = 64 * 1024
 
 
 class EvaluationPending(RuntimeError):
@@ -153,25 +156,73 @@ def freeze_package_report(project: Path, directory: Path) -> str:
     return digest
 
 
+def _checkpoint_fields(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise SubmissionError("The submission checkpoint has a repeated field.")
+        result[key] = value
+    return result
+
+
+def read_submission(path: Path) -> tuple[Submission, str]:
+    try:
+        if os.path.realpath(path, strict=True) != str(path):
+            raise ValueError
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+            os.close(descriptor)
+            raise ValueError
+        with os.fdopen(descriptor, "rb") as stream:
+            content = stream.read(_CHECKPOINT_LIMIT + 1)
+        if len(content) > _CHECKPOINT_LIMIT:
+            raise ValueError
+        data = json.loads(content, object_pairs_hook=_checkpoint_fields)
+        if (
+            not isinstance(data, dict)
+            or set(data) != {field.name for field in fields(Submission)}
+            or data["method"] not in ("phoenix", "ghidra-raw")
+            or not isinstance(data["key"], str)
+            or not data["key"]
+            or (
+                data["replay_of"] is not None
+                and (not isinstance(data["replay_of"], str) or not data["replay_of"])
+            )
+        ):
+            raise ValueError
+        for name in (
+            "source_sha256",
+            "development_sha256",
+            "origin_sha256",
+            "report_sha256",
+        ):
+            value = data[name]
+            if value is not None and (
+                not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value)
+            ):
+                raise ValueError
+        if data["source_sha256"] is None:
+            if data["category"] not in ("pipeline-failed", "invalid-project"):
+                raise ValueError
+        elif data["category"] is not None:
+            raise ValueError
+        data["reconstruction_seconds"] = _seconds(data["reconstruction_seconds"])
+        submission = Submission(**data)
+    except (OSError, ValueError, TypeError, RecursionError):
+        raise SubmissionError(
+            "The capture submission checkpoint is invalid or missing."
+        ) from None
+    return submission, hashlib.sha256(content).hexdigest()
+
+
 def _existing_submission(
     path: Path, snapshot: Path, method: Method, key: str, replay_of: str | None
 ) -> Submission:
-    data = json.loads(path.read_text(encoding="utf-8"))
-    submission = Submission(
-        method,
-        key,
-        data["source_sha256"],
-        data["category"],
-        replay_of,
-        data.get("development_sha256"),
-        data.get("origin_sha256"),
-        data.get("report_sha256"),
-        _seconds(data.get("reconstruction_seconds")),
-    )
+    submission, _ = read_submission(path)
     if (
-        data["method"] != method
-        or data["key"] != key
-        or data.get("replay_of") != replay_of
+        submission.method != method
+        or submission.key != key
+        or submission.replay_of != replay_of
     ):
         raise SubmissionError("The submission checkpoint identity changed.")
     if submission.source_sha256 is not None and (

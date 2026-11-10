@@ -530,3 +530,103 @@
   A separate Sol worker is implementing the stripped-binary evidence adapter
   from the completed Astra design. Private Astra authors are preparing T2
   and qualifying T3. Their sources and detailed logs remain sealed.
+
+
+## 2026-11-10. Isolated C-F2 capture consistency correction
+
+- Worked only in `agent/evaluation-capture-consistency` at base `6897e47`.
+  Read the combined Astra report and all three C-F2 reproduction sources
+  and logs. Main and its active real original and replay were not inspected.
+- Three synthetic M1 coordinator rejection tests failed on the base code.
+  A later submission changed the first checkpoint before freeze. The result
+  retained the old source identity or failure category. The binding correctly
+  hashed the changed checkpoint. The all-failed case used the real `_measure`
+  branch and reported `pipeline-failed` for an `invalid-project` checkpoint.
+  This evidence does not establish manipulation of a real run.
+- The candidate passes the returned submission map to the shared freeze.
+  It compares every returned value with parsed checkpoint metadata. One bounded
+  regular-file reader supplies both the value and the digest of the same bytes.
+  Submission resume uses that reader. Contradictions stop before archive access.
+- Added coordinator tests for changed metadata, malformed checkpoints, exact
+  failure categories, interruption, resume, replay, and timing normalization.
+  A replacement after a checkpoint read proves that validation and hashing use
+  the same bytes. Nonregular-file tests check rejection and descriptor closure.
+  Existing roster accounting tests remain in the gate.
+- The first corrected test run had 89 passes and two error-message mismatches.
+  The message was corrected. An initial Ruff check and an initial full gate
+  stopped on a long error string. Strict mypy first found six test typing errors.
+  Those errors were corrected. All failed logs remain in the task directory.
+- The initial full test run had 514 passes, 25 skips, and the unchanged nested
+  protection failure. A subsequent local check found a descriptor left open
+  after directory rejection. The reader now closes it. A static check first
+  used a nonexistent provider path. Its corrected version checks actual files.
+- The final focused suite passed 217 tests. The final `scripts/check` passed
+  Ruff, format, and strict mypy for 79 source files. Tests had 516 passes,
+  25 opt-in skips, and one failure. The outer guard denied nested sandbox
+  creation with exit 71. The protection test was not changed or excluded.
+  Evaluator line coverage was 90.52%. These are test results, not corpus scores.
+- The parent must rerun the full gate outside the outer guard and obtain fresh
+  Sol and Astra review. The shared M2 port needs the two shared modules and
+  the fourth `freeze_binding` argument. C-F1 stays in the separate M2 branch.
+  No commit, push, tag, real-run certification, or milestone approval was made.
+  Report, hashes, and summary are in
+  `/Volumes/PhoenixWork/audit/evaluation-capture-consistency/`.
+
+## 2026-11-10. Controlled checkpoint path errors
+
+- The parent reran the initial shared correction outside the review guard.
+  All 517 tests passed, with 25 opt-in skips and 90.52% evaluator coverage.
+- Independent Sol confirmed that the returned value and exact checkpoint
+  bytes agree at measurement. It held a new controlled-error regression.
+  Python 3.12 raised `RuntimeError` for a symbolic link loop on interrupted
+  resume. The command exited with a traceback instead of its input error.
+- The parent reproduced the independent command-line probe and two local
+  coordinator cases. Strict path resolution now rejects the loop as an input
+  error. The freeze checks for a symbolic link before path resolution. All
+  three targeted requirements pass. The binding and submission formats stay
+  the same. The corrected parent gate passed 519 tests with 25 opt-in skips
+  and 90.52% evaluator coverage. Ruff, format, strict mypy and protection passed.
+- The guarded original `m1-t0-6897e47` retained 17/20 fully successful
+  Phoenix variants and 8/20 Ghidra-raw variants. The parent checked all 40
+  bound checkpoints and model summaries. The exact replay is active.
+  Main and the accepted images stay fixed through the replay checks.
+- The earlier HOLD and its failures remain in the audit records. The shared
+  correction stays isolated pending fresh review. No milestone tag is claimed.
+
+## 2026-11-10. Controlled rejection during concurrent capture replacement
+
+- Fresh Astra passed the prior eight-file candidate. Fresh Sol passed the
+  C-F2 result checks and held a remaining controlled-error case. A threaded
+  probe replaced a checkpoint with a symbolic link loop between two path
+  checks. No archive opened and no report appeared. The command still
+  returned a traceback instead of its normal input error.
+- The parent reproduced the threaded probe and a local fault injection.
+  Capture enumeration now uses strict physical path resolution for both
+  directories and files. A path error causes the existing capture rejection.
+  The checkpoint reader still hashes the same bytes it parses.
+- All four targeted checks passed, including the original threaded command
+  probe. The complete parent gate passed 520 tests with 25 opt-in skips and
+  90.55% evaluator coverage. Ruff, format, strict mypy and protection passed.
+  Both failed probes and the corrected run remain in
+  `audit/evaluation-capture-concurrent/`.
+- The corrected branch remains isolated. Fresh exact reviews and the combined
+  M2 gate remain required. Main stays fixed during exact M1 replay.
+
+## 2026-11-10. Independent shared capture closure
+
+- A fresh Sol reviewer passed the exact eight-file correction. It reran
+  the threaded probe, 40 prior Sol controls, 23 prior Astra controls,
+  and 222 focused tests under the outer guard. The 285 passes include
+  the prior rejection and replay controls. The unchanged nested
+  protection test failed in the outer guard and passed in the parent gate.
+- A fresh Astra reviewer passed the same exact candidate. It confirmed
+  normal rejection when a checkpoint becomes a cyclic symbolic link
+  between checks. It also confirmed preserved capture consistency,
+  interrupted and completed resume, exact replay, and model accounting.
+- Both reviewers confirmed unchanged hashes. The parent checked all eight
+  hashes before this progress-document update. The reviewed code and tests
+  are unchanged. Reports are in `audit/evaluation-capture-concurrent-sol/`
+  and `audit/evaluation-capture-concurrent-astra/`.
+- Retain this verified source on its isolated branch. Main remains at
+  `6897e47` during exact M1 replay and milestone review. Combined M2 reviews
+  are separate gates. No milestone tag is claimed.

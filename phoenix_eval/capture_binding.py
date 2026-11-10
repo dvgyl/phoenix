@@ -1,8 +1,10 @@
 import json
+import os
+from collections.abc import Mapping
 from pathlib import Path
 
 from phoenix_eval.model_ledger import ledger_digest
-from phoenix_eval.submission import write_report
+from phoenix_eval.submission import Submission, read_submission, write_report
 
 
 def _digest(path: Path) -> str:
@@ -12,20 +14,43 @@ def _digest(path: Path) -> str:
     return digest
 
 
-def _record(run: Path, keys: tuple[str, ...]) -> dict[str, object]:
+def _physical(path: Path) -> bool:
+    try:
+        return os.path.realpath(path, strict=True) == str(path)
+    except OSError:
+        return False
+
+
+def _record(
+    run: Path,
+    keys: tuple[str, ...],
+    submissions: Mapping[str, Submission] | None = None,
+) -> dict[str, object]:
     captures = []
     if len(keys) != len(set(keys)):
         raise ValueError("The capture roster contains duplicate task keys.")
     for key in keys:
         directory = run / "submissions" / key / "capture"
-        if directory.resolve() != directory or not directory.is_dir():
+        if not directory.is_dir() or not _physical(directory):
             raise ValueError("The frozen capture directory is invalid or missing.")
         files = {}
         for path in sorted(directory.rglob("*")):
-            if path.resolve() != path:
+            if path.is_symlink() or not _physical(path):
                 raise ValueError("The frozen capture cannot contain symbolic links.")
             if not path.is_dir():
-                files[path.relative_to(directory).as_posix()] = _digest(path)
+                name = path.relative_to(directory).as_posix()
+                if name == "submission.json":
+                    saved, digest = read_submission(path)
+                    if saved.key != key or (
+                        submissions is not None and saved != submissions[key]
+                    ):
+                        raise ValueError(
+                            "The capture checkpoint differs from "
+                            "the returned submission."
+                        )
+                    files[name] = digest
+                else:
+                    files[name] = _digest(path)
         if "submission.json" not in files:
             raise ValueError("The frozen capture checkpoint is missing.")
         captures.append({"key": key, "files": files})
@@ -76,13 +101,22 @@ def open_binding(run: Path, keys: tuple[str, ...]) -> bytes | None:
     return content
 
 
-def freeze_binding(run: Path, keys: tuple[str, ...], bound: bytes | None) -> bytes:
+def freeze_binding(
+    run: Path,
+    keys: tuple[str, ...],
+    bound: bytes | None,
+    submissions: Mapping[str, Submission],
+) -> bytes:
+    if set(submissions) != set(keys):
+        raise ValueError("The returned submissions do not match the capture roster.")
+    record = _record(run, keys, submissions)
     if bound is None:
         if json.loads(_read(run)) != {"schema": 1, "phase": "capturing"}:
             raise ValueError("The capture binding changed before publication.")
-        write_report(run / "capture-binding.json", _record(run, keys))
+        write_report(run / "capture-binding.json", record)
         bound = _read(run)
-    verify_binding(run, keys, bound)
+    if _read(run) != bound or json.loads(bound) != record:
+        raise ValueError("The frozen capture binding changed after submission.")
     return bound
 
 
