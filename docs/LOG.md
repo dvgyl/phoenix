@@ -33,3 +33,13 @@
   build is in progress.
 - Both initial native CI jobs rejected a public mutation at compile
   time. Fixed the unused environment lookup in that variant.
+- The preliminary Apple Silicon run matched all 16 public cases across
+  Rosetta, QEMU, and the AArch64 builds. It detected all 20 deliberate
+  mutation builds. Coverage failed in run
+  `m0-4561081303ab4545b4c194d9f212922c`, so the run failed acceptance.
+- Built the pinned QEMU release with plugin support. Astra identified
+  why QEMU's entry address did not identify the original dynamic ELF.
+  The corrected collector observed the original executable entry in
+  a real public probe.
+- The public evaluation now pins worker image IDs for the full run.
+  The development case generator keeps mutations that add coverage.

@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 from base64 import b64encode
 from enum import StrEnum
@@ -36,7 +37,30 @@ class WorkerError(RuntimeError):
     pass
 
 
-def docker_args(engine: Engine, container: str) -> tuple[str, ...]:
+def freeze_images(engines: tuple[Engine, ...]) -> dict[str, str]:
+    platforms = tuple(dict.fromkeys(engine.platform for engine in engines))
+    result = subprocess.run(
+        (
+            "docker",
+            "image",
+            "inspect",
+            "--format={{.Id}}",
+            *(f"phoenix-worker:{platform}" for platform in platforms),
+        ),
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=15,
+    )
+    ids = result.stdout.splitlines()
+    if any(not re.fullmatch(r"sha256:[a-f0-9]{64}", image) for image in ids):
+        raise WorkerError("Docker returned an invalid worker image ID.")
+    return dict(zip(platforms, ids, strict=True))
+
+
+def docker_args(
+    engine: Engine, container: str, image: str | None = None
+) -> tuple[str, ...]:
     namespace = (
         ("--cap-add=SYS_ADMIN", "--security-opt=apparmor=unconfined")
         if engine is Engine.ROSETTA
@@ -69,12 +93,17 @@ def docker_args(engine: Engine, container: str) -> tuple[str, ...]:
         "--cap-add=DAC_OVERRIDE",
         "--security-opt=no-new-privileges",
         *namespace,
-        f"phoenix-worker:{engine.platform}",
+        image or f"phoenix-worker:{engine.platform}",
     )
 
 
 def run_batch(
-    binary: Path, cases: tuple[Invocation, ...], engine: Engine, *, trace: bool = False
+    binary: Path,
+    cases: tuple[Invocation, ...],
+    engine: Engine,
+    *,
+    trace: bool = False,
+    image: str | None = None,
 ) -> tuple[CaseResult, ...]:
     if trace and engine is not Engine.QEMU_X86_64:
         raise ValueError("Tracing requires the QEMU engine.")
@@ -103,7 +132,7 @@ def run_batch(
         request.seek(0)
         try:
             completed = subprocess.run(
-                docker_args(engine, name),
+                docker_args(engine, name, image),
                 stdin=request,
                 stdout=response,
                 stderr=diagnostics,

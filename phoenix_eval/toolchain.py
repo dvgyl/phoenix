@@ -17,6 +17,8 @@ def build_public(
     engine: Engine,
     compiler: Compiler,
     mutant: int = 0,
+    *,
+    image: str | None = None,
 ) -> None:
     if engine is Engine.QEMU_X86_64:
         raise ValueError("Use a native toolchain image to build a program.")
@@ -39,7 +41,7 @@ def build_public(
             "--entrypoint=/bin/sh",
             "--platform",
             f"linux/{engine.platform}",
-            f"phoenix-worker:{engine.platform}",
+            image or f"phoenix-worker:{engine.platform}",
             "-ec",
             '"$1" -x c -std=c11 -Wall -Wextra -Werror -O2 "$2" -o program -; '
             "strip --strip-all program; cat program",

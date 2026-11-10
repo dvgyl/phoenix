@@ -23,12 +23,17 @@ def test_m0_requires_valid_mutant_differences(
     mutants_detected: bool,
 ) -> None:
     def build(
-        source: Path, output: Path, engine: Engine, compiler: Compiler, mutant: int = 0
+        source: Path,
+        output: Path,
+        engine: Engine,
+        compiler: Compiler,
+        mutant: int = 0,
+        **_: object,
     ) -> None:
         output.write_bytes(b"public test executable")
 
     def run(
-        binary: Path, cases: tuple[Invocation, ...], engine: Engine
+        binary: Path, cases: tuple[Invocation, ...], engine: Engine, **_: object
     ) -> tuple[CaseResult, ...]:
         if binary.name.startswith("runprobe-"):
             return (
@@ -55,6 +60,9 @@ def test_m0_requires_valid_mutant_differences(
         m0,
         "verify_runtime",
         lambda _: RuntimeEvidence("arm64", "29.5", "rosetta", "native"),
+    )
+    monkeypatch.setattr(
+        m0, "freeze_images", lambda _: {"amd64": "x86-image", "arm64": "arm-image"}
     )
     monkeypatch.setattr(m0, "measure_public", lambda *_: PublicCoverage(2, 1, 1))
     monkeypatch.setattr(m0, "build_public", build)

@@ -30,10 +30,11 @@ RUN apt-get -o Acquire::Retries=3 --error-on=any update && \
     apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
         libglib2.0-dev meson ninja-build pkg-config python3-venv
 RUN --mount=type=bind,from=qemu-source,target=/source \
-    mkdir -p /build && tar -xJf /source/qemu.tar.xz -C /build --strip-components=1 && \
-    cd /build && ./configure --target-list=x86_64-linux-user --enable-plugins \
+    python3 -m tarfile -e /source/qemu.tar.xz /build
+WORKDIR /build/qemu-8.2.2
+RUN ./configure --target-list=x86_64-linux-user --enable-plugins \
         --disable-system --disable-tools --disable-docs --disable-guest-agent \
-        --disable-download --disable-capstone --disable-liburing && \
+        --disable-download --disable-capstone && \
     ninja -C build -j 4 qemu-x86_64 && \
     install -D build/qemu-x86_64 /opt/qemu/bin/qemu-x86_64
 

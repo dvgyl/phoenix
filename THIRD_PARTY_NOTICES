@@ -26,3 +26,7 @@ QEMU, GPL-2.0. Some files carry separate licenses. https://github.com/qemu/qemu/
 GitHub checkout, upload-artifact, and download-artifact actions, MIT. https://github.com/actions
 Astral setup-uv, MIT or Apache-2.0. https://github.com/astral-sh/setup-uv
 QEMU plugin header, GPL-2.0-or-later. https://github.com/qemu/qemu/blob/v8.2.2/include/qemu/qemu-plugin.h
+Meson, Apache-2.0. https://github.com/mesonbuild/meson/blob/master/COPYING
+Ninja, Apache-2.0. https://github.com/ninja-build/ninja/blob/master/COPYING
+pkgconf, ISC. https://github.com/pkgconf/pkgconf/blob/main/COPYING
+GLib, LGPL-2.1-or-later. https://github.com/GNOME/glib/blob/main/COPYING

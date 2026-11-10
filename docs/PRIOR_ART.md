@@ -24,3 +24,4 @@ projects used in the workspace and the local quality checks.
 | Bubblewrap | Design comparison for per-test isolation | [Bubblewrap](https://github.com/containers/bubblewrap) |
 | GitHub Actions and Astral setup-uv | Native CI and public report comparison | [Checkout](https://github.com/actions/checkout), [Artifact upload](https://github.com/actions/upload-artifact), [Artifact download](https://github.com/actions/download-artifact), [Setup uv](https://github.com/astral-sh/setup-uv) |
 | QEMU TCG plugin interface | Observe original instruction execution | [QEMU 8.2 plugin API](https://qemu.readthedocs.io/en/v8.2.10/devel/tcg-plugins.html) |
+| Meson, Ninja, pkgconf, and GLib | Build the pinned QEMU release | [Meson](https://github.com/mesonbuild/meson), [Ninja](https://github.com/ninja-build/ninja), [pkgconf](https://github.com/pkgconf/pkgconf), [GLib](https://github.com/GNOME/glib) |

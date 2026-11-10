@@ -56,7 +56,6 @@ def encode_result(result: CaseResult) -> str:
                 {
                     "start": trace.start,
                     "end": trace.end,
-                    "entry": trace.entry,
                     "hits": trace.hits,
                 }
                 if trace is not None
@@ -93,7 +92,6 @@ def _decode_trace(value: object) -> CodeTrace | None:
     return CodeTrace(
         start=_integer(trace["start"]),
         end=_integer(trace["end"]),
-        entry=_integer(trace["entry"]),
         hits=tuple(_integer(hit) for hit in _array(trace["hits"])),
     )
 

@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import BinaryIO
 
 import pytest
-from hypothesis import given
+from hypothesis import example, given, settings
 from hypothesis import strategies as st
 
 from phoenix_eval.case import Invocation
@@ -12,6 +12,8 @@ from phoenix_eval.wire import decode_invocation, encode_result
 
 
 @given(st.lists(st.text(alphabet=st.characters(exclude_characters="\0"))))
+@example(["--privileged", "--cap-add=SETUID", "a b"])
+@settings(deadline=None)
 def test_target_arguments_go_to_worker_stdin(args: list[str]) -> None:
     from tempfile import TemporaryDirectory
 

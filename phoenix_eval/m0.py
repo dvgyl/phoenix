@@ -4,12 +4,13 @@ import random
 import subprocess
 from dataclasses import asdict, dataclass
 from enum import StrEnum
+from functools import partial
 from pathlib import Path
 from uuid import uuid4
 
 from phoenix_eval.case import CaseFailure, CaseResult, FailureKind, Invocation
 from phoenix_eval.coverage import measure_public
-from phoenix_eval.docker import Engine, WorkerError, run_batch
+from phoenix_eval.docker import Engine, WorkerError, freeze_images, run_batch
 from phoenix_eval.outcome import (
     EntryKind,
     Exited,
@@ -139,14 +140,14 @@ def _mismatch(original: CaseResult, rebuild: CaseResult) -> bool:
     )
 
 
-def _probe(corpus: Path, work: Path, engine: Engine) -> bool:
+def _probe(corpus: Path, work: Path, engine: Engine, image: str) -> bool:
     executable = work / f"runprobe-{engine.value}.elf"
-    build_public(corpus / "runprobe.c", executable, engine, Compiler.GCC)
+    build_public(corpus / "runprobe.c", executable, engine, Compiler.GCC, image=image)
     cases = tuple(
         Invocation(args)
         for args in ((), ("escape",), ("signal",), ("exit",), ("fifo",), ("policy",))
     )
-    result = run_batch(executable, cases, engine)
+    result = run_batch(executable, cases, engine, image=image)
     (work / f"probe-{engine.value}.jsonl").write_text(
         "".join(encode_result(outcome) + "\n" for outcome in result), encoding="ascii"
     )
@@ -168,6 +169,7 @@ def evaluate(
     corpus: Path, runs: Path, mode: Mode, seed: int = SEED
 ) -> tuple[Path, bool]:
     runtime = verify_runtime(mode)
+    images = freeze_images(mode.engines)
     run_id = f"m0-{uuid4().hex}"
     work = runs / run_id
     work.mkdir(parents=True)
@@ -175,27 +177,42 @@ def evaluate(
     native_engines = tuple(
         engine for engine in mode.engines if engine is not Engine.QEMU_X86_64
     )
-    probes = {engine: _probe(corpus, work, engine) for engine in native_engines}
+    probes = {
+        engine: _probe(corpus, work, engine, images[engine.platform])
+        for engine in native_engines
+    }
+
+    def run(
+        binary: Path, cases: tuple[Invocation, ...], engine: Engine
+    ) -> tuple[CaseResult, ...]:
+        return run_batch(binary, cases, engine, image=images[engine.platform])
+
     summaries = []
     all_passed = all(probes.values())
     for program in public_programs(seed):
         source = corpus / f"{program.name}.c"
         baseline_engine = native_engines[0]
         original = work / f"{program.name}-original.elf"
-        build_public(source, original, baseline_engine, Compiler.GCC)
-        baseline = run_batch(original, program.cases, baseline_engine)
+        build_public(
+            source,
+            original,
+            baseline_engine,
+            Compiler.GCC,
+            image=images[baseline_engine.platform],
+        )
+        baseline = run(original, program.cases, baseline_engine)
         expected_ok = baseline == program.expected
         stable = all(isinstance(outcome, Outcome) for outcome in baseline)
         for _ in range(TRIALS):
-            stable &= baseline == run_batch(original, program.cases, baseline_engine)
+            stable &= baseline == run(original, program.cases, baseline_engine)
 
         excluded: set[int] = set()
         oracle_ok = True
         if Engine.QEMU_X86_64 in mode.engines:
-            independent = run_batch(original, program.cases, Engine.QEMU_X86_64)
+            independent = run(original, program.cases, Engine.QEMU_X86_64)
             oracle_ok = all(isinstance(outcome, Outcome) for outcome in independent)
             for _ in range(TRIALS):
-                oracle_ok &= independent == run_batch(
+                oracle_ok &= independent == run(
                     original, program.cases, Engine.QEMU_X86_64
                 )
             excluded = {
@@ -224,6 +241,8 @@ def evaluate(
                         tuple(program.cases[index] for index in eligible),
                         tuple(baseline[index] for index in eligible),
                         work / f"{program.name}-dev.jsonl",
+                        seed,
+                        images,
                     )
                 )
             except (
@@ -236,11 +255,12 @@ def evaluate(
         portable = {}
         mutations = {}
         for engine in native_engines:
+            build = partial(build_public, image=images[engine.platform])
             control: tuple[CaseResult, ...] = ()
             for compiler in Compiler:
                 rebuild = work / f"{program.name}-{engine.value}-{compiler}.elf"
-                build_public(source, rebuild, engine, compiler)
-                candidate = run_batch(rebuild, program.cases, engine)
+                build(source, rebuild, engine, compiler)
+                candidate = run(rebuild, program.cases, engine)
                 if compiler is Compiler.GCC:
                     control = candidate
                 portable[f"{engine.value}-{compiler}"] = bool(eligible) and all(
@@ -254,8 +274,8 @@ def evaluate(
             )
             for mutant in range(1, program.mutants + 1):
                 rebuild = work / f"{program.name}-{engine.value}-mutant-{mutant}.elf"
-                build_public(source, rebuild, engine, Compiler.GCC, mutant)
-                changed = run_batch(rebuild, program.cases, engine)
+                build(source, rebuild, engine, Compiler.GCC, mutant)
+                changed = run(rebuild, program.cases, engine)
                 valid &= all(isinstance(changed[index], Outcome) for index in eligible)
                 killed += any(
                     _mismatch(control[index], changed[index]) for index in eligible
@@ -301,6 +321,7 @@ def evaluate(
                 "run_id": run_id,
                 "mode": mode,
                 "runtime": asdict(runtime),
+                "worker_images": images,
                 "seed": seed,
                 "self_trials": TRIALS,
                 "sandbox_probes": probes,

@@ -11,7 +11,6 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 
 static uint64_t start;
 static uint64_t end;
-static uint64_t entry;
 static uint8_t *hits;
 static bool initialized;
 
@@ -25,8 +24,7 @@ static void translate(qemu_plugin_id_t id, struct qemu_plugin_tb *block) {
     if (!initialized) {
         start = qemu_plugin_start_code();
         end = qemu_plugin_end_code();
-        entry = qemu_plugin_entry_code();
-        if (end <= start || end - start > 16 * 1024 * 1024 || entry < start || entry >= end) {
+        if (end <= start || end - start > 16 * 1024 * 1024) {
             return;
         }
         initialized = true;
@@ -53,7 +51,7 @@ static void finish(qemu_plugin_id_t id, void *data) {
         return;
     }
     char line[128];
-    snprintf(line, sizeof(line), "image %" PRIx64 " %" PRIx64 " %" PRIx64 "\n", start, end, entry);
+    snprintf(line, sizeof(line), "image %" PRIx64 " %" PRIx64 "\n", start, end);
     qemu_plugin_outs(line);
     unsigned int count = 0;
     for (uint64_t offset = 0; offset < end - start; offset++) {
