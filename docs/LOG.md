@@ -112,3 +112,10 @@
   ADR 0007 records the pinned Clang interface and the limits of byte
   checks. The independent evaluator and compiler checker are in
   separate worktrees.
+- The Standard-tier Astra Corpus Author delivered 10 T0 programs and
+  40 stripped variants. Checked the release manifest, all 40 SHA-256
+  hashes, and the aggregate adequacy records. The author's minimum
+  source branch coverage was 9 of 10. The minimum mutation score was
+  8 of 8. The author's worktree could not create the Git index lock.
+  The lead agent staged the author's exact archive commitments from
+  the worktree. The source and held-out archives remain private.

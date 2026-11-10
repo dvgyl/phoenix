@@ -20,7 +20,7 @@ The workspace uses the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
 1. Replace the integrity scanner's token checks with compiler evidence.
 2. Verify the command-line reconstruction and replay on a public ELF.
 3. Add an evaluator that rebuilds and tests projects independently.
-4. Check the separate Corpus Author's T0 handoff metadata.
+4. Implement the mechanical Ghidra-raw baseline.
 5. Run the M1 evaluation and report the Ghidra-raw baseline.
 
 The Standard-tier Codex provider passed public run
@@ -37,8 +37,10 @@ built one CMake project with GCC and Clang on x86-64 and AArch64.
 All four builds returned the expected output in the Linux sandbox.
 
 The Ghidra exporter passed its public headless tests with the native
-ARM64 decompiler. The separate Standard-tier Corpus Author is preparing
-the T0 batch.
+ARM64 decompiler. The separate Standard-tier Corpus Author delivered
+10 T0 programs with 40 builds. The author measured at least 9 of 10
+source branches and 8 of 8 non-equivalent mutants in the lowest-scoring
+programs. The lead agent checked the release binary hashes.
 
 Public probe `public-reconstruction-24660e35059f42e2914b967546600bfb`
 built the decompiled `bitstats` project four ways. All 10 public cases
