@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: quality
+        name: Phoenix quality checks
+        entry: ./scripts/check
+        language: system
+        pass_filenames: false
+        always_run: true

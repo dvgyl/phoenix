@@ -1,0 +1,7 @@
+# The Python package versions and hashes are in uv.lock.
+python = "3.12.13"
+uv = "0.12.3"
+colima = "0.10.3"
+lima = "2.2.1"
+docker_cli = "29.7.2"
+source_date_epoch = 1794268800

@@ -1,0 +1,5 @@
+ts	phase	decision	why	evidence	result
+2026-11-10T08:47:12Z	start	Start M0 with the supplied specifications.	Later milestones depend on a test harness with known behavior.	AGENTS.md §5 and SPEC.md §8	M0 acceptance checks recorded.
+2026-11-10T08:47:12Z	storage	Mount a case-sensitive APFS sparse image on the external drive.	The external drive uses exFAT.	docs/adr/0001-host-environment.md	Confirmed case-sensitive APFS at /Volumes/PhoenixWork.
+2026-11-10T08:52:41Z	runtime	Enable Rosetta after installing the system package.	Rosetta and explicit QEMU must be independent on Apple Silicon.	docs/adr/0001-host-environment.md	The VM reports Rosetta enabled and automatic x86 QEMU disabled.
+2026-11-10T08:52:42Z	outcomes	Compare immutable outcomes and canonical directory trees.	Directory entry order must not affect a comparison.	tests/test_outcome.py	Local quality checks passed.

@@ -1,0 +1,9 @@
+*
+!containers/
+!containers/**
+!phoenix_eval/
+!phoenix_eval/**
+!corpus_public/
+!corpus_public/**
+!tools.lock
+**/__pycache__/

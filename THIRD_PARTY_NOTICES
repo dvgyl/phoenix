@@ -1,0 +1,16 @@
+Phoenix uses the following external tools. The Phoenix repository does
+not distribute their binaries or source files. The upstream license
+files apply to their installed copies.
+
+Colima, MIT. https://github.com/abiosoft/colima/blob/main/LICENSE
+Lima, Apache-2.0. https://github.com/lima-vm/lima/blob/master/LICENSE
+Docker CLI, Apache-2.0. https://github.com/docker/cli/blob/master/LICENSE
+Rosetta 2, Apple software license. Distributed by macOS Software Update.
+CPython, Python Software Foundation License. https://github.com/python/cpython/blob/3.12/LICENSE
+uv, MIT or Apache-2.0. https://github.com/astral-sh/uv
+Ruff, MIT. https://github.com/astral-sh/ruff/blob/main/LICENSE
+mypy, MIT. https://github.com/python/mypy/blob/master/LICENSE
+pytest, MIT. https://github.com/pytest-dev/pytest/blob/main/LICENSE
+Hypothesis, MPL-2.0. https://github.com/HypothesisWorks/hypothesis/blob/master/LICENSE.txt
+pytest-cov, MIT. https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE
+pre-commit, MIT. https://github.com/pre-commit/pre-commit/blob/main/LICENSE
