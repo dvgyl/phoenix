@@ -143,17 +143,24 @@ def test_configuration_binds_archive_and_image_evidence(
         "method": "ghidra-raw",
         "revision": "revision",
         "worker_source_sha256": "worker",
+        "checker_source_sha256": "checker",
         "pipeline_source_sha256": "pipeline",
         "lifting_tool_identity": {"tool": "identity"},
         "images": {"amd64": "worker"},
+        "checker_images": {"amd64": "checker"},
         "replay_from": None,
     }
     checkpoint = tmp_path / "run.json"
     checkpoint.write_text(json.dumps(record))
     m1._validate_pipeline_record(tmp_path, task, None, result)
-    checkpoint.write_text(json.dumps({**record, "method": "phoenix"}))
-    with pytest.raises(ValueError, match="does not match the evaluation plan"):
-        m1._validate_pipeline_record(tmp_path, task, None, result)
+    for change in (
+        {"method": "phoenix"},
+        {"checker_source_sha256": "different"},
+        {"checker_images": {"amd64": "different"}},
+    ):
+        checkpoint.write_text(json.dumps({**record, **change}))
+        with pytest.raises(ValueError, match="does not match the evaluation plan"):
+            m1._validate_pipeline_record(tmp_path, task, None, result)
 
 
 def test_measurement_does_not_pass_with_incomplete_integrity_evidence(

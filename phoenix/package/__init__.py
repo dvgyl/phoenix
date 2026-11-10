@@ -1,11 +1,13 @@
 import json
 from bisect import bisect_left
+from dataclasses import asdict
 from pathlib import Path
 
 from phoenix.generate import Candidate, write_project
 from phoenix.recover import Program
 from phoenix.verify import Verification
 from phoenix_eval.coverage import read_executable_bounds
+from phoenix_eval.integrity import IntegrityReport
 from phoenix_eval.outcome import Outcome
 
 
@@ -38,6 +40,7 @@ def package_project(
     candidate: Candidate,
     tested: frozenset[int],
     verification: Verification,
+    integrity: IntegrityReport | None,
     evidence: dict[str, object],
 ) -> None:
     write_project(project, candidate, tested)
@@ -75,11 +78,23 @@ def package_project(
         "builds": builds,
         "dev_cases": verification.case_count,
         "dev_cases_matched_on_all_builds": len(verification.passed_cases),
+        "development_behavior_passed": verification.passed,
+        "development_integrity": asdict(integrity) if integrity is not None else None,
         "functions": functions,
     }
     (project / "phoenix_report.json").write_text(
         json.dumps(report, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
     )
+    if integrity is None:
+        integrity_status = "No build was available for the development integrity check."
+    elif integrity.passed:
+        integrity_status = "The development integrity check passed."
+    else:
+        categories = ", ".join(
+            f"`{name}` ({count})"
+            for name, count in sorted(integrity.categories.items())
+        )
+        integrity_status = f"The development integrity check failed. {categories}."
     lines = [
         "# Phoenix reconstruction report",
         "",
@@ -87,6 +102,8 @@ def package_project(
         "",
         f"{len(verification.passed_cases)} of {verification.case_count} development "
         "cases matched on all four builds.",
+        "",
+        integrity_status,
         "",
         "The test runner measures original instruction hits. Function labels use "
         "passing tests and those hits. Branch coverage is unmeasured.",

@@ -146,9 +146,11 @@ def _validate_pipeline_record(
             "method": task.method,
             "revision": config["revision"],
             "worker_source_sha256": config["worker_source_sha256"],
+            "checker_source_sha256": config["checker_source_sha256"],
             "pipeline_source_sha256": config["pipeline_source_sha256"],
             "lifting_tool_identity": config["lifting_tool_identity"],
             "images": config["worker_images"],
+            "checker_images": config["checker_images"],
             "replay_from": replay_of,
         }
         if any(

@@ -25,8 +25,10 @@ from phoenix.package import package_project, reached_functions
 from phoenix.recover import recover
 from phoenix.repair import feedback
 from phoenix.verify import Check, Verification, verify_project
-from phoenix_eval.build import BuildResult
-from phoenix_eval.docker import Engine
+from phoenix.verify.integrity import IntegrityInputs
+from phoenix_eval.build import BuildResult, ProjectSnapshot, snapshot_project
+from phoenix_eval.docker import Engine, read_program
+from phoenix_eval.integrity import IntegrityReport, original_shapes
 from phoenix_eval.outcome import Outcome
 from phoenix_eval.toolchain import Compiler
 from phoenix_eval.wire import (
@@ -50,6 +52,7 @@ class _SavedBuild(TypedDict):
     engine: str
     compiler: str
     executable: str | None
+    executable_sha256: str | None
     warnings: int
     diagnostics: str
 
@@ -58,6 +61,11 @@ class _SavedCheck(TypedDict):
     build: _SavedBuild
     outcomes: list[str]
     differences: list[list[str]]
+
+
+class _SavedVerification(TypedDict):
+    project_sha256: str
+    checks: list[_SavedCheck]
 
 
 class Method(StrEnum):
@@ -73,6 +81,7 @@ class Settings:
     java_home: Path
     repair_limit: int
     astra_repair: bool
+    checker_images: dict[str, str]
     method: Method = Method.PHOENIX
 
     def __post_init__(self) -> None:
@@ -84,6 +93,21 @@ class Settings:
 class Reconstruction:
     project: Path
     development_passed: bool
+
+
+@dataclass(frozen=True, slots=True)
+class Trial:
+    candidate: Candidate
+    verification: Verification
+    integrity: IntegrityReport | None
+
+    @property
+    def passed(self) -> bool:
+        return (
+            self.verification.passed
+            and self.integrity is not None
+            and self.integrity.passed
+        )
 
 
 def write_json(path: Path, value: object) -> None:
@@ -136,38 +160,56 @@ def _analyze(binary: Path, path: Path, settings: Settings) -> Analysis:
     return result
 
 
-def _load_verification(path: Path, build_dir: Path, count: int) -> Verification:
-    saved = cast(list[_SavedCheck], json.loads(path.read_text(encoding="utf-8")))
+def _load_verification(
+    records: list[_SavedCheck], build_dir: Path, count: int
+) -> Verification:
     checks = []
-    for record in saved:
+    for record in records:
         build = record["build"]
-        executable = build["executable"]
+        engine, compiler = Engine(build["engine"]), Compiler(build["compiler"])
+        executable = None
+        tested = None
+        if build["executable"] is not None:
+            name = f"{engine.value}-{compiler}.elf"
+            executable = build_dir / name
+            if build["executable"] != name or executable.resolve() != executable:
+                raise ValueError("The saved executable path has changed.")
+            tested = read_program(executable)
+            if sha256(tested).hexdigest() != build["executable_sha256"]:
+                raise ValueError("The tested executable has changed.")
         checks.append(
             Check(
                 BuildResult(
-                    Engine(build["engine"]),
-                    Compiler(build["compiler"]),
-                    build_dir / executable if executable else None,
+                    engine,
+                    compiler,
+                    executable,
                     build["warnings"],
                     build["diagnostics"],
                 ),
                 tuple(decode_result(item) for item in record["outcomes"]),
                 tuple(tuple(item) for item in record["differences"]),
+                tested,
             )
         )
     return Verification(tuple(checks), count)
 
 
 def _verify(
-    project: Path, build_dir: Path, path: Path, analysis: Analysis, settings: Settings
+    project: ProjectSnapshot,
+    build_dir: Path,
+    path: Path,
+    analysis: Analysis,
+    settings: Settings,
 ) -> Verification:
+    project_digest = sha256(project.archive).hexdigest()
     if path.is_file():
-        result = _load_verification(path, build_dir, len(analysis.cases))
-        if all(
-            check.build.executable is None or check.build.executable.is_file()
-            for check in result.checks
-        ):
-            return result
+        saved = cast(_SavedVerification, json.loads(path.read_text(encoding="utf-8")))
+        if saved["project_sha256"] != project_digest:
+            raise ValueError("The source used for the saved builds has changed.")
+        try:
+            return _load_verification(saved["checks"], build_dir, len(analysis.cases))
+        except FileNotFoundError:
+            pass
     result = verify_project(
         project,
         build_dir,
@@ -177,22 +219,28 @@ def _verify(
     )
     write_json(
         path,
-        [
-            {
-                "build": {
-                    "engine": check.build.engine,
-                    "compiler": check.build.compiler,
-                    "warnings": check.build.warnings,
-                    "diagnostics": check.build.diagnostics,
-                    "executable": check.build.executable.name
-                    if check.build.executable is not None
-                    else None,
-                },
-                "outcomes": [encode_result(item) for item in check.outcomes],
-                "differences": check.differences,
-            }
-            for check in result.checks
-        ],
+        {
+            "project_sha256": project_digest,
+            "checks": [
+                {
+                    "build": {
+                        "engine": check.build.engine,
+                        "compiler": check.build.compiler,
+                        "warnings": check.build.warnings,
+                        "diagnostics": check.build.diagnostics,
+                        "executable": check.build.executable.name
+                        if check.build.executable is not None
+                        else None,
+                        "executable_sha256": sha256(check.tested_executable).hexdigest()
+                        if check.tested_executable is not None
+                        else None,
+                    },
+                    "outcomes": [encode_result(item) for item in check.outcomes],
+                    "differences": check.differences,
+                }
+                for check in result.checks
+            ],
+        },
     )
     return result
 
@@ -269,9 +317,22 @@ def reconstruct(
         )
         return Reconstruction(output, True)
 
+    original = read_program(binary)
+    if sha256(original).hexdigest() != metadata.sha256:
+        raise ValueError("The saved input binary SHA-256 has changed.")
+    integrity_inputs = IntegrityInputs(
+        original,
+        original_shapes(recovered.read_bytes(), raw=False),
+        frozenset(
+            value
+            for case in analysis.cases
+            for value in (case.expected.stdout, case.expected.stderr)
+        ),
+        settings.checker_images,
+    )
     previous: Candidate | None = None
     difference = ""
-    best: tuple[Candidate, Verification] | None = None
+    best: Trial | None = None
     stop = "repair-limit"
     budget_stop = ledger.path.parent / key / "repair/budget-stop.json"
     for index in range(settings.repair_limit + 1):
@@ -309,24 +370,30 @@ def reconstruct(
             continue
         project = directory / stage / "project"
         write_project(project, candidate)
+        snapshot = snapshot_project(project)
         round_name = f"round-{index:02}"
         verification = _verify(
-            project,
+            snapshot,
             directory / "build" / round_name,
             directory / "verify" / round_name / "result.json",
             analysis,
             settings,
         )
-        if best is None or verification.quality >= best[1].quality:
-            best = candidate, verification
-        if verification.passed:
+        integrity = integrity_inputs.check(snapshot, verification)
+        trial = Trial(candidate, verification, integrity)
+        if trial.passed:
+            best = trial
             stop = "development-passed"
             break
+        if best is None or verification.quality >= best.verification.quality:
+            best = trial
         if index == settings.repair_limit:
             break
         previous = candidate
         feedback_path = directory / "repair" / round_name / "feedback.json"
-        if feedback_path.is_file():
+        if integrity is not None and integrity.categories.keys() - {"missing_build"}:
+            difference = integrity_inputs.repair_feedback(integrity)
+        elif feedback_path.is_file():
             difference = cast(
                 str, json.loads(feedback_path.read_text(encoding="utf-8"))
             )
@@ -342,7 +409,7 @@ def reconstruct(
             write_json(feedback_path, difference)
     if best is None:
         raise InvalidCandidate("The model did not emit a usable project.")
-    candidate, verification = best
+    verification = best.verification
     passed = verification.passed_cases
     reached = reached_functions(
         binary,
@@ -352,9 +419,10 @@ def reconstruct(
     package_project(
         output,
         program,
-        candidate,
+        best.candidate,
         reached,
         verification,
+        best.integrity,
         {
             "run_id": run.name,
             "sha256": metadata.sha256,
@@ -379,4 +447,4 @@ def reconstruct(
         output / "tests/dev.json",
         json.loads((directory / "analyze/cases.json").read_text(encoding="utf-8")),
     )
-    return Reconstruction(output, verification.passed)
+    return Reconstruction(output, best.passed)

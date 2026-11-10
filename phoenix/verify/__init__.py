@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from phoenix_eval.build import BuildResult, build_project
+from phoenix_eval.build import BuildResult, ProjectSnapshot, build_project
 from phoenix_eval.case import CaseFailure, CaseResult, Invocation
-from phoenix_eval.docker import Engine, run_cases
+from phoenix_eval.docker import Engine, read_program, run_cases
 from phoenix_eval.outcome import Outcome, compare
 from phoenix_eval.toolchain import Compiler
 
@@ -13,6 +13,7 @@ class Check:
     build: BuildResult
     outcomes: tuple[CaseResult, ...]
     differences: tuple[tuple[str, ...], ...]
+    tested_executable: bytes | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,7 +55,7 @@ def mismatch(expected: Outcome, actual: CaseResult) -> tuple[str, ...]:
 
 
 def verify_project(
-    project: Path,
+    project: Path | ProjectSnapshot,
     directory: Path,
     cases: tuple[Invocation, ...],
     expected: tuple[Outcome, ...],
@@ -68,14 +69,17 @@ def verify_project(
             image = images[engine.platform]
             executable = directory / f"{engine.value}-{compiler}.elf"
             build = build_project(project, executable, engine, compiler, image=image)
+            tested = (
+                read_program(build.executable) if build.executable is not None else None
+            )
             outcomes = (
-                run_cases(build.executable, cases, engine, image=image)
-                if build.executable is not None
+                run_cases(tested, cases, engine, image=image)
+                if tested is not None
                 else ()
             )
             differences = tuple(
                 mismatch(original, candidate)
                 for original, candidate in zip(expected, outcomes)
             )
-            checks.append(Check(build, outcomes, differences))
+            checks.append(Check(build, outcomes, differences, tested))
     return Verification(tuple(checks), len(cases))

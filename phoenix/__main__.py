@@ -29,6 +29,8 @@ from phoenix_eval.docker import Engine, WorkerError, freeze_images
 from phoenix_eval.m0 import SEED
 from phoenix_eval.platforms import verify_runtime
 from phoenix_eval.provenance import (
+    CHECKER_SOURCE_LABEL,
+    checker_source_digest,
     evaluator_build,
     lifting_tool_identity,
     pinned_lifting_tools,
@@ -45,9 +47,11 @@ class _RunRecord(TypedDict):
     binary_sha256: str
     revision: str
     worker_source_sha256: str
+    checker_source_sha256: str
     pipeline_source_sha256: str
     lifting_tool_identity: dict[str, str]
     images: dict[str, str]
+    checker_images: dict[str, str]
     seed: int
     ghidra: str
     java_home: str
@@ -132,6 +136,7 @@ def _locked_run(
     original = directory / "ingest/original.elf"
     record_path = directory / "run.json"
     previous = _load_record(source / key / "run.json") if source is not None else None
+    local = None
     if record_path.exists() and not args.resume:
         local = _load_record(record_path)
         if (
@@ -157,6 +162,7 @@ def _locked_run(
 
     provenance = evaluator_build(_PIPELINE_ROOT)
     pipeline_digest = pipeline_source_digest(_PIPELINE_ROOT)
+    checker_digest = checker_source_digest(_PIPELINE_ROOT)
     if previous is not None:
         if pipeline_digest != previous.get("pipeline_source_sha256"):
             raise ValueError("Resume and replay require the recorded pipeline source.")
@@ -167,6 +173,8 @@ def _locked_run(
             raise ValueError(
                 "Resume and replay require the recorded revision and worker source."
             )
+        if checker_digest != previous.get("checker_source_sha256"):
+            raise ValueError("Resume and replay require the recorded checker source.")
         ghidra, java = Path(previous["ghidra"]), Path(previous["java_home"])
         overrides = {
             "ghidra": str(args.ghidra.resolve()) if args.ghidra is not None else None,
@@ -194,12 +202,19 @@ def _locked_run(
         raise ValueError("Resume and replay require the recorded lifting tools.")
 
     verify_runtime("apple-silicon")
-    images = freeze_images(
-        (Engine.ROSETTA, Engine.ARM64), provenance.worker_source_sha256
+    engines = (Engine.ROSETTA, Engine.ARM64)
+    images = freeze_images(engines, provenance.worker_source_sha256)
+    checker_images = freeze_images(
+        engines,
+        checker_digest,
+        repository="phoenix-c-integrity",
+        source_label=CHECKER_SOURCE_LABEL,
     )
     if previous is not None:
         if images != previous["images"]:
             raise ValueError("Resume and replay require the recorded worker images.")
+        if checker_images != previous.get("checker_images"):
+            raise ValueError("Resume and replay require the recorded checker images.")
         settings = Settings(
             images,
             previous["seed"],
@@ -207,6 +222,7 @@ def _locked_run(
             java,
             previous["repair_limit"],
             previous["astra_repair"],
+            checker_images,
             Method(previous["method"]),
         )
         budget = Budget(previous["budget_binary"], previous["budget_run"])
@@ -218,6 +234,7 @@ def _locked_run(
             java,
             args.max_repairs if args.max_repairs is not None else 20,
             bool(args.astra_repair),
+            checker_images,
             args.method or Method.PHOENIX,
         )
         budget = Budget(
@@ -246,17 +263,18 @@ def _locked_run(
         ledger = Ledger(run, budget)
     if previous is not None and selected.name != previous["provider"]:
         raise ValueError("Resume requires the recorded model provider.")
-    started = (
-        previous["started"] if args.resume and previous is not None else time.time()
-    )
+    checkpoint = local if args.replay else previous
+    started = checkpoint["started"] if checkpoint is not None else time.time()
     record: _RunRecord = {
         "version": 1,
         "binary_sha256": metadata.sha256,
         "revision": provenance.commit,
         "worker_source_sha256": provenance.worker_source_sha256,
+        "checker_source_sha256": checker_digest,
         "pipeline_source_sha256": pipeline_digest,
         "lifting_tool_identity": tool_identity,
         "images": images,
+        "checker_images": checker_images,
         "seed": settings.seed,
         "ghidra": str(settings.ghidra),
         "java_home": str(settings.java_home),
@@ -302,6 +320,15 @@ def _run(args: argparse.Namespace) -> int:
         if source.resolve() != source:
             raise ValueError("The saved run cannot be a symbolic link.")
         key = _existing_key(source, args.binary_id)
+        if args.resume:
+            checkpoint = _load_record(source / key / "run.json")
+            if checkpoint["replay_from"] is not None:
+                args.run_id = source.name
+                args.resume = None
+                args.replay = _identifier(checkpoint["replay_from"])
+                source = runs / args.replay
+                if source.resolve() != source:
+                    raise ValueError("The saved run cannot be a symbolic link.")
     else:
         if args.binary is None:
             raise ValueError("Supply the input executable.")
@@ -313,6 +340,8 @@ def _run(args: argparse.Namespace) -> int:
         else runs / _identifier(args.run_id or f"phoenix-{uuid4().hex}")
     )
     assert run is not None
+    if args.replay and run == source:
+        raise ValueError("Use a new run ID for replay.")
     if run.resolve() != run:
         raise ValueError("The run must stay in the workspace run directory.")
     directory = run / key
