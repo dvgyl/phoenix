@@ -23,3 +23,5 @@ CMake, BSD-3-Clause. https://gitlab.kitware.com/cmake/cmake/-/blob/master/Copyri
 GNU Binutils, GPL-3.0-or-later. https://www.gnu.org/software/binutils/
 libseccomp, LGPL-2.1. https://github.com/seccomp/libseccomp/blob/main/LICENSE
 QEMU, GPL-2.0. Some files carry separate licenses. https://github.com/qemu/qemu/blob/v8.2.2/LICENSE
+GitHub checkout, upload-artifact, and download-artifact actions, MIT. https://github.com/actions
+Astral setup-uv, MIT or Apache-2.0. https://github.com/astral-sh/setup-uv

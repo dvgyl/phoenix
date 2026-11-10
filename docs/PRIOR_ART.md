@@ -22,3 +22,4 @@ projects used in the workspace and the local quality checks.
 | libseccomp | Restrict Linux system calls in the test process | [libseccomp](https://github.com/seccomp/libseccomp) |
 | QEMU user mode | Independent execution of x86-64 programs | [QEMU](https://www.qemu.org/docs/master/user/main.html) |
 | Bubblewrap | Design comparison for per-test isolation | [Bubblewrap](https://github.com/containers/bubblewrap) |
+| GitHub Actions and Astral setup-uv | Native CI and public report comparison | [Checkout](https://github.com/actions/checkout), [Artifact upload](https://github.com/actions/upload-artifact), [Artifact download](https://github.com/actions/download-artifact), [Setup uv](https://github.com/astral-sh/setup-uv) |

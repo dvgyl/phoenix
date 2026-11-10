@@ -7,8 +7,8 @@ The workspace uses the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
 
 ## Next actions
 
-1. Verify Rosetta and explicit QEMU execution with the same x86-64 program.
-2. Implement exact outcome comparison and per-test isolation.
-3. Add public toy programs, known mutations, and block coverage.
-4. Run the acceptance script and verify both continuous integration jobs.
+1. Run the sandbox probes in both Linux images.
+2. Compare the public programs on Rosetta, QEMU, and native AArch64.
+3. Add execution coverage and coverage-guided input generation.
+4. Verify the two native CI jobs and their report comparison.
 5. Obtain an independent Astra review before tagging M0.

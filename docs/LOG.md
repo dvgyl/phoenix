@@ -19,3 +19,7 @@
 - The default Docker policy rejected nested namespace creation. Recorded
   an alternate chroot design for per-test isolation.
 - Added a versioned test protocol. The quality gate passed 29 tests.
+- Added the isolated Docker worker and public test programs. The local
+  quality gate passed 59 tests. The worker images are still building.
+- Added native x86-64 and AArch64 CI jobs. CI compares exact public
+  outcome hashes across the two architectures.

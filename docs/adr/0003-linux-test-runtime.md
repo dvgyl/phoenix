@@ -22,3 +22,8 @@ libraries into the AArch64 image without running an x86-64 build stage.
 Use GCC, Clang, CMake, and GNU Binutils from that snapshot to build
 public fixtures. Use QEMU user mode from the snapshot as the independent
 x86-64 oracle. Keep all upstream tools as separate dependencies.
+
+Use the official GitHub Actions for checkout and report transfer. Use
+Astral's setup action for uv. Pin each action to its commit. The public
+workflow builds and runs on both native architectures. It compares the
+hashes of their exact outcomes.

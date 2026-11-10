@@ -1,0 +1,15 @@
+#!/bin/sh
+set -eu
+
+case "${1:-}" in
+    amd64|arm64) architecture=$1 ;;
+    *) printf '%s\n' 'Specify amd64 or arm64.' >&2; exit 2 ;;
+esac
+
+cd "$(dirname "$0")/.."
+base=$(sed -n 's/^ubuntu_base = "\(.*\)"$/\1/p' tools.lock)
+snapshot=$(sed -n 's/^ubuntu_snapshot = "\(.*\)"$/\1/p' tools.lock)
+
+docker buildx build --load --platform "linux/$architecture" \
+    --build-arg "UBUNTU_BASE=$base" --build-arg "UBUNTU_SNAPSHOT=$snapshot" \
+    -f containers/Dockerfile -t "phoenix-worker:$architecture" .

@@ -20,3 +20,18 @@ uv sync --locked
 uv run --locked pre-commit install
 ./scripts/check
 ```
+
+## Run the public behavior checks
+
+On the Apple Silicon host, start the workspace Colima VM with Rosetta.
+Build the two worker images. Run the same public inputs through Rosetta,
+explicit QEMU x86-64 emulation, and native AArch64.
+
+```sh
+./scripts/build-worker amd64
+./scripts/build-worker arm64
+uv run --locked phoenix-eval m0 --mode apple-silicon --runs "$PHOENIX_ROOT/runs"
+```
+
+The command prints the path to its JSON report. The report contains the
+run ID, seed, exact outcome hashes, and mutation counts.

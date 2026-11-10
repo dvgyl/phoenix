@@ -265,9 +265,9 @@ wheels = [
 ]
 
 [[package]]
-name = "phoenix-reconstruction"
+name = "phoenix-eval"
 version = "0.0.1"
-source = { virtual = "." }
+source = { editable = "." }
 
 [package.dev-dependencies]
 dev = [
