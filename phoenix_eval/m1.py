@@ -601,20 +601,23 @@ def _evaluate(
         )
         for task in tasks
     ]
-    verify_identity(workspace, model_ledger)
-    if read_identity(identity_file) != model_ledger:
-        raise ValueError("The model ledger identity changed during measurement.")
-    verify_binding(run, keys, capture_binding)
-    if bound_summaries(
-        workspace, keys, model_ledger
-    ) != model_summaries or not _same_json(
-        [record.get("model") for record in records],
-        [asdict(model_summaries[key]) for key in keys],
-    ):
-        raise ValueError(
-            "The reported model summaries do not reconcile with the ledger."
-        )
-    check_replay_ledgers()
+
+    def verify_publication() -> None:
+        verify_identity(workspace, model_ledger)
+        if read_identity(identity_file) != model_ledger:
+            raise ValueError("The model ledger identity changed during measurement.")
+        verify_binding(run, keys, capture_binding)
+        if bound_summaries(
+            workspace, keys, model_ledger
+        ) != model_summaries or not _same_json(
+            [record.get("model") for record in records],
+            [asdict(model_summaries[key]) for key in keys],
+        ):
+            raise ValueError(
+                "The reported model summaries do not reconcile with the ledger."
+            )
+        check_replay_ledgers()
+
     if scope is not None:
         for task, record in zip(tasks, records, strict=True):
             record.update(
@@ -654,7 +657,7 @@ def _evaluate(
         if prior is not None:
             reproduced = _stable_m2_report(document) == _stable_m2_report(prior)
             document["reproduced"] = reproduced
-    write_report(report, document)
+    write_report(report, document, before_publish=verify_publication)
     return report, accepted and reproduced is not False
 
 

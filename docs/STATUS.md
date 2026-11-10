@@ -1,27 +1,27 @@
 # Phoenix status
 
-This isolated branch integrates shared correction `05d362f` and matrix
-`11da284`. Independent Sol review passed the combined base `0ee21d7`.
-Independent Astra held two findings. This branch corrects replay ancestry
-accounting and capture consistency. Fresh combined Sol and Astra reviews
-remain open. The branch is not ready for sealed M2 use.
+This isolated branch integrates the shared capture guards and the M2
+matrix. Fresh Sol review held three further findings at `1cf064b`.
+This checkpoint corrects replay publication and cyclic replay log paths.
+The durable capture rejection correction and fresh combined reviews remain
+open. The branch is not ready for sealed M2 use.
 
-The replay ancestry correction passed all ten negative requirements. The
-capture correction passed three prior Astra rejection probes and a parent
-test with the actual failed measurement branch. It also controls a
-symbolic link loop during capture and resume. The final parent gate passed
-726 tests with 25 opt-in skips and 92.38% evaluator line coverage.
-[Replay ancestry issue](https://github.com/dvgyl/phoenix/issues/5).
-[Capture consistency issue](https://github.com/dvgyl/phoenix/issues/6).
+The final report is staged before its last capture and ledger checks.
+An earlier or current replay cannot publish a fresh model log after report
+rendering. A cyclic log path gives a controlled error. Eight focused
+requirements passed. The complete parent gate passed 730 tests, with 25
+opt-in skips and 92.27% evaluator line coverage.
+[Replay issue](https://github.com/dvgyl/phoenix/issues/5).
+[Capture issue](https://github.com/dvgyl/phoenix/issues/6).
 
 M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
-M1 and the v1 goal remain open. No M1 tag exists.
-Main is pushed at `6897e4753d8acedfae57af63e6426faf116bed2e`.
-Its public pipeline passed both methods in all four build configurations.
-Native CI run 42905864046 passed. The native results matched the Mac M0 run.
-Guarded M1 original `m1-t0-6897e47` retained Phoenix 17/20 and
-Ghidra-raw 8/20 fully successful. All 40 bound checkpoints and model
-summaries match the report. Its exact replay remains active.
+M1 passed at exact measured commit `6897e47`. The `m1` tag points to it.
+Guarded original `m1-t0-6897e47` and replay `m1-t0-replay-6897e47`
+agree in every stable field. Phoenix is 17/20 fully successful and raw is
+8/20. Both 40-task bindings and model summaries match the reports.
+Independent Sol and Astra passed these measured results. Main records the
+acceptance at `49bd659`. New sealed measurement remains closed until the
+remaining evaluator fixes pass.
 
 Original `m1-t0-baae648` and replay `m1-t0-replay-baae648` have equal stable
 fields. Phoenix is 17/20 fully successful. It retains two `embedded_text`
@@ -61,8 +61,8 @@ of memory. Standard service and fresh Sol review apply to every major block.
 
 ## Next actions
 
-1. Complete fresh independent reviews of the combined evaluator.
-2. Finish the guarded M1 original and exact replay on fixed main.
-3. Obtain M1 milestone review before tagging or M2 source integration.
+1. Port the durable capture rejection correction and verify the full gate.
+2. Obtain fresh independent Sol and Astra reviews of the combined source.
+3. Keep new sealed measurement closed until the evaluator passes.
 4. Complete production M2 recovery and its public evidence gates.
 5. Continue M3, T3 qualification, M4, publication and section 9 replay.

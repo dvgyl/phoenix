@@ -679,3 +679,26 @@
 - The port stays in the isolated M2 branch. Fresh combined Sol and Astra
   reviews remain required. Main and its exact guarded M1 replay stay fixed.
   No sealed M2 use or milestone acceptance is claimed.
+
+## 2026-11-10. Verify final replay evidence after rendering
+
+- Fresh combined Sol review of `1cf064b` reproduced a new retry defect and
+  two replay publication defects. A retry could accept a previously rejected
+  checkpoint. A replay could also publish after a local model log appeared
+  during final comparison. A cyclic replay log path caused a traceback.
+- The parent reproduced four Sol rejection requirements and four local
+  requirements. They cover current and earlier replays, stable comparison,
+  report serialization, and cyclic log paths.
+- The evaluator now stages the complete report before its final evidence
+  checks. It verifies the capture binding, ledger identity, per-task model
+  summaries, and absence of replay-local logs before atomic replacement.
+  The absence check inspects the directory entry without opening a log
+  or following its final symbolic link. Valid replay still uses the
+  original ledger.
+- All eight focused requirements passed. The complete parent gate passed
+  730 tests with 25 opt-in skips and 92.27% evaluator line coverage.
+  Ruff, format, strict mypy, and protection passed. Prior failure logs
+  remain in `audit/m2-replay-publication/`.
+- A separate Astra worker owns the shared durable capture rejection fix.
+  The combined evaluator still needs that port and exact independent
+  reviews before any new sealed measurement.

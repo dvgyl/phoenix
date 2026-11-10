@@ -91,8 +91,20 @@ def freeze_identity(workspace: Path, run: Path, pipeline_run: str) -> LedgerIden
 
 
 def require_no_replay_ledger(workspace: Path, pipeline_run: str) -> None:
-    if ledger_digest(workspace / "runs" / pipeline_run / "llm.jsonl") is not None:
-        raise ValueError("Replay must not create a fresh model ledger.")
+    directory = workspace / "runs" / pipeline_run
+    try:
+        descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    except FileNotFoundError:
+        return
+    except OSError as error:
+        raise ValueError("The replay model ledger directory is invalid.") from error
+    try:
+        os.stat("llm.jsonl", dir_fd=descriptor, follow_symlinks=False)
+    except FileNotFoundError:
+        return
+    finally:
+        os.close(descriptor)
+    raise ValueError("Replay must not create a fresh model ledger.")
 
 
 @dataclass(frozen=True)

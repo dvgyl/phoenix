@@ -710,6 +710,79 @@ def test_m2_replay_rejects_model_logs_in_its_lineage(
 
 
 @pytest.mark.parametrize(
+    ("phase", "pipeline"), [("compare", "first"), ("write", "next")]
+)
+def test_m2_replay_rechecks_model_logs_after_rendering(
+    tmp_path: Path,
+    synthetic_engine: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    phase: str,
+    pipeline: str,
+) -> None:
+    origin = m1.evaluate_m2(tmp_path, "origin")[0]
+    first = m1.evaluate_m2(tmp_path, "first", "origin")[0]
+    saved = {p: p.read_bytes() for p in (origin, first)}
+    synthetic_engine["opened"].clear()
+    log = tmp_path / "runs" / f"{pipeline}-rebuild" / "llm.jsonl"
+
+    def introduce_log(document: object) -> None:
+        if isinstance(document, dict) and document.get("run_id") == "next":
+            log.parent.mkdir(exist_ok=True)
+            log.write_bytes(b"")
+
+    if phase == "compare":
+        project = m1._stable_m2_report
+
+        def compare(document: dict[str, object]) -> str:
+            result = project(document)
+            introduce_log(document)
+            return result
+
+        monkeypatch.setattr(m1, "_stable_m2_report", compare)
+    else:
+        serialize = json.dump
+
+        def dump(data: object, *args: Any, **kwargs: Any) -> None:
+            serialize(data, *args, **kwargs)
+            introduce_log(data)
+
+        monkeypatch.setattr(json, "dump", dump)
+
+    with pytest.raises(ValueError, match="fresh model ledger"):
+        m1.evaluate_m2(tmp_path, "next", "first")
+    assert log.is_file()
+    assert synthetic_engine["opened"] == [Tier.T0, Tier.T1]
+    assert not (tmp_path / "runs/next/m2.json").exists()
+    assert all(p.read_bytes() == data for p, data in saved.items())
+
+
+@pytest.mark.parametrize("pipeline", ["first", "next"])
+def test_m2_replay_cyclic_model_log_reports_controlled_error(
+    tmp_path: Path,
+    synthetic_engine: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    pipeline: str,
+) -> None:
+    m1.evaluate_m2(tmp_path, "origin")
+    m1.evaluate_m2(tmp_path, "first", "origin")
+    synthetic_engine["opened"].clear()
+    submitted = len(synthetic_engine["submitted"])
+    log = tmp_path / "runs" / f"{pipeline}-rebuild" / "llm.jsonl"
+    log.parent.mkdir(exist_ok=True)
+    log.symlink_to(log.name)
+    monkeypatch.setenv("PHOENIX_ROOT", str(tmp_path))
+    monkeypatch.setattr(
+        sys, "argv", ["phoenix-eval", "m2", "--run-id", "next", "--replay", "first"]
+    )
+    assert cli.main() == 2
+    assert "model ledger" in capsys.readouterr().err
+    assert synthetic_engine["opened"] == []
+    assert len(synthetic_engine["submitted"]) == submitted
+    assert not (tmp_path / "runs/next/m2.json").exists()
+
+
+@pytest.mark.parametrize(
     "change", ["cycle", "log_origin", "config_missing", "report_scope"]
 )
 def test_m2_rejects_conflicting_lineage(
