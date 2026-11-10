@@ -508,7 +508,7 @@ def _evaluate(
         check_replay_ledgers()
     model_ledger = freeze_identity(workspace, run, replay_pipeline or pipeline_run)
     model_summaries = bound_summaries(workspace, keys, model_ledger)
-    capture_binding = freeze_binding(run, keys, capture_binding)
+    capture_binding = freeze_binding(run, keys, capture_binding, submissions)
     current_config = _configuration(workspace, release_hash)
     if scope is not None:
         current_config.update({"schema": 2, "scope": _m2_scope(workspace).record()})

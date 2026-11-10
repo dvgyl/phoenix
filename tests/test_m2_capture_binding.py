@@ -1,6 +1,6 @@
 import json
 from collections.abc import Callable
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any, cast
 
@@ -12,6 +12,9 @@ from phoenix_eval import m1
 from phoenix_eval.case import Invocation
 from phoenix_eval.corpus import Tier
 from phoenix_eval.model_ledger import bound_summaries, read_identity
+from phoenix_eval.submission import Submission
+
+REAL_MEASURE = m1._measure
 
 
 def test_all_m2_captures_and_costs_are_bound_before_each_archive(
@@ -49,6 +52,43 @@ def test_all_m2_captures_and_costs_are_bound_before_each_archive(
     assert [row["model"] for row in document["results"]] == [
         asdict(summaries[key]) for key in keys
     ]
+
+
+def test_later_m2_capture_cannot_change_an_earlier_failure(
+    tmp_path: Path, synthetic_engine: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original_submit = cast(Callable[..., Submission], getattr(m1, "submit"))
+    keys = synthetic_engine["scope"].record()["task_keys"]
+    run = tmp_path / "runs/origin"
+    first = run / "submissions" / keys[0] / "capture/submission.json"
+
+    def submit(*args: Any) -> Submission:
+        result = replace(
+            original_submit(*args),
+            source_sha256=None,
+            category="pipeline-failed",
+            development_sha256=None,
+            origin_sha256=None,
+            report_sha256=None,
+        )
+        checkpoint = args[1] / "capture/submission.json"
+        checkpoint.write_text(json.dumps(asdict(result)))
+        if result.key == keys[-1]:
+            record = json.loads(first.read_text())
+            record["category"] = "invalid-project"
+            first.write_text(json.dumps(record))
+        return result
+
+    monkeypatch.setattr(m1, "submit", submit)
+    monkeypatch.setattr(m1, "_measure", REAL_MEASURE)
+    with pytest.raises(ValueError, match="differs from the returned submission"):
+        m1.evaluate_m2(tmp_path, "origin")
+    assert len(synthetic_engine["submitted"]) == 260
+    assert synthetic_engine["opened"] == []
+    assert not (run / "m2.json").exists()
+    assert (
+        json.loads((run / "capture-binding.json").read_text())["phase"] == "capturing"
+    )
 
 
 @pytest.mark.parametrize("change", ["capture", "ledger"])

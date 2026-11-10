@@ -2,12 +2,15 @@
 
 This isolated branch integrates shared correction `05d362f` and matrix
 `11da284`. Independent Sol review passed the combined base `0ee21d7`.
-Independent Astra review held two findings. This branch corrects replay
-ancestry accounting. The capture consistency correction and fresh combined
-reviews remain open. The branch is not ready for sealed M2 use.
+Independent Astra held two findings. This branch corrects replay ancestry
+accounting and capture consistency. Fresh combined Sol and Astra reviews
+remain open. The branch is not ready for sealed M2 use.
 
-The replay ancestry correction passed ten rejection checks. The parent gate
-passed 660 tests with 25 opt-in skips and 92.30% evaluator line coverage.
+The replay ancestry correction passed all ten negative requirements. The
+capture correction passed three prior Astra rejection probes and a parent
+test with the actual failed measurement branch. It also controls a
+symbolic link loop during capture and resume. The final parent gate passed
+726 tests with 25 opt-in skips and 92.38% evaluator line coverage.
 [Replay ancestry issue](https://github.com/dvgyl/phoenix/issues/5).
 [Capture consistency issue](https://github.com/dvgyl/phoenix/issues/6).
 
@@ -16,8 +19,9 @@ M1 and the v1 goal remain open. No M1 tag exists.
 Main is pushed at `6897e4753d8acedfae57af63e6426faf116bed2e`.
 Its public pipeline passed both methods in all four build configurations.
 Native CI run 42905864046 passed. The native results matched the Mac M0 run.
-Guarded M1 run `m1-t0-6897e47` froze all 40 captures. Its measurement and
-exact replay remain open.
+Guarded M1 original `m1-t0-6897e47` retained Phoenix 17/20 and
+Ghidra-raw 8/20 fully successful. All 40 bound checkpoints and model
+summaries match the report. Its exact replay remains active.
 
 Original `m1-t0-baae648` and replay `m1-t0-replay-baae648` have equal stable
 fields. Phoenix is 17/20 fully successful. It retains two `embedded_text`
@@ -57,7 +61,7 @@ of memory. Standard service and fresh Sol review apply to every major block.
 
 ## Next actions
 
-1. Port the reviewed capture consistency correction and repeat combined review.
+1. Complete fresh independent reviews of the combined evaluator.
 2. Finish the guarded M1 original and exact replay on fixed main.
 3. Obtain M1 milestone review before tagging or M2 source integration.
 4. Complete production M2 recovery and its public evidence gates.

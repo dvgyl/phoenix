@@ -1,7 +1,8 @@
 import io
 import json
+import os
 import tarfile
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass, field
 from hashlib import sha256
 from pathlib import Path
@@ -15,6 +16,7 @@ from phoenix_eval import capture_binding, m1, submission
 from phoenix_eval.build import PROJECT_CMAKE, project_files
 from phoenix_eval.case import Invocation
 from phoenix_eval.corpus import Variant, heldout_cases
+from phoenix_eval.m1 import _measure as measure_submission
 from phoenix_eval.model_ledger import (
     LedgerIdentity,
     bound_summaries,
@@ -138,8 +140,10 @@ class SyntheticEngine:
     opened: list[Path] = field(default_factory=list)
     extra_events: list[dict[str, object]] = field(default_factory=list)
     failed: set[str] = field(default_factory=set)
+    failure_category: str = "pipeline-failed"
     interrupt_after: int | None = None
     before_measure: Callable[[], None] = lambda: None
+    after_capture: Callable[[Path, Submission], None] = lambda _path, _value: None
 
     @property
     def run(self) -> Path:
@@ -204,9 +208,9 @@ def engine(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SyntheticEngine:
                 method,
                 key,
                 None,
-                "pipeline-failed",
+                engine.failure_category,
                 replay_pipeline_run,
-                reconstruction_seconds=1,
+                reconstruction_seconds=1 if replay_pipeline_run is None else 2,
             )
         else:
             project = stored / "project"
@@ -244,6 +248,7 @@ def engine(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SyntheticEngine:
                 for event in [*ledger_attempt(key), *engine.extra_events]:
                     stream.write(json.dumps(event) + "\n")
             engine.extra_events.clear()
+        engine.after_capture(stored, result)
         return result
 
     def cases(
@@ -627,13 +632,15 @@ def test_capture_binding_rejects_any_replacement(content: bytes) -> None:
         capture = run / "submissions/task/capture"
         capture.mkdir(parents=True)
         checkpoint = capture / "submission.json"
-        submission.write_report(checkpoint, {"source_sha256": sha256(b"").hexdigest()})
+        returned = Submission("phoenix", "task", sha256(b"").hexdigest(), None)
+        submission.write_report(checkpoint, asdict(returned))
         source = capture / "source.c"
         source.write_bytes(b"")
-        bound = capture_binding.freeze_binding(run, ("task",), None)
+        bound = capture_binding.freeze_binding(run, ("task",), None, {"task": returned})
         source.write_bytes(content)
         submission.write_report(
-            checkpoint, {"source_sha256": sha256(content).hexdigest()}
+            checkpoint,
+            {**asdict(returned), "source_sha256": sha256(content).hexdigest()},
         )
         with pytest.raises(ValueError, match="capture"):
             capture_binding.verify_binding(run, ("task",), bound)
@@ -645,8 +652,13 @@ def test_frozen_resume_rejects_changes_before_first_archive_read(
 ) -> None:
     freeze = capture_binding.freeze_binding
 
-    def interrupted(run: Path, keys: tuple[str, ...], bound: bytes | None) -> bytes:
-        freeze(run, keys, bound)
+    def interrupted(
+        run: Path,
+        keys: tuple[str, ...],
+        bound: bytes | None,
+        submissions: Mapping[str, Submission],
+    ) -> bytes:
+        freeze(run, keys, bound, submissions)
         raise KeyboardInterrupt("Synthetic interruption after the freeze.")
 
     with monkeypatch.context() as patch:
@@ -776,3 +788,385 @@ def test_measurement_rejects_replaced_or_added_frozen_evidence(
     with pytest.raises(ValueError, match="capture"):
         m1.evaluate_t0(engine.workspace, "initial")
     assert report.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    "change", ["success-to-failure", "source-identity", "failure-category"]
+)
+def test_later_capture_cannot_replace_returned_submission(
+    engine: SyntheticEngine, monkeypatch: pytest.MonkeyPatch, change: str
+) -> None:
+    if change == "failure-category":
+        manifest: Callable[[Path], tuple[tuple[Variant, ...], str]] = getattr(
+            m1, "t0_manifest"
+        )
+        variants, _ = manifest(engine.workspace)
+        engine.failed.update(
+            m1.Task(variant, method).key
+            for variant in variants
+            for method in m1.METHODS
+        )
+        monkeypatch.setattr(m1, "_measure", measure_submission)
+
+    def changed(_directory: Path, _returned: Submission) -> None:
+        if len(engine.submitted) != 40:
+            return
+        first = engine.run / "submissions" / engine.submitted[0] / "capture"
+        checkpoint = first / "submission.json"
+        data = json.loads(checkpoint.read_bytes())
+        if change == "source-identity":
+            replace_source(engine.run, engine.submitted[0])
+        else:
+            data.update(
+                source_sha256=None,
+                category="invalid-project",
+                development_sha256=None,
+                origin_sha256=None,
+                report_sha256=None,
+            )
+            submission.write_report(checkpoint, data)
+
+    engine.after_capture = changed
+    with pytest.raises(ValueError, match="checkpoint"):
+        m1.evaluate_t0(engine.workspace, "initial")
+    assert len(engine.submitted) == 40
+    assert engine.opened == []
+    assert not (engine.run / "m1.json").exists()
+    assert json.loads((engine.run / "capture-binding.json").read_bytes())["phase"] == (
+        "capturing"
+    )
+
+
+@pytest.mark.parametrize("category", ["pipeline-failed", "invalid-project"])
+def test_failed_captures_keep_exact_category_through_resume_and_replay(
+    engine: SyntheticEngine, monkeypatch: pytest.MonkeyPatch, category: str
+) -> None:
+    manifest: Callable[[Path], tuple[tuple[Variant, ...], str]] = getattr(
+        m1, "t0_manifest"
+    )
+    variants, _ = manifest(engine.workspace)
+    engine.failed.update(
+        m1.Task(variant, method).key for variant in variants for method in m1.METHODS
+    )
+    engine.failure_category = category
+    engine.extra_events = ledger_attempt("case-0-gcc-O0-phoenix", "failed")
+    monkeypatch.setattr(m1, "_measure", measure_submission)
+    engine.interrupt_after = 7
+    with pytest.raises(KeyboardInterrupt):
+        m1.evaluate_t0(engine.workspace, "initial")
+    assert engine.opened == []
+    assert len(engine.submitted) == 7
+    engine.interrupt_after = None
+    report, passed = m1.evaluate_t0(engine.workspace, "initial")
+    assert not passed
+    original = json.loads(report.read_bytes())
+    assert len(original["results"]) == 40
+    assert {record["failure_category"] for record in original["results"]} == {category}
+    assert all(record["source_sha256"] is None for record in original["results"])
+    assert all(record["fully_successful"] is False for record in original["results"])
+    assert (
+        sum(
+            record["model"]["unknown_cost_reservations"]
+            for record in original["results"]
+        )
+        == 120_000
+    )
+    assert (
+        sum(record["model"]["cost_nanodollars"] for record in original["results"])
+        == 1_600_000
+    )
+    ledger = engine.ledger.read_bytes()
+    binding = (engine.run / "capture-binding.json").read_bytes()
+    m1.evaluate_t0(engine.workspace, "initial")
+    assert len(engine.submitted) == 40
+    assert json.loads(report.read_bytes()) == original
+    assert (engine.run / "capture-binding.json").read_bytes() == binding
+    before = report.read_bytes()
+    replay, passed = m1.evaluate_t0(engine.workspace, "replay", "initial")
+    replayed = json.loads(replay.read_bytes())
+    assert not passed and replayed["reproduced"] is True
+    assert {record["failure_category"] for record in replayed["results"]} == {category}
+    assert {record["reconstruction_seconds"] for record in original["results"]} == {1}
+    assert {record["reconstruction_seconds"] for record in replayed["results"]} == {2}
+    assert report.read_bytes() == before
+    assert engine.ledger.read_bytes() == ledger
+    assert not (engine.workspace / "runs/replay-rebuild/llm.jsonl").exists()
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("method", "ghidra-raw"),
+        ("key", "another-task"),
+        ("replay_of", "another-rebuild"),
+        ("development_sha256", "a" * 64),
+        ("origin_sha256", "a" * 64),
+        ("report_sha256", "a" * 64),
+        ("reconstruction_seconds", 7),
+    ],
+)
+def test_later_capture_cannot_change_returned_metadata(
+    engine: SyntheticEngine, field: str, value: object
+) -> None:
+    def changed(_directory: Path, _returned: Submission) -> None:
+        if len(engine.submitted) == 40:
+            checkpoint = (
+                engine.run
+                / "submissions"
+                / engine.submitted[0]
+                / "capture/submission.json"
+            )
+            data = json.loads(checkpoint.read_bytes())
+            data[field] = value
+            submission.write_report(checkpoint, data)
+
+    engine.after_capture = changed
+    with pytest.raises(ValueError, match="checkpoint"):
+        m1.evaluate_t0(engine.workspace, "initial")
+    assert engine.opened == []
+    assert not (engine.run / "m1.json").exists()
+
+
+@pytest.mark.parametrize("phase", ["later-capture", "interrupted-resume"])
+@pytest.mark.parametrize(
+    "change",
+    [
+        "duplicate",
+        "missing",
+        "extra",
+        "non-object",
+        "invalid-json",
+        "bad-utf8",
+        "method-type",
+        "key-type",
+        "replay-type",
+        "source-type",
+        "digest-shape",
+        "category-type",
+        "success-category",
+        "boolean-time",
+        "negative-time",
+        "nonfinite-time",
+        "huge-time",
+        "missing-time",
+        "oversized",
+        "nested",
+    ],
+)
+def test_invalid_checkpoint_stops_before_archive(
+    engine: SyntheticEngine, phase: str, change: str
+) -> None:
+    def corrupt() -> None:
+        checkpoint = (
+            engine.run / "submissions" / engine.submitted[0] / "capture/submission.json"
+        )
+        data = json.loads(checkpoint.read_bytes())
+        content: bytes | None = None
+        if change == "duplicate":
+            content = checkpoint.read_bytes().replace(
+                b'"method": "phoenix"', b'"method": "wrong", "method": "phoenix"'
+            )
+        elif change == "missing":
+            del data["category"]
+        elif change == "missing-time":
+            del data["reconstruction_seconds"]
+        elif change == "extra":
+            data["unknown"] = None
+        elif change == "non-object":
+            content = b"[]"
+        elif change == "invalid-json":
+            content = b"{"
+        elif change == "bad-utf8":
+            content = b"\xff"
+        elif change == "oversized":
+            content = b" " * (64 * 1024 + 1) + checkpoint.read_bytes()
+        elif change == "nested":
+            content = b"[" * 2000 + b"]" * 2000
+        else:
+            replacements: dict[str, tuple[str, object]] = {
+                "method-type": ("method", []),
+                "key-type": ("key", True),
+                "replay-type": ("replay_of", 1),
+                "source-type": ("source_sha256", []),
+                "digest-shape": ("report_sha256", "not-a-digest"),
+                "category-type": ("category", []),
+                "success-category": ("category", "invalid-project"),
+                "boolean-time": ("reconstruction_seconds", True),
+                "negative-time": ("reconstruction_seconds", -1),
+                "nonfinite-time": ("reconstruction_seconds", float("nan")),
+                "huge-time": ("reconstruction_seconds", 10**1000),
+            }
+            name, value = replacements[change]
+            data[name] = value
+        checkpoint.write_bytes(
+            content if content is not None else json.dumps(data).encode()
+        )
+
+    if phase == "interrupted-resume":
+        engine.interrupt_after = 1
+        with pytest.raises(KeyboardInterrupt):
+            m1.evaluate_t0(engine.workspace, "initial")
+        engine.interrupt_after = None
+        corrupt()
+    else:
+
+        def changed(_directory: Path, _returned: Submission) -> None:
+            if len(engine.submitted) == 40:
+                corrupt()
+
+        engine.after_capture = changed
+    with pytest.raises(ValueError, match="checkpoint"):
+        m1.evaluate_t0(engine.workspace, "initial")
+    assert engine.opened == []
+    assert not (engine.run / "m1.json").exists()
+
+
+@pytest.mark.parametrize("seconds", [0, 1, 1.25])
+def test_checkpoint_whitespace_and_numeric_time_normalization_are_valid(
+    engine: SyntheticEngine, seconds: float
+) -> None:
+    engine.interrupt_after = 1
+    with pytest.raises(KeyboardInterrupt):
+        m1.evaluate_t0(engine.workspace, "initial")
+    checkpoint = (
+        engine.run / "submissions" / engine.submitted[0] / "capture/submission.json"
+    )
+    data = json.loads(checkpoint.read_bytes())
+    data["reconstruction_seconds"] = seconds
+    content = json.dumps(data, indent=4).encode() + b" \n"
+    checkpoint.write_bytes(content)
+    engine.interrupt_after = None
+    report, passed = m1.evaluate_t0(engine.workspace, "initial")
+    assert passed and report.is_file()
+    binding = json.loads((engine.run / "capture-binding.json").read_bytes())
+    assert (
+        binding["captures"][0]["files"]["submission.json"]
+        == sha256(content).hexdigest()
+    )
+    assert checkpoint.read_bytes() == content
+    assert len(engine.submitted) == 40
+
+
+def test_checkpoint_validation_and_binding_use_the_same_read(
+    engine: SyntheticEngine, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    loads = json.loads
+    target: Path | None = None
+    original: bytes | None = None
+    changed = False
+
+    def ready(_directory: Path, _returned: Submission) -> None:
+        nonlocal target, original
+        if len(engine.submitted) == 40:
+            target = (
+                engine.run
+                / "submissions"
+                / engine.submitted[0]
+                / "capture/submission.json"
+            )
+            original = target.read_bytes()
+
+    def replace_after_read(
+        content: str | bytes,
+        *,
+        object_pairs_hook: Callable[[list[tuple[str, object]]], dict[str, object]]
+        | None = None,
+    ) -> object:
+        nonlocal changed
+        data = loads(content, object_pairs_hook=object_pairs_hook)
+        if target is not None and content == original and not changed:
+            changed = True
+            replacement = loads(content)
+            replacement.update(
+                source_sha256=None,
+                category="invalid-project",
+                development_sha256=None,
+                origin_sha256=None,
+                report_sha256=None,
+            )
+            submission.write_report(target, replacement)
+        return data
+
+    engine.after_capture = ready
+    monkeypatch.setattr(json, "loads", replace_after_read)
+    with pytest.raises(ValueError, match="capture"):
+        m1.evaluate_t0(engine.workspace, "initial")
+    assert changed and target is not None and original is not None
+    binding = loads((engine.run / "capture-binding.json").read_bytes())
+    digest = binding["captures"][0]["files"]["submission.json"]
+    assert digest == sha256(original).hexdigest()
+    assert digest != sha256(target.read_bytes()).hexdigest()
+    assert engine.opened == []
+    assert not (engine.run / "m1.json").exists()
+
+
+@pytest.mark.parametrize(
+    "kind", ["symlink", "symlink-loop", "fifo", "directory", "missing"]
+)
+def test_checkpoint_requires_a_regular_file_on_resume(
+    engine: SyntheticEngine, kind: str
+) -> None:
+    engine.interrupt_after = 1
+    with pytest.raises(KeyboardInterrupt):
+        m1.evaluate_t0(engine.workspace, "initial")
+    engine.interrupt_after = None
+    checkpoint = (
+        engine.run / "submissions" / engine.submitted[0] / "capture/submission.json"
+    )
+    saved = checkpoint.with_name("saved.json")
+    checkpoint.rename(saved)
+    if kind == "symlink":
+        checkpoint.symlink_to(saved)
+    elif kind == "symlink-loop":
+        checkpoint.symlink_to(checkpoint.name)
+    elif kind == "fifo":
+        os.mkfifo(checkpoint)
+    elif kind == "directory":
+        checkpoint.mkdir()
+    with pytest.raises(ValueError, match="checkpoint"):
+        m1.evaluate_t0(engine.workspace, "initial")
+    assert engine.opened == []
+    assert not (engine.run / "m1.json").exists()
+
+
+@pytest.mark.parametrize("when", ["after-capture", "after-path-check"])
+def test_checkpoint_symlink_loop_stops_the_capture_freeze(
+    engine: SyntheticEngine, monkeypatch: pytest.MonkeyPatch, when: str
+) -> None:
+    pending: Path | None = None
+    is_symlink = Path.is_symlink
+
+    def replace(path: Path) -> None:
+        path.unlink()
+        path.symlink_to(path.name)
+
+    def check(path: Path) -> bool:
+        nonlocal pending
+        result = is_symlink(path)
+        if path == pending:
+            assert not result
+            replace(path)
+            pending = None
+        return result
+
+    def replace_checkpoint(_directory: Path, _returned: Submission) -> None:
+        nonlocal pending
+        if len(engine.submitted) == 40:
+            checkpoint = (
+                engine.run
+                / "submissions"
+                / engine.submitted[0]
+                / "capture/submission.json"
+            )
+            if when == "after-capture":
+                replace(checkpoint)
+            else:
+                pending = checkpoint
+
+    engine.after_capture = replace_checkpoint
+    monkeypatch.setattr(Path, "is_symlink", check)
+    with pytest.raises(ValueError, match="capture cannot contain symbolic links"):
+        m1.evaluate_t0(engine.workspace, "initial")
+    assert pending is None
+    assert engine.opened == []
+    assert not (engine.run / "m1.json").exists()

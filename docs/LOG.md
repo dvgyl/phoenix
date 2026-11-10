@@ -657,3 +657,25 @@
 - The correction stays on the isolated branch. The shared capture correction
   and fresh combined Sol and Astra reviews remain open. Main and the active
   guarded M1 measurement stay fixed. No sealed M2 use or acceptance is claimed.
+
+## 2026-11-10. Port capture consistency to the guarded M2 evaluator
+
+- Reproduced all three prior Astra capture mismatch requirements at
+  `532d93a`. A new parent control used the real failed measurement branch.
+  All four requirements failed before the port.
+- The combined coordinator now checks returned submissions against the
+  same checkpoint bytes it hashes. It passes the full 260-key roster and
+  returned submission map to the shared freeze. The replay ancestry
+  correction and both archive barriers stay in place.
+- Applied the shared path correction after a fresh Sol reviewer reproduced
+  a concurrent symbolic link loop. Four shared path controls pass. No
+  archive opens and no report is written when the capture is invalid.
+  Fresh independent Sol passed the exact shared M1 correction.
+- The first combined gate caught a strict typing error in the new test.
+  Corrected the test type. Initial passing gates had 723 and 725 tests.
+  The final parent gate passed 726 tests with 25 opt-in skips and 92.38%
+  evaluator line coverage. Ruff, format, strict mypy, and protection passed.
+  All attempts are retained in `audit/m2-capture-consistency-port/`.
+- The port stays in the isolated M2 branch. Fresh combined Sol and Astra
+  reviews remain required. Main and its exact guarded M1 replay stay fixed.
+  No sealed M2 use or milestone acceptance is claimed.
