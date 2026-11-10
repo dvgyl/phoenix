@@ -22,3 +22,8 @@ The workspace uses the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
 3. Build and test the first public binary-to-C reconstruction.
 4. Assign T0 corpus work to a separate Standard-tier Corpus Author.
 5. Run the M1 evaluation and report the Ghidra-raw baseline.
+
+The Standard-tier Codex provider passed public run
+`provider-probe-9d3b7e1b24ab4fe2b161b48952045086`. The ingestion,
+lifting, and integrity worktrees are under
+`/Volumes/PhoenixWork/worktrees`.

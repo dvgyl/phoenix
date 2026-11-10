@@ -33,7 +33,7 @@ select = ["E", "F", "I", "UP"]
 
 [tool.mypy]
 strict = true
-files = ["phoenix_eval", "tests"]
+files = ["phoenix", "phoenix_eval", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -68,3 +68,11 @@
 - Verified the published Ghidra 12.2 and Temurin 25.0.5+8 archive hashes
   and recorded both licenses before use. The tools will be installed
   on the external drive.
+- Started ingestion, lifting, and integrity implementation in three
+  separate external-drive worktrees. Each agent uses Standard service
+  and has nested agents disabled.
+- Verified the Temurin archive hash and the installed Java version.
+- Added the runtime model interface and the private budget ledger.
+  Public run `provider-probe-9d3b7e1b24ab4fe2b161b48952045086`
+  completed through signed-in Codex. Replay returned the saved
+  response from the run log.
