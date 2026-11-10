@@ -5,15 +5,29 @@ from dataclasses import dataclass, replace
 from hashlib import sha256
 from struct import Struct
 
-from phoenix.lift.index import ExternalImport, LiftIndex, Location, StaticEdge
+from phoenix.lift.index import (
+    ExternalImport,
+    LiftIndex,
+    Location,
+    Operation,
+    StaticEdge,
+)
 from phoenix.lift.mapping import GhidraVA, MappingError
-from phoenix.recover.addresses import AddressProof, ElfImage, ElfVA, checked_end
+from phoenix.recover.addresses import (
+    AddressProof,
+    ElfImage,
+    ElfVA,
+    checked_end,
+    synthetic_external_target,
+)
 
 _U32 = Struct("<I")
 _U16 = Struct("<H")
 _SYMBOL = Struct("<IBBHQQ")
 _RELA = Struct("<QQq")
 _MAX_RECORDS = 65536
+# x86-64 ELF relocation write widths. COPY uses the destination symbol size.
+_WRITE_WIDTH = {0: 0, 1: 8, 2: 4, 6: 8, 7: 8, 8: 8, 10: 4, 11: 4, 37: 8}
 
 
 @dataclass(frozen=True, slots=True)
@@ -285,6 +299,7 @@ class _DynamicReader:
         records: list[Relocation] = []
         occupied: set[int] = set()
         ranges = []
+        writes: list[tuple[int, int, int]] = []
         for address, size, plt in tables:
             if size % _RELA.size or size // _RELA.size > _MAX_RECORDS:
                 raise MappingError("Invalid relocation table size.")
@@ -292,26 +307,39 @@ class _DynamicReader:
                 continue
             ranges.append((address, address + size))
             data = self.read(address, size)
+            file_offset = self.image.offset(ElfVA(address), size)
             for index, (slot, info, addend) in enumerate(_RELA.iter_unpack(data)):
                 if len(records) >= _MAX_RECORDS or slot in occupied:
                     raise MappingError(
                         "Duplicate relocation slot or exceeded relocation bound."
                     )
                 occupied.add(slot)
-                end = checked_end(slot, 8)
-                if (
-                    len(
-                        [
-                            segment
-                            for segment in self.image.segments
-                            if segment.va <= slot
-                            and end <= segment.va + segment.memory_size
-                        ]
+                kind, symbol_index = info & 0xFFFFFFFF, info >> 32
+                if symbol_index >= self.count:
+                    raise MappingError("A relocation has an invalid symbol index.")
+                width = _WRITE_WIDTH.get(kind)
+                if kind == 5 and symbol_index and not addend:
+                    _, info, _, section, value, size_bytes = _SYMBOL.unpack_from(
+                        self.symbols, symbol_index * _SYMBOL.size
                     )
-                    != 1
+                    if (
+                        info & 15 == 1
+                        and 0 < section < 0xFF00
+                        and value == slot
+                        and size_bytes
+                    ):
+                        width = size_bytes
+                end = checked_end(slot, max(1, width or 0))
+                if width != 0 and not any(
+                    segment.va <= slot and end <= segment.va + segment.memory_size
+                    for segment in self.image.segments
                 ):
                     raise MappingError("A relocation has no unique memory owner.")
-                kind, symbol_index = info & 0xFFFFFFFF, info >> 32
+                if width != 0:
+                    # Without a write width, a later slot cannot prove exclusion.
+                    writes.append(
+                        (slot, (1 << 64) if width is None else end, len(records))
+                    )
                 identity = None
                 gap: str | None = "unsupported_relocation"
                 if kind in (6, 7):
@@ -322,23 +350,31 @@ class _DynamicReader:
                     gap = (
                         None if identity is not None else "unsupported_symbol_or_ifunc"
                     )
-                elif symbol_index >= self.count:
-                    raise MappingError(
-                        "An unsupported relocation has an invalid symbol index."
-                    )
                 records.append(
                     Relocation(
                         ElfVA(slot),
                         kind,
                         identity,
                         gap,
-                        self.image.offset(ElfVA(address), size) + index * _RELA.size,
+                        file_offset + index * _RELA.size,
                         symbol_index,
                     )
                 )
         ranges.sort()
         if any(left[1] > right[0] for left, right in zip(ranges, ranges[1:])):
             raise MappingError("Relocation tables overlap.")
+        writes.sort()
+        previous_end = 0
+        for index, (start, end, record_index) in enumerate(writes):
+            record = records[record_index]
+            if record.identity is not None and (
+                previous_end > start
+                or (index + 1 < len(writes) and writes[index + 1][0] < end)
+            ):
+                records[record_index] = replace(
+                    record, identity=None, gap="overlapping_relocation"
+                )
+            previous_end = max(previous_end, end)
         return tuple(records)
 
 
@@ -357,32 +393,59 @@ def read_dynamic_imports(binary: bytes, image: ElfImage) -> tuple[Relocation, ..
     return _DynamicReader(binary, image).relocations()
 
 
-def _transfer_slots(lift: LiftIndex, site: GhidraVA) -> set[GhidraVA]:
+def _transfer_slot(lift: LiftIndex, site: GhidraVA) -> GhidraVA | None:
     """Accept only raw memory operands carried by width-preserving COPY operations."""
     instruction = lift.instructions.get(site)
     if instruction is None:
-        return set()
+        return None
     values: dict[Location, GhidraVA] = {}
-    slots: set[GhidraVA] = set()
+    memory_written = False
+    found_transfer = False
+    slot = None
     for operation in instruction.pcode:
+        if operation.opcode in ("BRANCH", "CBRANCH", "CALL", "CALLOTHER", "RETURN"):
+            return None
         operand = operation.inputs[0] if operation.inputs else None
         source = None
-        if operand is not None and operand.size == 8:
-            source = operand.address.ram
-            if source is None:
-                source = values.get(operand.address)
-        if operation.opcode in ("CALLIND", "BRANCHIND") and source is not None:
-            slots.add(source)
+        if operand is not None and operand.size == 8 and operand.definition is None:
+            source = values.get(operand.address)
+            if source is None and not memory_written:
+                source = operand.address.ram
+        if operation.opcode in ("CALLIND", "BRANCHIND"):
+            if found_transfer or len(operation.inputs) != 1:
+                return None
+            found_transfer = True
+            slot = source
+        if operation.opcode == "STORE":
+            memory_written = True
         if operation.output is not None:
-            values.pop(operation.output.address, None)
+            output = operation.output
+            address = output.address
+            memory_written |= address.ram is not None
+            values = {
+                stored: slot
+                for stored, slot in values.items()
+                if stored.space != address.space
+                or (
+                    output.size > 0
+                    and address.offset + output.size <= 1 << 64
+                    and (
+                        stored.offset + 8 <= address.offset
+                        or address.offset + output.size <= stored.offset
+                    )
+                )
+            }
             if (
                 operation.opcode == "COPY"
                 and len(operation.inputs) == 1
-                and operation.output.size == 8
+                and address.space in ("register", "unique")
+                and output.size == 8
+                and output.definition is None
+                and address.offset + 8 <= 1 << 64
                 and source is not None
             ):
-                values[operation.output.address] = source
-    return slots
+                values[address] = source
+    return slot
 
 
 def _binding(
@@ -405,18 +468,18 @@ def _binding(
     indirect = any(
         operation.opcode in ("CALLIND", "BRANCHIND") for operation in instruction.pcode
     )
-    if (direct and (len(direct) != 1 or direct[0] != edge.target)) or (
+    if (direct and (indirect or len(direct) != 1 or direct[0] != edge.target)) or (
         not direct and not indirect
     ):
         return ImportBinding(
             edge.site, edge.caller, None, None, None, (), "conflicting_call_target"
         )
     path: list[GhidraVA] = []
-    sites = [edge.site]
+    transfer_site = edge.site if indirect and not direct else None
     target = edge.target
     seen: set[Location] = set()
     gap = "unknown_import"
-    while target is not None and target not in imports:
+    while target is not None and target.space != "EXTERNAL":
         if target in seen or len(seen) >= 32:
             gap = "thunk_cycle_or_bound"
             break
@@ -425,28 +488,73 @@ def _binding(
         if address is None or address not in lift.functions:
             break
         function = lift.functions[address]
-        if function.thunk_target is None:
+        next_target = function.thunk_target
+        if next_target is None:
             break
-        if function.instructions:
-            path.append(address)
-        sites.extend(instruction.address for instruction in function.instructions)
-        target = function.thunk_target
+        synthetic = synthetic_external_target(lift, proof, address)
+        if synthetic is not None:
+            target = synthetic
+            continue
+        if not direct and not path:
+            gap = "unproven_indirect_thunk_target"
+            break
+        proof.witness(address, owner=address)
+        transfers: list[tuple[GhidraVA, Operation]] = []
+        next_instruction = address
+        for ins in function.instructions:
+            proof.witness(ins.address, owner=address)
+            if not transfers and ins.address != next_instruction:
+                break
+            next_instruction = GhidraVA(ins.address + ins.size)
+            transfers.extend(
+                (ins.address, op)
+                for op in ins.pcode
+                if op.opcode
+                in (
+                    "BRANCH",
+                    "BRANCHIND",
+                    "CBRANCH",
+                    "CALL",
+                    "CALLIND",
+                    "CALLOTHER",
+                    "RETURN",
+                )
+            )
+        if len(transfers) != 1:
+            gap = "unsupported_thunk_transfer"
+            break
+        site, operation = transfers[0]
+        if operation.opcode == "BRANCHIND":
+            transfer_site = site
+            if next_target.space != "EXTERNAL" and (
+                next_target.ram is None
+                or synthetic_external_target(lift, proof, next_target.ram) is None
+            ):
+                gap = "unsupported_thunk_transfer"
+                break
+        elif (
+            operation.opcode != "BRANCH"
+            or len(operation.inputs) != 1
+            or operation.inputs[0].address != next_target
+            or next_target.ram is None
+        ):
+            gap = "conflicting_thunk_target"
+            break
+        path.append(address)
+        target = next_target
     else:
-        if target is not None:
-            imported = imports[target]
-            slots = set()
-            for site in sites:
-                for address in _transfer_slots(lift, site):
-                    try:
-                        slot = proof.to_elf(address, 8)
-                        if slot in relocations:
-                            slots.add(slot)
-                    except MappingError:
-                        continue
-            if len(slots) == 1:
-                relocation = relocations[slots.pop()]
+        if target is not None and target in imports and transfer_site is not None:
+            gap = "missing_or_ambiguous_got_slot"
+            operand_address = _transfer_slot(lift, transfer_site)
+            relocation = None
+            if operand_address is not None:
+                try:
+                    relocation = relocations.get(proof.to_elf(operand_address, 8))
+                except MappingError:
+                    pass
+            if relocation is not None:
                 identity = relocation.identity
-                if identity is not None and imported.name == identity.symbol:
+                if identity is not None and imports[target].name == identity.symbol:
                     return ImportBinding(
                         edge.site,
                         edge.caller,
@@ -457,8 +565,6 @@ def _binding(
                         None,
                     )
                 gap = relocation.gap or "conflicting_import_identity"
-            else:
-                gap = "missing_or_ambiguous_got_slot"
     return ImportBinding(edge.site, edge.caller, None, None, None, tuple(path), gap)
 
 
@@ -483,12 +589,8 @@ def bind_imports(
             witness = proof.witness(edge.site)
             if edge.caller != witness.owner:
                 raise MappingError("Call ownership disagrees.")
-            # Every physical thunk instruction also needs an original witness.
-            binding = _binding(edge, lift, proof, relocations, external_imports)
-            for entry in binding.thunk_path:
-                for instruction in lift.functions[entry].instructions:
-                    proof.witness(instruction.address)
-            result.append(binding)
+            proof.witness(witness.owner, owner=witness.owner)
+            result.append(_binding(edge, lift, proof, relocations, external_imports))
         except MappingError:
             result.append(
                 ImportBinding(

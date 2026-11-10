@@ -1,6 +1,9 @@
 """Host controls use synthetic ELF records. Live gates are separate."""
 
 import json
+import os
+import subprocess
+import sys
 from copy import deepcopy
 from dataclasses import asdict, replace
 from hashlib import sha256
@@ -12,12 +15,14 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
+from phoenix.lift import lift_binary
 from phoenix.lift.index import parse_lift
 from phoenix.lift.mapping import (
+    MAX_BYTES,
     GhidraVA,
     MappingError,
     parse_mapping,
-    publish_companion,
+    publish_generation,
     read_companion,
 )
 from phoenix.recover.addresses import (
@@ -141,7 +146,12 @@ def fixture(delta: int = 0x100000, base: int = 0) -> tuple[bytes, dict[str, Any]
         return {
             "entry": loc(entry),
             "name": "poisoned_public_label",
-            "signature": {"return_type": "int", "parameters": [], "variadic": False},
+            "signature": {
+                "calling_convention": None,
+                "return_type": "int",
+                "parameters": [],
+                "variadic": False,
+            },
             "thunk_target": target,
             "ranges": [{"start": loc(entry), "end": loc(end)}],
             "decompilation": {
@@ -445,16 +455,167 @@ def test_unknown_or_conflicting_import_stays_unnamed() -> None:
     assert bind_imports(binary, lift, proof)[0].gap == "unknown_import"
 
 
+@pytest.mark.parametrize(
+    "slot, kind, named",
+    [
+        (0x2504, 8, False),
+        (0x2507, 0xFFFF, False),
+        (0x24F0, 0xFFFF, False),
+        (0x24FC, 10, True),
+        (0x24FD, 10, False),
+        (0x2508, 8, True),
+    ],
+)
+def test_import_requires_exclusive_relocation_write_range(
+    slot: int, kind: int, named: bool
+) -> None:
+    binary, document = fixture()
+    data = bytearray(binary)
+    pack_into("<Q", data, 0x868, 48)
+    pack_into("<QQq", data, 0xC18, slot, kind, 0)
+    binary = bytes(data)
+    lift, _, proof = evidence(binary, document)
+    binding = bind_imports(binary, lift, proof)[0]
+    assert (binding.identity is not None) == named
+    assert binding.gap == (None if named else "overlapping_relocation")
+
+
+@pytest.mark.parametrize("write_offset, named", [(1, False), (8, True)])
+def test_partial_storage_write_invalidates_only_overlapping_fact(
+    write_offset: int, named: bool
+) -> None:
+    binary, document = fixture()
+    thunk = 0x100140
+    register = operand(0, "register")
+    partial = operand(write_offset, "register") | {"size": 1}
+    literal = operand(0, "const") | {"size": 1}
+    document["functions"][1]["instructions"][0]["pcode"] = [
+        op(thunk, "COPY", [operand(0x102500)], register),
+        op(thunk, "COPY", [literal], partial, index=1),
+        op(thunk, "BRANCHIND", [register], index=2),
+    ]
+    lift, _, proof = evidence(binary, document)
+    binding = bind_imports(binary, lift, proof)[0]
+    assert (binding.identity is not None) == named
+
+
+@pytest.mark.parametrize("fault", ["missing", "interior", "foreign", "ambiguous"])
+def test_physical_thunk_target_requires_exact_owned_witness(fault: str) -> None:
+    binary, document = fixture()
+    call, thunk = document["functions"]
+    address = 0x100140
+    if fault == "missing":
+        thunk["instructions"].clear()
+    elif fault == "interior":
+        address += 1
+        thunk["entry"] = loc(address)
+        data = bytearray(binary)
+        pack_into("<i", data, 0x101, 0x3C)
+        binary = bytes(data)
+    elif fault == "foreign":
+        thunk["entry"] = loc(address)
+        call["ranges"].extend(thunk["ranges"])
+        call["instructions"].extend(thunk["instructions"])
+        thunk["ranges"] = [{"start": loc(address + 8), "end": loc(address + 8)}]
+        thunk["instructions"] = []
+    else:
+        call["ranges"].extend(thunk["ranges"])
+    call["instructions"][0]["pcode"][0]["inputs"][0] = operand(address)
+    document["call_edges"][0]["target"] = loc(address)
+    lift, _, proof = evidence(binary, document)
+    bindings = bind_imports(binary, lift, proof)
+    assert bindings[0].identity is None
+    candidate = make_candidate(lift, proof, bindings)
+    site = next(site for site in candidate.sites if "direct_call" in site.roles)
+    assert [(target.kind, target.elf) for target in site.static_targets] == [
+        (
+            "ambiguous_owner" if fault == "ambiguous" else "unavailable_function_entry",
+            None,
+        )
+    ]
+    assert (site.ghidra, site.static_targets[0].kind) in candidate.gaps
+    assert (address, "unavailable_function_entry") in candidate.gaps
+
+
+def test_local_target_requires_exact_instruction_start() -> None:
+    binary, document = fixture()
+    document["call_edges"][0]["target"] = loc(0x100101)
+    lift, _, proof = evidence(binary, document)
+    site = next(
+        site
+        for site in make_candidate(lift, proof, ()).sites
+        if "direct_call" in site.roles
+    )
+    assert [(item.kind, item.elf) for item in site.static_targets] == [
+        ("interior", None)
+    ]
+
+
+def test_synthetic_external_target_requires_indirect_slot_evidence() -> None:
+    binary, document = fixture()
+    call, thunk = document["functions"]
+    address = 0x105000
+    thunk["entry"] = loc(address)
+    thunk["ranges"] = [{"start": loc(address), "end": loc(address)}]
+    thunk["instructions"].clear()
+    document["call_edges"][0]["target"] = loc(address)
+    call["instructions"][0]["pcode"] = [op(0x100100, "CALLIND", [operand(0x102500)])]
+    lift, _, proof = evidence(binary, document)
+    bindings = bind_imports(binary, lift, proof)
+    identity = bindings[0].identity
+    assert identity is not None and identity.symbol == "fwrite"
+    assert not bindings[0].thunk_path
+    site = next(
+        site
+        for site in make_candidate(lift, proof, bindings).sites
+        if "indirect_call" in site.roles
+    )
+    assert [(target.kind, target.elf) for target in site.static_targets] == [
+        ("external", None)
+    ]
+
+    call["instructions"][0]["pcode"] = [
+        op(0x100100, "CALLIND", [operand(0, "register")])
+    ]
+    lift, _, proof = evidence(binary, document)
+    assert bind_imports(binary, lift, proof)[0].identity is None
+
+
+def test_disconnected_thunk_transfer_cannot_supply_the_slot() -> None:
+    binary, document = fixture()
+    thunk = document["functions"][1]
+    branch = thunk["instructions"][0]
+    branch["address"] = loc(0x100144)
+    branch["size"] = 2
+    branch["pcode"][0]["sequence"]["address"] = branch["address"]
+    thunk["instructions"].insert(
+        0, {"address": loc(0x100140), "size": 2, "text": "", "pcode": []}
+    )
+    lift, _, proof = evidence(binary, document)
+    assert (
+        proof.witness(GhidraVA(0x100140)).owner
+        == proof.witness(GhidraVA(0x100144)).owner
+    )
+    binding = bind_imports(binary, lift, proof)[0]
+    assert binding.identity is None
+    assert binding.gap == "unsupported_thunk_transfer"
+
+
 def test_complete_publication_is_required(tmp_path: Path) -> None:
     binary, document = fixture()
     raw = raw_json(document)
-    lift = tmp_path / "lift.json"
-    mapping = tmp_path / "mapping.json"
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    lift = staging / "lift.json"
+    mapping = staging / "mapping.json"
+    binary_path = tmp_path / "binary.elf"
+    binary_path.write_bytes(binary)
     lift.write_bytes(raw)
     mapping.write_bytes(raw_json(mapping_wire(binary, raw)))
     with pytest.raises(MappingError, match="incomplete"):
         read_companion(tmp_path, binary)
-    publish_companion(lift, mapping, binary)
+    exported = publish_generation(lift, tmp_path, binary_path, binary, "")
+    mapping = exported.with_name("mapping.json")
     saved, parsed = read_companion(tmp_path, binary)
     assert saved == raw and parsed.binary_sha256 == sha256(binary).hexdigest()
     mapping.write_bytes(mapping.read_bytes() + b" ")
@@ -463,6 +624,49 @@ def test_complete_publication_is_required(tmp_path: Path) -> None:
     mapping.unlink()
     with pytest.raises(MappingError, match="incomplete"):
         read_companion(tmp_path, binary)
+
+
+@pytest.mark.parametrize("kind", ["symlink", "fifo"])
+def test_generation_reader_rejects_unsafe_selection(tmp_path: Path, kind: str) -> None:
+    binary, document = fixture()
+    binary_path = tmp_path / "binary.elf"
+    binary_path.write_bytes(binary)
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    raw = raw_json(document)
+    lift = staging / "lift.json"
+    lift.write_bytes(raw)
+    (staging / "mapping.json").write_bytes(raw_json(mapping_wire(binary, raw)))
+    published = publish_generation(lift, tmp_path, binary_path, binary, "")
+    selector = tmp_path / "evidence-current"
+    outside = selector.rename(tmp_path / "saved-selection")
+    if kind == "symlink":
+        selector.symlink_to(outside)
+    else:
+        os.mkfifo(selector)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys\n"
+            "from pathlib import Path\n"
+            "from phoenix.lift.mapping import MappingError, read_companion\n"
+            "try:\n"
+            "    read_companion(Path(sys.argv[1]), Path(sys.argv[2]).read_bytes())\n"
+            "except MappingError:\n"
+            "    sys.exit(0)\n"
+            "sys.exit('The evidence reader accepted the unsafe selector.')\n",
+            str(tmp_path),
+            str(binary_path),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=3,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert published.read_bytes() == raw
 
 
 def test_duplicate_keys_and_noncanonical_addresses_reject() -> None:
@@ -651,7 +855,8 @@ def test_launcher_opt_in_publishes_pair_and_default_stays_legacy(
     assert not (old.parent / "mapping.json").exists()
     assert not (old.parent / "evidence-commit.json").exists()
     new = tmp_path / "companion" / "lift.json"
-    lift_binary(binary, new, installation, java, mapping_companion=True)
+    result = lift_binary(binary, new, installation, java, mapping_companion=True)
+    assert result.export_path.read_bytes() == raw
     assert read_companion(new.parent, binary_bytes)[0] == raw
 
 
@@ -673,7 +878,156 @@ def test_launcher_rejects_partial_companion(tmp_path: Path) -> None:
     with pytest.raises(LiftError, match="mapping companion"):
         lift_binary(binary, output, installation, java, mapping_companion=True)
     assert not output.exists()
-    assert not (output.parent / "evidence-commit.json").exists()
+    with pytest.raises(MappingError, match="incomplete"):
+        read_companion(output.parent, binary_bytes)
+
+
+def mock_export(monkeypatch: pytest.MonkeyPatch, binary: bytes, raw: bytes) -> None:
+    def launch(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        post_script = args.index("-postScript")
+        Path(args[post_script + 2]).write_bytes(raw)
+        Path(args[post_script + 5]).write_bytes(raw_json(mapping_wire(binary, raw)))
+        return subprocess.CompletedProcess(args, 0, "Ghidra log")
+
+    monkeypatch.setattr("phoenix.lift.subprocess.run", launch)
+
+
+@pytest.mark.parametrize("fault", ["mapping", "selection"])
+def test_failed_refresh_keeps_last_generation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str
+) -> None:
+    original, document = fixture()
+    binary, installation, java = fake_install(tmp_path, "")
+    binary.write_bytes(original)
+    raw = raw_json(document)
+    output = tmp_path / "published" / "lift.json"
+    mock_export(monkeypatch, original, raw)
+    first = lift_binary(binary, output, installation, java, mapping_companion=True)
+    assert first.export_path.with_name("ghidra.log").read_text() == "Ghidra log"
+
+    def inject(source: Path, destination: Path) -> Path:
+        if destination.name == (
+            "mapping.json" if fault == "mapping" else "evidence-current"
+        ):
+            raise OSError("Injected publication failure.")
+        return move(source, destination)
+
+    changed = raw + b"\n"
+    mock_export(monkeypatch, original, changed)
+    method = "rename" if fault == "mapping" else "replace"
+    move = Path.rename if fault == "mapping" else Path.replace
+    with monkeypatch.context() as injection:
+        injection.setattr(Path, method, inject)
+        with pytest.raises(OSError, match="Injected"):
+            lift_binary(binary, output, installation, java, mapping_companion=True)
+    assert read_companion(output.parent, original)[0] == raw
+    assert first.export_path.read_bytes() == raw
+    second = lift_binary(binary, output, installation, java, mapping_companion=True)
+    assert read_companion(output.parent, original)[0] == changed
+    assert second.export_path.read_bytes() == changed
+    assert first.export_path.read_bytes() == raw
+
+
+@pytest.mark.parametrize(
+    "name, alias",
+    [
+        ("lift.json", "direct"),
+        ("mapping.json", "direct"),
+        ("ghidra.log", "symlink"),
+        ("evidence-commit.json", "hardlink"),
+        ("evidence-current", "symlink"),
+    ],
+)
+def test_opt_in_rejects_input_output_alias_before_launch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str, alias: str
+) -> None:
+    original, _ = fixture()
+    binary, installation, java = fake_install(tmp_path, "")
+    output = tmp_path / "published" / "lift.json"
+    output.parent.mkdir()
+    artifact = output.with_name(name)
+    if alias == "direct":
+        binary = artifact
+    binary.write_bytes(original)
+    if alias == "symlink":
+        artifact.symlink_to(binary)
+    elif alias == "hardlink":
+        artifact.hardlink_to(binary)
+
+    def unexpected_launch(*args: object, **kwargs: object) -> None:
+        pytest.fail("Ghidra received aliased paths.")
+
+    monkeypatch.setattr("phoenix.lift.subprocess.run", unexpected_launch)
+    with pytest.raises(ValueError, match="binary"):
+        lift_binary(binary, output, installation, java, mapping_companion=True)
+    assert binary.read_bytes() == artifact.read_bytes() == original
+
+
+@pytest.mark.parametrize("fault", ["empty", "missing", "malformed"])
+def test_malformed_lift_is_an_evidence_error_before_publication(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str
+) -> None:
+    original, document = fixture()
+    binary, installation, java = fake_install(tmp_path, "")
+    binary.write_bytes(original)
+    if fault == "empty":
+        document.clear()
+    elif fault == "missing":
+        del document["functions"][0]["decompilation"]["analyzed_pcode"]
+    else:
+        document["strings"] = [{"address": loc(0x102500)}]
+    raw = raw_json(document)
+    mock_export(monkeypatch, original, raw)
+    output = tmp_path / "published" / "lift.json"
+    with pytest.raises(MappingError):
+        parse_lift(raw, original)
+    with pytest.raises(MappingError):
+        lift_binary(binary, output, installation, java, mapping_companion=True)
+    with pytest.raises(MappingError, match="incomplete"):
+        read_companion(output.parent, original)
+
+
+def test_input_size_is_checked_before_ghidra(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    binary, installation, java = fake_install(tmp_path, "")
+    with binary.open("wb") as stream:
+        stream.truncate(MAX_BYTES + 1)
+
+    def unexpected_launch(*args: object, **kwargs: object) -> None:
+        pytest.fail("Ghidra received an oversized input.")
+
+    monkeypatch.setattr("phoenix.lift.subprocess.run", unexpected_launch)
+    output = tmp_path / "published" / "lift.json"
+    with pytest.raises(MappingError, match="64 MiB"):
+        lift_binary(binary, output, installation, java, mapping_companion=True)
+    assert not output.parent.exists()
+
+
+def test_input_identity_is_checked_after_ghidra(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original, document = fixture()
+    binary, installation, java = fake_install(tmp_path, "")
+    binary.write_bytes(original)
+
+    def launch(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        raw = raw_json(document)
+        imported = Path(args[args.index("-import") + 1])
+        assert imported != binary and imported.name == binary.name
+        assert imported.read_bytes() == original
+        post_script = args.index("-postScript")
+        Path(args[post_script + 2]).write_bytes(raw)
+        Path(args[post_script + 5]).write_bytes(raw_json(mapping_wire(original, raw)))
+        binary.write_bytes(original[:-1] + b"x")
+        return subprocess.CompletedProcess(args, 0, "")
+
+    monkeypatch.setattr("phoenix.lift.subprocess.run", launch)
+    output = tmp_path / "published" / "lift.json"
+    with pytest.raises(MappingError, match="changed during"):
+        lift_binary(binary, output, installation, java, mapping_companion=True)
+    with pytest.raises(MappingError, match="incomplete"):
+        read_companion(output.parent, original)
 
 
 def test_unmapped_analyzed_proposal_has_explicit_gap() -> None:

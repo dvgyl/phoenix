@@ -20,10 +20,33 @@ and `FileBytes.getFileOffset()` establish file positions. Image base alone
 does not establish file positions. Changed memory spans remain unavailable
 byte evidence. Only unchanged executable spans can witness instructions.
 
-Mapping publication uses three files. A commit record binds the exact
-completed lift and mapping bytes. Readers require all three files and check
-both digests. A failed or partial publication cannot enter new recovery.
-The lift digest is outside the hashed lift object.
+Opt-in publication writes `lift.json`, `mapping.json`,
+`evidence-commit.json`, and `ghidra.log` in a new generation directory.
+The commit record binds the exact lift and mapping bytes. The log is
+diagnostic. The lift digest is outside the hashed lift object.
+
+Call `read_companion(output.parent, binary_bytes)` to read the current
+opt-in generation. The reader reads `evidence-current` once. It requires a regular file,
+limits the byte count, and opens without following a symbolic link. This file
+contains one directory name in the form `generation-<32 lowercase hex
+digits>` followed by a newline. The reader checks the files, commit
+digests, binary identity, and lift structure in that directory. The opt-in
+launcher returns the selected generation's own lift path. Use that path to
+keep a specific generation after a refresh.
+
+The publisher validates a complete generation before it replaces
+`evidence-current` atomically. A failure before replacement leaves the
+previous selection readable. The publisher keeps earlier generations and
+can leave a complete unselected generation if selector replacement fails.
+This contract covers process failures and concurrent refreshes. Power-loss
+durability and automatic deletion of generations are outside its scope.
+
+Saved flat U1 exports remain archived in their original layout. The
+production reader requires a selector. To check a saved flat export with
+the new reader, first verify its archived commit and public binary hashes.
+Then publish copies of the saved lift and mapping bytes in a separate
+directory. Keep the saved files and their hashes intact. The default
+launcher continues to write one lift file at the requested path.
 
 Import identity requires both a Ghidra call/thunk path and an ELF relocation
 at a referenced GOT slot. Version identity is retained. DT_NEEDED order does

@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass
 
 from phoenix.lift.index import LiftIndex
 from phoenix.lift.mapping import GhidraVA, MappingError
-from phoenix.recover.addresses import AddressProof, ElfVA
+from phoenix.recover.addresses import AddressProof, ElfVA, synthetic_external_target
 from phoenix.recover.imports import ImportBinding
 
 
@@ -57,10 +57,19 @@ def make_candidate(
     continuations: dict[GhidraVA, ElfVA] = {}
     gaps = [*lift.gaps, *proof.gaps]
     witnesses = {witness.ghidra: witness for witness in proof.witnesses}
+    external = {
+        item.address for item in lift.imports if item.address.space == "EXTERNAL"
+    }
+    synthetic = {
+        entry
+        for entry in lift.functions
+        if synthetic_external_target(lift, proof, entry) in external
+    }
     for function in lift.functions.values():
-        if function.entry in witnesses:
+        entry_witness = witnesses.get(function.entry)
+        if entry_witness is not None and entry_witness.owner == function.entry:
             roles.setdefault(function.entry, set()).add("entry")
-        else:
+        elif function.entry not in synthetic:
             gaps.append((function.entry, "unavailable_function_entry"))
     for instruction in lift.instructions.values():
         opcodes = {op.opcode for op in instruction.pcode}
@@ -96,17 +105,24 @@ def make_candidate(
             gaps.append((edge.site, "unavailable_or_conflicting_edge_owner"))
             continue
         target = edge.target
-        if target is None or target.ram is None:
-            resolved = StaticTarget(
-                "external" if target is not None else "unknown", None, None
-            )
+        if target is None:
+            resolved = StaticTarget("unknown", None, None)
+        elif target in external or target.ram in synthetic:
+            resolved = StaticTarget("external", None, target.ram)
+        elif target.ram is None:
+            resolved = StaticTarget("unresolved_target", None, None)
         else:
             address = target.ram
             kind = lift.target_kind(address)
-            try:
-                elf = proof.to_elf(address)
-            except MappingError:
-                elf = None
+            elf = None
+            if kind in ("function_entry", "instruction"):
+                target_witness = witnesses.get(address)
+                if target_witness is not None and (
+                    kind == "instruction" or target_witness.owner == address
+                ):
+                    elf = target_witness.elf
+                else:
+                    kind = "unavailable_target"
             resolved = StaticTarget(kind, elf, address)
         edges.setdefault(edge.site, set()).add(resolved)
         if resolved.kind in (
@@ -114,6 +130,8 @@ def make_candidate(
             "interior",
             "ambiguous_owner",
             "unresolved_target",
+            "unavailable_target",
+            "unavailable_function_entry",
         ):
             gaps.append((edge.site, resolved.kind))
     for address, site_roles in roles.items():
@@ -129,7 +147,7 @@ def make_candidate(
     for address, site_roles in sorted(roles.items()):
         witness = witnesses[address]
         try:
-            entry = proof.witness(witness.owner).elf
+            entry = proof.witness(witness.owner, owner=witness.owner).elf
         except MappingError:
             gaps.append((address, "unavailable_owner_entry"))
             continue

@@ -134,20 +134,26 @@ class LiftIndex:
         return ()
 
     def target_kind(self, address: GhidraVA) -> str:
-        if address in self.functions:
-            return "function_entry"
-        if len(self.owners(address)) > 1:
+        owners = self.owners(address)
+        if len(owners) > 1:
             return "ambiguous_owner"
+        if address in self.functions:
+            if owners == (address,) and address in self.instructions:
+                return "function_entry"
+            return "unavailable_function_entry"
         if address in self.instructions:
             return "instruction"
-        if self.owners(address):
+        if owners:
             return "interior"
         return "unresolved_target"
 
 
 def location(value: object) -> Location:
     item = object_fields(value, "space offset")
-    return Location(text(item["space"]), hex_address(item["offset"]))
+    space = text(item["space"])
+    if not space:
+        raise MappingError("The address space name is empty.")
+    return Location(space, hex_address(item["offset"]))
 
 
 def ram(value: object) -> GhidraVA:
@@ -155,6 +161,30 @@ def ram(value: object) -> GhidraVA:
     if result is None:
         raise MappingError("Expected a Ghidra RAM address.")
     return result
+
+
+def _optional_location(value: object) -> None:
+    if value is not None:
+        location(value)
+
+
+def _string(value: object, *, optional: bool = False) -> None:
+    if not isinstance(value, str) and not (optional and value is None):
+        raise MappingError("Expected lift text.")
+
+
+def _signature(value: object) -> None:
+    signature = object_fields(
+        value, "calling_convention return_type parameters variadic"
+    )
+    _string(signature["calling_convention"], optional=True)
+    _string(signature["return_type"])
+    if type(signature["variadic"]) is not bool:
+        raise MappingError("Invalid variadic flag.")
+    for value_parameter in array(signature["parameters"]):
+        parameter = object_fields(value_parameter, "name type")
+        _string(parameter["name"])
+        _string(parameter["type"])
 
 
 def _sequence(value: object) -> Sequence:
@@ -230,6 +260,8 @@ def parse_lift(raw: bytes, binary: bytes) -> LiftIndex:
     if type(item["schema_version"]) is not int or item["schema_version"] != 1:
         raise MappingError("Unsupported lift schema.")
     main = object_fields(item["main"], "entry startup setup call")
+    ram(main["setup"])
+    ram(main["call"])
     functions: dict[GhidraVA, Function] = {}
     instructions: dict[GhidraVA, Instruction] = {}
     edges = []
@@ -245,6 +277,8 @@ def parse_lift(raw: bytes, binary: bytes) -> LiftIndex:
         )
         if function.keys() - allowed or allowed - {"static_evidence"} - function.keys():
             raise MappingError("Invalid function fields.")
+        _string(function["name"])
+        _signature(function["signature"])
         entry = ram(function["entry"])
         ranges = []
         for value_range in array(function["ranges"], 65536):
@@ -261,6 +295,7 @@ def parse_lift(raw: bytes, binary: bytes) -> LiftIndex:
         decoded_addresses: set[GhidraVA] = set()
         for value_instruction in array(function["instructions"]):
             ins = object_fields(value_instruction, "address size text pcode")
+            _string(ins["text"])
             address, size = ram(ins["address"]), uint(ins["size"], 15)
             owner_index = bisect_right(range_starts, address) - 1
             if (
@@ -279,7 +314,21 @@ def parse_lift(raw: bytes, binary: bytes) -> LiftIndex:
             decoded.append(instruction)
             decoded_addresses.add(address)
             total += 1 + len(operations)
-        decompilation = object_fields(function["decompilation"])
+        decompilation = object_fields(
+            function["decompilation"],
+            "raw_c status diagnostic analyzed_pcode statements",
+        )
+        _string(decompilation["raw_c"], optional=True)
+        _string(decompilation["diagnostic"], optional=True)
+        if decompilation["status"] not in ("ok", "timeout", "incomplete"):
+            raise MappingError("Invalid decompilation status.")
+        for value_statement in array(decompilation["statements"]):
+            statement = object_fields(value_statement, "text start end operation")
+            _string(statement["text"])
+            _optional_location(statement["start"])
+            _optional_location(statement["end"])
+            if statement["operation"] is not None:
+                _sequence(statement["operation"])
         analyzed = _operations(decompilation["analyzed_pcode"])
         definitions = {operation.sequence: operation for operation in analyzed}
         for operation in analyzed:
@@ -335,7 +384,6 @@ def parse_lift(raw: bytes, binary: bytes) -> LiftIndex:
             )
         if entry in functions:
             raise MappingError("Duplicate function entry.")
-        static = function.get("static_evidence")
         functions[entry] = Function(
             entry,
             tuple(ranges),
@@ -344,7 +392,9 @@ def parse_lift(raw: bytes, binary: bytes) -> LiftIndex:
             else location(function["thunk_target"]),
             tuple(sorted(decoded, key=lambda ins: ins.address)),
             analyzed,
-            None if static is None else parse_static_evidence(static),
+            parse_static_evidence(function["static_evidence"])
+            if "static_evidence" in function
+            else None,
             tuple(blocks),
         )
     for value in array(item["call_edges"]):
@@ -364,10 +414,15 @@ def parse_lift(raw: bytes, binary: bytes) -> LiftIndex:
     references = []
     for value in array(item["data_references"]):
         ref = object_fields(value, "from to kind operand_index")
+        _string(ref["kind"])
+        if type(ref["operand_index"]) is not int:
+            raise MappingError("Invalid reference operand index.")
         references.append(Reference(location(ref["from"]), location(ref["to"])))
     imports = []
     for value in array(item["imports"], 65536):
         imported = object_fields(value, "address library name library_address")
+        _string(imported["library"])
+        _optional_location(imported["library_address"])
         imports.append(
             ExternalImport(
                 location(imported["address"]),
@@ -376,6 +431,13 @@ def parse_lift(raw: bytes, binary: bytes) -> LiftIndex:
         )
     if len({imported.address for imported in imports}) != len(imports):
         raise MappingError("Duplicate import address.")
+    for value in array(item["strings"]):
+        string = object_fields(value, "address value type size")
+        location(string["address"])
+        _string(string["value"])
+        _string(string["type"])
+        if not uint(string["size"]):
+            raise MappingError("Invalid string size.")
     if len(edges) + len(references) + total > 1_000_000:
         raise MappingError("The lift index exceeds the total bound.")
     ordered = sorted(instructions.values(), key=lambda ins: ins.address)

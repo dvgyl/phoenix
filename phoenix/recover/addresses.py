@@ -7,7 +7,7 @@ from hashlib import sha256
 from struct import Struct
 from typing import NewType
 
-from phoenix.lift.index import LiftIndex
+from phoenix.lift.index import LiftIndex, Location
 from phoenix.lift.mapping import (
     MAX_BYTES,
     FileOffset,
@@ -216,11 +216,38 @@ class AddressProof:
             raise MappingError("The address round trip failed.")
         return converted
 
-    def witness(self, address: GhidraVA) -> InstructionWitness:
+    def witness(
+        self, address: GhidraVA, *, owner: GhidraVA | None = None
+    ) -> InstructionWitness:
         index = bisect_right(self.witness_starts, address) - 1
         if index < 0 or self.witnesses[index].ghidra != address:
             raise MappingError("The target has no exact admitted instruction witness.")
-        return self.witnesses[index]
+        witness = self.witnesses[index]
+        if owner is not None and owner != witness.owner:
+            raise MappingError("The instruction witness has a different owner.")
+        return witness
+
+
+def synthetic_external_target(
+    lift: LiftIndex, proof: AddressProof, address: GhidraVA
+) -> Location | None:
+    function = lift.functions.get(address)
+    if (
+        function is None
+        or function.instructions
+        or function.ranges != ((address, address),)
+        or lift.owners(address) != (address,)
+        or function.thunk_target is None
+        or function.thunk_target.space != "EXTERNAL"
+    ):
+        return None
+    elf = address - proof.ghidra_delta
+    if not 0 <= elf < 1 << 64 or any(
+        segment.va <= elf < segment.va + segment.memory_size
+        for segment in proof.image.segments
+    ):
+        return None
+    return function.thunk_target
 
 
 def prove_addresses(

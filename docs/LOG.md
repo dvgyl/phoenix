@@ -450,3 +450,29 @@
 - Fresh independent Sol and Astra reviews remain queued. Linux acceptance
   checks remain open while the guarded M1 original and replay own the VM.
   No production observation, switch reconstruction or M2 result is claimed.
+
+## 2026-11-10. Harden the opt-in U1 publication and evidence checks
+
+- Independent Sol confirmed the six saved public positive exports at
+  `ac45adf`. It held seven findings with nine synthetic defect observations.
+  The original verdict and probes remain in `audit/m2-production-u1-sol/`.
+- The isolated correction rejects conflicting relocation writes, overlapping
+  register writes, and targets without exact instruction and owner evidence.
+  It rejects input aliases and oversize input before Ghidra. It validates the
+  lift and mapping, then selects a complete generation in one atomic step.
+  Both injected refresh failures leave the last complete generation readable.
+- The parent full gate passed 576 tests after the writer returned. The parent
+  then reproduced a reader accepting a symbolic link as the selector and a
+  reader waiting on a named pipe. Both rejection tests failed before the fix.
+  The reader now uses a bounded, nonblocking regular-file read and does not
+  follow the final symbolic link. Both tests pass.
+- The final full parent gate passed 578 tests with 26 opt-in skips and 90.06%
+  evaluator line coverage. Ruff, format, strict mypy, and the unchanged
+  protection test passed. The writer's separate nested guard failure remains
+  recorded. No protection check was excluded.
+- Fresh read-only Ghidra analysis of both public switch binaries used the new
+  publication path. Both output generations preserved the saved lift and
+  address proof hashes, and the originals stayed unchanged. No target ran.
+- The hardening checkpoint remains opt-in and outside main. Fresh independent
+  Sol and Astra reviews and expanded Linux E1 checks remain open. Evidence
+  is in `audit/m2-production-u1-hardening/`. Worktree scratch stays untracked.

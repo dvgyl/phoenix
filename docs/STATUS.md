@@ -41,7 +41,9 @@ The later `efcad05` review closed that header finding.
 Native CI and the current Mac M0 passed at `6897e47`. All three reports
 match in revision, source hash, seed, cases and outcomes.
 [CI run 42905864046](https://github.com/dvgyl/phoenix/actions/runs/42905864046).
-The guarded M1 original is active. Its exact replay remains required.
+Guarded M1 original `m1-t0-6897e47` retained Phoenix 17/20 and
+Ghidra-raw 8/20 fully successful. All 40 report rows match their bound
+checkpoints and model summaries. Its exact replay is active.
 
 T1 is sealed with 15 programs and 90 variants. Its archive commitments
 are pushed on `agent/t1-commitments`. Integration waits for M1 acceptance.
@@ -50,8 +52,8 @@ The source and held-out inputs stay private. T3 qualification is pending.
 
 Verified static lift evidence awaits integration after M1. The separate
 public observer calibration passed its fixed positive and mutant controls.
-Wrong-API and missing-register runtime controls remain open. Its source
-and runtime evidence need fresh review. The M2 evaluator is in its
+Wrong-API and missing-register runtime controls passed a fresh Linux run
+and independent Sol review. The observer remains separate from production. The M2 evaluator is in its
 separate worktree, with synthetic checks and review in progress.
 
 The internal-drive free-space baseline is 14,432,616 KiB.
@@ -63,25 +65,29 @@ Standard service with Fast mode and nested agents disabled.
 
 ## Separate U1 candidate
 
-`agent/m2-production-recovery` has an uncommitted U1 evidence adapter.
-It is disabled by default. Main remains separate for M1. ADR0022 records
-the mapping, static index, import checks, and static plan candidate.
-Public static Ghidra checks passed for four PIE fixtures and both saved
-switch fixtures. Changed data spans remain unavailable byte evidence.
-The switch arrays still have 13 targets and 12 labels. No target ran.
+Initial opt-in U1 candidate `ac45adf` remains on its own branch. Independent
+Sol confirmed six saved public static exports and held seven findings.
+The hardening branch corrects them. It rejects conflicting import or target
+evidence, protects the input paths, and preserves the previous complete
+generation after a failed refresh.
 
-The writer retained a nested-sandbox test failure under its outer guard.
-The complete parent gate passed 549 tests with 26 opt-in skips and 90.06%
-evaluator line coverage. Ruff, format, strict mypy and the unchanged
-protection tests passed. These are software checks, not evaluation scores.
-Parent evidence is under `$PHOENIX_ROOT/audit/m2-production-u1/`.
-Fresh independent Sol and Astra reviews remain pending. Linux ET_EXEC,
-PLT/GOT, and multiple-executable-segment gates remain pending. The public
-builder is ready. Production observation and U2 are disabled.
+The parent also reproduced two selector faults. A symbolic link reached a
+valid selector outside the publication path. A named pipe blocked the
+reader. The reader now requires a regular file and uses a bounded
+nonblocking read without following symbolic links. Both probes pass.
+
+The parent gate passed 578 tests with 26 opt-in skips and 90.06% evaluator
+line coverage. Two fresh Ghidra analyses of public GCC and Clang switch
+fixtures preserved the original binary, lift, and address proof hashes.
+They published a complete generation through the new path. No target ran.
+
+The code remains opt-in. Fresh independent Sol and Astra reviews and the
+expanded E1 Linux fixture checks remain open.
+[Tracked review findings](https://github.com/dvgyl/phoenix/issues/7).
 
 ## Next actions
 
-1. Complete the guarded M1 original and exact replay on unchanged main.
+1. Complete exact guarded M1 replay on unchanged main.
 2. Obtain milestone review before tagging or M2 integration.
 3. Finish the combined evaluator and fresh observer evidence reviews.
 4. Review U1 independently, then run its pending public Linux fixture gates.
