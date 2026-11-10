@@ -359,3 +359,58 @@
   contents stay in its private namespaces. Linux validation was gated
   until the M1 replay and public compiler regression completed. Only
   aggregate status and permitted release metadata reach the lead.
+
+## 2026-11-10. Corrected M1 measurement and M2 preparation
+
+- Re-read all governing documents after compaction. Main stayed clean at
+  `efcad05`. Storage remained above the internal-drive threshold.
+- Native CI run `42859828267` passed on its third transport attempt.
+  Earlier attempts rejected incorrect CA package bytes. The pinned hash
+  stayed fixed. The exact native outcome hashes match Mac M0 run
+  `m0-43bba34c9d8d426aa1c029de0e5071c1`.
+- Corrected sealed run `m1-t0-efcad05` scored Phoenix 17/20 fully
+  successful and Ghidra-raw 8/20. Phoenix behavior passed for 19 and
+  integrity passed for 18. Two variants failed `embedded_text`. One
+  failed behavior. Twelve raw variants failed compilation.
+- Both methods had 792 eligible original cases, zero emulator
+  disagreements, and zero evaluation errors. Recovered block entry
+  coverage remained 790/1079. All earlier failed or held runs remain.
+- The original full model log SHA-256 is
+  `728cf1a3f10b21b54c7c747f7dabbbaada85c68b286110d5b865bfe77dd23f44`.
+  It records 80 calls and $1.603504 of API-equivalent cost. There are
+  zero unknown reservations. Median reconstruction time was 51.893
+  seconds across all 20 Phoenix variants. Exact replay and final Astra
+  review are active. No M1 tag was made.
+- The dedicated T1 author completed 15 programs and 90 stripped variants.
+  The lead checked the manifest, all release hashes, ELF contracts and
+  aggregate adequacy records. Only permitted metadata was opened.
+  Minimum branch coverage was 184/197. Minimum mutation detection was
+  11/12. One of 180 non-equivalent mutants survived. Source sizes are
+  304 to 316 C LOC. This narrow range is a report limitation.
+- The lead committed the author's T1 archive hashes in a separate public
+  worktree before any T1 reconstruction. Main remains fixed through M1
+  replay. Neither source archives nor held-out contents were opened.
+- A fresh T2 author started private design under a separate guard. The
+  contract requires 10 independent multi-file programs with a size spread
+  across 1,500 to 6,000 real C LOC and at least 20 meaningful mutants each.
+  Linux validation is gated until M1 replay finishes. An initial brief
+  named the wrong archive root. The lead stopped that process, corrected
+  the root to `t2/cases`, and launched a fresh author. No private output
+  was read.
+- The public trace prototype passed independent source review for runtime
+  experimentation. The real fixture build then exposed a host bind-mount
+  assumption and a missing writable Clang temporary path. The lead
+  reproduced both failures and corrected the fixture transport. All 16
+  builds and static plans passed. The parent gate passed 496 tests with
+  23 skips and 90.01% evaluator coverage. Live trace calibration remains
+  pending in its separate worktree.
+- The static lift extension passed the parent host gate with 454 tests,
+  26 skips, and 90.06% evaluator coverage. Isolated parent Ghidra runs
+  preserved every legacy export field and recovery output. Independent
+  review then found invalid storage intervals and register-base records
+  that its new reader accepted. A fresh Astra worker is fixing them.
+- A new public switch fixture retained indirect jumps under both pinned
+  compilers. The first parent check incorrectly required equal target and
+  label counts. Ghidra exports the default destination without a label.
+  The corrected check confirmed 13 destinations and 12 labels, preserving
+  both arrays separately. No target execution was used for this check.
