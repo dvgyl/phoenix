@@ -23,3 +23,13 @@
   quality gate passed 59 tests. The worker images are still building.
 - Added native x86-64 and AArch64 CI jobs. CI compares exact public
   outcome hashes across the two architectures.
+- Astra found ways that resource limits, persistent inter-process
+  communication, emulator selection, and invalid controls could distort
+  the public scores. The worker and acceptance checks now reject those
+  cases.
+- Verified the native AArch64, Rosetta, and distro QEMU sandbox probes.
+  The Rosetta launcher uses a private proc mount and preserves signals.
+  The distro QEMU package lacks plugins. The upstream plugin-enabled
+  build is in progress.
+- Both initial native CI jobs rejected a public mutation at compile
+  time. Fixed the unused environment lookup in that variant.

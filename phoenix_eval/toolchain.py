@@ -53,7 +53,7 @@ def build_public(
         check=False,
     )
     machine = int.from_bytes(result.stdout[18:20], "little")
-    expected_machine = 62 if engine is Engine.AMD64 else 183
+    expected_machine = 62 if engine.platform == "amd64" else 183
     if (
         result.returncode
         or not result.stdout.startswith(b"\x7fELF\x02\x01")

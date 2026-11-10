@@ -1,6 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import PurePosixPath
+
+from phoenix_eval.trace import CodeTrace
 
 
 class EntryKind(StrEnum):
@@ -80,6 +82,7 @@ class Outcome:
     stderr: bytes
     termination: Exited | Signaled
     tree: TreeSnapshot
+    trace: CodeTrace | None = field(default=None, compare=False)
 
 
 class Difference(StrEnum):

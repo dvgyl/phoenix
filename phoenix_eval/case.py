@@ -32,11 +32,18 @@ class Invocation:
         return dict((*FIXED_ENVIRONMENT, *self.overlay))
 
 
+class WorkerRuntime(StrEnum):
+    DIRECT = "direct"
+    QEMU = "qemu"
+    ROSETTA = "rosetta"
+
+
 class FailureKind(StrEnum):
     LAUNCH = "launch"
     LIMIT = "limit"
     TIMEOUT = "timeout"
     SNAPSHOT = "snapshot"
+    TRACE = "trace"
 
 
 @dataclass(frozen=True)

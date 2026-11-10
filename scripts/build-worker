@@ -5,11 +5,30 @@ case "${1:-}" in
     amd64|arm64) architecture=$1 ;;
     *) printf '%s\n' 'Specify amd64 or arm64.' >&2; exit 2 ;;
 esac
+case "$(docker info --format '{{.Architecture}}')" in
+    x86_64|amd64) native=amd64 ;;
+    aarch64|arm64) native=arm64 ;;
+    *) printf '%s\n' 'Unsupported Docker daemon architecture.' >&2; exit 2 ;;
+esac
 
 cd "$(dirname "$0")/.."
 base=$(sed -n 's/^ubuntu_base = "\(.*\)"$/\1/p' tools.lock)
 snapshot=$(sed -n 's/^ubuntu_snapshot = "\(.*\)"$/\1/p' tools.lock)
+launcher=$(mktemp -d)
+trap 'rm -f "$launcher/launch-target"; rmdir "$launcher"' EXIT
 
-docker buildx build --load --platform "linux/$architecture" \
-    --build-arg "UBUNTU_BASE=$base" --build-arg "UBUNTU_SNAPSHOT=$snapshot" \
-    -f containers/Dockerfile -t "phoenix-worker:$architecture" .
+build_image() {
+    docker buildx build --load --build-arg "UBUNTU_BASE=$base" \
+        --build-arg "UBUNTU_SNAPSHOT=$snapshot" -f containers/Dockerfile "$@" .
+}
+
+build_image --target toolchain --platform "linux/$native" -t "phoenix-toolchain:$native"
+docker run --rm -i --pull=never --network=none --read-only --pids-limit=32 \
+    --tmpfs /work:rw,nosuid,nodev,size=16m --workdir /work --env TMPDIR=/work \
+    --platform "linux/$native" "phoenix-toolchain:$native" /bin/sh -ec \
+    'gcc -x c -std=c11 -Wall -Wextra -Werror -static -O2 -s -o launcher -; cat launcher' \
+    < containers/launch-target.c > "$launcher/launch-target"
+chmod 0555 "$launcher/launch-target"
+
+build_image --target "worker-$architecture" --platform "linux/$architecture" \
+    --build-context "phoenix_launcher=$launcher" -t "phoenix-worker:$architecture"

@@ -36,9 +36,9 @@ case "$1" in
     arm64)
         make_root "" /opt/phoenix-runtime aarch64-linux-gnu ld-linux-aarch64.so.1
         make_root /opt/x86-base /opt/phoenix-qemu-root x86_64-linux-gnu ld-linux-x86-64.so.2
-        copy_file "" /usr/bin/qemu-x86_64 /opt/phoenix-qemu-root
-        for path in $(ldd /usr/bin/qemu-x86_64 | awk '{for (i=1;i<=NF;i++) if ($i ~ "^/") print $i}'); do
-            copy_file "" "$(readlink -f "$path")" /opt/phoenix-qemu-root
+        install -D /opt/qemu/bin/qemu-x86_64 /opt/phoenix-qemu-root/usr/bin/qemu-x86_64
+        for path in $(ldd /opt/qemu/bin/qemu-x86_64 | awk '{for (i=1;i<=NF;i++) if ($i ~ "^/") print $i}'); do
+            copy_file "" "/usr/lib/aarch64-linux-gnu/$(basename "$path")" /opt/phoenix-qemu-root
         done
         ln -s aarch64-linux-gnu/ld-linux-aarch64.so.1 /opt/phoenix-qemu-root/lib/ld-linux-aarch64.so.1
         ;;

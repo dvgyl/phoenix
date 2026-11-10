@@ -5,8 +5,10 @@ import pytest
 
 from phoenix_eval import m0
 from phoenix_eval.case import CaseFailure, CaseResult, FailureKind, Invocation
+from phoenix_eval.coverage import PublicCoverage
 from phoenix_eval.docker import Engine
 from phoenix_eval.outcome import Exited, Outcome, Signaled, TreeSnapshot
+from phoenix_eval.platforms import RuntimeEvidence
 from phoenix_eval.toolchain import Compiler
 
 EMPTY = Outcome(b"", b"", Exited(0), TreeSnapshot())
@@ -35,6 +37,7 @@ def test_m0_requires_valid_mutant_differences(
                 Outcome(b"", b"", Signaled(15), TreeSnapshot()),
                 Outcome(b"", b"", Exited(143), TreeSnapshot()),
                 CaseFailure(FailureKind.SNAPSHOT, "FIFO"),
+                EMPTY,
             )
         if "-mutant-" in binary.name:
             if mutants_detected:
@@ -42,8 +45,18 @@ def test_m0_requires_valid_mutant_differences(
                     Outcome(b"different", b"", Exited(0), TreeSnapshot()) for _ in cases
                 )
             return tuple(CaseFailure(FailureKind.LAUNCH, "Exec failed.") for _ in cases)
-        return (EMPTY,) * len(cases)
+        return next(
+            public.expected
+            for public in m0.public_programs(m0.SEED)
+            if binary.name.startswith(public.name)
+        )
 
+    monkeypatch.setattr(
+        m0,
+        "verify_runtime",
+        lambda _: RuntimeEvidence("arm64", "29.5", "rosetta", "native"),
+    )
+    monkeypatch.setattr(m0, "measure_public", lambda *_: PublicCoverage(2, 1, 1))
     monkeypatch.setattr(m0, "build_public", build)
     monkeypatch.setattr(m0, "run_batch", run)
     path, passed = m0.evaluate(tmp_path, tmp_path, mode)

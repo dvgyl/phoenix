@@ -11,6 +11,7 @@ from phoenix_eval.outcome import (
     TreeEntry,
     TreeSnapshot,
 )
+from phoenix_eval.trace import CodeTrace
 
 PROTOCOL_VERSION = 1
 
@@ -43,6 +44,7 @@ def encode_result(result: CaseResult) -> str:
     if isinstance(result, CaseFailure):
         return json.dumps({"failure": result.kind, "detail": result.detail})
     termination = result.termination
+    trace = result.trace
     return json.dumps(
         {
             "stdout": _encode_bytes(result.stdout),
@@ -50,6 +52,16 @@ def encode_result(result: CaseResult) -> str:
             "exit": termination.code if isinstance(termination, Exited) else None,
             "signal": termination.number if isinstance(termination, Signaled) else None,
             "tree": _encode_tree(result.tree),
+            "trace": (
+                {
+                    "start": trace.start,
+                    "end": trace.end,
+                    "entry": trace.entry,
+                    "hits": trace.hits,
+                }
+                if trace is not None
+                else None
+            ),
         }
     )
 
@@ -70,6 +82,19 @@ def decode_result(line: str) -> CaseResult:
         if signal is None
         else Signaled(_integer(signal)),
         tree=_decode_tree(data["tree"]),
+        trace=_decode_trace(data.get("trace")),
+    )
+
+
+def _decode_trace(value: object) -> CodeTrace | None:
+    if value is None:
+        return None
+    trace = _object(value)
+    return CodeTrace(
+        start=_integer(trace["start"]),
+        end=_integer(trace["end"]),
+        entry=_integer(trace["entry"]),
+        hits=tuple(_integer(hit) for hit in _array(trace["hits"])),
     )
 
 

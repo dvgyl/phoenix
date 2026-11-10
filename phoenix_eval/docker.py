@@ -6,7 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryFile
 from uuid import uuid4
 
-from phoenix_eval.case import CaseResult, Invocation
+from phoenix_eval.case import CaseResult, Invocation, WorkerRuntime
 from phoenix_eval.wire import PROTOCOL_VERSION, decode_result, encode_invocation
 from phoenix_eval.worker import MAX_PROGRAM_BYTES, WALL_SECONDS
 
@@ -17,10 +17,19 @@ class Engine(StrEnum):
     AMD64 = "amd64"
     ARM64 = "arm64"
     QEMU_X86_64 = "qemu-x86-64"
+    ROSETTA = "rosetta"
 
     @property
     def platform(self) -> str:
-        return "amd64" if self is Engine.AMD64 else "arm64"
+        return "amd64" if self in (Engine.AMD64, Engine.ROSETTA) else "arm64"
+
+    @property
+    def runtime(self) -> WorkerRuntime:
+        if self is Engine.ROSETTA:
+            return WorkerRuntime.ROSETTA
+        if self is Engine.QEMU_X86_64:
+            return WorkerRuntime.QEMU
+        return WorkerRuntime.DIRECT
 
 
 class WorkerError(RuntimeError):
@@ -28,6 +37,11 @@ class WorkerError(RuntimeError):
 
 
 def docker_args(engine: Engine, container: str) -> tuple[str, ...]:
+    namespace = (
+        ("--cap-add=SYS_ADMIN", "--security-opt=apparmor=unconfined")
+        if engine is Engine.ROSETTA
+        else ()
+    )
     return (
         "docker",
         "run",
@@ -44,21 +58,26 @@ def docker_args(engine: Engine, container: str) -> tuple[str, ...]:
         "--memory=1536m",
         "--memory-swap=1536m",
         "--tmpfs",
-        "/scratch:rw,nosuid,nodev,size=256m,nr_inodes=16384",
+        "/scratch:rw,exec,nosuid,nodev,size=256m,nr_inodes=16384",
         "--cap-drop=ALL",
         "--cap-add=SYS_CHROOT",
         "--cap-add=SETUID",
         "--cap-add=SETGID",
         "--cap-add=CHOWN",
+        "--cap-add=FOWNER",
+        "--cap-add=FSETID",
         "--cap-add=DAC_OVERRIDE",
         "--security-opt=no-new-privileges",
+        *namespace,
         f"phoenix-worker:{engine.platform}",
     )
 
 
 def run_batch(
-    binary: Path, cases: tuple[Invocation, ...], engine: Engine
+    binary: Path, cases: tuple[Invocation, ...], engine: Engine, *, trace: bool = False
 ) -> tuple[CaseResult, ...]:
+    if trace and engine is not Engine.QEMU_X86_64:
+        raise ValueError("Tracing requires the QEMU engine.")
     if not 0 < len(cases) <= MAX_BATCH:
         raise ValueError(f"A worker batch must contain 1 to {MAX_BATCH} cases.")
     with binary.open("rb") as file:
@@ -69,7 +88,8 @@ def run_batch(
     name = f"phoenix-{uuid4().hex}"
     header = {
         "version": PROTOCOL_VERSION,
-        "engine": "qemu" if engine is Engine.QEMU_X86_64 else "direct",
+        "engine": engine.runtime,
+        "trace": trace,
         "binary": b64encode(program).decode("ascii"),
     }
     with (

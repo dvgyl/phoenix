@@ -26,8 +26,11 @@ int main(int argc, char **argv) {
     } else {
         printf("%u\n", count + (PHOENIX_MUTANT == 4));
     }
-    if (getenv("PHOENIX_TAG") != NULL && PHOENIX_MUTANT != 5) {
-        puts(getenv("PHOENIX_TAG"));
+    if (PHOENIX_MUTANT != 5) {
+        const char *tag = getenv("PHOENIX_TAG");
+        if (tag != NULL) {
+            puts(tag);
+        }
     }
     return 0;
 }

@@ -1,13 +1,15 @@
 import hashlib
 import json
 import random
-from dataclasses import dataclass
+import subprocess
+from dataclasses import asdict, dataclass
 from enum import StrEnum
 from pathlib import Path
 from uuid import uuid4
 
 from phoenix_eval.case import CaseFailure, CaseResult, FailureKind, Invocation
-from phoenix_eval.docker import Engine, run_batch
+from phoenix_eval.coverage import measure_public
+from phoenix_eval.docker import Engine, WorkerError, run_batch
 from phoenix_eval.outcome import (
     EntryKind,
     Exited,
@@ -17,6 +19,7 @@ from phoenix_eval.outcome import (
     TreeSnapshot,
     compare,
 )
+from phoenix_eval.platforms import verify_runtime
 from phoenix_eval.toolchain import Compiler, build_public
 from phoenix_eval.wire import encode_result
 
@@ -32,7 +35,7 @@ class Mode(StrEnum):
     @property
     def engines(self) -> tuple[Engine, ...]:
         if self is Mode.APPLE_SILICON:
-            return Engine.AMD64, Engine.ARM64, Engine.QEMU_X86_64
+            return Engine.ROSETTA, Engine.ARM64, Engine.QEMU_X86_64
         if self is Mode.NATIVE_AMD64:
             return (Engine.AMD64,)
         return (Engine.ARM64,)
@@ -42,7 +45,16 @@ class Mode(StrEnum):
 class Program:
     name: str
     cases: tuple[Invocation, ...]
+    expected: tuple[Outcome, ...]
     mutants: int = 5
+
+
+def _output(stdout: bytes = b"", stderr: bytes = b"", code: int = 0) -> Outcome:
+    return Outcome(stdout, stderr, Exited(code), TreeSnapshot())
+
+
+def _number(value: int) -> bytes:
+    return f"{value}\n".encode("ascii")
 
 
 def public_programs(seed: int) -> tuple[Program, ...]:
@@ -61,6 +73,14 @@ def public_programs(seed: int) -> tuple[Program, ...]:
                 for sample in data
             ),
         ),
+        (
+            _output(stderr=b"use sum or count\n", code=3),
+            _output(stderr=b"use sum or count\n", code=3),
+            _output(b"0\n"),
+            _output(b"2\ntest\n"),
+            *(_output(_number(sum(sample))) for sample in data),
+            *(_output(_number(len(sample))) for sample in data),
+        ),
     )
     files = Program(
         "filemarks",
@@ -72,6 +92,30 @@ def public_programs(seed: int) -> tuple[Program, ...]:
                     ("write",),
                     tree=TreeSnapshot(
                         entries=(TreeEntry("input", EntryKind.FILE, 0o644, sample),)
+                    ),
+                )
+                for sample in (b"", *data)
+            ),
+        ),
+        (
+            _output(code=2),
+            _output(stderr=b"missing input\n", code=5),
+            *(
+                Outcome(
+                    _number(len(sample)),
+                    b"",
+                    Exited(0),
+                    TreeSnapshot(
+                        entries=(
+                            TreeEntry("input", EntryKind.FILE, 0o644, sample),
+                            TreeEntry("output", EntryKind.DIRECTORY, 0o700),
+                            TreeEntry(
+                                "output/result",
+                                EntryKind.FILE,
+                                0o600,
+                                bytes(value ^ 0xA5 for value in sample),
+                            ),
+                        )
                     ),
                 )
                 for sample in (b"", *data)
@@ -100,9 +144,12 @@ def _probe(corpus: Path, work: Path, engine: Engine) -> bool:
     build_public(corpus / "runprobe.c", executable, engine, Compiler.GCC)
     cases = tuple(
         Invocation(args)
-        for args in ((), ("escape",), ("signal",), ("exit",), ("fifo",))
+        for args in ((), ("escape",), ("signal",), ("exit",), ("fifo",), ("policy",))
     )
     result = run_batch(executable, cases, engine)
+    (work / f"probe-{engine.value}.jsonl").write_text(
+        "".join(encode_result(outcome) + "\n" for outcome in result), encoding="ascii"
+    )
     return (
         result[:4]
         == (
@@ -113,12 +160,14 @@ def _probe(corpus: Path, work: Path, engine: Engine) -> bool:
         )
         and isinstance(result[4], CaseFailure)
         and result[4].kind is FailureKind.SNAPSHOT
+        and result[5] == _output()
     )
 
 
 def evaluate(
     corpus: Path, runs: Path, mode: Mode, seed: int = SEED
 ) -> tuple[Path, bool]:
+    runtime = verify_runtime(mode)
     run_id = f"m0-{uuid4().hex}"
     work = runs / run_id
     work.mkdir(parents=True)
@@ -135,6 +184,7 @@ def evaluate(
         original = work / f"{program.name}-original.elf"
         build_public(source, original, baseline_engine, Compiler.GCC)
         baseline = run_batch(original, program.cases, baseline_engine)
+        expected_ok = baseline == program.expected
         stable = all(isinstance(outcome, Outcome) for outcome in baseline)
         for _ in range(TRIALS):
             stable &= baseline == run_batch(original, program.cases, baseline_engine)
@@ -144,6 +194,10 @@ def evaluate(
         if Engine.QEMU_X86_64 in mode.engines:
             independent = run_batch(original, program.cases, Engine.QEMU_X86_64)
             oracle_ok = all(isinstance(outcome, Outcome) for outcome in independent)
+            for _ in range(TRIALS):
+                oracle_ok &= independent == run_batch(
+                    original, program.cases, Engine.QEMU_X86_64
+                )
             excluded = {
                 index
                 for index, (first, second) in enumerate(
@@ -154,30 +208,60 @@ def evaluate(
         eligible = tuple(
             index for index in range(len(program.cases)) if index not in excluded
         )
+        coverage = None
+        coverage_failure = None
+        if (
+            Engine.QEMU_X86_64 in mode.engines
+            and stable
+            and oracle_ok
+            and expected_ok
+            and eligible
+        ):
+            try:
+                coverage = asdict(
+                    measure_public(
+                        original,
+                        tuple(program.cases[index] for index in eligible),
+                        tuple(baseline[index] for index in eligible),
+                        work / f"{program.name}-dev.jsonl",
+                    )
+                )
+            except (
+                ValueError,
+                OSError,
+                WorkerError,
+                subprocess.SubprocessError,
+            ) as error:
+                coverage_failure = str(error)
         portable = {}
         mutations = {}
         for engine in native_engines:
+            control: tuple[CaseResult, ...] = ()
             for compiler in Compiler:
                 rebuild = work / f"{program.name}-{engine.value}-{compiler}.elf"
                 build_public(source, rebuild, engine, compiler)
                 candidate = run_batch(rebuild, program.cases, engine)
+                if compiler is Compiler.GCC:
+                    control = candidate
                 portable[f"{engine.value}-{compiler}"] = bool(eligible) and all(
                     isinstance(candidate[index], Outcome)
                     and candidate[index] == baseline[index]
                     for index in eligible
                 )
             killed = 0
-            valid = True
+            valid = (
+                expected_ok and oracle_ok and portable[f"{engine.value}-{Compiler.GCC}"]
+            )
             for mutant in range(1, program.mutants + 1):
                 rebuild = work / f"{program.name}-{engine.value}-mutant-{mutant}.elf"
                 build_public(source, rebuild, engine, Compiler.GCC, mutant)
                 changed = run_batch(rebuild, program.cases, engine)
                 valid &= all(isinstance(changed[index], Outcome) for index in eligible)
                 killed += any(
-                    _mismatch(baseline[index], changed[index]) for index in eligible
+                    _mismatch(control[index], changed[index]) for index in eligible
                 )
             mutations[engine] = {
-                "killed": killed,
+                "killed": killed if valid else 0,
                 "total": program.mutants,
                 "valid": valid,
             }
@@ -185,6 +269,8 @@ def evaluate(
         passed = (
             stable
             and oracle_ok
+            and expected_ok
+            and (Engine.QEMU_X86_64 not in mode.engines or coverage is not None)
             and all(portable.values())
             and all(
                 bool(result["valid"]) and 10 * result["killed"] >= 9 * result["total"]
@@ -199,6 +285,9 @@ def evaluate(
                 "original_sha256": hashlib.sha256(original.read_bytes()).hexdigest(),
                 "outcome_sha256": _fingerprint(baseline),
                 "self_match": stable,
+                "matches_expected_public_behavior": expected_ok,
+                "coverage": coverage,
+                "coverage_failure": coverage_failure,
                 "independent_oracle_healthy": oracle_ok,
                 "emulator_sensitive_cases": len(excluded),
                 "portability": portable,
@@ -211,6 +300,7 @@ def evaluate(
             {
                 "run_id": run_id,
                 "mode": mode,
+                "runtime": asdict(runtime),
                 "seed": seed,
                 "self_trials": TRIALS,
                 "sandbox_probes": probes,
