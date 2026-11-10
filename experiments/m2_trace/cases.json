@@ -1,0 +1,50 @@
+[
+  {
+    "operation": "inc",
+    "stdin_hex": ""
+  },
+  {
+    "operation": "inc",
+    "stdin_hex": "00"
+  },
+  {
+    "operation": "inc",
+    "stdin_hex": "0001"
+  },
+  {
+    "operation": "inc",
+    "stdin_hex": "00010203040506"
+  },
+  {
+    "operation": "inc",
+    "stdin_hex": "0001020304050607"
+  },
+  {
+    "operation": "inc",
+    "stdin_hex": "000102030405060708"
+  },
+  {
+    "operation": "xor",
+    "stdin_hex": ""
+  },
+  {
+    "operation": "xor",
+    "stdin_hex": "00"
+  },
+  {
+    "operation": "xor",
+    "stdin_hex": "0001"
+  },
+  {
+    "operation": "xor",
+    "stdin_hex": "00010203040506"
+  },
+  {
+    "operation": "xor",
+    "stdin_hex": "0001020304050607"
+  },
+  {
+    "operation": "xor",
+    "stdin_hex": "000102030405060708"
+  }
+]

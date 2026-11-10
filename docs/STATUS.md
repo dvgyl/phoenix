@@ -1,56 +1,46 @@
 # Phoenix status
 
-M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
-M1 remains open. The first sealed run scored zero fully successful
-variants for both Phoenix and Ghidra-raw. The exact replay reproduced
-that result.
+This branch retains the isolated public M2 trace prototype.
+It is based on `5695148`. It is not the sealed-evaluation candidate.
+Main is fixed at `baae648` while the new M1 run and replay proceed.
+M0 passed. M1 and the v1 goal remain open.
 
-| Method | Behavior passed | Integrity passed | Fully successful |
-| --- | --- | --- | --- |
-| Phoenix | 19/20 | 0/20 | 0/20 |
-| Ghidra-raw | 8/20 | 0/20 | 0/20 |
+Original run `m1-t0-efcad05` scored Phoenix 17/20 and raw 8/20 fully
+successful. Its exact replay failed one stable record. Final Astra review
+returned HOLD. The reviewed CMake feedback correction is on main.
+Its new sealed run is `m1-t0-baae648`. No M1 tag exists.
 
-The run is `m1-t0-ce6a34d` at commit `ce6a34d`. Its replay is
-`m1-t0-replay-ce6a34d`. All 792 original cases per method were
-eligible. There were zero emulator disagreements and evaluation errors.
-The tests reached 790 of 1,079 recovered block entries. These counts
-measure recovered blocks. Source branch adequacy is recorded separately.
+The separate observer image built after the fixture transport and `ldd`
+recipe corrections. The accepted oracle image IDs stayed fixed.
+Its public calibration passed 96 positive cases with three repetitions.
+It detected all eight mutant controls. The parent checked all 296 traces
+and their plans and complete outcomes. This is public fixture evidence.
+It is not a Phoenix-Bench result or M2 acceptance.
 
-Public `-O0` probes reproduced the exact-byte rejection in C runtime
-startup code. A hardened build profile passed all four public variants
-and the integrity checks in
-`m1-public-hardened-e675da21dc2a43f4ba29dd132b067fd4`.
-The copied-byte negative controls also passed.
+A fresh independent Standard-service Sol reviewer passed this isolated
+prototype. It ran 104 focused tests and 10 independent tests.
+The parent full gate passed 496 tests with 23 skips and 90.01% evaluator
+coverage. The reviewer checked the saved runtime evidence independently.
+The later wrong-API and missing-register controls also rejected their
+invalid traces. Independent review of those later controls is pending.
 
-The accounting and development evidence fixes are integrated. The
-combined local gate passed 392 tests with 90.01% evaluator coverage.
-Source packages now preserve the exact tested snapshot. Source comments
-record generation-time confidence, and the report gives final confidence.
+The M2 evaluator remains separate and unmerged. Astra review held its
+replay lineage and saved-report validation. A separate Astra task is
+correcting inherited capture-freeze and accounting gaps. All sealed-use
+gates remain closed until the corrections and closure reviews pass.
 
-The public decimal control passed behavior and integrity with the fixed
-optimized profile. Its Docker regression failed under the previous
-profile and passed under the new profile across both compilers and
-architectures. Astra closed the five prior findings and found a submission recovery
-defect. Atomic capture and evaluator timing are now implemented.
-Independent review and a new sealed run are pending.
+T1 is sealed. A dedicated private Astra author is preparing T2.
+The T2 Linux resource gate remains closed during the official M1 work.
+Source and held-out material stay private. T3 qualification remains open.
 
-The package-only Ubuntu fallback passed its signed repository probe.
-New builds then failed on signed snapshot indexes. The previous image
-recipes are restored and successfully reused the verified local cache.
-Clean native builds still depend on the snapshot service.
-
-Native ARM64 CI passed for `ce6a34d`. Three x86-64 attempts stopped on
-Ubuntu package delivery. The first M0 native outcome comparison remains
-green in [run 42794652145](https://github.com/dvgyl/phoenix/actions/runs/42794652145).
-
-The internal-drive free-space baseline is 14,432,616 KiB.
-The workspace is the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
-The dedicated Colima VM has 2 GiB of memory.
+The internal-drive baseline is 14,432,616 KiB free.
+The workspace is `/Volumes/PhoenixWork` on the external drive.
+The dedicated Colima VM has four CPUs and 2 GiB of memory.
 
 ## Next actions
 
-1. Build and verify the follow-up worker and checker images.
-2. Run the public optimization matrix and new public control programs.
-3. Obtain the independent Astra preflight review of the exact candidate.
-4. Run a new sealed M1 measurement with its own revision and run ID.
-5. Replay and review that exact result before any M1 tag.
+1. Finish and check the new M1 run and exact replay on main.
+2. Correct and review the shared engine and M2 evaluator gaps.
+3. Review the two later observer controls before production integration.
+4. Integrate verified M2 work after the M1 gates pass.
+5. Continue through M4 and SPEC.md section 9.

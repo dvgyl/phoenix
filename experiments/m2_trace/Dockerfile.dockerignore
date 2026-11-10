@@ -1,0 +1,17 @@
+**
+!THIRD_PARTY_NOTICES
+!phoenix/__init__.py
+!phoenix/ingest/__init__.py
+!phoenix_eval/__init__.py
+!phoenix_eval/case.py
+!phoenix_eval/outcome.py
+!phoenix_eval/trace.py
+!phoenix_eval/tree.py
+!phoenix_eval/wire.py
+!phoenix_eval/worker.py
+!experiments/m2_trace/Dockerfile
+!experiments/m2_trace/COPYING
+!experiments/m2_trace/observer.c
+!experiments/m2_trace/__init__.py
+!experiments/m2_trace/trace.py
+!experiments/m2_trace/worker.py

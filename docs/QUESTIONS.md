@@ -21,3 +21,13 @@
 - The managed worktree tool has no per-call location. Create Phoenix
   agent worktrees with Git at the required external-drive path. Keep
   the desktop app's global worktree location for other projects.
+
+## 2026-11-10 public M2 trace prototype task limits
+
+This subtask does not perform delegation, commits, pushes, or runtime
+verification. The parent retains every required verification and independent
+review gate. No gate is waived or satisfied by these task limits.
+The instruction order in AGENTS.md §2 remains in force.
+The external task record contains the temporary work restrictions.
+Runtime calibration and review of the fixed diff remain pending for the parent.
+The existing M1 evaluation and all production paths stay unchanged.

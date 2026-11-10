@@ -1,0 +1,48 @@
+#!/bin/sh
+set -eu
+cd "$(dirname "$0")/../.."
+fixture_image=$1
+fixture_output=$2
+mkdir -p "$fixture_output"
+fixture_output=$(cd "$fixture_output" && pwd)
+if [ -n "${DOCKER_HOST:-}" ]; then
+    set -- docker --host "$DOCKER_HOST"
+else
+    set -- docker
+fi
+COPYFILE_DISABLE=1 tar -cf - -C experiments/m2_trace \
+    main.c walk.c fixture.h cases.json fixture-sha256.txt | \
+"$@" run --rm -i --pull=never --platform linux/amd64 --network none --read-only \
+    --pids-limit 32 --memory 1g --cpus 2 --tmpfs /work:rw,nosuid,nodev,size=32m \
+    --workdir /work --env TMPDIR=/work --env SOURCE_DATE_EPOCH=1794268800 \
+    --entrypoint /bin/sh \
+    "$fixture_image" -ec '
+    tar -xf -
+    sha256sum -c fixture-sha256.txt >/dev/null
+    for compiler in gcc clang; do
+      "$compiler" --version >&2
+      for level in O0 O2; do
+        for variant in original unchanged wrong-target wrong-count; do
+          case "$variant" in
+            wrong-target) define=-DWRONG_TARGET ;;
+            wrong-count) define=-DWRONG_COUNT ;;
+            *) define= ;;
+          esac
+          name=$compiler-$level.$variant
+          "$compiler" -std=c11 -Wall -Wextra -Werror -"$level" -fno-lto \
+              -fPIE -pie $define main.c walk.c -o "$name.unstripped"
+          objdump -dw "$name.unstripped" > "$name.dis"
+          cp "$name.unstripped" "$name"
+          strip --strip-all "$name"
+          sha256sum "$name" "$name.dis" >> compiled-sha256.txt
+          rm "$name.unstripped"
+        done
+      done
+    done
+    rm main.c walk.c fixture.h cases.json fixture-sha256.txt
+    dpkg-query -W > packages.txt
+    sha256sum packages.txt >> compiled-sha256.txt
+    tar -cf - .
+    ' > "$fixture_output/fixtures.tar"
+tar -xf "$fixture_output/fixtures.tar" -C "$fixture_output"
+rm "$fixture_output/fixtures.tar"

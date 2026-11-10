@@ -108,3 +108,28 @@ Run future optional tool experiments on public fixtures only. Compare
 recovered signatures and structures with public source and exact process
 outcomes across architectures. Check tool output as evidence under the
 existing integrity rules.
+
+## Public M2 trace experiment reuse, 2026-11-10
+
+The experiment in `experiments/m2_trace/` builds a separate arm64-host
+`qemu-x86_64` observer from QEMU 9.2.0. It uses plugin API 4 for register
+and guest-memory reads. It does not replace the QEMU 8.2.2 oracle.
+The official [release](https://www.qemu.org/2024/12/11/qemu-9-2-0/)
+and [archive](https://download.qemu.org/qemu-9.2.0.tar.xz) were checked.
+The downloaded archive has SHA-256
+`f859f0bc65e1f533d040bbe8c92bcfecee5af2c921a6687c652fb44d089bd894`.
+The tag commit is `ae35f033b874c627d81d51070187fbf55f0bf1a7`.
+The archive header has SHA-256
+`e4c5bf7e92075d7c1e6b1dcb6164bca6c549b2912a62b56ce1a777be4c7b8788`.
+
+The archive LICENSE and plugin header were read before implementation.
+The [combined emulator](https://github.com/qemu/qemu/blob/v9.2.0/LICENSE)
+uses GPLv2. The [header](https://github.com/qemu/qemu/blob/v9.2.0/include/qemu/qemu-plugin.h)
+uses GPL-2.0-or-later. The new Phoenix C plugin uses GPL-2.0-or-later.
+No upstream plugin implementation was copied. The emulator and plugin
+stay outside the MIT Python package. Preserve QEMU attribution, COPYING,
+source, build instructions, and component notices with distributed images.
+Provide corresponding source under the applicable GPL terms when distributing
+binaries. The image retains the source archive and plugin source for this purpose.
+This license check does not prove runtime or sandbox compatibility.
+See ADR 0018 for the experiment boundary and pending checks.

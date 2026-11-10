@@ -293,3 +293,94 @@
 - The new interruption regression failed on the previous code for both
   methods with `invalid-project`. The fixed parent gate passed 392
   tests with 23 opt-in skips and 90.01% evaluator line coverage.
+
+## 2026-11-10. Isolated public M2 trace prototype
+
+- Added `experiments/m2_trace/` on `agent/m2-trace-prototype`, based on
+  `5695148`. The experiment has a fixed two-unit public fixture, source
+  and case commitments, a versioned wire contract, a bounded QEMU API 4
+  observer, a strict parser, and a separate image recipe and driver.
+- Recorded the official QEMU 9.2.0 archive hash and file licenses before
+  implementation. ADR 0018 and THIRD_PARTY_NOTICES describe the reuse.
+  The accepted QEMU 8.2.2 oracle and all production paths are unchanged.
+- All 31 focused host tests passed. Lint, format, strict type checks,
+  host C syntax checks, and shell syntax checks passed.
+- The final project host gate reported 422 passed tests, 23 skipped
+  tests, and one failure. The outer OS guard blocked the protection
+  test with `sandbox-exec: sandbox_apply: Operation not permitted`.
+  Evaluator line coverage was 90.01%. No suppression was added.
+- No Docker command, target execution, image build, agent, commit, push,
+  or tag was used. Runtime calibration and independent review remain
+  pending for the parent. This work makes no milestone or sealed result
+  claim. The handoff memo is in the external M2 survey audit directory.
+
+## 2026-11-10. Public M2 trace review fixes
+
+- Fixed the four accepted prototype findings. The observer has an exact
+  file allowlist for its Docker context. Calibration checks physical call
+  targets and the fixed fixture's call counts and order. Positive and
+  control observations now use one evidence record constructor.
+- Added direct calibration tests for both operations and every fixed case,
+  including empty input. Added wrong-target, repeated-call, reordered-call,
+  mutant, outcome, and malformed-trace tests. Build-context tests check
+  required inputs, import dependencies, and the production ignore rules.
+- Expanded C branches, named register indexes and limits, and replaced the
+  overloaded return register slot with explicit pending-transfer data.
+  Fixture sources, cases, commitments, licenses, and production code are
+  unchanged. Moved the work checklist to the external task directory.
+- The focused suite passed 103 tests. Ruff, strict mypy, C syntax-only
+  checks, and shell syntax checks passed. The full host gate reported
+  494 passed, 23 skipped, and one failed test, with 90.01% evaluator
+  coverage. The outer guard blocked the nested protection test with
+  `sandbox-exec: sandbox_apply: Operation not permitted`, exit status 71.
+  No test suppression was added.
+- No Docker, VM, target execution, agent, staging, commit, or push was used.
+  The parent retains the complete host gate outside the guard, fixed-diff
+  review, and all Linux runtime gates. No runtime or shipping claim is made.
+  The fix report is in the external M2 survey audit directory.
+
+- The first real public fixture build failed because the VM cannot read
+  a worktree bind mount. The builder now streams its fixed source archive
+  through Docker standard input. A host transport regression failed on
+  the previous script and passed after this change.
+- The next build reached Clang and failed because its temporary directory
+  was on the read-only root. The script now sets `TMPDIR=/work`, as the
+  existing worker build does. All 16 fixture builds and their plans then
+  passed. GCC and Clang at O0 and O2 retained the direct stdio calls,
+  program call, and indirect byte-operation call. No target was executed.
+- The updated parent gate passed 496 tests with 23 skips and 90.01%
+  evaluator coverage. The observer image build, live calibration, and
+  independent review of the fixture transport correction remain pending.
+
+## 2026-11-10. Public observer runtime calibration
+
+- The separate QEMU observer build failed on an `ldd` file heading.
+  Separate calls removed that heading from the library list.
+- The corrected image built. Accepted worker and checker tags stayed fixed.
+  The observer guest-runtime hash check passed.
+- The public calibration passed all 96 positive cases with three repetitions.
+  It detected both mutants in every compiler and optimization configuration.
+  The parent checked all 296 saved trace hashes and parsed each trace again.
+  Each observation matched both oracle outcomes and its fixed plan.
+- Public evidence is under `tmp/m2-public-calibration/observation-1`.
+  Parent checks are under `audit/continue-v1/observer-*` in the workspace.
+  Wrong-API and missing-register runtime controls remain open.
+  Independent review is required before integration.
+
+## 2026-11-10. Independent public observer review
+
+- A fresh Standard-service Sol reviewer passed the isolated prototype.
+  It checked all 296 trace hashes, 192 agreed oracle pairs, 288 positive
+  observations, and eight rejected mutant controls.
+- The review ran 104 focused tests and 10 independent synthetic tests.
+  It also checked source streaming, temporary paths, library selection,
+  isolated imports, stale samples, outcome changes, and synthetic load bias.
+  The parent full gate passed 496 tests with 23 skips and 90.01% coverage.
+- The parent later ran two additional Linux controls using separate images.
+  A wrong plugin API produced no accepted trace. A missing register
+  produced a register gap while preserving the original oracle outcome.
+  The accepted observer and oracle images stayed unchanged.
+  These later controls remain subject to independent review.
+- Public artifacts are under `tmp/m2-observer-negative-controls` and
+  `audit/continue-v1/observer-negative-controls.*` in the workspace.
+  No production trace integration or milestone acceptance is claimed.

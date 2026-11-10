@@ -36,3 +36,19 @@ Ghidra, Apache-2.0. Bundled components have separate notices. https://github.com
 Gson 2.13.2, Apache-2.0. Bundled with Ghidra. https://github.com/google/gson/blob/gson-parent-2.13.2/LICENSE
 Eclipse Temurin OpenJDK, GPL-2.0 with the Classpath Exception where designated. https://github.com/openjdk/jdk25u/blob/master/LICENSE
 OpenAI Codex CLI, Apache-2.0. https://github.com/openai/codex/blob/main/LICENSE
+
+Public M2 observer experiment only:
+QEMU 9.2.0, commit ae35f033b874c627d81d51070187fbf55f0bf1a7.
+Copyright Fabrice Bellard and the QEMU contributors.
+Official source: https://download.qemu.org/qemu-9.2.0.tar.xz
+Archive SHA-256: f859f0bc65e1f533d040bbe8c92bcfecee5af2c921a6687c652fb44d089bd894
+Combined emulator, GPLv2. https://github.com/qemu/qemu/blob/v9.2.0/LICENSE
+Plugin header, GPL-2.0-or-later. Copyright 2017 Emilio G. Cota and 2019 Linaro.
+https://github.com/qemu/qemu/blob/v9.2.0/include/qemu/qemu-plugin.h
+Header SHA-256: e4c5bf7e92075d7c1e6b1dcb6164bca6c549b2912a62b56ce1a777be4c7b8788
+The separate experiment plugin uses GPL-2.0-or-later. No upstream plugin
+implementation was copied. The MIT Python package does not link QEMU.
+Preserve attribution, COPYING, source, build instructions, and component
+notices. Meet the applicable corresponding-source duties for distributed
+binaries. The observer image retains its QEMU archive and plugin source.
+The license check does not establish runtime compatibility.
