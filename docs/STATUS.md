@@ -27,3 +27,7 @@ The Standard-tier Codex provider passed public run
 `provider-probe-9d3b7e1b24ab4fe2b161b48952045086`. The ingestion,
 lifting, and integrity worktrees are under
 `/Volumes/PhoenixWork/worktrees`.
+
+The ingestion stage accepted the stripped public `bitstats` ELF
+from the M0 run. Static checks provide format and linkage evidence.
+Runtime restrictions remain the job of the test sandbox.

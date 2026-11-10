@@ -76,3 +76,6 @@
   Public run `provider-probe-9d3b7e1b24ab4fe2b161b48952045086`
   completed through signed-in Codex. Replay returned the saved
   response from the run log.
+- Integrated the ingestion worktree. It validates the ELF format,
+  dynamic glibc linkage evidence, and stripping. A read-only check
+  accepted the public `bitstats` ELF and reproduced its SHA-256.
