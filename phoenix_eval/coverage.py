@@ -6,7 +6,7 @@ from pathlib import Path
 from struct import unpack_from
 
 from phoenix_eval.case import CaseResult, Invocation
-from phoenix_eval.docker import Engine, docker_cli, run_batch
+from phoenix_eval.docker import Engine, docker_cli, read_program, run_batch
 from phoenix_eval.outcome import EntryKind, Outcome
 from phoenix_eval.trace import CodeTrace
 from phoenix_eval.wire import encode_invocation
@@ -88,8 +88,8 @@ def read_executable_bounds(program: bytes) -> tuple[int, int]:
     return entry, min(starts)
 
 
-def inspect_x86(binary: Path, image: str | None = None) -> BlockInventory:
-    program = binary.read_bytes()
+def inspect_x86(binary: Path | bytes, image: str | None = None) -> BlockInventory:
+    program = read_program(binary)
     entry, link_start = read_executable_bounds(program)
     listing = subprocess.run(
         (

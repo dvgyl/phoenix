@@ -119,8 +119,17 @@ def docker_args(
     )
 
 
+def read_program(binary: Path | bytes) -> bytes:
+    if isinstance(binary, Path):
+        with binary.open("rb") as file:
+            binary = file.read(MAX_PROGRAM_BYTES + 1)
+    if not 0 < len(binary) <= MAX_PROGRAM_BYTES:
+        raise ValueError("Invalid program size.")
+    return binary
+
+
 def run_batch(
-    binary: Path,
+    binary: Path | bytes,
     cases: tuple[Invocation, ...],
     engine: Engine,
     *,
@@ -131,10 +140,7 @@ def run_batch(
         raise ValueError("Tracing requires the QEMU engine.")
     if not 0 < len(cases) <= MAX_BATCH:
         raise ValueError(f"A worker batch must contain 1 to {MAX_BATCH} cases.")
-    with binary.open("rb") as file:
-        program = file.read(MAX_PROGRAM_BYTES + 1)
-    if not 0 < len(program) <= MAX_PROGRAM_BYTES:
-        raise ValueError("Invalid program size.")
+    program = read_program(binary)
 
     name = f"phoenix-{uuid4().hex}"
     header = {
@@ -186,7 +192,7 @@ def run_batch(
 
 
 def run_cases(
-    binary: Path,
+    binary: Path | bytes,
     cases: tuple[Invocation, ...],
     engine: Engine,
     *,

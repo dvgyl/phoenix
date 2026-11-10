@@ -4,16 +4,23 @@ import os
 import re
 import subprocess
 from dataclasses import asdict, dataclass
+from hashlib import sha256
 from pathlib import Path
 from typing import TypedDict, cast
 from uuid import uuid4
 
-from phoenix_eval.build import project_files
+from phoenix_eval.build import snapshot_project
 from phoenix_eval.case import Invocation
 from phoenix_eval.corpus import Variant, committed_hash, heldout_cases, t0_manifest
-from phoenix_eval.docker import Engine, freeze_images
-from phoenix_eval.integrity import IntegrityError, check_integrity, inspect_project
-from phoenix_eval.outcome import Outcome
+from phoenix_eval.development import DevelopmentError, verify_development
+from phoenix_eval.docker import Engine, freeze_images, read_program
+from phoenix_eval.integrity import (
+    IntegrityError,
+    check_integrity,
+    inspect_project,
+    original_shapes,
+)
+from phoenix_eval.m0 import SEED
 from phoenix_eval.pair import evaluate_pair
 from phoenix_eval.platforms import verify_runtime
 from phoenix_eval.provenance import (
@@ -21,6 +28,9 @@ from phoenix_eval.provenance import (
     CHECKOUT,
     checker_source_digest,
     evaluator_build,
+    lifting_tool_identity,
+    pinned_lifting_tools,
+    pipeline_source_digest,
 )
 from phoenix_eval.submission import (
     Method,
@@ -30,7 +40,6 @@ from phoenix_eval.submission import (
     submit,
     write_report,
 )
-from phoenix_eval.wire import decode_result
 
 METHODS: tuple[Method, ...] = ("phoenix", "ghidra-raw")
 _RUN_ID = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}")
@@ -41,6 +50,9 @@ class _Configuration(TypedDict):
     revision: str
     worker_source_sha256: str
     checker_source_sha256: str
+    pipeline_source_sha256: str
+    lifting_tool_identity: dict[str, str]
+    pipeline_settings: dict[str, object]
     release_manifest_sha256: str
     source_archive_sha256: str
     heldout_archive_sha256: str
@@ -87,6 +99,7 @@ def _configuration(workspace: Path, release_hash: str) -> _Configuration:
     runtime = verify_runtime("apple-silicon")
     build = evaluator_build()
     checker = checker_source_digest()
+    ghidra, java = pinned_lifting_tools(workspace, CHECKOUT)
     engines = (Engine.ROSETTA, Engine.ARM64)
     commitments = CHECKOUT / "docs/corpus_commitments.md"
     if workspace.resolve() != workspace:
@@ -96,6 +109,17 @@ def _configuration(workspace: Path, release_hash: str) -> _Configuration:
         "revision": build.commit,
         "worker_source_sha256": build.worker_source_sha256,
         "checker_source_sha256": checker,
+        "pipeline_source_sha256": pipeline_source_digest(CHECKOUT),
+        "lifting_tool_identity": lifting_tool_identity(ghidra, java),
+        "pipeline_settings": {
+            "seed": SEED,
+            "repair_limit": 20,
+            "astra_repair": False,
+            "budget_binary": 5_000_000_000,
+            "budget_run": 200_000_000_000,
+            "ghidra": str(ghidra),
+            "java_home": str(java),
+        },
         "release_manifest_sha256": release_hash,
         "source_archive_sha256": committed_hash(commitments, "t0-source.tar.gz"),
         "heldout_archive_sha256": committed_hash(commitments, "t0-inputs.tar.gz"),
@@ -110,24 +134,31 @@ def _configuration(workspace: Path, release_hash: str) -> _Configuration:
     }
 
 
-def _development_outputs(path: Path, *, required: bool) -> frozenset[bytes]:
-    if not path.is_file():
-        if required:
-            raise IntegrityError("The original development outcomes are missing.")
-        return frozenset()
+def _validate_pipeline_record(
+    directory: Path, task: Task, replay_of: str | None, config: _Configuration
+) -> None:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        outputs: set[bytes] = set()
-        if not data["cases"]:
+        record = json.loads((directory / "run.json").read_text(encoding="utf-8"))
+        expected = {
+            **config["pipeline_settings"],
+            "binary_sha256": task.variant.sha256,
+            "method": task.method,
+            "revision": config["revision"],
+            "worker_source_sha256": config["worker_source_sha256"],
+            "pipeline_source_sha256": config["pipeline_source_sha256"],
+            "lifting_tool_identity": config["lifting_tool_identity"],
+            "images": config["worker_images"],
+            "replay_from": replay_of,
+        }
+        if any(
+            name not in record or record[name] != value
+            for name, value in expected.items()
+        ):
             raise ValueError
-        for _, record in data["cases"]:
-            outcome = decode_result(record)
-            if not isinstance(outcome, Outcome):
-                raise ValueError
-            outputs.update((outcome.stdout, outcome.stderr))
-        return frozenset(outputs)
-    except (TypeError, KeyError, ValueError, OSError):
-        raise IntegrityError("The saved development evidence is invalid.") from None
+    except (OSError, TypeError, ValueError):
+        raise ValueError(
+            "The pipeline checkpoint does not match the evaluation plan."
+        ) from None
 
 
 def _measure(
@@ -136,9 +167,10 @@ def _measure(
     pipeline_run: str,
     task: Task,
     submission: Submission,
-    binary: Path,
+    binary: Path | bytes,
     cases: tuple[Invocation, ...],
     config: _Configuration,
+    dev_outputs: frozenset[bytes] = frozenset(),
 ) -> dict[str, object]:
     variant = task.variant
     result: dict[str, object] = {
@@ -150,42 +182,53 @@ def _measure(
     if submission.source_sha256 is None:
         return {**result, "failure_category": submission.category}
     directory = run / "submissions" / task.key
-    snapshot = directory / "project"
-    files = project_files(snapshot)
+    snapshot = snapshot_project(directory / "project")
+    files = dict(snapshot.files)
     if source_digest(files) != submission.source_sha256:
         raise ValueError("The submitted project changed before evaluation.")
+    original = read_program(binary)
+    if sha256(original).hexdigest() != variant.sha256:
+        raise ValueError("The original bytes do not match the release manifest.")
     original_project = project_path(workspace, pipeline_run, task.key)
     record = json.loads(
         (original_project / "phoenix_report.json").read_text(encoding="utf-8")
     )
-    if record.get("sha256") != variant.sha256:
-        raise ValueError("The project report does not match the released input hash.")
+    if record.get("sha256") != variant.sha256 or record.get("method") != task.method:
+        raise ValueError("The project report does not match the input hash and method.")
     result["model"] = record["llm"]
     result["reconstruction_seconds"] = record["wall_seconds"]
     builds = directory / f"build-{uuid4().hex}"
     builds.mkdir(mode=0o700)
-    pair = evaluate_pair(binary, snapshot, cases, builds, config["worker_images"])
+    pair = evaluate_pair(original, snapshot, cases, builds, config["worker_images"])
     result["behavior"] = asdict(pair)
     try:
         evidence = inspect_project(snapshot, config["checker_images"])
-        executable_paths = tuple(
-            builds / f"{build.architecture}-{build.compiler}.elf"
-            for build in pair.builds
-            if build.compiled
+        raw_task = Task(variant, "ghidra-raw")
+        raw_directory = workspace / "runs" / pipeline_run / raw_task.key
+        _validate_pipeline_record(raw_directory, raw_task, submission.replay_of, config)
+        origin = original_shapes(
+            raw_directory / "recover/program.json",
+            raw=task.method == "ghidra-raw",
         )
-        development = (
-            workspace
-            / "runs"
-            / pipeline_run
-            / f"{variant.key}-phoenix"
-            / "analyze/cases.json"
-        )
+        executables = []
+        for build in pair.builds:
+            if build.executable_sha256 is None:
+                continue
+            executable = read_program(
+                builds / f"{build.architecture}-{build.compiler}.elf"
+            )
+            if sha256(executable).hexdigest() != build.executable_sha256:
+                raise IntegrityError(
+                    "The tested executable changed.", "tested_artifact_changed"
+                )
+            executables.append(executable)
         integrity = check_integrity(
-            binary.read_bytes(),
+            original,
             files,
-            tuple(path.read_bytes() for path in executable_paths),
+            tuple(executables),
             evidence,
-            _development_outputs(development, required=task.method == "phoenix"),
+            dev_outputs,
+            origin,
         )
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         category = (
@@ -196,6 +239,13 @@ def _measure(
         result["integrity"] = asdict(integrity)
         result["fully_successful"] = pair.behavior_passed and integrity.passed
     return result
+
+
+def _release_bytes(variant: Variant, release: Path) -> bytes:
+    program = read_program(variant.executable(release))
+    if sha256(program).hexdigest() != variant.sha256:
+        raise ValueError("A released executable changed before measurement.")
+    return program
 
 
 def _scores(records: list[dict[str, object]]) -> dict[str, dict[str, int]]:
@@ -224,9 +274,13 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
     variants, release_hash = t0_manifest(release)
     config = _configuration(workspace, release_hash)
     config_file = run / "configuration.json"
+    plan = {
+        "configuration": config,
+        "replay_of": replay.name if replay is not None else None,
+    }
     if (
         config_file.exists()
-        and json.loads(config_file.read_text(encoding="utf-8")) != config
+        and json.loads(config_file.read_text(encoding="utf-8")) != plan
     ):
         raise ValueError("The evaluation configuration changed after it was recorded.")
     prior = None
@@ -234,7 +288,7 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         prior = json.loads((replay / "m1.json").read_text(encoding="utf-8"))
         if prior["configuration"] != config:
             raise ValueError("Replay requires the same evaluation configuration.")
-    write_report(config_file, config)
+    write_report(config_file, plan)
     pipeline_run = f"{run.name}-rebuild"
     replay_pipeline = f"{replay.name}-rebuild" if replay is not None else None
     tasks = tuple(
@@ -259,6 +313,31 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         raise ValueError("The evaluation configuration changed before measurement.")
     if t0_manifest(release) != (variants, release_hash):
         raise ValueError("The released binaries changed before measurement.")
+    originals = {
+        variant.key: _release_bytes(variant, release)
+        for variant in variants
+        if variant.flag == "-O0"
+    }
+    development = {}
+    for task in tasks:
+        submission = submissions[task.key]
+        if submission.source_sha256 is not None:
+            _validate_pipeline_record(
+                workspace / "runs" / pipeline_run / task.key,
+                task,
+                replay_pipeline,
+                config,
+            )
+        if task.method == "phoenix" and submission.source_sha256 is not None:
+            digest = submission.development_sha256
+            if digest is None:
+                raise DevelopmentError("The submission has no development evidence.")
+            development[task.variant.key] = verify_development(
+                originals[task.variant.key],
+                run / "submissions" / task.key / "development.json",
+                digest,
+                config["worker_images"],
+            )
     cases = heldout_cases(
         workspace / "holdout/t0-inputs.tar.gz",
         config["heldout_archive_sha256"],
@@ -271,9 +350,10 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
             pipeline_run,
             task,
             submissions[task.key],
-            task.variant.executable(release),
+            originals[task.variant.key],
             cases[task.variant.name],
             config,
+            development.get(task.variant.key, frozenset()),
         )
         for task in tasks
     ]

@@ -133,3 +133,26 @@
   macOS swap growth forced two Phoenix VM stops. One stop interrupted
   the checker's image load. The VM now has 2 GiB of memory. The lead
   agent took over the final checker builds and tests.
+- The two pinned checker images passed 38 synthetic checks. Native
+  x86-64 and AArch64 CI passed for `2ce518a` in run 42808964131.
+- Public run `m1-integrated-public-1ebbdfa6c70f41fb875b6e3a5b273c28`
+  matched all 16 public cases for both methods and exposed source-check
+  failures. Added the missing `chmod` entry and corrected the raw format
+  pointer declarations. Public probe
+  `m1-public-integrity-fix-7bf237b0737344e8ad00b00796254157` passed
+  the focused retest. The binary data export also identified the exact
+  unsigned format in `bitstats`. The earlier signed format matched the
+  small public cases by coincidence.
+- Astra held the preflight review for pipeline identity, replay
+  lineage, artifact mutation, and integrity checks for short tables and
+  the newline that `puts` adds. The evaluator now binds the reviewed
+  checkout, method, settings, tools, and replay origin. It uses fixed
+  bytes and independently replays the frozen development inputs.
+- The revised source policy checks original data, external function
+  references, and function structure from a separate Ghidra lift.
+  It rejects unsupported source and missing evidence. The sealed
+  evaluation remains pending.
+- The revised checker passed 40 real compiler checks across x86-64 and
+  AArch64. The local quality gate passed 241 tests and reached 88.95%
+  evaluator line coverage. The opt-in compiler and Ghidra tests run
+  separately from the local gate.

@@ -10,6 +10,7 @@ from phoenix_eval.elf import Section
 from phoenix_eval.integrity import (
     Call,
     CompilerEvidence,
+    FunctionShape,
     IntegrityError,
     Storage,
     check_integrity,
@@ -22,6 +23,7 @@ ARTIFACT = "src/program.c"
 SOURCE = {ARTIFACT: b"int main(void) { return 0; }"}
 TEXT = bytes(range(128, 192))
 TEST_OUTPUT = b"This text appears only in a development outcome."
+ORIGIN = (FunctionShape("main", 0, 0, 0),)
 
 
 @pytest.fixture(autouse=True)
@@ -34,10 +36,13 @@ def original_sections(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _evidence(
-    storage: tuple[Storage, ...] = (), calls: tuple[Call, ...] = ()
+    storage: tuple[Storage, ...] = (),
+    calls: tuple[Call, ...] = (),
+    functions: tuple[FunctionShape, ...] = ORIGIN,
 ) -> tuple[CompilerEvidence, ...]:
     return tuple(
-        CompilerEvidence(target, "18.1.3", storage, calls) for target in TARGETS
+        CompilerEvidence(target, "18.1.3", storage, calls, functions)
+        for target in TARGETS
     )
 
 
@@ -49,6 +54,7 @@ def test_scans_all_four_builds_and_source_storage_for_exact_text() -> None:
         (b"prefix" + TEXT, b"", b"", b""),
         _evidence((stored,)),
         frozenset(),
+        ORIGIN,
     )
     assert not report.passed
     assert report.categories["embedded_text"] == 3
@@ -59,7 +65,9 @@ def test_scans_all_four_builds_and_source_storage_for_exact_text() -> None:
 def test_typed_wide_elements_are_not_decoded_as_single_bytes() -> None:
     payload = b"".join(number.to_bytes(4, "little") for number in TEXT)
     stored = Storage("storage", ARTIFACT, 0, payload, "unsigned int[64]")
-    report = check_integrity(b"", SOURCE, (b"",) * 4, _evidence((stored,)), frozenset())
+    report = check_integrity(
+        b"", SOURCE, (b"",) * 4, _evidence((stored,)), frozenset(), ORIGIN
+    )
     assert "embedded_text" not in report.categories
     assert report.categories == {"unproven_constant_table": 2}
 
@@ -71,7 +79,7 @@ def test_checks_literal_payload_and_object_size_separately() -> None:
         Storage("storage", ARTIFACT, 0, bytes(5000), "char[5000]"),
     )
     report = check_integrity(
-        b"", SOURCE, (b"",) * 4, _evidence(records), frozenset((TEST_OUTPUT,))
+        b"", SOURCE, (b"",) * 4, _evidence(records), frozenset((TEST_OUTPUT,)), ORIGIN
     )
     assert report.categories == {
         "memorized_output": 2,
@@ -89,13 +97,59 @@ def test_incomplete_evidence_and_unapproved_calls_cannot_pass() -> None:
         Call("project", "helper"),
     )
     report = check_integrity(
-        b"", SOURCE, (b"",), _evidence(calls=calls)[:1], frozenset()
+        b"", SOURCE, (b"",), _evidence(calls=calls)[:1], frozenset(), ORIGIN
     )
     assert report.categories == {
         "missing_build": 1,
         "incomplete_source_check": 1,
         "unresolved_call": 1,
         "unapproved_call": 1,
+    }
+
+
+def test_checks_short_tables_and_the_newline_added_by_puts() -> None:
+    literal = TEST_OUTPUT
+    output = literal + b"\n"
+    records = (
+        Storage("literal", ARTIFACT, 0, literal, ""),
+        Storage("constant_output", ARTIFACT, 0, output, "", literal),
+        Storage("storage", ARTIFACT, 0, b"ab", "char[2]"),
+    )
+    report = check_integrity(
+        b"", SOURCE, (b"",) * 4, _evidence(records), frozenset((output,)), ORIGIN
+    )
+    assert report.categories == {"memorized_output": 2, "unproven_constant_table": 2}
+
+
+def test_preserves_output_provenance_when_the_library_adds_a_newline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        integrity,
+        "elf_sections",
+        lambda *_: {
+            ".text": Section(0, TEXT),
+            ".rodata": Section(0, TEST_OUTPUT + b"\0"),
+        },
+    )
+    output = TEST_OUTPUT + b"\n"
+    record = Storage("constant_output", ARTIFACT, 0, output, "", TEST_OUTPUT)
+    report = check_integrity(
+        b"", SOURCE, (b"",) * 4, _evidence((record,)), frozenset({output}), ORIGIN
+    )
+    assert report.passed
+
+
+def test_rejects_added_control_flow_and_split_unproven_output() -> None:
+    records = (
+        Storage("output_literal", ARTIFACT, 0, b"first new chunk", ""),
+        Storage("output_literal", ARTIFACT, 0, b"second new chunk", ""),
+    )
+    evidence = _evidence(records, functions=(FunctionShape("main", 0, 1, 1),))
+    report = check_integrity(b"", SOURCE, (b"",) * 4, evidence, frozenset(), ORIGIN)
+    assert report.categories == {
+        "unproven_control_flow": 2,
+        "unproven_output_literal": 4,
     }
 
 
@@ -112,6 +166,7 @@ def _document(target: str = TARGETS[0]) -> dict[str, object]:
             {"kind": "literal", "file": ARTIFACT, "offset": 0, "bytes_hex": "61"}
         ],
         "calls": [{"kind": "builtin", "name": "puts"}],
+        "functions": [{"name": "main", "branches": 0, "loops": 0, "switches": 0}],
     }
 
 
@@ -149,4 +204,4 @@ def test_requires_both_target_checks(
     result = inspect_project(tmp_path, images)
     assert tuple(item.target for item in result) == TARGETS
     assert all(item.storage[0].data == b"a" for item in result)
-    assert check_integrity(b"", SOURCE, (b"",) * 4, result, frozenset()).passed
+    assert check_integrity(b"", SOURCE, (b"",) * 4, result, frozenset(), ORIGIN).passed

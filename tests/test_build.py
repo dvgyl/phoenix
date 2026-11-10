@@ -1,10 +1,12 @@
 import subprocess
+import tarfile
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
 
-from phoenix_eval.build import build_project
+from phoenix_eval.build import build_project, project_archive, snapshot_project
 from phoenix_eval.docker import Engine
 from phoenix_eval.toolchain import Compiler
 
@@ -55,3 +57,33 @@ def test_only_a_successful_build_for_the_selected_architecture_emits_an_elf(
     else:
         assert result.executable is None
         assert not destination.exists()
+
+
+def test_build_uses_captured_project_archive(
+    project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    snapshot = snapshot_project(project)
+    assert project_archive(project) == snapshot.archive
+    (project / "src/main.c").write_text("int main(void) { return 1; }\n")
+    assert project_archive(project) != snapshot.archive
+
+    runner = Mock(return_value=subprocess.CompletedProcess(("docker",), 1, b"", b""))
+    monkeypatch.setattr(subprocess, "run", runner)
+    build_project(snapshot, project / "program", Engine.ARM64, Compiler.GCC)
+
+    payload = runner.call_args.kwargs["input"]
+    assert payload == snapshot.archive
+    with tarfile.open(fileobj=BytesIO(payload)) as archive:
+        captured = {}
+        for entry in archive:
+            stream = archive.extractfile(entry)
+            assert stream is not None
+            captured[entry.name.removeprefix("project/")] = stream.read()
+    assert (
+        tuple(captured.items())
+        == snapshot.files
+        == (
+            ("CMakeLists.txt", b"add_executable(program src/main.c)\n"),
+            ("src/main.c", b"int main(void) { return 0; }\n"),
+        )
+    )

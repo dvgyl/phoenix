@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
@@ -11,13 +12,11 @@ from phoenix_eval.build import PROJECT_CMAKE
 from phoenix_eval.case import Invocation
 from phoenix_eval.corpus import Variant
 from phoenix_eval.integrity import IntegrityError
-from phoenix_eval.outcome import Exited, Outcome, TreeSnapshot
 from phoenix_eval.pair import PairReport
 from phoenix_eval.platforms import RuntimeEvidence
 from phoenix_eval.provenance import BuildEvidence
 from phoenix_eval.submission import Method, Submission, freeze_project, project_path
 from phoenix_eval.toolchain import Compiler
-from phoenix_eval.wire import encode_result
 
 
 def test_freezes_every_submission_before_opening_cases(
@@ -43,7 +42,7 @@ def test_freezes_every_submission_before_opening_cases(
     ) -> Submission:
         assert not opened or replay_pipeline_run is not None
         submitted.append((key, replay_pipeline_run))
-        return Submission(method, key, "b" * 64, None)
+        return Submission(method, key, "b" * 64, None, replay_pipeline_run, "d" * 64)
 
     def cases(
         path: Path, digest: str, names: set[str]
@@ -59,9 +58,10 @@ def test_freezes_every_submission_before_opening_cases(
         _pipeline_run: str,
         task: m1.Task,
         _submission: Submission,
-        _binary: Path,
+        _binary: Path | bytes,
         _cases: tuple[Invocation, ...],
         _config: m1._Configuration,
+        _dev_outputs: frozenset[bytes],
     ) -> dict[str, object]:
         assert opened
         return {
@@ -73,9 +73,14 @@ def test_freezes_every_submission_before_opening_cases(
 
     monkeypatch.setattr(m1, "t0_manifest", lambda _: (variants, "a" * 64))
     monkeypatch.setattr(
-        m1, "_configuration", lambda *_: {"heldout_archive_sha256": "c" * 64}
+        m1,
+        "_configuration",
+        lambda *_: {"heldout_archive_sha256": "c" * 64, "worker_images": {}},
     )
     monkeypatch.setattr(m1, "submit", submit)
+    monkeypatch.setattr(m1, "_release_bytes", lambda *_: b"synthetic original")
+    monkeypatch.setattr(m1, "_validate_pipeline_record", lambda *_: None)
+    monkeypatch.setattr(m1, "verify_development", lambda *_: frozenset({b"public"}))
     monkeypatch.setattr(m1, "heldout_cases", cases)
     monkeypatch.setattr(m1, "_measure", measure)
 
@@ -92,20 +97,8 @@ def test_freezes_every_submission_before_opening_cases(
     assert json.loads(replay.read_text())["reproduced"] is True
     assert all(source == "initial-rebuild" for _, source in submitted[40:])
     assert "private synthetic case" not in replay.read_text()
-
-
-def test_development_outputs_require_recorded_original_results(tmp_path: Path) -> None:
-    evidence = tmp_path / "cases.json"
-    with pytest.raises(ValueError, match="outcomes are missing"):
-        m1._development_outputs(evidence, required=True)
-    assert m1._development_outputs(evidence, required=False) == frozenset()
-    outcome = Outcome(
-        b"development stdout", b"development stderr", Exited(0), TreeSnapshot()
-    )
-    evidence.write_text(json.dumps({"cases": [("unused", encode_result(outcome))]}))
-    assert m1._development_outputs(evidence, required=True) == frozenset(
-        (outcome.stdout, outcome.stderr)
-    )
+    with pytest.raises(ValueError, match="configuration changed"):
+        m1.evaluate_t0(tmp_path, "replay")
 
 
 def test_configuration_binds_archive_and_image_evidence(
@@ -130,25 +123,59 @@ def test_configuration_binds_archive_and_image_evidence(
         m1, "evaluator_build", lambda: BuildEvidence("revision", "worker")
     )
     monkeypatch.setattr(m1, "checker_source_digest", lambda: "checker")
+    monkeypatch.setattr(m1, "pipeline_source_digest", lambda _: "pipeline")
+    monkeypatch.setattr(m1, "pinned_lifting_tools", lambda *_: (tmp_path, tmp_path))
+    monkeypatch.setattr(m1, "lifting_tool_identity", lambda *_: {"tool": "identity"})
     monkeypatch.setattr(m1, "freeze_images", lambda _, digest, **_kw: {"amd64": digest})
     result = m1._configuration(tmp_path, "release")
     assert result["revision"] == "revision"
     assert result["source_archive_sha256"] == "a" * 64
     assert result["heldout_archive_sha256"] == "b" * 64
     assert result["worker_images"] != result["checker_images"]
+    assert result["pipeline_source_sha256"] == "pipeline"
+    assert result["lifting_tool_identity"] == {"tool": "identity"}
+    variant = Variant("fixture", Compiler.GCC, "-O0", "a" * 64, "synthetic")
+    task = m1.Task(variant, "ghidra-raw")
+    record = {
+        **result["pipeline_settings"],
+        "binary_sha256": variant.sha256,
+        "method": "ghidra-raw",
+        "revision": "revision",
+        "worker_source_sha256": "worker",
+        "pipeline_source_sha256": "pipeline",
+        "lifting_tool_identity": {"tool": "identity"},
+        "images": {"amd64": "worker"},
+        "replay_from": None,
+    }
+    checkpoint = tmp_path / "run.json"
+    checkpoint.write_text(json.dumps(record))
+    m1._validate_pipeline_record(tmp_path, task, None, result)
+    checkpoint.write_text(json.dumps({**record, "method": "phoenix"}))
+    with pytest.raises(ValueError, match="does not match the evaluation plan"):
+        m1._validate_pipeline_record(tmp_path, task, None, result)
 
 
 def test_measurement_does_not_pass_with_incomplete_integrity_evidence(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    variant = Variant("fixture", Compiler.GCC, "-O0", "a" * 64, "synthetic")
+    original = b"synthetic original"
+    variant = Variant(
+        "fixture", Compiler.GCC, "-O0", sha256(original).hexdigest(), "synthetic"
+    )
     task = m1.Task(variant, "phoenix")
     project = project_path(tmp_path, "pipeline", task.key)
     (project / "src").mkdir(parents=True)
     (project / "src/program.c").write_text("int main(void) { return 0; }\n")
     (project / "CMakeLists.txt").write_text(PROJECT_CMAKE)
     (project / "phoenix_report.json").write_text(
-        json.dumps({"sha256": variant.sha256, "llm": {}, "wall_seconds": 1})
+        json.dumps(
+            {
+                "sha256": variant.sha256,
+                "method": "phoenix",
+                "llm": {},
+                "wall_seconds": 1,
+            }
+        )
     )
     run = tmp_path / "eval"
     snapshot = run / "submissions" / task.key / "project"
@@ -169,6 +196,9 @@ def test_measurement_does_not_pass_with_incomplete_integrity_evidence(
         "revision": "revision",
         "worker_source_sha256": "worker",
         "checker_source_sha256": "checker",
+        "pipeline_source_sha256": "pipeline",
+        "lifting_tool_identity": {},
+        "pipeline_settings": {},
         "release_manifest_sha256": "release",
         "source_archive_sha256": "source",
         "heldout_archive_sha256": "heldout",
@@ -182,7 +212,7 @@ def test_measurement_does_not_pass_with_incomplete_integrity_evidence(
         "pipeline",
         task,
         submission,
-        tmp_path / "input",
+        original,
         (),
         configuration,
     )

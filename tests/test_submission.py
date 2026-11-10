@@ -1,3 +1,4 @@
+import json
 import subprocess
 from pathlib import Path
 from unittest.mock import Mock
@@ -5,7 +6,10 @@ from unittest.mock import Mock
 import pytest
 
 from phoenix_eval.build import PROJECT_CMAKE
+from phoenix_eval.case import Invocation
+from phoenix_eval.outcome import Exited, Outcome, TreeSnapshot
 from phoenix_eval.protection import GUARD_ENV, GUARD_PROBE
+from phoenix_eval.provenance import CHECKOUT
 from phoenix_eval.submission import (
     EvaluationPending,
     SubmissionError,
@@ -13,6 +17,7 @@ from phoenix_eval.submission import (
     project_path,
     submit,
 )
+from phoenix_eval.wire import encode_invocation, encode_result
 
 
 def _project(path: Path) -> None:
@@ -48,6 +53,14 @@ def test_submission_resumes_after_the_provider_reports_a_limit(
     original = workspace / "sealed/release/case.elf"
     project = project_path(workspace, "pipeline", "case")
     _project(project)
+    development = workspace / "runs/pipeline/case/analyze/cases.json"
+    development.parent.mkdir()
+    outcome = Outcome(b"public", b"", Exited(0), TreeSnapshot())
+    development.write_text(
+        json.dumps(
+            {"cases": [(encode_invocation(Invocation()), encode_result(outcome))]}
+        )
+    )
     runner = Mock(
         side_effect=[
             subprocess.CompletedProcess((), 75),
@@ -63,6 +76,7 @@ def test_submission_resumes_after_the_provider_reports_a_limit(
     first = runner.call_args
     assert first.args[0][-4:] == ("--run-id", "pipeline", "--method", "phoenix")
     assert first.kwargs["env"][GUARD_ENV] == str(directory / GUARD_PROBE)
+    assert Path(first.kwargs["env"]["PYTHONPATH"]) == CHECKOUT
     checkpoint = workspace / "runs/pipeline/case/run.json"
     checkpoint.touch()
     result = submit(workspace, directory, "pipeline", "case", original, "phoenix")
@@ -71,4 +85,8 @@ def test_submission_resumes_after_the_provider_reports_a_limit(
     assert (
         submit(workspace, directory, "pipeline", "case", original, "phoenix") == result
     )
+    with pytest.raises(SubmissionError, match="checkpoint identity"):
+        submit(
+            workspace, directory, "pipeline", "case", original, "phoenix", "previous"
+        )
     assert runner.call_count == 2

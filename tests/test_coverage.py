@@ -1,5 +1,7 @@
+import subprocess
 from dataclasses import replace
 from pathlib import Path
+from struct import pack_into
 
 import pytest
 
@@ -122,8 +124,6 @@ def test_development_generation_preserves_file_metadata() -> None:
 
 
 def test_elf_coverage_uses_the_first_executable_load_segment() -> None:
-    from struct import pack_into
-
     program = bytearray(64 + 3 * 56)
     program[:6] = b"\x7fELF\x02\x01"
     pack_into("<H", program, 18, 62)
@@ -135,3 +135,30 @@ def test_elf_coverage_uses_the_first_executable_load_segment() -> None:
     assert coverage.read_executable_bounds(bytes(program)) == (0x1050, 0x1000)
     with pytest.raises(ValueError, match="program header table"):
         coverage.read_executable_bounds(bytes(program[:-1]))
+
+
+@pytest.mark.parametrize("from_path", [False, True])
+def test_inspection_sends_original_elf_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, from_path: bool
+) -> None:
+    elf = bytearray(64 + 56)
+    elf[:6] = b"\x7fELF\x02\x01"
+    pack_into("<H", elf, 18, 62)
+    pack_into("<QQ", elf, 24, 0x1000, 64)
+    pack_into("<HH", elf, 54, 56, 1)
+    pack_into("<IIQQ", elf, 64, 1, 5, 0, 0x1000)
+    program = bytes(elf)
+    path = tmp_path / "program"
+    if from_path:
+        path.write_bytes(program)
+
+    def fake_docker(
+        command: tuple[str, ...], *, input: bytes, **kwargs: object
+    ) -> subprocess.CompletedProcess[bytes]:
+        assert input == program
+        return subprocess.CompletedProcess(command, 0, LISTING.encode("ascii"))
+
+    monkeypatch.setattr(subprocess, "run", fake_docker)
+    assert coverage.inspect_x86(path if from_path else program) == recover_blocks(
+        0x1000, 0x1000, LISTING
+    )

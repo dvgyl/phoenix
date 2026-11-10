@@ -1,7 +1,8 @@
 # Phoenix status
 
 M0 passed on commit `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
-M1 starts with binary ingestion, Ghidra lifting, and output integrity.
+M1 has an end-to-end pipeline and a sealed T0 release. The evaluator
+is in preflight verification.
 
 Apple Silicon run `m0-46d58c78e11c4b2793a510f1fe00237f` matched
 16 public cases and detected 20 of 20 mutation builds. It reached
@@ -17,9 +18,9 @@ The workspace uses the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
 
 ## Next actions
 
-1. Verify the integrated Clang checker on both Linux architectures.
-2. Run the independent evaluator and source checks on public projects.
-3. Review the evaluator and integrity controls with GPT-6 Astra.
+1. Verify the revised source checks on both Linux architectures.
+2. Check the fixed snapshot and replay paths on public projects.
+3. Obtain the independent Astra preflight review of the revised commit.
 4. Run the sealed T0 evaluation and report the Ghidra-raw baseline.
 5. Replay the evaluation and review the exact candidate commit.
 
@@ -53,3 +54,9 @@ CMake files and preserved the model ledger.
 
 Public probe `ghidra-raw-public-55e5cf11170c4257ba1d48e5cfe3851a`
 built the raw baseline four ways and matched 10 public cases.
+
+The first independent public run matched 16 cases for Phoenix and
+Ghidra-raw. It exposed a missing `chmod` allowlist entry and an invalid
+raw format-pointer declaration. Public probe
+`m1-public-integrity-fix-7bf237b0737344e8ad00b00796254157` passed both
+behavior and source checks after those fixes.

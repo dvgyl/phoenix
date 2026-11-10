@@ -437,3 +437,26 @@ def test_accepts_runtime_values_and_reports_direct_calls(
         b"PUBLIC_TEST".hex(),
         b"0".hex(),
     }
+
+
+def test_records_library_added_bytes_and_external_function_references(
+    arch: str, snapshot: Path
+) -> None:
+    text = "This public output has a library-added newline."
+    (snapshot / "case.c").write_text(
+        "#include <stdio.h>\n#include <stdlib.h>\n"
+        'int apply(int (*fn)(const char *)) { return fn("example"); }\n'
+        f'int main(void) {{ if (0) apply(system); return puts("{text}"); }}\n'
+    )
+    result = checker(arch, snapshot)
+    assert result.returncode == 0, (result.stdout.decode(), result.stderr.decode())
+    report = json.loads(result.stdout)
+    (output,) = [
+        item for item in report["records"] if item["kind"] == "constant_output"
+    ]
+    assert bytes.fromhex(output["bytes_hex"]) == (text + "\n").encode()
+    assert bytes.fromhex(output["origin_hex"]) == text.encode()
+    assert any(
+        item["kind"] == "external_reference" and item["name"] == "system"
+        for item in report["calls"]
+    )

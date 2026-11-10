@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
-from phoenix_eval.build import project_archive, project_files
+from phoenix_eval.build import ProjectSnapshot, snapshot_project
 from phoenix_eval.docker import docker_cli
 from phoenix_eval.elf import elf_sections
 
@@ -15,11 +15,16 @@ _TEXT_WINDOW = 64
 _MAX_TEXT = 512 * 1024
 _EVIDENCE_LIMIT = 32 * 1024 * 1024
 _HEX = re.compile(r"[a-f0-9]*")
+_IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_QUOTED_C = re.compile(
+    r"""/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*' """, re.S | re.X
+)
 _TARGETS = {"amd64": "x86_64-linux-gnu", "arm64": "aarch64-linux-gnu"}
 _ALLOWED_CALLS = frozenset(
     """
-    abort abs access atexit atoi atol atoll bsearch calloc chdir clearerr close
-    creat dup dup2 exit fclose fcntl fdopen feof ferror fflush fgetc fgetpos
+    abort abs access atexit atoi atol atoll bsearch calloc chdir chmod clearerr
+    close closedir creat dup dup2 exit fchmod fclose fcntl fdopen feof ferror
+    fflush fgetc fgetpos
     fgets fileno fopen fprintf fputc fputs fread free freopen fscanf fseek fseeko
     fsetpos fstat ftell ftello ftruncate fwrite getc getchar getenv getline
     getdelim getopt isalnum isalpha isascii isblank iscntrl isdigit isgraph
@@ -44,6 +49,7 @@ class Storage:
     offset: int
     data: bytes
     canonical_type: str
+    origin: bytes | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,11 +59,20 @@ class Call:
 
 
 @dataclass(frozen=True, slots=True)
+class FunctionShape:
+    name: str
+    branches: int
+    loops: int
+    switches: int
+
+
+@dataclass(frozen=True, slots=True)
 class CompilerEvidence:
     target: str
     version: str
     storage: tuple[Storage, ...]
     calls: tuple[Call, ...]
+    functions: tuple[FunctionShape, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,6 +100,37 @@ class IntegrityError(ValueError):
     def __init__(self, message: str, category: str = "incomplete_source_check") -> None:
         super().__init__(message)
         self.category = category
+
+
+def original_shapes(path: Path, *, raw: bool) -> tuple[FunctionShape, ...]:
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+        functions = []
+        for item in document["functions"]:
+            name = item["ghidra_name" if raw else "name"]
+            if not _IDENTIFIER.fullmatch(name):
+                raise ValueError
+            if raw and name == "main":
+                name = "phoenix_raw_main"
+            code = _QUOTED_C.sub(" ", item["raw_c"])
+            functions.append(
+                FunctionShape(
+                    name,
+                    len(re.findall(r"\bif\s*\(|\?|&&|\|\|", code)),
+                    len(re.findall(r"\b(?:while|for)\s*\(|\bdo\s*\{", code)),
+                    len(re.findall(r"\bswitch\s*\(", code)),
+                )
+            )
+        if not functions:
+            raise ValueError
+        if raw:
+            functions.append(FunctionShape("main", 0, 0, 0))
+        return tuple(functions)
+    except (OSError, KeyError, TypeError, ValueError, UnicodeError):
+        raise IntegrityError(
+            "The independent lift has no complete function evidence.",
+            "incomplete_origin",
+        ) from None
 
 
 def _checker_category(raw: bytes) -> str:
@@ -122,19 +168,31 @@ def compiler_evidence(
             offset = item["offset"]
             data = item["bytes_hex"]
             type_name = item.get("canonical_type", "")
+            origin_hex = item.get("origin_hex")
             if (
-                kind not in ("literal", "literal_storage", "storage")
+                kind
+                not in (
+                    "literal",
+                    "literal_storage",
+                    "storage",
+                    "constant_output",
+                    "output_literal",
+                )
                 or name not in files
                 or not name.endswith((".c", ".h"))
                 or type(offset) is not int
                 or not 0 <= offset < len(files[name])
                 or not isinstance(type_name, str)
                 or not _HEX.fullmatch(data)
+                or (origin_hex is not None and not _HEX.fullmatch(origin_hex))
             ):
                 raise IntegrityError(
                     "Clang source evidence contains an invalid record."
                 )
-            storage.append(Storage(kind, name, offset, bytes.fromhex(data), type_name))
+            origin = bytes.fromhex(origin_hex) if origin_hex is not None else None
+            storage.append(
+                Storage(kind, name, offset, bytes.fromhex(data), type_name, origin)
+            )
         calls = []
         for item in document["calls"]:
             kind = item["kind"]
@@ -142,27 +200,44 @@ def compiler_evidence(
             if kind not in (
                 "builtin",
                 "external_linkage",
+                "external_reference",
                 "indirect",
                 "project",
             ) or not isinstance(name, str):
                 raise IntegrityError("Clang source evidence contains an invalid call.")
             calls.append(Call(kind, name))
+        functions = []
+        for item in document["functions"]:
+            name = item["name"]
+            counts = (item["branches"], item["loops"], item["switches"])
+            if not _IDENTIFIER.fullmatch(name) or any(
+                type(count) is not int or count < 0 for count in counts
+            ):
+                raise IntegrityError(
+                    "Clang source evidence contains an invalid function."
+                )
+            functions.append(FunctionShape(name, *counts))
         return CompilerEvidence(
-            target, str(document["clang_version"]), tuple(storage), tuple(calls)
+            target,
+            str(document["clang_version"]),
+            tuple(storage),
+            tuple(calls),
+            tuple(functions),
         )
     except (KeyError, TypeError, AttributeError, ValueError, UnicodeError):
         raise IntegrityError("Clang did not supply complete source evidence.") from None
 
 
 def inspect_project(
-    project: Path, images: dict[str, str]
+    project: Path | ProjectSnapshot, images: dict[str, str]
 ) -> tuple[CompilerEvidence, ...]:
-    files = project_files(project)
+    snapshot = snapshot_project(project) if isinstance(project, Path) else project
+    files = dict(snapshot.files)
     translation_units = tuple(name for name in files if name.endswith(".c"))
     if translation_units != ("src/program.c",):
         raise IntegrityError("The M1 checker requires one fixed C translation unit.")
     artifact = translation_units[0]
-    payload = project_archive(project)
+    payload = snapshot.archive
     evidence = []
     docker = docker_cli()
     for architecture, target in _TARGETS.items():
@@ -246,6 +321,7 @@ def check_integrity(
     executables: tuple[bytes, ...],
     evidence: tuple[CompilerEvidence, ...],
     dev_outputs: frozenset[bytes],
+    origin: tuple[FunctionShape, ...],
 ) -> IntegrityReport:
     sections = elf_sections(original, ".text", ".rodata", ".data")
     text = sections.get(".text")
@@ -272,7 +348,22 @@ def check_integrity(
             categories["embedded_text"] += 1
 
     justifications = []
+    expected = {function.name: function for function in origin}
+    if not expected or len(expected) != len(origin):
+        categories["incomplete_origin"] += 1
     for item in evidence:
+        names = {function.name for function in item.functions}
+        if names != set(expected) or len(names) != len(item.functions):
+            categories["unproven_functions"] += 1
+        else:
+            for function in item.functions:
+                prior = expected[function.name]
+                if (
+                    function.branches > prior.branches
+                    or function.loops > prior.loops
+                    or function.switches > prior.switches
+                ):
+                    categories["unproven_control_flow"] += 1
         for call in item.calls:
             if call.kind == "indirect":
                 categories["unresolved_call"] += 1
@@ -282,25 +373,27 @@ def check_integrity(
             payload = record.data
             if _matches_text(windows, payload):
                 categories["embedded_text"] += 1
-            if record.kind == "literal":
+            if record.kind == "output_literal":
+                if payload and not any(payload in section for section in data_sections):
+                    categories["unproven_output_literal"] += 1
+                continue
+            if record.kind in ("literal", "constant_output"):
                 if (
                     len(payload) > 32
                     and payload in dev_outputs
-                    and payload not in rodata
+                    and (record.origin or payload) not in rodata
                 ):
                     categories["memorized_output"] += 1
                 continue
-            if len(payload) <= 32:
+            table = record.kind == "storage" and "[" in record.canonical_type
+            large = len(payload) > 4096
+            if not (table or large):
                 continue
             zeroes = not any(payload)
             in_original = any(payload in section for section in data_sections)
-            if (
-                record.kind == "storage"
-                and "[" in record.canonical_type
-                and not (zeroes or in_original)
-            ):
+            if table and not (zeroes or in_original):
                 categories["unproven_constant_table"] += 1
-            if len(payload) > 4096:
+            if large:
                 if not (zeroes or in_original):
                     categories["unjustified_blob"] += 1
                 else:

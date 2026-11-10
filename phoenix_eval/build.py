@@ -49,6 +49,12 @@ class BuildResult:
     diagnostics: str
 
 
+@dataclass(frozen=True)
+class ProjectSnapshot:
+    files: tuple[tuple[str, bytes], ...]
+    archive: bytes
+
+
 def project_files(project: Path) -> dict[str, bytes]:
     source = project / "src"
     include = project / "include"
@@ -74,20 +80,26 @@ def project_files(project: Path) -> dict[str, bytes]:
     return contents
 
 
-def project_archive(project: Path) -> bytes:
+def snapshot_project(project: Path) -> ProjectSnapshot:
+    files = tuple(project_files(project).items())
     output = BytesIO()
     with tarfile.open(fileobj=output, mode="w") as archive:
-        for name, data in project_files(project).items():
+        for name, data in files:
             entry = tarfile.TarInfo(f"project/{name}")
             entry.size = len(data)
             entry.mode = 0o644
             entry.mtime = 1794268800
             archive.addfile(entry, BytesIO(data))
-    return output.getvalue()
+    return ProjectSnapshot(files, output.getvalue())
+
+
+def project_archive(project: Path | ProjectSnapshot) -> bytes:
+    snapshot = snapshot_project(project) if isinstance(project, Path) else project
+    return snapshot.archive
 
 
 def build_project(
-    project: Path,
+    project: Path | ProjectSnapshot,
     destination: Path,
     engine: Engine,
     compiler: Compiler,

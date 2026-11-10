@@ -6,13 +6,19 @@ from collections import Counter
 from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import StrEnum
+from hashlib import sha256
 from itertools import batched
 from pathlib import Path
 
-from phoenix_eval.build import BuildResult, build_project
+from phoenix_eval.build import (
+    BuildResult,
+    ProjectSnapshot,
+    build_project,
+    snapshot_project,
+)
 from phoenix_eval.case import CaseFailure, CaseResult, FailureKind, Invocation
 from phoenix_eval.coverage import BlockInventory, inspect_x86
-from phoenix_eval.docker import MAX_BATCH, Engine, run_cases
+from phoenix_eval.docker import MAX_BATCH, Engine, read_program, run_cases
 from phoenix_eval.outcome import Outcome, compare
 from phoenix_eval.toolchain import Compiler
 from phoenix_eval.trace import CodeTrace
@@ -27,6 +33,7 @@ class BuildReport:
     matched_cases: int
     evaluation_errors: int
     failure_categories: dict[str, int]
+    executable_sha256: str | None = None
 
 
 @dataclass(frozen=True)
@@ -48,7 +55,7 @@ class _RunError(StrEnum):
 
 
 def _run(
-    binary: Path,
+    binary: bytes,
     cases: tuple[Invocation, ...],
     engine: Engine,
     image: str,
@@ -90,7 +97,7 @@ def _failure(result: CaseFailure | _RunError) -> str:
 
 
 def _originals(
-    original: Path,
+    original: bytes,
     cases: tuple[Invocation, ...],
     engine: Engine,
     images: dict[str, str],
@@ -148,7 +155,7 @@ def _originals(
 
 
 def _evaluate_build(
-    project: Path,
+    project: ProjectSnapshot | None,
     build_directory: Path,
     engine: Engine,
     compiler: Compiler,
@@ -160,7 +167,7 @@ def _evaluate_build(
     try:
         build = (
             None
-            if destination.exists(follow_symlinks=False)
+            if project is None or destination.exists(follow_symlinks=False)
             else build_project(project, destination, engine, compiler, image=image)
         )
     except Exception:
@@ -177,10 +184,16 @@ def _evaluate_build(
         return BuildReport(
             architecture, compiler, False, build.warnings, 0, 0, {"build_failed": 1}
         )
+    try:
+        program = read_program(build.executable)
+    except (OSError, ValueError):
+        return BuildReport(
+            architecture, compiler, True, build.warnings, 0, 1, {"build_error": 1}
+        )
     matched = 0
     errors = 0
     failures: Counter[str] = Counter()
-    rebuilt = _run(destination, tuple(case for case, _ in eligible), engine, image)
+    rebuilt = _run(program, tuple(case for case, _ in eligible), engine, image)
     for (_, expected), observed in zip(eligible, rebuilt, strict=True):
         if isinstance(observed, Outcome):
             differences = compare(expected, observed)
@@ -192,13 +205,20 @@ def _evaluate_build(
             failures[_failure(observed)] += 1
             errors += isinstance(observed, _RunError)
     return BuildReport(
-        architecture, compiler, True, build.warnings, matched, errors, dict(failures)
+        architecture,
+        compiler,
+        True,
+        build.warnings,
+        matched,
+        errors,
+        dict(failures),
+        executable_sha256=sha256(program).hexdigest() if eligible else None,
     )
 
 
 def evaluate_pair(
-    original: Path,
-    project: Path,
+    original: Path | bytes,
+    project: Path | ProjectSnapshot,
     cases: tuple[Invocation, ...],
     build_directory: Path,
     images: dict[str, str],
@@ -207,6 +227,7 @@ def evaluate_pair(
 
     The caller must verify the Docker runtime, including Rosetta on Apple
     Silicon, and supply a private build directory with unused artifact names.
+    The executable digest identifies the bytes supplied to the behavior checks.
     Each original case contributes to at most one error category. A rebuild
     case can contribute to several difference categories. Coverage counts
     recovered block entries reached by eligible original cases.
@@ -219,21 +240,37 @@ def evaluate_pair(
         if platform.system() == "Darwin" and platform.machine() == "arm64"
         else Engine.AMD64
     )
+    try:
+        program = read_program(original)
+    except (OSError, ValueError):
+        program = None
+    try:
+        snapshot = snapshot_project(project) if isinstance(project, Path) else project
+    except (OSError, ValueError):
+        snapshot = None
+
     inventory = None
-    if cases:
+    if cases and program is not None:
         try:
-            inspected = inspect_x86(original, image_ids["amd64"])
+            inspected = inspect_x86(program, image_ids["amd64"])
             if isinstance(inspected, BlockInventory):
                 inventory = inspected
         except Exception:
             # The inspection error can include private paths or binary data.
             pass
-    eligible, disagreements, original_errors, covered = _originals(
-        original, cases, engine, image_ids, inventory
-    )
+    if program is None:
+        eligible: list[tuple[Invocation, Outcome]] = []
+        disagreements = covered = 0
+        original_errors: Counter[str] = Counter()
+        if cases:
+            original_errors["worker_error"] = len(cases)
+    else:
+        eligible, disagreements, original_errors, covered = _originals(
+            program, cases, engine, image_ids, inventory
+        )
     builds = tuple(
         _evaluate_build(
-            project,
+            snapshot,
             build_directory,
             target,
             compiler,

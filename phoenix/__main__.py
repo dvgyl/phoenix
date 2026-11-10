@@ -6,7 +6,6 @@ import re
 import subprocess
 import sys
 import time
-import tomllib
 from dataclasses import asdict
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -29,10 +28,16 @@ from phoenix.pipeline import Method, Settings, reconstruct, write_json
 from phoenix_eval.docker import Engine, WorkerError, freeze_images
 from phoenix_eval.m0 import SEED
 from phoenix_eval.platforms import verify_runtime
-from phoenix_eval.provenance import CHECKOUT, evaluator_build
+from phoenix_eval.provenance import (
+    evaluator_build,
+    lifting_tool_identity,
+    pinned_lifting_tools,
+    pipeline_source_digest,
+)
 from phoenix_eval.worker import MAX_PROGRAM_BYTES
 
 _ID = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,95}")
+_PIPELINE_ROOT = Path(__file__).resolve().parents[1]
 
 
 class _RunRecord(TypedDict):
@@ -40,6 +45,8 @@ class _RunRecord(TypedDict):
     binary_sha256: str
     revision: str
     worker_source_sha256: str
+    pipeline_source_sha256: str
+    lifting_tool_identity: dict[str, str]
     images: dict[str, str]
     seed: int
     ghidra: str
@@ -86,14 +93,6 @@ def _identifier(value: str) -> str:
     return value
 
 
-def _default_tools(workspace: Path) -> tuple[Path, Path]:
-    with (CHECKOUT / "tools.lock").open("rb") as stream:
-        tools = tomllib.load(stream)
-    ghidra = workspace / "tools/ghidra" / f"ghidra_{tools['ghidra']}_PUBLIC"
-    java = workspace / "tools/jdk" / f"jdk-{tools['temurin_macos_arm64']}/Contents/Home"
-    return ghidra, java
-
-
 def _safe_input(path: Path, workspace: Path) -> Path:
     path = path.resolve()
     sealed = workspace / "sealed"
@@ -135,64 +134,108 @@ def _locked_run(
     previous = _load_record(source / key / "run.json") if source is not None else None
     if record_path.exists() and not args.resume:
         local = _load_record(record_path)
-        if not args.replay or source is None or local.get("replay_from") != source.name:
+        if (
+            not args.replay
+            or source is None
+            or previous is None
+            or local.get("replay_from") != source.name
+        ):
             raise ValueError("Use --resume for an existing binary ID.")
+        expected = {**previous, "replay_from": source.name, "started": local["started"]}
+        if local != expected:
+            raise ValueError("The replay checkpoint differs from the original record.")
+    requested = original
     if not args.resume:
         assert args.binary is not None or source is not None
         requested = (
             args.binary if source is None else source / key / "ingest/original.elf"
         )
-        requested = _safe_input(requested, workspace)
-        requested_metadata = inspect_binary(requested)
-        with requested.open("rb") as stream:
-            binary_data = stream.read(MAX_PROGRAM_BYTES + 1)
-        if len(binary_data) > MAX_PROGRAM_BYTES:
-            raise ValueError("The executable exceeds the sandbox program size limit.")
-        original.parent.mkdir(parents=True, exist_ok=True)
-        original.write_bytes(binary_data)
-        original.chmod(0o600)
-    metadata = inspect_binary(_safe_input(original, workspace))
-    if not args.resume and metadata.sha256 != requested_metadata.sha256:
-        raise ValueError("The input binary changed while it was being copied.")
+    requested = _safe_input(requested, workspace)
+    metadata = inspect_binary(requested)
     if previous is not None and metadata.sha256 != previous["binary_sha256"]:
         raise ValueError("The saved input binary SHA-256 has changed.")
 
+    provenance = evaluator_build(_PIPELINE_ROOT)
+    pipeline_digest = pipeline_source_digest(_PIPELINE_ROOT)
+    if previous is not None:
+        if pipeline_digest != previous.get("pipeline_source_sha256"):
+            raise ValueError("Resume and replay require the recorded pipeline source.")
+        if (
+            provenance.commit != previous["revision"]
+            or provenance.worker_source_sha256 != previous["worker_source_sha256"]
+        ):
+            raise ValueError(
+                "Resume and replay require the recorded revision and worker source."
+            )
+        ghidra, java = Path(previous["ghidra"]), Path(previous["java_home"])
+        overrides = {
+            "ghidra": str(args.ghidra.resolve()) if args.ghidra is not None else None,
+            "java_home": (
+                str(args.java_home.resolve()) if args.java_home is not None else None
+            ),
+            "seed": args.seed,
+            "repair_limit": args.max_repairs,
+            "astra_repair": args.astra_repair,
+            "method": args.method,
+            "budget_binary": args.budget_binary,
+            "budget_run": args.budget_run,
+        }
+        for name, value in overrides.items():
+            if value is not None and value != previous.get(name):
+                raise ValueError(f"Resume and replay require the recorded {name}.")
+    else:
+        ghidra, java = pinned_lifting_tools(workspace, _PIPELINE_ROOT)
+        ghidra, java = (
+            (args.ghidra or ghidra).resolve(),
+            (args.java_home or java).resolve(),
+        )
+    tool_identity = lifting_tool_identity(ghidra, java)
+    if previous is not None and tool_identity != previous.get("lifting_tool_identity"):
+        raise ValueError("Resume and replay require the recorded lifting tools.")
+
     verify_runtime("apple-silicon")
-    provenance = evaluator_build()
     images = freeze_images(
         (Engine.ROSETTA, Engine.ARM64), provenance.worker_source_sha256
     )
     if previous is not None:
-        if (
-            provenance.commit != previous["revision"]
-            or provenance.worker_source_sha256 != previous["worker_source_sha256"]
-            or images != previous["images"]
-        ):
-            raise ValueError(
-                "Resume and replay require the recorded revision and images."
-            )
+        if images != previous["images"]:
+            raise ValueError("Resume and replay require the recorded worker images.")
         settings = Settings(
             images,
             previous["seed"],
-            Path(previous["ghidra"]),
-            Path(previous["java_home"]),
+            ghidra,
+            java,
             previous["repair_limit"],
             previous["astra_repair"],
-            Method(previous.get("method", Method.PHOENIX)),
+            Method(previous["method"]),
         )
         budget = Budget(previous["budget_binary"], previous["budget_run"])
     else:
-        ghidra, java = _default_tools(workspace)
         settings = Settings(
             images,
-            args.seed,
-            (args.ghidra or ghidra).resolve(),
-            (args.java_home or java).resolve(),
-            args.max_repairs,
-            args.astra_repair,
-            args.method,
+            args.seed if args.seed is not None else SEED,
+            ghidra,
+            java,
+            args.max_repairs if args.max_repairs is not None else 20,
+            bool(args.astra_repair),
+            args.method or Method.PHOENIX,
         )
-        budget = Budget(args.budget_binary, args.budget_run)
+        budget = Budget(
+            args.budget_binary or 5 * NANODOLLARS, args.budget_run or 200 * NANODOLLARS
+        )
+
+    if not args.resume:
+        with requested.open("rb") as stream:
+            binary_data = stream.read(MAX_PROGRAM_BYTES + 1)
+        if len(binary_data) > MAX_PROGRAM_BYTES:
+            raise ValueError("The executable exceeds the sandbox program size limit.")
+        if _safe_input(original, workspace) != original:
+            raise ValueError("Use a regular file for the saved input binary.")
+        original.parent.mkdir(parents=True, exist_ok=True)
+        original.write_bytes(binary_data)
+        original.chmod(0o600)
+        if inspect_binary(original).sha256 != metadata.sha256:
+            raise ValueError("The input binary changed while it was being copied.")
 
     if args.replay:
         assert previous is not None and source is not None
@@ -211,6 +254,8 @@ def _locked_run(
         "binary_sha256": metadata.sha256,
         "revision": provenance.commit,
         "worker_source_sha256": provenance.worker_source_sha256,
+        "pipeline_source_sha256": pipeline_digest,
+        "lifting_tool_identity": tool_identity,
         "images": images,
         "seed": settings.seed,
         "ghidra": str(settings.ghidra),
@@ -295,14 +340,12 @@ def main() -> int:
     prior.add_argument("--replay", metavar="RUN_ID")
     run.add_argument("--ghidra", type=Path)
     run.add_argument("--java-home", type=Path)
-    run.add_argument("--seed", type=int, default=SEED)
-    run.add_argument(
-        "--method", type=Method, choices=list(Method), default=Method.PHOENIX
-    )
-    run.add_argument("--max-repairs", type=int, default=20)
-    run.add_argument("--astra-repair", action="store_true")
-    run.add_argument("--budget-binary", type=_dollars, default=5 * NANODOLLARS)
-    run.add_argument("--budget-run", type=_dollars, default=200 * NANODOLLARS)
+    run.add_argument("--seed", type=int)
+    run.add_argument("--method", type=Method, choices=list(Method))
+    run.add_argument("--max-repairs", type=int)
+    run.add_argument("--astra-repair", action="store_true", default=None)
+    run.add_argument("--budget-binary", type=_dollars)
+    run.add_argument("--budget-run", type=_dollars)
     args = parser.parse_args()
     try:
         return _run(args)

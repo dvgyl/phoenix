@@ -72,6 +72,7 @@ struct Evidence {
     std::string unit;
     json::Array records;
     json::Array calls;
+    json::Array functions;
     json::Object error;
     size_t byteCount = 0;
     bool walked = false;
@@ -96,6 +97,7 @@ struct Evidence {
             report["record_count"] = records.size();
             report["records"] = std::move(records);
             report["calls"] = std::move(calls);
+            report["functions"] = std::move(functions);
         } else {
             report["status"] = "unchecked";
             report["error"] = std::move(error);
@@ -230,6 +232,12 @@ public:
 };
 
 class Inventory : public RecursiveASTVisitor<Inventory> {
+    struct ControlShape {
+        unsigned branches = 0;
+        unsigned loops = 0;
+        unsigned switches = 0;
+    };
+
     ASTContext &context;
     SourcePolicy &source;
     Evidence &evidence;
@@ -237,9 +245,19 @@ class Inventory : public RecursiveASTVisitor<Inventory> {
     llvm::DenseSet<unsigned> nonObjectStrings;
     llvm::DenseSet<unsigned> seenStrings;
     std::vector<const StringLiteral *> literals;
+    ControlShape *currentShape = nullptr;
+
+    static bool usesOutputData(StringRef name) {
+        return name == "puts" || name == "fputs" || name == "fwrite" || name == "write" ||
+               name == "printf" || name == "fprintf" || name == "sprintf" || name == "snprintf" ||
+               name == "__printf_chk" || name == "__fprintf_chk" || name == "memcpy" ||
+               name == "memmove" || name == "strcpy" || name == "strncpy" || name == "strcat" ||
+               name == "strncat";
+    }
 
     bool record(StringRef kind, SourceLocation loc, StringRef bytes,
-                StringRef name = {}, StringRef type = {}, json::Array tokens = {}) {
+                StringRef name = {}, StringRef type = {}, json::Array tokens = {},
+                StringRef origin = {}) {
         auto where = source.expansion(loc);
         if (bytes.size() > maxBytes - evidence.byteCount ||
             evidence.records.size() >= maxRecords)
@@ -256,6 +274,8 @@ class Inventory : public RecursiveASTVisitor<Inventory> {
             item["canonical_type"] = type.str();
         if (!tokens.empty())
             item["tokens"] = std::move(tokens);
+        if (!origin.empty())
+            item["origin_hex"] = llvm::toHex(origin, true);
         evidence.records.push_back(std::move(item));
         return evidence.error.empty();
     }
@@ -339,6 +359,25 @@ public:
               llvm::DenseSet<unsigned> &unseenStrings)
         : context(context), source(source), evidence(evidence), unseenStrings(unseenStrings) {}
 
+    bool TraverseFunctionDecl(FunctionDecl *decl) {
+        auto where = source.expansion(decl->getLocation());
+        bool project = where.project() && decl->doesThisDeclarationHaveABody();
+        ControlShape shape;
+        auto *previous = currentShape;
+        if (project)
+            currentShape = &shape;
+        bool complete = RecursiveASTVisitor<Inventory>::TraverseFunctionDecl(decl);
+        currentShape = previous;
+        if (project && complete) {
+            if (evidence.functions.size() >= maxRecords)
+                return evidence.fail("limit", "Function evidence limit exceeded.", where);
+            evidence.functions.push_back(json::Object{{"name", decl->getNameAsString()},
+                {"file", where.file}, {"offset", where.offset}, {"branches", shape.branches},
+                {"loops", shape.loops}, {"switches", shape.switches}});
+        }
+        return complete;
+    }
+
     bool VisitDecl(Decl *decl) {
         if (decl->isImplicit() || !source.expansion(decl->getLocation()).project())
             return evidence.error.empty();
@@ -407,12 +446,19 @@ public:
         auto where = source.expansion(stmt->getBeginLoc());
         if (!where.project())
             return evidence.error.empty();
+        if (currentShape) {
+            currentShape->branches += isa<IfStmt, ConditionalOperator>(stmt);
+            currentShape->loops += isa<ForStmt, WhileStmt, DoStmt>(stmt);
+            currentShape->switches += isa<SwitchStmt>(stmt);
+        }
         if (isa<AsmStmt>(stmt))
             return evidence.fail("unsupported_assembly", "Inline assembly is not supported.", where);
         if (isa<CompoundLiteralExpr>(stmt))
             return evidence.fail("unsupported_storage", "Compound literals are not supported.", where);
         if (isa<AttributedStmt>(stmt))
             return evidence.fail("unsupported_attribute", "Statement attributes are not supported.", where);
+        if (isa<IndirectGotoStmt>(stmt))
+            return evidence.fail("unresolved_dispatch", "Computed jumps are not supported.", where);
         if (auto *cast = dyn_cast<CastExpr>(stmt);
             cast && cast->getCastKind() == CK_IntegralToPointer) {
             Expr::EvalResult result;
@@ -440,10 +486,45 @@ public:
             else
                 fact["kind"] = callee->getBuiltinID() ? "builtin" : "external_linkage";
             fact["name"] = callee->getNameAsString();
+            if (!definition && usesOutputData(callee->getName())) {
+                for (auto *arg : call->arguments()) {
+                    const auto *literal = dyn_cast<StringLiteral>(arg->IgnoreParenImpCasts());
+                    if (literal && literal->getCharByteWidth() == 1 &&
+                        !record("output_literal", call->getExprLoc(), literal->getBytes()))
+                        return false;
+                }
+            }
+            if (!definition && callee->getName() == "puts" && call->getNumArgs() == 1) {
+                const auto *literal = dyn_cast<StringLiteral>(
+                    call->getArg(0)->IgnoreParenImpCasts());
+                if (literal && literal->getCharByteWidth() == 1) {
+                    auto origin = literal->getBytes().split('\0').first;
+                    auto output = origin.str();
+                    output.push_back('\n');
+                    if (!record("constant_output", call->getExprLoc(), output, {}, {}, {}, origin))
+                        return false;
+                }
+            }
         } else {
             fact["kind"] = "indirect";
         }
         evidence.calls.push_back(std::move(fact));
+        return true;
+    }
+
+    bool VisitDeclRefExpr(DeclRefExpr *reference) {
+        auto where = source.expansion(reference->getExprLoc());
+        auto *function = dyn_cast<FunctionDecl>(reference->getDecl());
+        if (!where.project() || !function)
+            return evidence.error.empty();
+        const auto *definition = function->getDefinition();
+        if (definition && source.expansion(definition->getLocation()).project())
+            return true;
+        if (evidence.calls.size() >= maxRecords)
+            return evidence.fail("limit", "Call evidence limit exceeded.", where);
+        evidence.calls.push_back(json::Object{{"file", where.file}, {"offset", where.offset},
+                                              {"kind", "external_reference"},
+                                              {"name", function->getNameAsString()}});
         return true;
     }
 

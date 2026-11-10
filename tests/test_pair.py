@@ -1,19 +1,21 @@
 import json
 import platform
 from dataclasses import asdict, replace
+from hashlib import sha256
 from pathlib import Path
 from typing import cast
 
 import pytest
 
 from phoenix_eval import pair
-from phoenix_eval.build import BuildResult
+from phoenix_eval.build import BuildResult, ProjectSnapshot, snapshot_project
 from phoenix_eval.case import CaseFailure, CaseResult, FailureKind, Invocation
 from phoenix_eval.coverage import BlockInventory
-from phoenix_eval.docker import Engine, WorkerError
+from phoenix_eval.docker import MAX_BATCH, Engine, WorkerError
 from phoenix_eval.outcome import EntryKind, Exited, Outcome, TreeEntry, TreeSnapshot
 from phoenix_eval.toolchain import Compiler
 from phoenix_eval.trace import CodeTrace
+from phoenix_eval.worker import MAX_PROGRAM_BYTES
 
 IMAGES = {"amd64": "sha256:" + "a" * 64, "arm64": "sha256:" + "b" * 64}
 MARKER = "private-synthetic-marker"
@@ -29,6 +31,15 @@ class FakeWorker:
         self.original = tmp_path / f"{MARKER}-original"
         self.project = tmp_path / f"{MARKER}-project"
         self.build_directory = tmp_path / f"{MARKER}-builds"
+        self.original_bytes = self.original.name.encode()
+        self.original.write_bytes(self.original_bytes)
+        (self.project / "src").mkdir(parents=True)
+        (self.project / "CMakeLists.txt").write_bytes(
+            b"add_executable(program src/main.c)"
+        )
+        self.source = self.project / "src/main.c"
+        self.source.write_bytes(b"int main(void) { return 0; }")
+        self.snapshot = snapshot_project(self.project)
         self.cases = tuple(
             Invocation(
                 (f"{MARKER}-arg-{index}",),
@@ -47,8 +58,8 @@ class FakeWorker:
         self.truncated_results: set[str] = set()
         self.built: list[tuple[str, Engine, Compiler]] = []
 
-    def inspect_x86(self, binary: Path, image: str) -> BlockInventory:
-        assert binary == self.original
+    def inspect_x86(self, binary: bytes, image: str) -> BlockInventory:
+        assert binary == self.original_bytes
         assert image == IMAGES["amd64"]
         return BlockInventory(
             entry=0x1010,
@@ -59,7 +70,7 @@ class FakeWorker:
 
     def run_cases(
         self,
-        binary: Path,
+        binary: bytes,
         cases: tuple[Invocation, ...],
         engine: Engine,
         *,
@@ -67,31 +78,29 @@ class FakeWorker:
         image: str,
     ) -> tuple[CaseResult, ...]:
         assert image == IMAGES[engine.platform]
-        if binary != self.original:
-            assert binary.read_bytes() == binary.name.encode()
+        name = binary.decode("ascii")
         if trace:
-            assert binary == self.original and engine is Engine.QEMU_X86_64
-        self.calls.append((binary.name, engine, trace, cases))
-        if binary.name in self.worker_errors:
+            assert binary == self.original_bytes and engine is Engine.QEMU_X86_64
+        self.calls.append((name, engine, trace, cases))
+        if name in self.worker_errors:
             raise WorkerError(f"{MARKER}: {cases!r}")
-        if binary.name in self.truncated_results:
+        if name in self.truncated_results:
             return ()
         default = replace(BASELINE, trace=TRACE) if trace else BASELINE
         return tuple(
-            self.outcomes.get((binary.name, engine, trace, case), default)
-            for case in cases
+            self.outcomes.get((name, engine, trace, case), default) for case in cases
         )
 
     def build_project(
         self,
-        project: Path,
+        project: ProjectSnapshot,
         destination: Path,
         engine: Engine,
         compiler: Compiler,
         *,
         image: str,
     ) -> BuildResult:
-        assert project == self.project
+        assert project == self.snapshot
         assert image == IMAGES[engine.platform]
         self.built.append((destination.name, engine, compiler))
         if destination.name in self.failed_builds:
@@ -217,6 +226,129 @@ def test_duplicate_invocations_count_across_batches(worker: FakeWorker) -> None:
     assert (report.covered_blocks, report.recovered_blocks) == (2, 3)
 
 
+@pytest.mark.parametrize("from_paths", [True, False])
+def test_pair_uses_captured_inputs_across_all_builds_and_batches(
+    worker: FakeWorker, monkeypatch: pytest.MonkeyPatch, from_paths: bool
+) -> None:
+    def inspect(binary: bytes, image: str) -> BlockInventory:
+        worker.original.write_bytes(b"edited before the first worker")
+        return worker.inspect_x86(binary, image)
+
+    def build(
+        project: ProjectSnapshot,
+        destination: Path,
+        engine: Engine,
+        compiler: Compiler,
+        *,
+        image: str,
+    ) -> BuildResult:
+        worker.source.write_bytes(b"edited before a later build")
+        return worker.build_project(project, destination, engine, compiler, image=image)
+
+    observed: dict[str, list[bytes]] = {name: [] for name in ARTIFACTS}
+
+    def run(
+        binary: bytes,
+        cases: tuple[Invocation, ...],
+        engine: Engine,
+        *,
+        trace: bool,
+        image: str,
+    ) -> tuple[CaseResult, ...]:
+        if binary == worker.original_bytes:
+            worker.original.write_bytes(b"edited between workers")
+        else:
+            name = binary.decode("ascii")
+            observed[name].append(binary)
+            (worker.build_directory / name).write_bytes(b"edited between batches")
+        return worker.run_cases(binary, cases, engine, trace=trace, image=image)
+
+    monkeypatch.setattr(pair, "inspect_x86", inspect)
+    monkeypatch.setattr(pair, "build_project", build)
+    monkeypatch.setattr(pair, "run_cases", run)
+    if not from_paths:
+        worker.original.unlink()
+        worker.source.unlink()
+
+    cases = (worker.cases[0],) * (MAX_BATCH + 1)
+    report = pair.evaluate_pair(
+        worker.original if from_paths else worker.original_bytes,
+        worker.project if from_paths else worker.snapshot,
+        cases,
+        worker.build_directory,
+        IMAGES,
+    )
+
+    assert report.behavior_passed
+    assert report.eligible_cases == len(cases)
+    original_calls = [call for call in worker.calls if call[0] == worker.original.name]
+    assert len(original_calls) == 6
+    for artifact, report_build in zip(ARTIFACTS, report.builds, strict=True):
+        first, second = observed[artifact]
+        assert first == second == artifact.encode()
+        assert report_build.executable_sha256 == sha256(first).hexdigest()
+        assert (worker.build_directory / artifact).read_bytes() != first
+
+
+def test_pair_rejects_an_oversize_original_path(worker: FakeWorker) -> None:
+    with worker.original.open("wb") as stream:
+        stream.truncate(MAX_PROGRAM_BYTES + 1)
+
+    report = worker.evaluate()
+
+    assert not report.behavior_passed
+    assert report.original_error_categories == {"worker_error": len(worker.cases)}
+    assert worker.calls == []
+    assert all(build.executable_sha256 is None for build in report.builds)
+
+
+def test_pair_reports_a_source_capture_failure(worker: FakeWorker) -> None:
+    worker.source.unlink()
+
+    report = worker.evaluate()
+
+    assert not report.behavior_passed
+    assert report.eligible_cases == len(worker.cases)
+    assert report.evaluation_errors == 4
+    assert worker.built == []
+    assert all(
+        not build.compiled
+        and build.executable_sha256 is None
+        and build.failure_categories == {"build_error": 1}
+        for build in report.builds
+    )
+
+
+def test_pair_reports_an_artifact_capture_failure(
+    worker: FakeWorker, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def build(
+        project: ProjectSnapshot,
+        destination: Path,
+        engine: Engine,
+        compiler: Compiler,
+        *,
+        image: str,
+    ) -> BuildResult:
+        result = worker.build_project(
+            project, destination, engine, compiler, image=image
+        )
+        if destination.name == ARTIFACTS[0]:
+            destination.unlink()
+        return result
+
+    monkeypatch.setattr(pair, "build_project", build)
+
+    report = worker.evaluate()
+
+    assert not report.behavior_passed
+    assert report.evaluation_errors == 1
+    first, *_ = report.builds
+    assert first.compiled and first.executable_sha256 is None
+    assert first.failure_categories == {"build_error": 1}
+    assert all(name != ARTIFACTS[0] for name, _, _, _ in worker.calls)
+
+
 def test_native_original_still_requires_trace(
     worker: FakeWorker, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -320,6 +452,7 @@ def test_worker_errors_and_malformed_batches_do_not_leak(
         "matched_cases",
         "evaluation_errors",
         "failure_categories",
+        "executable_sha256",
     }
     for private in (MARKER, str(worker.build_directory), "expected output", *ARTIFACTS):
         assert private not in serialized
