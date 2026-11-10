@@ -5,11 +5,12 @@ import os
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 from uuid import uuid4
 
 from phoenix.llm.provider import (
     Completion,
+    Model,
     Provider,
     ProviderError,
     Request,
@@ -52,6 +53,49 @@ def _append(stream: TextIO, event: dict[str, object]) -> None:
     stream.write(json.dumps(event, ensure_ascii=True, sort_keys=True) + "\n")
     stream.flush()
     os.fsync(stream.fileno())
+
+
+def _cached_completion(event: dict[str, Any]) -> Completion:
+    try:
+        body = event["request"]
+        request = Request(
+            body["prompt"], Model(body["model"]), body["max_output_tokens"]
+        )
+        if (
+            not isinstance(body["prompt"], str)
+            or type(body["max_output_tokens"]) is not int
+        ):
+            raise ValueError
+        result = event["completion"]
+        counts = result["usage"]
+        if set(counts) != {"input_tokens", "cached_input_tokens", "output_tokens"}:
+            raise ValueError
+        if any(type(value) is not int for value in counts.values()):
+            raise ValueError
+        usage = Usage(**counts)
+        expected_key = hashlib.sha256(
+            json.dumps(
+                (event["binary"], event["provider"], asdict(request)), sort_keys=True
+            ).encode("ascii")
+        ).hexdigest()
+        if (
+            not isinstance(event["binary"], str)
+            or not isinstance(event["provider"], str)
+            or body != asdict(request)
+            or event["key"] != expected_key
+            or event["service_tier"] != "standard"
+            or result["model"] != request.model
+            or result["service_tier"] != "standard"
+            or not isinstance(result["text"], str)
+            or type(event["cost_nanodollars"]) is not int
+            or event["cost_nanodollars"] != cost_nanodollars(request.model, usage)
+        ):
+            raise ValueError
+        return Completion(result["text"], usage, result["model"], "standard")
+    except (KeyError, TypeError, ValueError, AttributeError):
+        raise ProviderError(
+            "The cached model completion is malformed or inconsistent."
+        ) from None
 
 
 class Ledger:
@@ -109,18 +153,34 @@ class Ledger:
         descriptor = os.open(self.path, flags | os.O_NOFOLLOW, 0o600)
         with os.fdopen(descriptor, "r" if replay else "r+", encoding="utf-8") as stream:
             fcntl.flock(stream, fcntl.LOCK_SH if replay else fcntl.LOCK_EX)
-            latest = {}
-            for line in stream:
-                event = json.loads(line)
-                latest[event["attempt"]] = event
-                if event["key"] == key and event["state"] == "completed":
-                    result = event["completion"]
-                    return Completion(
-                        result["text"],
-                        Usage(**result["usage"]),
-                        result["model"],
-                        result["service_tier"],
-                    )
+            latest: dict[str, dict[str, Any]] = {}
+            cached = None
+            try:
+                for line in stream:
+                    event = json.loads(line)
+                    previous = latest.get(event["attempt"])
+                    if event["state"] == "completed":
+                        result = _cached_completion(event)
+                        if previous is not None and any(
+                            previous[name] != event[name]
+                            for name in (
+                                "key",
+                                "binary",
+                                "provider",
+                                "service_tier",
+                                "request",
+                            )
+                        ):
+                            raise ValueError
+                        if event["key"] == key:
+                            cached = result
+                    latest[event["attempt"]] = event
+            except (KeyError, TypeError, ValueError):
+                raise ProviderError(
+                    "The cached model ledger is malformed or inconsistent."
+                ) from None
+            if cached is not None:
+                return cached
             if replay:
                 raise ReplayMissing(
                     "The run has no recorded response for this request."

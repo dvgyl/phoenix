@@ -21,6 +21,12 @@ from phoenix_eval.integrity import (
     original_shapes,
 )
 from phoenix_eval.m0 import SEED
+from phoenix_eval.model_ledger import (
+    freeze_identity,
+    read_identity,
+    require_no_replay_ledger,
+    verify_identity,
+)
 from phoenix_eval.pair import evaluate_pair
 from phoenix_eval.platforms import verify_runtime
 from phoenix_eval.provenance import (
@@ -293,6 +299,34 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
     write_report(config_file, plan)
     pipeline_run = f"{run.name}-rebuild"
     replay_pipeline = f"{replay.name}-rebuild" if replay is not None else None
+    identity_file = run / "model-ledger.json"
+    if identity_file.exists() or identity_file.is_symlink():
+        saved_identity = read_identity(identity_file)
+        if saved_identity["pipeline_run"] != (replay_pipeline or pipeline_run):
+            raise ValueError("The model ledger identity has a different pipeline run.")
+        verify_identity(workspace, saved_identity)
+    completed_report = run / "m1.json"
+    if completed_report.exists():
+        completed_identity = read_identity(identity_file)
+        if (
+            json.loads(completed_report.read_text(encoding="utf-8")).get("model_ledger")
+            != completed_identity
+        ):
+            raise ValueError(
+                "The completed report has a different model ledger identity."
+            )
+    if replay is not None:
+        original_identity = read_identity(replay / "model-ledger.json")
+        if (
+            original_identity["pipeline_run"] != replay_pipeline
+            or prior is None
+            or prior.get("model_ledger") != original_identity
+        ):
+            raise ValueError(
+                "The replay model ledger identity does not match its origin."
+            )
+        verify_identity(workspace, original_identity)
+        require_no_replay_ledger(workspace, pipeline_run)
     tasks = tuple(
         Task(variant, method)
         for variant in variants
@@ -311,6 +345,10 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         )
         for task in tasks
     }
+    if replay is not None:
+        verify_identity(workspace, original_identity)
+        require_no_replay_ledger(workspace, pipeline_run)
+    model_ledger = freeze_identity(workspace, run, replay_pipeline or pipeline_run)
     if _configuration(workspace, release_hash) != config:
         raise ValueError("The evaluation configuration changed before measurement.")
     if t0_manifest(release) != (variants, release_hash):
@@ -345,6 +383,9 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
                 digest,
                 config["worker_images"],
             )
+    verify_identity(workspace, model_ledger)
+    if replay is not None:
+        require_no_replay_ledger(workspace, pipeline_run)
     cases = heldout_cases(
         workspace / "holdout/t0-inputs.tar.gz",
         config["heldout_archive_sha256"],
@@ -365,6 +406,11 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         )
         for task in tasks
     ]
+    verify_identity(workspace, model_ledger)
+    if read_identity(identity_file) != model_ledger:
+        raise ValueError("The model ledger identity changed during measurement.")
+    if replay is not None:
+        require_no_replay_ledger(workspace, pipeline_run)
     scores = _scores(records)
     phoenix = scores["phoenix"]
     accepted = phoenix["variants"] == 20 and phoenix["fully_successful"] >= 16
@@ -384,6 +430,7 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
             "configuration": config,
             "corpus": "agent-sealed",
             "coverage_kind": "recovered_block_entries",
+            "model_ledger": model_ledger,
             "scores": scores,
             "results": records,
             "accepted": accepted,

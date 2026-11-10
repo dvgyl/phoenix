@@ -154,3 +154,85 @@ def test_responses_request_uses_standard_without_tools(
     assert provider.complete(
         Request("Public test prompt.", max_output_tokens=128)
     ) == Completion("answer", Usage(12, 3, 4), Model.SOL)
+
+
+@pytest.mark.parametrize("replay", [False, True])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("model", "gpt-6-astra"),
+        ("service_tier", "priority"),
+        ("text", 42),
+        ("usage", {"input_tokens": 5, "cached_input_tokens": 2, "output_tokens": 4}),
+        ("usage", {"input_tokens": 5, "cached_input_tokens": 6, "output_tokens": 3}),
+        ("usage", {"input_tokens": 5, "cached_input_tokens": 2, "output_tokens": True}),
+        ("usage", {}),
+    ],
+)
+def test_cached_completion_rejects_modified_metadata(
+    tmp_path: Path, replay: bool, field: str, value: object
+) -> None:
+    provider = PublicProvider()
+    ledger = Ledger(tmp_path)
+    request = Request("Synthetic metadata test.")
+    ledger.call("original", request, provider)
+    events = [json.loads(line) for line in ledger.path.read_text().splitlines()]
+    events[-1]["completion"][field] = value
+    ledger.path.write_text("".join(json.dumps(event) + "\n" for event in events))
+    with pytest.raises(ProviderError, match="malformed or inconsistent"):
+        ledger.call("original", request, provider, replay=replay)
+    assert provider.calls == 1
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("binary", "other"),
+        ("provider", "other"),
+        ("service_tier", "priority"),
+        ("request", {}),
+        ("cost_nanodollars", 0),
+        ("cost_nanodollars", 36_200.0),
+    ],
+)
+def test_cached_record_rejects_modified_identity_or_charge(
+    tmp_path: Path, field: str, value: object
+) -> None:
+    provider = PublicProvider()
+    ledger = Ledger(tmp_path)
+    request = Request("Synthetic identity test.")
+    ledger.call("original", request, provider)
+    events = [json.loads(line) for line in ledger.path.read_text().splitlines()]
+    events[-1][field] = value
+    ledger.path.write_text("".join(json.dumps(event) + "\n" for event in events))
+    with pytest.raises(ProviderError, match="malformed or inconsistent"):
+        ledger.call("original", request, provider, replay=True)
+    assert provider.calls == 1
+
+
+def test_old_completion_without_optional_timing_remains_valid(tmp_path: Path) -> None:
+    provider = PublicProvider()
+    ledger = Ledger(tmp_path)
+    request = Request("Synthetic old record.")
+    expected = ledger.call("original", request, provider)
+    events = [json.loads(line) for line in ledger.path.read_text().splitlines()]
+    del events[-1]["seconds"]
+    ledger.path.write_text("".join(json.dumps(event) + "\n" for event in events))
+    assert ledger.call("original", request, provider, replay=True) == expected
+
+
+def test_unknown_cost_retry_keeps_its_reservation(tmp_path: Path) -> None:
+    class UnknownCostProvider(PublicProvider):
+        def complete(self, request: Request) -> Completion:
+            self.calls += 1
+            raise RetryLater("Synthetic limit.", cost_unknown=True)
+
+    provider = UnknownCostProvider()
+    ledger = Ledger(tmp_path, Budget(120_000, 120_000))
+    request = Request("Synthetic reservation.")
+    with pytest.raises(RetryLater):
+        ledger.call("original", request, provider)
+    with pytest.raises(BudgetExceeded):
+        ledger.call("original", request, provider)
+    assert ledger.summary("original").unknown_cost_reservations == 120_000
+    assert provider.calls == 1
