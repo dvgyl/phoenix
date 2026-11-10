@@ -143,9 +143,7 @@ def parse_candidate(response: str, program: Program) -> Candidate:
     return Candidate(_text(document["declarations"]), tuple(functions))
 
 
-def write_project(
-    project: Path, candidate: Candidate, tested_entries: frozenset[int] = frozenset()
-) -> None:
+def write_project(project: Path, candidate: Candidate) -> None:
     (project / "src").mkdir(parents=True, exist_ok=True)
     (project / "include").mkdir(exist_ok=True)
     (project / "CMakeLists.txt").write_text(PROJECT_CMAKE, encoding="utf-8")
@@ -154,9 +152,8 @@ def write_project(
     definitions = []
     for item in candidate.functions:
         marker = (
-            ""
-            if item.entry in tested_entries
-            else "/* PHOENIX-UNVERIFIED: No passing test reached this function. */\n"
+            "/* PHOENIX-UNVERIFIED: Pending tests at generation. "
+            "See phoenix_report.json for final confidence. */\n"
         )
         body = indent(dedent(item.body).strip(), "    ")
         definitions.append(f"{marker}{item.signature}\n{{\n{body}\n}}")

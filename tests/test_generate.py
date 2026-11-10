@@ -39,8 +39,7 @@ def test_project_marks_functions_without_a_passing_test(
     write_project(tmp_path, candidate)
     source = tmp_path / "src/program.c"
     assert "PHOENIX-UNVERIFIED" in source.read_text()
-    write_project(tmp_path, candidate, frozenset({0x1100}))
-    assert "PHOENIX-UNVERIFIED" not in source.read_text()
+    assert "See phoenix_report.json for final confidence." in source.read_text()
     assert "int main(void)\n{\n    return 0;\n}" in source.read_text()
 
 

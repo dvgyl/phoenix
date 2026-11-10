@@ -24,7 +24,13 @@ from phoenix.llm.provider import Model, Provider, Request, RetryLater
 from phoenix.package import package_project, reached_functions
 from phoenix.recover import recover
 from phoenix.repair import feedback
-from phoenix.verify import Check, Verification, verify_project
+from phoenix.verify import (
+    BUILD_CONFIGURATIONS,
+    Check,
+    Verification,
+    mismatch,
+    verify_project,
+)
 from phoenix.verify.integrity import IntegrityInputs
 from phoenix_eval.build import BuildResult, ProjectSnapshot, snapshot_project
 from phoenix_eval.docker import Engine, read_program
@@ -60,11 +66,11 @@ class _SavedBuild(TypedDict):
 class _SavedCheck(TypedDict):
     build: _SavedBuild
     outcomes: list[str]
-    differences: list[list[str]]
 
 
 class _SavedVerification(TypedDict):
     project_sha256: str
+    development_sha256: str
     checks: list[_SavedCheck]
 
 
@@ -98,6 +104,7 @@ class Reconstruction:
 @dataclass(frozen=True, slots=True)
 class Trial:
     candidate: Candidate
+    project: ProjectSnapshot
     verification: Verification
     integrity: IntegrityReport | None
 
@@ -139,36 +146,51 @@ def _read_analysis(path: Path) -> Analysis:
     )
 
 
+def _analysis_record(result: Analysis) -> _SavedAnalysis:
+    return {
+        "cases": [
+            (encode_invocation(case.invocation), encode_result(case.expected))
+            for case in result.cases
+        ],
+        "covered_blocks": result.covered_blocks,
+        "recovered_blocks": result.recovered_blocks,
+        "candidate_count": result.candidate_count,
+        "emulator_sensitive": result.emulator_sensitive,
+        "invalid_candidates": result.invalid_candidates,
+    }
+
+
 def _analyze(binary: Path, path: Path, settings: Settings) -> Analysis:
     if path.is_file():
         return _read_analysis(path)
     result = analyze(binary, settings.images, settings.seed)
-    write_json(
-        path,
-        {
-            "cases": [
-                (encode_invocation(case.invocation), encode_result(case.expected))
-                for case in result.cases
-            ],
-            "covered_blocks": result.covered_blocks,
-            "recovered_blocks": result.recovered_blocks,
-            "candidate_count": result.candidate_count,
-            "emulator_sensitive": result.emulator_sensitive,
-            "invalid_candidates": result.invalid_candidates,
-        },
-    )
+    write_json(path, _analysis_record(result))
     return result
 
 
 def _load_verification(
-    records: list[_SavedCheck], build_dir: Path, count: int
+    records: list[_SavedCheck], build_dir: Path, expected: tuple[Outcome, ...]
 ) -> Verification:
+    configurations = [
+        (record["build"]["engine"], record["build"]["compiler"]) for record in records
+    ]
+    if len(configurations) != len(BUILD_CONFIGURATIONS) or set(configurations) != set(
+        BUILD_CONFIGURATIONS
+    ):
+        raise ValueError(
+            "Saved verification requires four distinct build configurations."
+        )
     checks = []
     for record in records:
         build = record["build"]
         engine, compiler = Engine(build["engine"]), Compiler(build["compiler"])
         executable = None
         tested = None
+        outcomes = tuple(decode_result(item) for item in record["outcomes"])
+        if len(outcomes) != (len(expected) if build["executable"] is not None else 0):
+            raise ValueError(
+                "The saved build result count does not match the development cases."
+            )
         if build["executable"] is not None:
             name = f"{engine.value}-{compiler}.elf"
             executable = build_dir / name
@@ -177,6 +199,8 @@ def _load_verification(
             tested = read_program(executable)
             if sha256(tested).hexdigest() != build["executable_sha256"]:
                 raise ValueError("The tested executable has changed.")
+        elif build["executable_sha256"] is not None:
+            raise ValueError("A failed build cannot have a tested executable identity.")
         checks.append(
             Check(
                 BuildResult(
@@ -186,12 +210,15 @@ def _load_verification(
                     build["warnings"],
                     build["diagnostics"],
                 ),
-                tuple(decode_result(item) for item in record["outcomes"]),
-                tuple(tuple(item) for item in record["differences"]),
+                outcomes,
+                tuple(
+                    mismatch(original, actual)
+                    for original, actual in zip(expected, outcomes)
+                ),
                 tested,
             )
         )
-    return Verification(tuple(checks), count)
+    return Verification(tuple(checks), len(expected))
 
 
 def _verify(
@@ -202,25 +229,31 @@ def _verify(
     settings: Settings,
 ) -> Verification:
     project_digest = sha256(project.archive).hexdigest()
+    development_digest = sha256(
+        json.dumps(_analysis_record(analysis)["cases"], ensure_ascii=True).encode()
+    ).hexdigest()
+    expected = tuple(case.expected for case in analysis.cases)
     if path.is_file():
         saved = cast(_SavedVerification, json.loads(path.read_text(encoding="utf-8")))
         if saved["project_sha256"] != project_digest:
             raise ValueError("The source used for the saved builds has changed.")
-        try:
-            return _load_verification(saved["checks"], build_dir, len(analysis.cases))
-        except FileNotFoundError:
-            pass
+        if saved.get("development_sha256") != development_digest:
+            raise ValueError(
+                "The saved development inputs or expected outcomes have changed."
+            )
+        return _load_verification(saved["checks"], build_dir, expected)
     result = verify_project(
         project,
         build_dir,
         tuple(case.invocation for case in analysis.cases),
-        tuple(case.expected for case in analysis.cases),
+        expected,
         settings.images,
     )
     write_json(
         path,
         {
             "project_sha256": project_digest,
+            "development_sha256": development_digest,
             "checks": [
                 {
                     "build": {
@@ -236,7 +269,6 @@ def _verify(
                         else None,
                     },
                     "outcomes": [encode_result(item) for item in check.outcomes],
-                    "differences": check.differences,
                 }
                 for check in result.checks
             ],
@@ -380,7 +412,7 @@ def reconstruct(
             settings,
         )
         integrity = integrity_inputs.check(snapshot, verification)
-        trial = Trial(candidate, verification, integrity)
+        trial = Trial(candidate, snapshot, verification, integrity)
         if trial.passed:
             best = trial
             stop = "development-passed"
@@ -393,10 +425,6 @@ def reconstruct(
         feedback_path = directory / "repair" / round_name / "feedback.json"
         if integrity is not None and integrity.categories.keys() - {"missing_build"}:
             difference = integrity_inputs.repair_feedback(integrity)
-        elif feedback_path.is_file():
-            difference = cast(
-                str, json.loads(feedback_path.read_text(encoding="utf-8"))
-            )
         else:
             difference = feedback(
                 binary,
@@ -406,7 +434,7 @@ def reconstruct(
                 tuple(case.expected for case in analysis.cases),
                 settings.images,
             )
-            write_json(feedback_path, difference)
+        write_json(feedback_path, difference)
     if best is None:
         raise InvalidCandidate("The model did not emit a usable project.")
     verification = best.verification
@@ -420,6 +448,7 @@ def reconstruct(
         output,
         program,
         best.candidate,
+        best.project,
         reached,
         verification,
         best.integrity,
@@ -445,6 +474,8 @@ def reconstruct(
     )
     write_json(
         output / "tests/dev.json",
-        json.loads((directory / "analyze/cases.json").read_text(encoding="utf-8")),
+        _analysis_record(analysis),
     )
+    if snapshot_project(output) != best.project:
+        raise ValueError("The final package differs from the tested source snapshot.")
     return Reconstruction(output, best.passed)

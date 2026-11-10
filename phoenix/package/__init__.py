@@ -1,11 +1,13 @@
 import json
 from bisect import bisect_left
 from dataclasses import asdict
+from hashlib import sha256
 from pathlib import Path
 
-from phoenix.generate import Candidate, write_project
+from phoenix.generate import Candidate
 from phoenix.recover import Program
 from phoenix.verify import Verification
+from phoenix_eval.build import ProjectSnapshot, snapshot_project
 from phoenix_eval.coverage import read_executable_bounds
 from phoenix_eval.integrity import IntegrityReport
 from phoenix_eval.outcome import Outcome
@@ -38,12 +40,21 @@ def package_project(
     project: Path,
     program: Program,
     candidate: Candidate,
+    snapshot: ProjectSnapshot,
     tested: frozenset[int],
     verification: Verification,
     integrity: IntegrityReport | None,
     evidence: dict[str, object],
 ) -> None:
-    write_project(project, candidate, tested)
+    for directory in (project, project / "src", project / "include"):
+        if directory.is_symlink():
+            raise ValueError("The package directory must not be a symbolic link.")
+        directory.mkdir(parents=True, exist_ok=True)
+    for name, data in snapshot.files:
+        path = project / name
+        if path.is_symlink():
+            raise ValueError("A package source file must not be a symbolic link.")
+        path.write_bytes(data)
     definitions = {item.entry: item for item in candidate.functions}
     functions = [
         {
@@ -64,6 +75,9 @@ def package_project(
             "compiler": check.build.compiler,
             "built": check.build.executable is not None,
             "warnings": check.build.warnings,
+            "executable_sha256": sha256(check.tested_executable).hexdigest()
+            if check.tested_executable is not None
+            else None,
             "dev_cases_matched": sum(not result for result in check.differences),
             "dev_differences": [
                 {"case": index, "categories": categories}
@@ -75,6 +89,7 @@ def package_project(
     ]
     report = {
         **evidence,
+        "project_sha256": sha256(snapshot.archive).hexdigest(),
         "builds": builds,
         "dev_cases": verification.case_count,
         "dev_cases_matched_on_all_builds": len(verification.passed_cases),
@@ -108,6 +123,10 @@ def package_project(
         "The test runner measures original instruction hits. Function labels use "
         "passing tests and those hits. Branch coverage is unmeasured.",
         "",
+        "The package contains the tested source snapshot. Source comments record "
+        "confidence at generation. Read the function records in phoenix_report.json "
+        "for final test confidence.",
+        "",
         "| Architecture | Compiler | Build passed | Warnings | Matching cases |",
         "| --- | --- | --- | --- | --- |",
         *(
@@ -120,3 +139,7 @@ def package_project(
         "",
     ]
     (project / "PHOENIX_REPORT.md").write_text("\n".join(lines), encoding="utf-8")
+    if snapshot_project(project) != snapshot:
+        raise ValueError(
+            "The delivered project differs from the tested source snapshot."
+        )
