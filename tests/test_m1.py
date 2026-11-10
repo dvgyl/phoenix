@@ -194,7 +194,7 @@ def test_measurement_does_not_pass_with_incomplete_integrity_evidence(
         )
     )
     run = tmp_path / "eval"
-    snapshot = run / "submissions" / task.key / "project"
+    snapshot = run / "submissions" / task.key / "capture/project"
     snapshot.parent.mkdir(parents=True)
     submission = Submission(
         "phoenix",

@@ -83,9 +83,11 @@ def test_measurement_uses_ledger_for_all_submissions(
         "wall_seconds": 1,
     }
     (project / "phoenix_report.json").write_text(json.dumps(report))
-    directory = run / "submissions" / task.key
+    directory = run / "submissions" / task.key / "capture"
     directory.mkdir(parents=True)
-    submission = Submission("phoenix", task.key, None, "pipeline-failed")
+    submission = Submission(
+        "phoenix", task.key, None, "pipeline-failed", reconstruction_seconds=2.5
+    )
     if not failed:
         submission = replace(
             submission,
@@ -115,6 +117,7 @@ def test_measurement_uses_ledger_for_all_submissions(
         "cost_nanodollars": 36_200,
         "unknown_cost_reservations": 0,
     }
+    assert result["reconstruction_seconds"] == 2.5
     report["wall_seconds"] = 999
     (project / "phoenix_report.json").write_text(json.dumps(report))
     after = m1._measure(

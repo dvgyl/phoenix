@@ -127,7 +127,7 @@ def test_raw_lift_summary_is_bound_before_measurement(
     else:
         result = submit(tmp_path, directory, "pipeline", "raw", original, "ghidra-raw")
         assert result.origin_sha256 == digest
-        snapshot = directory / "origin.json"
+        snapshot = directory / "capture/origin.json"
         (lift / "program.json").write_bytes(b"changed")
         assert read_origin(snapshot, digest) == origin
         snapshot.write_bytes(b"changed")

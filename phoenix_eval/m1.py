@@ -192,10 +192,11 @@ def _measure(
         "source_sha256": submission.source_sha256,
         "fully_successful": False,
         "model": asdict(bound_summary(workspace, run, task.key, model_ledger)),
+        "reconstruction_seconds": submission.reconstruction_seconds,
     }
     if submission.source_sha256 is None:
         return {**result, "failure_category": submission.category}
-    directory = run / "submissions" / task.key
+    directory = run / "submissions" / task.key / "capture"
     snapshot = snapshot_project(directory / "project")
     files = dict(snapshot.files)
     if source_digest(files) != submission.source_sha256:
@@ -208,8 +209,7 @@ def _measure(
     record = read_package_report(directory / "report.json", submission.report_sha256)
     if record.get("sha256") != variant.sha256 or record.get("method") != task.method:
         raise ValueError("The project report does not match the input hash and method.")
-    result["reconstruction_seconds"] = record["wall_seconds"]
-    builds = directory / f"build-{uuid4().hex}"
+    builds = directory.parent / f"build-{uuid4().hex}"
     builds.mkdir(mode=0o700)
     pair = evaluate_pair(original, snapshot, cases, builds, config["worker_images"])
     result["behavior"] = asdict(pair)
@@ -373,7 +373,8 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
             )
         if task.method == "ghidra-raw" and submission.origin_sha256 is not None:
             origins[task.variant.key] = read_origin(
-                run / "submissions" / task.key / "origin.json", submission.origin_sha256
+                run / "submissions" / task.key / "capture/origin.json",
+                submission.origin_sha256,
             )
         if task.method == "phoenix" and submission.source_sha256 is not None:
             digest = submission.development_sha256
@@ -381,7 +382,7 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
                 raise DevelopmentError("The submission has no development evidence.")
             development[task.variant.key] = verify_development(
                 originals[task.variant.key],
-                run / "submissions" / task.key / "development.json",
+                run / "submissions" / task.key / "capture/development.json",
                 digest,
                 config["worker_images"],
             )

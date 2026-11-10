@@ -4,6 +4,7 @@ import math
 import os
 import subprocess
 import sys
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -37,6 +38,7 @@ class Submission:
     development_sha256: str | None = None
     origin_sha256: str | None = None
     report_sha256: str | None = None
+    reconstruction_seconds: float = 0.0
 
 
 def write_report(path: Path, data: object) -> None:
@@ -95,6 +97,39 @@ def read_origin(path: Path, expected: str) -> bytes:
     return data
 
 
+def _seconds(value: object) -> float:
+    if (
+        not isinstance(value, (int, float))
+        or isinstance(value, bool)
+        or value < 0
+        or value > sys.float_info.max
+        or not math.isfinite(value)
+    ):
+        raise SubmissionError("The reconstruction time is invalid.")
+    return float(value)
+
+
+def _reconstruction_start(directory: Path) -> float:
+    path = directory / "reconstruction-start.json"
+    now = time.time()
+    if path.exists():
+        if path.resolve() != path or not path.is_file():
+            raise SubmissionError("The reconstruction timer must be a regular file.")
+        try:
+            with path.open() as stream:
+                data = stream.read(4097)
+            if len(data) > 4096:
+                raise ValueError
+            started = _seconds(json.loads(data)["started"])
+        except (KeyError, TypeError, ValueError):
+            raise SubmissionError("The reconstruction timer is invalid.") from None
+        if started > now:
+            raise SubmissionError("The reconstruction start is in the future.")
+        return started
+    write_report(path, {"started": now})
+    return now
+
+
 def read_package_report(path: Path, expected: str) -> dict[str, object]:
     content = path.read_bytes()
     if hashlib.sha256(content).hexdigest() != expected:
@@ -102,13 +137,7 @@ def read_package_report(path: Path, expected: str) -> dict[str, object]:
     data = json.loads(content)
     if not isinstance(data, dict):
         raise SubmissionError("The package report is invalid.")
-    seconds = data.get("wall_seconds")
-    if (
-        (not isinstance(seconds, (int, float)) or isinstance(seconds, bool))
-        or not math.isfinite(seconds)
-        or seconds < 0
-    ):
-        raise SubmissionError("The package report time is invalid.")
+    _seconds(data.get("wall_seconds"))
     return data
 
 
@@ -137,6 +166,7 @@ def _existing_submission(
         data.get("development_sha256"),
         data.get("origin_sha256"),
         data.get("report_sha256"),
+        _seconds(data.get("reconstruction_seconds")),
     )
     if (
         data["method"] != method
@@ -166,10 +196,21 @@ def submit(
     method: Method,
     replay_pipeline_run: str | None = None,
 ) -> Submission:
-    record = directory / "submission.json"
-    snapshot = directory / "project"
-    if record.is_file():
-        return _existing_submission(record, snapshot, method, key, replay_pipeline_run)
+    if directory.resolve() != directory:
+        raise SubmissionError("Use the physical submission directory.")
+    capture = directory / "capture"
+    if capture.exists():
+        if capture.resolve() != capture:
+            raise SubmissionError("The capture path must be a regular directory.")
+        return _existing_submission(
+            capture / "submission.json",
+            capture / "project",
+            method,
+            key,
+            replay_pipeline_run,
+        )
+    if (directory / "submission.json").exists():
+        raise SubmissionError("Use the recorded revision for this submission layout.")
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     probe = directory / GUARD_PROBE
     probe.write_text("Synthetic file guard witness.\n", encoding="utf-8")
@@ -185,6 +226,7 @@ def submit(
     else:
         options = (str(binary), "--run-id", pipeline_run, "--method", method)
     command = guarded_command(workspace, (*base, *options), release=True, probe=probe)
+    started = _reconstruction_start(directory)
     with (
         (directory / "pipeline.stdout").open("ab") as output,
         (directory / "pipeline.stderr").open("ab") as errors,
@@ -207,66 +249,74 @@ def submit(
         raise EvaluationPending(
             "The model service is unavailable. Resume the evaluation."
         )
-    origin_sha = None
-    if method == "ghidra-raw":
-        lift = workspace / "runs" / pipeline_run / key / "recover"
-        evidence = lift / "evidence.json"
-        if evidence.is_file():
-            try:
-                binding = json.loads(evidence.read_text(encoding="utf-8"))
-                original_sha, origin_sha = (
-                    binding["binary_sha256"],
-                    str(binding["sha256"]),
-                )
-            except (KeyError, TypeError, ValueError):
-                raise SubmissionError("The raw lift identity is invalid.") from None
-            if original_sha != hashlib.sha256(read_program(binary)).hexdigest():
-                raise SubmissionError(
-                    "The raw lift summary has a different original hash."
-                )
-            origin = read_origin(lift / "program.json", origin_sha)
-            (directory / "origin.json").write_bytes(origin)
-    if result.returncode not in (0, 1):
-        submission = Submission(
-            method,
-            key,
-            None,
-            "pipeline-failed",
-            replay_pipeline_run,
-            origin_sha256=origin_sha,
-        )
-    else:
-        project = project_path(workspace, pipeline_run, key)
-        try:
-            digest = freeze_project(project, snapshot)
-            report_digest = freeze_package_report(project, directory)
-            development_digest = None
-            if method == "phoenix":
-                development = (
-                    workspace / "runs" / pipeline_run / key / "analyze/cases.json"
-                )
-                development_digest = freeze_development(
-                    development, directory / "development.json"
-                )
-        except (OSError, ValueError):
+    elapsed = _seconds(time.time() - started)
+    with TemporaryDirectory(dir=directory, prefix=".capture-") as scratch:
+        staging = Path(scratch) / "capture"
+        staging.mkdir(mode=0o700)
+        origin_sha = None
+        if method == "ghidra-raw":
+            lift = workspace / "runs" / pipeline_run / key / "recover"
+            evidence = lift / "evidence.json"
+            if evidence.is_file():
+                try:
+                    binding = json.loads(evidence.read_text(encoding="utf-8"))
+                    original_sha, origin_sha = (
+                        binding["binary_sha256"],
+                        str(binding["sha256"]),
+                    )
+                except (KeyError, TypeError, ValueError):
+                    raise SubmissionError("The raw lift identity is invalid.") from None
+                if original_sha != hashlib.sha256(read_program(binary)).hexdigest():
+                    raise SubmissionError(
+                        "The raw lift summary has a different original hash."
+                    )
+                origin = read_origin(lift / "program.json", origin_sha)
+                (staging / "origin.json").write_bytes(origin)
+        if result.returncode not in (0, 1):
             submission = Submission(
                 method,
                 key,
                 None,
-                "invalid-project",
+                "pipeline-failed",
                 replay_pipeline_run,
                 origin_sha256=origin_sha,
+                reconstruction_seconds=elapsed,
             )
         else:
-            submission = Submission(
-                method,
-                key,
-                digest,
-                None,
-                replay_pipeline_run,
-                development_digest,
-                origin_sha,
-                report_digest,
-            )
-    write_report(record, asdict(submission))
+            project = project_path(workspace, pipeline_run, key)
+            try:
+                digest = freeze_project(project, staging / "project")
+                report_digest = freeze_package_report(project, staging)
+                development_digest = None
+                if method == "phoenix":
+                    development = (
+                        workspace / "runs" / pipeline_run / key / "analyze/cases.json"
+                    )
+                    development_digest = freeze_development(
+                        development, staging / "development.json"
+                    )
+            except ValueError:
+                submission = Submission(
+                    method,
+                    key,
+                    None,
+                    "invalid-project",
+                    replay_pipeline_run,
+                    origin_sha256=origin_sha,
+                    reconstruction_seconds=elapsed,
+                )
+            else:
+                submission = Submission(
+                    method,
+                    key,
+                    digest,
+                    None,
+                    replay_pipeline_run,
+                    development_digest,
+                    origin_sha,
+                    report_digest,
+                    elapsed,
+                )
+        write_report(staging / "submission.json", asdict(submission))
+        staging.replace(capture)
     return submission
