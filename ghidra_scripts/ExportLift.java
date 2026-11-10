@@ -293,13 +293,12 @@ public class ExportLift extends GhidraScript {
         return value;
     }
 
-    // The type table describes storage types. Composite members stay opaque.
     private final class EvidenceBuilder {
         private final Map<DataType, String> typeIds = new IdentityHashMap<>();
         private final List<TypeEvidence> types = new ArrayList<>();
         private final Map<String, RegisterEvidence> registers = new LinkedHashMap<>();
 
-        private String type(DataType data, int depth) {
+        private String typeId(DataType data, int depth) {
             if (data == null) {
                 return null;
             }
@@ -336,7 +335,7 @@ public class ExportLift extends GhidraScript {
             types.set(index, new TypeEvidence(id, boundedText(data.getPathName()),
                     boundedText(data.getName()), kind,
                     bounded(data.getLength(), -1, Integer.MAX_VALUE, "type size"),
-                    type(target, depth + 1), count));
+                    typeId(target, depth + 1), count));
             return id;
         }
 
@@ -379,7 +378,7 @@ public class ExportLift extends GhidraScript {
         }
 
         private Slot slot(String name, DataType data, VariableStorage storage) {
-            return new Slot(boundedText(name), type(data, 0), storage(storage));
+            return new Slot(boundedText(name), typeId(data, 0), storage(storage));
         }
 
         private void validateTypes() {
