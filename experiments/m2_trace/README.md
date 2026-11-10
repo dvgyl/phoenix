@@ -100,6 +100,24 @@ uv run --locked python -m experiments.m2_trace.driver \
   --oracle-arm64 "$trace_oracle_arm64" --observer "$trace_observer"
 ```
 
+Run the plugin rejection controls after the positive calibration.
+Use this command when no sealed measurement or replay uses the VM.
+It builds two separate control images. It preserves the accepted tags.
+
+```sh
+uv run --locked python -m experiments.m2_trace.negative_controls \
+  "$trace_work/fixtures" "$trace_work/observation-1/report.json" \
+  "$trace_work/negative-controls-1"
+```
+
+The output directory must be new. The command binds each modified source,
+compiled plugin, image, invocation, outcome, and trace by hash.
+A wrong API version must stop before target execution. A missing register
+must retain the original outcome and emit the exact register-gap record.
+Both traces must be rejected. The command records partial evidence if
+a control fails. Its final report sets `negative_controls_passed` to true
+only after both controls pass.
+
 The driver checks commitments before execution. It obtains normal
 untraced outcomes with the unchanged dual-emulator oracle. Each observation
 uses the same `Invocation`, fresh tree, environment, launcher, resource
@@ -152,8 +170,13 @@ Its SHA-256 is
 `d982848be0620ac8e838cf621b500235eb3966a601de23ce307bbae457700a64`.
 Parent checks and build logs are under
 `$PHOENIX_ROOT/audit/continue-v1/observer-*`.
-Wrong-API and missing-register runtime controls remain pending.
-The recipe corrections and runtime evidence still need independent review.
+The later wrong-API and missing-register Linux controls also rejected their
+traces. The missing-register control retained the agreed oracle outcome.
+These results are under `$PHOENIX_ROOT/tmp/m2-observer-negative-controls`.
+Use the new command to repeat those controls. Its host tests and checks of
+the saved outcomes passed. A fresh independent Sol review passed the command
+and saved evidence. A fresh command run remains pending while M1 uses the VM.
+Independent Sol review passed the initial recipe and calibration evidence.
 These public checks do not establish production recovery or M2 acceptance.
 
 The observer covers only planned calls and program returns. It has no

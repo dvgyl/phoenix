@@ -384,3 +384,22 @@
 - Public artifacts are under `tmp/m2-observer-negative-controls` and
   `audit/continue-v1/observer-negative-controls.*` in the workspace.
   No production trace integration or milestone acceptance is claimed.
+
+## 2026-11-10. Reusable observer rejection controls
+
+- Added a public command for the wrong-API and missing-register controls.
+  It compiles fixed source mutations in the Linux sandbox. It creates
+  separate control images and checks the accepted observer identity.
+- Each record binds source, plugin, image, invocation, outcome and trace
+  evidence before classification. A failed observation retains available
+  evidence. A regression exposed an empty result list before this fix.
+  The corrected 19-test focused suite passed.
+- The parent full gate passed 515 tests with 23 opt-in skips and 90.01%
+  evaluator line coverage. Ruff, format, strict mypy, CLI help and checks
+  against both saved real Linux outcomes passed.
+- Fresh independent Standard-service Sol review passed the exact source
+  and host evidence. It ran 123 focused tests and 15 fresh probes. It also
+  recomputed both saved control hashes and checked selected positive traces.
+- The reusable command has not run fresh in Linux. M1 owns the VM. This
+  pending runtime gate is explicit. The command stays on the isolated
+  experiment branch while main remains fixed for M1 replay.

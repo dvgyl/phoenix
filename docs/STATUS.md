@@ -22,7 +22,12 @@ prototype. It ran 104 focused tests and 10 independent tests.
 The parent full gate passed 496 tests with 23 skips and 90.01% evaluator
 coverage. The reviewer checked the saved runtime evidence independently.
 The later wrong-API and missing-register controls also rejected their
-invalid traces. Independent review of those later controls is pending.
+invalid traces. A reusable command now binds control sources, plugins,
+images, invocations, raw traces and outcomes. It retains partial evidence
+on failure. Its parent gate passed 515 tests with 23 skips and 90.01%
+evaluator line coverage. Fresh independent Sol review passed the source
+and saved public evidence. A fresh Linux run of this command remains open
+while M1 uses the VM.
 
 The M2 evaluator remains separate and unmerged. Astra review held its
 replay lineage and saved-report validation. A separate Astra task is
@@ -41,6 +46,6 @@ The dedicated Colima VM has four CPUs and 2 GiB of memory.
 
 1. Finish and check the new M1 run and exact replay on main.
 2. Correct and review the shared engine and M2 evaluator gaps.
-3. Review the two later observer controls before production integration.
+3. Run the reviewed reusable observer controls after M1 releases the VM.
 4. Integrate verified M2 work after the M1 gates pass.
 5. Continue through M4 and SPEC.md section 9.
