@@ -17,6 +17,8 @@ projects used in the workspace and the local quality checks.
 | Project | Use in Phoenix | Upstream source |
 | --- | --- | --- |
 | Ubuntu 24.04 | Pinned Linux image and package archive | [Ubuntu images](https://github.com/docker-library/official-images/blob/master/library/ubuntu), [Ubuntu Snapshot Service](https://snapshot.ubuntu.com/) |
+| APT mirror transport | Fetch package files from an official Ubuntu pool if the snapshot cannot supply them | [Ubuntu APT mirror transport](https://manpages.ubuntu.com/manpages/noble/man1/apt-transport-mirror.1.html) |
+| GnuPG 2.5.21 | Sign a synthetic repository for the package transport probe | [GnuPG](https://gnupg.org/), [license](https://gnupg.org/documentation/manuals/gnupg/Copying.html) |
 | Docker Engine and Buildx | Isolated workers and architecture-specific images | [Moby](https://github.com/moby/moby), [Buildx](https://github.com/docker/buildx) |
 | GCC, Clang, CMake, and GNU Binutils | Build and strip public test executables | [GCC](https://gcc.gnu.org/), [Clang](https://clang.llvm.org/), [CMake](https://cmake.org/), [GNU Binutils](https://www.gnu.org/software/binutils/) |
 | Clang LibTooling and LLVM | Resolve C declarations and their stored data for integrity checks | [Clang LibTooling 18.1.3](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.3/clang/docs/LibTooling.rst), [LLVM license](https://llvm.org/LICENSE.txt) |

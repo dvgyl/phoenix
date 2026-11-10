@@ -16,6 +16,8 @@ pytest-cov, MIT. https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE
 pre-commit, MIT. https://github.com/pre-commit/pre-commit/blob/main/LICENSE
 
 Ubuntu 24.04. Package notices are under /usr/share/doc in the image.
+APT mirror transport, GPL-2.0-or-later. Phoenix uses the copy in the Ubuntu base image. https://github.com/Debian/apt/blob/2.7.14/COPYING
+GnuPG 2.5.21, GPL-3.0-or-later. External test signing tool. https://gnupg.org/documentation/manuals/gnupg/Copying.html
 Docker Engine and Buildx, Apache-2.0. https://github.com/moby/moby and https://github.com/docker/buildx
 GCC, GPL-3.0-or-later. GCC runtime components have a runtime library exception where specified. https://gcc.gnu.org/
 Clang, Clang LibTooling, and LLVM, Apache-2.0 with LLVM exceptions. https://llvm.org/LICENSE.txt
