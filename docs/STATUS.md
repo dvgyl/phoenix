@@ -1,16 +1,23 @@
 # Phoenix status
 
 This isolated branch integrates shared correction `05d362f` and matrix
-`11da284`. The complete parent gate passed 655 tests with 25 opt-in skips
-and 92.27% evaluator line coverage. Fresh independent Sol and Astra review
-of the combined source remain queued. It is not ready for sealed M2 use.
+`11da284`. Independent Sol review passed the combined base `0ee21d7`.
+Independent Astra review held two findings. This branch corrects replay
+ancestry accounting. The capture consistency correction and fresh combined
+reviews remain open. The branch is not ready for sealed M2 use.
+
+The replay ancestry correction passed ten rejection checks. The parent gate
+passed 660 tests with 25 opt-in skips and 92.30% evaluator line coverage.
+[Replay ancestry issue](https://github.com/dvgyl/phoenix/issues/5).
+[Capture consistency issue](https://github.com/dvgyl/phoenix/issues/6).
 
 M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
 M1 and the v1 goal remain open. No M1 tag exists.
 Main is pushed at `6897e4753d8acedfae57af63e6426faf116bed2e`.
-Its public pipeline checks are active after required worker image rebuilds.
-Native CI run 42905864046 is active. A new guarded M1 original and exact
-replay remain required before milestone acceptance.
+Its public pipeline passed both methods in all four build configurations.
+Native CI run 42905864046 passed. The native results matched the Mac M0 run.
+Guarded M1 run `m1-t0-6897e47` froze all 40 captures. Its measurement and
+exact replay remain open.
 
 Original `m1-t0-baae648` and replay `m1-t0-replay-baae648` have equal stable
 fields. Phoenix is 17/20 fully successful. It retains two `embedded_text`
@@ -38,11 +45,11 @@ limited and must remain visible in the final report. Minimum source branch
 coverage is 184/197. Minimum mutation detection is 11/12. Source and input
 archive commitments precede reconstruction. This branch retains those hashes.
 
-The reusable observer controls passed a fresh Linux run. Independent review
-of that new runtime evidence remains open. The observer experiment remains
-separate from production. A Sol worker is implementing the stripped-binary
-adapter from the required Astra design. Private Astra authors are preparing
-T2 and qualifying T3. Their sources and detailed logs remain sealed.
+The reusable observer controls passed a fresh Linux run and independent Sol
+review. The observer remains separate from production. Independent Sol review
+held opt-in stripped-binary evidence candidate `ac45adf`. It needs corrections
+and expanded public checks. Private Astra authors are preparing T2 and T3.
+Their sources and detailed logs remain sealed.
 
 The internal-drive baseline is 14,432,616 KiB free. The workspace is the external
 APFS mount at `/Volumes/PhoenixWork`. The dedicated VM has four CPUs and 2 GiB
@@ -50,8 +57,8 @@ of memory. Standard service and fresh Sol review apply to every major block.
 
 ## Next actions
 
-1. Review the combined evaluator and fresh observer runtime evidence.
-2. Finish current main public/native checks and guarded M1 original/replay.
+1. Port the reviewed capture consistency correction and repeat combined review.
+2. Finish the guarded M1 original and exact replay on fixed main.
 3. Obtain M1 milestone review before tagging or M2 source integration.
 4. Complete production M2 recovery and its public evidence gates.
 5. Continue M3, T3 qualification, M4, publication and section 9 replay.

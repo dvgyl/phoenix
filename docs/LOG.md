@@ -635,3 +635,25 @@
 - Main advanced only after the `baae648` exact replay and ledger checks passed.
   Current main `6897e47` has public/native checks active. Original and replay
   measurements with the new automatic guard remain required before M1.
+
+## 2026-11-10. Require no model log in M2 replay ancestry
+
+- Fresh Sol review passed combined base `0ee21d7`. Fresh Astra review held
+  two findings. An earlier replay could retain an unreported local model log.
+  An early submission checkpoint could also change before the capture freeze.
+- Reproduced five Astra ancestry rejection requirements on the exact combined
+  base. Five additional parent requirements also failed there. They cover
+  earlier and selected replays, including writes during capture, between
+  archive reads, and during measurement.
+- The evaluator now distinguishes the original pipeline from all replay
+  pipelines in its lineage. It requires no local model log in any replay.
+  It checks before capture, after capture, before archive access, and before
+  report publication. It still validates and uses the original ledger.
+- All ten rejection requirements passed after the correction. The parent gate
+  passed 660 tests, with 25 opt-in skips and 92.30% evaluator line coverage.
+  Ruff, format, strict mypy, and the unchanged protection test passed.
+  The initial gate caught a tuple annotation error before the full run.
+  Both logs remain in `audit/m2-lineage-no-log/`.
+- The correction stays on the isolated branch. The shared capture correction
+  and fresh combined Sol and Astra reviews remain open. Main and the active
+  guarded M1 measurement stay fixed. No sealed M2 use or acceptance is claimed.

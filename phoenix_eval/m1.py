@@ -333,11 +333,20 @@ def _m2_scope(workspace: Path) -> Scope:
     return Scope.parse(Scope(tuple(batches)).record())
 
 
-def _m2_replay_pipeline(workspace: Path, replay: Path, keys: tuple[str, ...]) -> str:
+@dataclass(frozen=True, slots=True)
+class _ReplayLineage:
+    origin_pipeline: str
+    replay_pipelines: tuple[str, ...]
+
+
+def _m2_replay_lineage(
+    workspace: Path, replay: Path, keys: tuple[str, ...]
+) -> _ReplayLineage:
     identity = read_identity(replay / "model-ledger.json")
     configuration = None
     stable = None
     visited: set[str] = set()
+    replay_pipelines: list[str] = []
     while True:
         if replay.name in visited or recorded_kind(replay) != "m2":
             raise ValueError("The M2 replay lineage is invalid.")
@@ -362,9 +371,10 @@ def _m2_replay_pipeline(workspace: Path, replay: Path, keys: tuple[str, ...]) ->
         if source is None:
             if identity["pipeline_run"] != f"{replay.name}-rebuild":
                 raise ValueError("The M2 model log has a different origin.")
-            return identity["pipeline_run"]
+            return _ReplayLineage(identity["pipeline_run"], tuple(replay_pipelines))
         if not isinstance(source, str):
             raise ValueError("The M2 replay origin is invalid.")
+        replay_pipelines.append(f"{replay.name}-rebuild")
         replay = _directory(workspace / "runs", source)
 
 
@@ -423,8 +433,16 @@ def _evaluate(
     write_report(config_file, plan)
     pipeline_run = f"{run.name}-rebuild"
     replay_pipeline = f"{replay.name}-rebuild" if replay is not None else None
+    replay_pipelines: tuple[str, ...] = (pipeline_run,) if replay is not None else ()
     if scope is not None and replay is not None:
-        replay_pipeline = _m2_replay_pipeline(workspace, replay, keys)
+        lineage = _m2_replay_lineage(workspace, replay, keys)
+        replay_pipeline = lineage.origin_pipeline
+        replay_pipelines += lineage.replay_pipelines
+
+    def check_replay_ledgers() -> None:
+        for pipeline in replay_pipelines:
+            require_no_replay_ledger(workspace, pipeline)
+
     identity_file = run / "model-ledger.json"
     if identity_file.exists() or identity_file.is_symlink():
         saved_identity = read_identity(identity_file)
@@ -460,7 +478,7 @@ def _evaluate(
         verify_identity(workspace, original_identity)
         if open_binding(replay, keys) is None:
             raise ValueError("Replay requires a frozen capture binding at its origin.")
-        require_no_replay_ledger(workspace, pipeline_run)
+        check_replay_ledgers()
     if scope is not None:
         if identity_file.exists() and any(
             not (run / "submissions" / task.key / "capture/submission.json").is_file()
@@ -487,7 +505,7 @@ def _evaluate(
     }
     if replay is not None:
         verify_identity(workspace, original_identity)
-        require_no_replay_ledger(workspace, pipeline_run)
+        check_replay_ledgers()
     model_ledger = freeze_identity(workspace, run, replay_pipeline or pipeline_run)
     model_summaries = bound_summaries(workspace, keys, model_ledger)
     capture_binding = freeze_binding(run, keys, capture_binding)
@@ -530,8 +548,7 @@ def _evaluate(
                 config["worker_images"],
             )
     verify_identity(workspace, model_ledger)
-    if replay is not None:
-        require_no_replay_ledger(workspace, pipeline_run)
+    check_replay_ledgers()
     verify_binding(run, keys, capture_binding)
     if scope is None:
         cases = heldout_cases(
@@ -554,8 +571,7 @@ def _evaluate(
         for batch in scope.batches:
             verify_binding(run, keys, capture_binding)
             verify_identity(workspace, model_ledger)
-            if replay is not None:
-                require_no_replay_ledger(workspace, pipeline_run)
+            check_replay_ledgers()
             cases = heldout_cases(
                 workspace / "holdout" / f"{batch.tier.lower()}-inputs.tar.gz",
                 batch.inputs_sha256,
@@ -598,8 +614,7 @@ def _evaluate(
         raise ValueError(
             "The reported model summaries do not reconcile with the ledger."
         )
-    if replay is not None:
-        require_no_replay_ledger(workspace, pipeline_run)
+    check_replay_ledgers()
     if scope is not None:
         for task, record in zip(tasks, records, strict=True):
             record.update(

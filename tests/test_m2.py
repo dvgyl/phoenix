@@ -652,6 +652,64 @@ def test_m2_replay_rejects_a_fresh_model_log(
 
 
 @pytest.mark.parametrize(
+    ("ancestor", "phase", "opened"),
+    [
+        ("first", "before", []),
+        ("second", "before", []),
+        ("first", "submit", []),
+        ("first", "cases", [Tier.T0]),
+        ("second", "measure", [Tier.T0, Tier.T1]),
+    ],
+)
+def test_m2_replay_rejects_model_logs_in_its_lineage(
+    tmp_path: Path,
+    synthetic_engine: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    ancestor: str,
+    phase: str,
+    opened: list[Tier],
+) -> None:
+    prior = [
+        m1.evaluate_m2(tmp_path, "origin")[0],
+        m1.evaluate_m2(tmp_path, "first", "origin")[0],
+        m1.evaluate_m2(tmp_path, "second", "first")[0],
+    ]
+    original = tmp_path / "runs/origin-rebuild/llm.jsonl"
+    saved = {path: path.read_bytes() for path in [*prior, original]}
+    synthetic_engine["opened"].clear()
+    submitted = len(synthetic_engine["submitted"])
+    ledger = tmp_path / "runs" / f"{ancestor}-rebuild" / "llm.jsonl"
+
+    def add_ledger() -> None:
+        ledger.parent.mkdir(parents=True, exist_ok=True)
+        ledger.write_bytes(saved[original])
+
+    if phase == "before":
+        add_ledger()
+    else:
+        name = {"submit": "submit", "cases": "heldout_cases", "measure": "_measure"}[
+            phase
+        ]
+        operation = getattr(m1, name)
+
+        def changed(*args: Any, **kwargs: Any) -> Any:
+            result = operation(*args, **kwargs)
+            if not ledger.exists():
+                add_ledger()
+            return result
+
+        monkeypatch.setattr(m1, name, changed)
+    with pytest.raises(ValueError, match="fresh model ledger"):
+        m1.evaluate_m2(tmp_path, "next", "second")
+    if phase == "before":
+        assert len(synthetic_engine["submitted"]) == submitted
+    assert synthetic_engine["opened"] == opened
+    assert not (tmp_path / "runs/next/m2.json").exists()
+    assert ledger.read_bytes() == saved[original]
+    assert all(path.read_bytes() == data for path, data in saved.items())
+
+
+@pytest.mark.parametrize(
     "change", ["cycle", "log_origin", "config_missing", "report_scope"]
 )
 def test_m2_rejects_conflicting_lineage(
