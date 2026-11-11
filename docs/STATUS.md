@@ -45,6 +45,9 @@ The reviewed U1 lift evidence and opt-in recovery plan are on main.
 Public static checks passed 16 configurations at `49202a7`. Sol and Astra
 passed the exact source review. The public observer controls passed.
 The switch proof and graph export remain on separate branches.
+This branch defines the first bounded C source profile. It passed
+23 synthetic checks and parsed both saved public switch functions.
+Token binding, generation, and Linux behavior remain open.
 Their public target checks and fresh reviews are open.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the

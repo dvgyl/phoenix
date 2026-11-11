@@ -600,3 +600,21 @@
   transport failures are recorded in `audit/m2-production-u1-e1/`.
 - This integration does not enable switch recovery or production
   traces. No target execution or new benchmark result is claimed.
+
+## 2026-11-11. Parse the first checked switch source profile
+
+- Added a bounded parser for a function with one flat switch, an
+  unsigned 32-bit parameter and mask, flat integer arms, and one shared
+  return. It retains exact byte spans. Stacked labels share an arm.
+  Unknown syntax stays unproved.
+- The 23 synthetic checks include repeated labels, missing default,
+  fall-through, side effects in expressions, and exact byte positions
+  after a UTF-8 comment. Both saved ordinary public C functions parsed
+  with all 12 cases and one default. The spans match the saved Ghidra
+  marker positions. No target ran.
+- Separate host Ghidra probes found exact parameter storage, unique
+  indirect predecessor records, and the shared continuation for the
+  two public functions. The source profile does not yet validate that
+  evidence or change output. Independent review and production binding
+  remain open. Evidence is in `audit/m2-switch-source-profile/` and
+  `audit/m2-switch-body-links/`.
