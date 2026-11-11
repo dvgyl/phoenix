@@ -699,3 +699,22 @@
   import and observation plans. Static imports still identify symbol
   requests only. Live capture, runtime mapping, and frame admission
   remain open. No M2 result or new milestone tag is claimed.
+
+## 2026-11-11. Integrate the reviewed opt-in switch caller
+
+- Fresh Sol passed the exact caller at `d3485cd`. It passed 96
+  focused tests and 81 fresh controls. It checked malformed generation
+  selectors, source and settings changes, per-function gaps, repair and
+  replay persistence, and final source identity. Integrated the exact
+  caller, tests, README option, and ADR 0027.
+- The new option remains off by default. It cannot change Ghidra-raw.
+  Resume and replay retain the recorded value. The checked path reads
+  one schema 3 generation and passes its retained definitions through
+  every cleanup and repair. The package remains the tested snapshot.
+- Both actual saved public plans retain their complete protected
+  source and 12 selectors. Host syntax checks and synthetic orchestration
+  do not establish target behavior. Public dual-oracle, four-way build,
+  unvisited-case, and duplicate-destination gates remain open.
+- The earlier combined main transfer plans also matched all 16 reviewed
+  public plans byte for byte. Their proof and relocation-width metadata
+  stayed consistent. No target ran or sealed result changed.

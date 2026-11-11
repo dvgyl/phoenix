@@ -319,14 +319,21 @@ def publish_generation(
 
 def read_companion(directory: Path, binary: bytes) -> tuple[bytes, LiftMapping]:
     """Read the selected generation and check its lift and mapping."""
+    _, evidence = read_selected_generation(directory, binary)
+    return evidence.lift, evidence.mapping
+
+
+def read_selected_generation(
+    directory: Path, binary: bytes
+) -> tuple[Path, LiftGeneration]:
     try:
         selection = _read_regular(directory / _SELECTOR, 45)
     except OSError as error:
         raise MappingError("The evidence publication is incomplete.") from error
     if re.fullmatch(rb"generation-[0-9a-f]{32}\n", selection) is None:
         raise MappingError("Invalid evidence generation selection.")
-    evidence = read_generation(directory / selection[:-1].decode("ascii"), binary)
-    return evidence.lift, evidence.mapping
+    generation = directory / selection[:-1].decode("ascii")
+    return generation, read_generation(generation, binary)
 
 
 def read_generation(generation: Path, binary: bytes) -> LiftGeneration:
