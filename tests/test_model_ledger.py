@@ -227,6 +227,15 @@ def test_nonregular_ledger_is_rejected(tmp_path: Path) -> None:
         ledger_digest(directory)
 
 
+def test_cyclic_ledger_paths_have_controlled_errors(tmp_path: Path) -> None:
+    record = tmp_path / "model-ledger.json"
+    record.symlink_to(record.name)
+    with pytest.raises(ValueError, match="symbolic link"):
+        ledger_digest(record)
+    with pytest.raises(ValueError, match="invalid or missing"):
+        read_identity(record)
+
+
 def test_resume_rejects_missing_frozen_identity(
     tmp_path: Path, synthetic_evaluator: list[str]
 ) -> None:

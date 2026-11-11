@@ -17,27 +17,37 @@ class LedgerIdentity(TypedDict):
     sha256: str | None
 
 
-def ledger_digest(path: Path) -> str | None:
-    if path.resolve() != path:
-        raise ValueError("The model ledger path cannot contain symbolic links.")
+def _open_ledger(path: Path) -> int | None:
+    try:
+        physical = path.resolve() == path
+    except (OSError, RuntimeError):
+        physical = False
+    if not physical:
+        raise ValueError("The model ledger path is invalid or contains symbolic links.")
     try:
         descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except FileNotFoundError:
         return None
+    except OSError as error:
+        raise ValueError("Cannot open the model ledger.") from error
     if not stat.S_ISREG(os.fstat(descriptor).st_mode):
         os.close(descriptor)
         raise ValueError("The model ledger must be a regular file.")
+    return descriptor
+
+
+def ledger_digest(path: Path) -> str | None:
+    descriptor = _open_ledger(path)
+    if descriptor is None:
+        return None
     with os.fdopen(descriptor, "rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
 def read_identity(path: Path) -> LedgerIdentity:
     try:
-        if path.resolve() != path:
-            raise ValueError
-        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-            os.close(descriptor)
+        descriptor = _open_ledger(path)
+        if descriptor is None:
             raise ValueError
         with os.fdopen(descriptor, "rb") as stream:
             content = stream.read(4097)
@@ -63,7 +73,7 @@ def read_identity(path: Path) -> LedgerIdentity:
         ):
             raise ValueError
         return cast(LedgerIdentity, data)
-    except (OSError, ValueError, TypeError):
+    except (OSError, ValueError, TypeError, RecursionError):
         raise ValueError(
             "The model ledger identity record is invalid or missing."
         ) from None
@@ -307,11 +317,13 @@ def bound_summaries(
 
 def _bound_events(workspace: Path, identity: LedgerIdentity) -> tuple[ModelEvent, ...]:
     path = workspace / "runs" / identity["pipeline_run"] / "llm.jsonl"
-    verify_identity(workspace, identity)
-    content = path.read_bytes() if identity["sha256"] is not None else b""
-    if (
-        identity["sha256"] is not None
-        and hashlib.sha256(content).hexdigest() != identity["sha256"]
-    ):
+    descriptor = _open_ledger(path)
+    if descriptor is None:
+        if identity["sha256"] is None:
+            return ()
+        raise ValueError("The model ledger changed after submission.")
+    with os.fdopen(descriptor, "rb") as stream:
+        content = stream.read()
+    if hashlib.sha256(content).hexdigest() != identity["sha256"]:
         raise ValueError("The model ledger changed after submission.")
     return read_events(content.decode("utf-8").splitlines())

@@ -725,3 +725,24 @@
 - Fresh Sol passed the exact shared marker candidate. The exact shared
   Astra and combined Sol and Astra reviews remain required. No new
   sealed measurement or M2 result is claimed.
+
+## 2026-11-11. Recheck saved replay ancestors at use
+
+- Sol and Astra held `4d51cb8`. The coordinator accepted all ancestors
+  before capture. It discarded those binding identities and checked
+  only the current capture before archive access and publication.
+  Both reviewers reproduced publication after an ancestor checkpoint
+  changed. Both reproduced uncontrolled cyclic ledger path errors.
+- Retain the selected report and exact bytes of each ancestor binding.
+  Parse and hash each report from one bounded read. Recheck each
+  report and capture before opening either archive and after the new
+  report is staged. Ledger and identity readers reject cyclic paths.
+  Model events are parsed and hashed from one regular-file read.
+- The unchanged Sol suite passed five cases. The Astra minimum suite
+  passed three. The initial broader suite passed 111 tests and failed
+  one assertion for the previous diagnostic wording. Restored that
+  wording. The full parent gate passed 747 tests, 25 opt-in skips,
+  and 92.38% evaluator line coverage.
+- Preserve the old failures and HOLDs. Evidence is in
+  `audit/m2-lineage-closure/`. Fresh exact Sol and Astra reviews remain
+  required. No real measurement, benchmark acceptance, or tag changed.

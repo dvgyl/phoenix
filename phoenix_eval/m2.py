@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import stat
 from dataclasses import asdict, dataclass
+from hashlib import sha256
 from pathlib import Path
 from typing import Literal, cast
 
@@ -475,7 +478,14 @@ def _validate_saved_result(record: dict[str, object]) -> None:
             raise ValueError
 
 
-def recorded_kind(directory: Path) -> ReportKind:
+@dataclass(frozen=True, slots=True)
+class RecordedReport:
+    kind: ReportKind
+    document: dict[str, object]
+    sha256: str
+
+
+def _report_kind(directory: Path) -> ReportKind:
     present = [
         path.stem
         for path in directory.glob("m*.json")
@@ -483,14 +493,29 @@ def recorded_kind(directory: Path) -> ReportKind:
     ]
     if len(present) != 1 or present[0] not in ("m1", "m2"):
         raise ValueError("Select one supported recorded evaluation report.")
-    kind = cast(ReportKind, present[0])
-    path = directory / f"{kind}.json"
+    return cast(ReportKind, present[0])
+
+
+def _report_bytes(path: Path) -> bytes:
+    if os.path.realpath(path, strict=True) != str(path):
+        raise ValueError
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+        os.close(descriptor)
+        raise ValueError
+    limit = 32 * 1024 * 1024
+    with os.fdopen(descriptor, "rb") as stream:
+        content = stream.read(limit + 1)
+    if len(content) > limit:
+        raise ValueError
+    return content
+
+
+def read_recorded_report(directory: Path) -> RecordedReport:
+    kind = _report_kind(directory)
     try:
-        if path.resolve() != path or not path.is_file():
-            raise ValueError
-        data = json.loads(
-            path.read_text(encoding="utf-8"), object_pairs_hook=_unique_fields
-        )
+        content = _report_bytes(directory / f"{kind}.json")
+        data = json.loads(content.decode("utf-8"), object_pairs_hook=_unique_fields)
         config = data["configuration"]
         if (
             data["run_id"] != directory.name
@@ -553,6 +578,21 @@ def recorded_kind(directory: Path) -> ReportKind:
                 raise ValueError
             if data["accepted"] != data["scores"]["accepted"]:
                 raise ValueError
-        return kind
-    except (OSError, KeyError, TypeError, ValueError):
+        return RecordedReport(kind, data, sha256(content).hexdigest())
+    except (OSError, KeyError, TypeError, ValueError, RecursionError):
         raise ValueError("The recorded evaluation report is invalid.") from None
+
+
+def recorded_kind(directory: Path) -> ReportKind:
+    return read_recorded_report(directory).kind
+
+
+def verify_m2_report(directory: Path, expected: str) -> None:
+    try:
+        if (
+            _report_kind(directory) != "m2"
+            or sha256(_report_bytes(directory / "m2.json")).hexdigest() != expected
+        ):
+            raise ValueError
+    except (OSError, ValueError):
+        raise ValueError("An ancestor report changed after replay began.") from None

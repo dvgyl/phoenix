@@ -120,3 +120,16 @@ The two M2-only findings, R1 and R2, are outside this change. Independent Sol
 review, Astra closure review, the full parent gate, combined M2 integration
 review, and new candidate measurements remain required. This change does not
 establish M1 acceptance or any benchmark score.
+
+## Recheck the selected M2 replay chain
+
+An M2 replay uses the same stable report and capture records from each
+ancestor. Retain the verified capture binding bytes and exact report
+digest for each run. The recorded report reader parses and hashes one
+bounded regular-file read. Verify each ancestor again before the T0
+archive, before the T1 archive, and after staging the result. A changed
+report or capture stops publication. A cyclic origin log or identity
+path is an input error.
+
+These checks detect changed evidence at the stated boundaries. They
+do not authenticate the filesystem or provide a filesystem snapshot.

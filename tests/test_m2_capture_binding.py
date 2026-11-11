@@ -2,7 +2,7 @@ import json
 from collections.abc import Callable
 from dataclasses import asdict, replace
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, TextIO, cast
 
 import pytest
 from test_evaluation_freeze import ledger_attempt
@@ -182,6 +182,71 @@ def test_changed_ancestor_capture_stops_before_replay_work(
     assert len(synthetic_engine["submitted"]) == submitted
     assert report.read_bytes() == before
     assert not (tmp_path / "runs/copy/m2.json").exists()
+
+
+@pytest.mark.parametrize(
+    ("ancestor", "evidence", "boundary", "opened", "diagnostic"),
+    [
+        ("first", "checkpoint", "archive", [Tier.T0], "capture binding"),
+        ("origin", "checkpoint", "report", [Tier.T0, Tier.T1], "capture binding"),
+        ("origin", "report", "report", [Tier.T0, Tier.T1], "ancestor report"),
+    ],
+)
+def test_m2_replay_rechecks_ancestor_evidence_at_use(
+    tmp_path: Path,
+    synthetic_engine: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    ancestor: str,
+    evidence: str,
+    boundary: str,
+    opened: list[Tier],
+    diagnostic: str,
+) -> None:
+    origin, _ = m1.evaluate_m2(tmp_path, "origin")
+    first, _ = m1.evaluate_m2(tmp_path, "first", "origin")
+    ancestor_run = tmp_path / "runs" / ancestor
+    key = synthetic_engine["submitted"][0][1]
+    path = (
+        ancestor_run / "submissions" / key / "capture/submission.json"
+        if evidence == "checkpoint"
+        else ancestor_run / "m2.json"
+    )
+    before = path.read_bytes()
+    ledger = tmp_path / "runs/origin-rebuild/llm.jsonl"
+    preserved = {
+        item: item.read_bytes()
+        for item in (origin, first, ledger, ancestor_run / "capture-binding.json")
+        if item != path
+    }
+    read_cases = cast(
+        Callable[..., dict[str, tuple[Invocation, ...]]], getattr(m1, "heldout_cases")
+    )
+    dump = json.dump
+
+    def cases(
+        path_arg: Path, digest: str, names: set[str], *, tier: Tier
+    ) -> dict[str, tuple[Invocation, ...]]:
+        result = read_cases(path_arg, digest, names, tier=tier)
+        if tier == Tier.T0:
+            path.write_bytes(before + b"\n")
+        return result
+
+    def stage(document: object, stream: TextIO, **options: Any) -> None:
+        dump(document, stream, **options)
+        if isinstance(document, dict) and document.get("run_id") == "copy":
+            path.write_bytes(before + b"\n")
+
+    if boundary == "archive":
+        monkeypatch.setattr(m1, "heldout_cases", cases)
+    else:
+        monkeypatch.setattr(json, "dump", stage)
+    synthetic_engine["opened"].clear()
+    with pytest.raises(ValueError, match=diagnostic):
+        m1.evaluate_m2(tmp_path, "copy", "first")
+    assert synthetic_engine["opened"] == opened
+    assert not (tmp_path / "runs/copy/m2.json").exists()
+    assert path.read_bytes() == before + b"\n"
+    assert all(item.read_bytes() == old for item, old in preserved.items())
 
 
 def test_m2_task_charge_transfer_cannot_hide_in_the_total(
