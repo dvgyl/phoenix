@@ -38,7 +38,10 @@ property test used a Mac-only scratch path. The correction passed all
 13 affected cases and fresh Sol review. Native CI at `53ee7de` passed
 both architectures and its outcome comparison. Its public case counts
 and full outcome digests match the historical Mac run. The same-revision
-Mac check still needs refreshed images and the Linux VM.
+Mac check still needs refreshed images and the Linux VM. The later
+`3c11d94` native arm64 job passed. Its amd64 job reached the 30-minute
+limit during pinned integrity package downloads. The native job limit
+is now 60 minutes. Its replacement run remains required.
 [Capture issue](https://github.com/dvgyl/phoenix/issues/6).
 [Replay issue](https://github.com/dvgyl/phoenix/issues/5).
 

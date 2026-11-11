@@ -735,3 +735,13 @@
 - No target ran. The separate Corpus Author health check reported a
   healthy bounded validation batch, progress, and no owner action.
   The Linux VM remains private. Source and held-out inputs stay sealed.
+
+## 2026-11-11. Allow the native image checks to finish
+
+- Native run 42954976284 passed its arm64 job. The amd64 job passed the
+  source gate and worker image build. It reached the 30-minute job limit
+  while downloading pinned integrity toolchain packages. The log reports
+  cancellation at 04:17:07 UTC. No amd64 M0 report was produced.
+- Increased the native job limit to 60 minutes. Every existing build,
+  integrity, M0, and outcome comparison step remains required. The package
+  pins and verification rules remain unchanged. The new run must pass.
