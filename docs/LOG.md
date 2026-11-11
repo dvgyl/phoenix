@@ -630,3 +630,70 @@
 - Retain this verified source on its isolated branch. Main remains at
   `6897e47` during exact M1 replay and milestone review. Combined M2 reviews
   are separate gates. No milestone tag is claimed.
+
+
+## 2026-11-10. Durable capture contradiction rejection
+
+- The task is confined to `agent/evaluation-capture-rejection` at `f5f0608`.
+  The parent owns M2 C-F1, final review, and promotion.
+- The original-surface M1 probe reproduced the two-invocation defect.
+  The first invocation rejected the changed failed checkpoint. The second
+  used the real saved reader and failed-result measurement branch. It opened
+  one synthetic archive and published 40 records with the rejected category.
+  No real-run change is established.
+- The shared capture boundary now saves a bounded terminal rejection record.
+  It keeps digests of the returned submission, rejected bytes, and task key.
+  It preserves the checkpoint, ledger, identity, and existing reports.
+  Retry stops before submission reuse and archive access.
+- A separate atomic-replacement experiment reproduced the same defect after
+  interruption before rejection publication. The candidate therefore
+  truncates and syncs the capturing binding before writing rejection evidence.
+  Empty, partial, and complete interrupted rejection writes all block retry.
+  Valid atomic freeze publication keeps its recovery behavior.
+- The unchanged original probe passed after the correction. Six additional
+  retry controls cover failed category, success-to-failure, and source changes,
+  with and without restoration. Two new failed-result controls cover valid
+  freeze interruption, completed resume, and exact replay. Existing safe path
+  and accounting controls remain in the focused suite.
+- Initial Ruff found one long test line. Initial strict mypy found four test
+  references to non-exported imports. Those errors were corrected. Their logs
+  remain in the task scratch directory.
+- The focused suite passed 159 tests. The complete `scripts/check` passed
+  Ruff, format, and strict mypy for 80 source files. Pytest had 531 passes,
+  25 opt-in skips, and one unchanged nested guard failure with exit 71.
+  Evaluator coverage was 90.53%. The guard test was not edited or excluded.
+- ADR 0021 describes the terminal state and the minimal M2 port. Only the
+  shared binding module changes production behavior. The parent must rerun
+  gates, obtain independent review, and test the combined M2 coordinator.
+  No real-run certification, milestone acceptance, commit, push, or tag
+  was made. Report, candidate hashes, and summary are in
+  `/Volumes/PhoenixWork/audit/evaluation-capture-rejection/`.
+
+## 2026-11-10. Preserve original bindings on terminal rejection
+
+- The parent gate passed the first durable-rejection candidate outside its
+  outer guard. It passed 532 tests. A new hard-link control then proved
+  that in-place invalidation changes the original binding inode and its
+  alias. Preserve that failed control and the writer's original diff.
+- The correction creates a separate exclusive rejection marker. Sync the
+  directory first. A partial or empty marker blocks retry. Existing
+  binding, checkpoint, ledger, identity, and report files stay unchanged.
+  The hard-link control now passes.
+- The complete corrected parent gate passed 533 tests with 25 opt-in
+  skips and 90.59% evaluator line coverage. Ruff, format, strict mypy,
+  and the unchanged protection test passed.
+- M1 passed at its measured revision and has its exact tag. This isolated
+  correction is required before future sealed measurement. Fresh reviews
+  and the combined M2 gate remain separate.
+
+## 2026-11-11. Verify durable capture rejection
+
+- Fresh Standard Sol and Astra reviews passed the exact shared correction.
+  Each reviewer verified the candidate hashes before and after review.
+- Astra repeated the original two-invocation failure on the base and
+  confirmed that the correction blocks retry before any checkpoint or
+  archive access. Eighteen fresh checks passed. They include real child
+  exit during marker publication and preservation of the original
+  binding and its hard-link alias. The review retained all failed logs.
+- No sealed measurement ran. The M1 tag and result do not change.
+  Combined M2 review is separate.

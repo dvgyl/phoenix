@@ -176,3 +176,57 @@ changes. Pass `submissions` as the fourth `freeze_binding` argument in M2's
 shared coordinator. Keep M2's coordinator and replay ancestry changes.
 Port the focused shared tests and update direct calls to the required freeze
 argument. Do not replace M2's complete `m1.py` with this M1 file.
+
+## Detected capture contradictions are terminal
+
+The next combined M2 review found a retry defect in C-F2. The first freeze
+rejected a changed failed checkpoint but left `phase` set to `capturing`.
+On retry, the saved-submission reader returned that changed value. The next
+freeze accepted it. A synthetic M1 coordinator probe reproduced this defect
+at `f5f0608`. It used the real saved-submission reader and failed-result
+measurement branch. The retry opened one synthetic archive and published
+40 records. This does not establish a change in a real evaluation run.
+
+A parsed checkpoint that contradicts its returned submission now ends an
+unbound capture. Create `capture-rejected.json` in the run directory.
+Its bounded record contains schema 1, reason `checkpoint-mismatch`, and
+three SHA-256 digests. These identify the task key, rejected checkpoint
+bytes, and returned submission. The returned submission digest uses UTF-8
+JSON from `asdict` with sorted keys. The record contains no project text,
+model response, or archive input.
+
+Only an unbound `capturing` run can create this marker. Create it exclusively
+and sync the directory before writing the record. Flush and sync the details.
+The presence of the marker blocks reuse even if its details are empty or
+incomplete. The next invocation rejects the run before reading saved
+submissions or archives. Restoring a checkpoint does not remove the marker.
+Keep the rejected run and use a new run ID.
+
+An earlier synthetic experiment staged rejection in a temporary file.
+An interruption before replacement left the old run resumable. A second
+candidate invalidated the binding in place. The parent reproduced an
+unwanted write through a hard link to that binding. Exclusive creation
+of a separate marker blocks retry without changing any existing file.
+The ordinary capturing and frozen binding records remain unchanged.
+A normal interruption during valid freeze remains resumable.
+
+This state records only an explicit comparison contradiction. It does not
+turn every exception, missing file, invalid checkpoint, or interruption into
+a terminal state. Existing safe path checks remain in force. Changed
+checkpoint bytes, model ledger bytes, ledger identity, and published reports
+are not edited. Existing frozen bindings retain their format. Historical
+runs receive no retrospective binding. Public report schema 1, scoring,
+accounting, replay comparison, and reconstruction time retain their meanings.
+
+The existing evaluator lock serializes coordinator invocations. The evidence
+model still does not authenticate a filesystem owner. It also cannot persist
+a rejection if the process stops before its first durable state change.
+This change makes no claim about a failed storage device or power-loss
+behavior beyond the filesystem's `fsync` contract.
+
+The minimal M2 port replaces only `phoenix_eval/capture_binding.py` with this
+candidate. Its public function signatures are unchanged. Keep M2's existing
+four-argument `freeze_binding` call and coordinator logic. Port the focused
+retry and interruption tests, including the rejection marker checks.
+Do not replace M2's `m1.py`, `model_ledger.py`, or `submission.py`. C-F1
+publication and log-path corrections remain with the parent.
