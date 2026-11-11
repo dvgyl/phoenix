@@ -1,0 +1,450 @@
+{
+  "cases": [
+    {
+      "args": [
+        "0"
+      ],
+      "development": true,
+      "id": "selector-00-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "0"
+      ],
+      "development": true,
+      "id": "selector-00-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "0"
+      ],
+      "development": true,
+      "id": "selector-00-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "1"
+      ],
+      "development": true,
+      "id": "selector-01-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "1"
+      ],
+      "development": true,
+      "id": "selector-01-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "1"
+      ],
+      "development": true,
+      "id": "selector-01-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "2"
+      ],
+      "development": true,
+      "id": "selector-02-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "2"
+      ],
+      "development": true,
+      "id": "selector-02-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "2"
+      ],
+      "development": true,
+      "id": "selector-02-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "3"
+      ],
+      "development": true,
+      "id": "selector-03-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "3"
+      ],
+      "development": true,
+      "id": "selector-03-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "3"
+      ],
+      "development": true,
+      "id": "selector-03-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "4"
+      ],
+      "development": true,
+      "id": "selector-04-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "4"
+      ],
+      "development": true,
+      "id": "selector-04-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "4"
+      ],
+      "development": true,
+      "id": "selector-04-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "5"
+      ],
+      "development": true,
+      "id": "selector-05-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "5"
+      ],
+      "development": true,
+      "id": "selector-05-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "5"
+      ],
+      "development": true,
+      "id": "selector-05-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "6"
+      ],
+      "development": true,
+      "id": "selector-06-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "6"
+      ],
+      "development": true,
+      "id": "selector-06-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "6"
+      ],
+      "development": true,
+      "id": "selector-06-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "7"
+      ],
+      "development": true,
+      "id": "selector-07-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "7"
+      ],
+      "development": true,
+      "id": "selector-07-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "7"
+      ],
+      "development": true,
+      "id": "selector-07-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "8"
+      ],
+      "development": true,
+      "id": "selector-08-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "8"
+      ],
+      "development": true,
+      "id": "selector-08-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "8"
+      ],
+      "development": true,
+      "id": "selector-08-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "9"
+      ],
+      "development": true,
+      "id": "selector-09-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "9"
+      ],
+      "development": true,
+      "id": "selector-09-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "9"
+      ],
+      "development": true,
+      "id": "selector-09-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "10"
+      ],
+      "development": true,
+      "id": "selector-10-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "10"
+      ],
+      "development": true,
+      "id": "selector-10-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "10"
+      ],
+      "development": true,
+      "id": "selector-10-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "11"
+      ],
+      "development": false,
+      "id": "selector-11-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "11"
+      ],
+      "development": false,
+      "id": "selector-11-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "11"
+      ],
+      "development": false,
+      "id": "selector-11-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "12"
+      ],
+      "development": true,
+      "id": "selector-12-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "12"
+      ],
+      "development": true,
+      "id": "selector-12-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "12"
+      ],
+      "development": true,
+      "id": "selector-12-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "13"
+      ],
+      "development": true,
+      "id": "selector-13-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "13"
+      ],
+      "development": true,
+      "id": "selector-13-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "13"
+      ],
+      "development": true,
+      "id": "selector-13-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "14"
+      ],
+      "development": true,
+      "id": "selector-14-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "14"
+      ],
+      "development": true,
+      "id": "selector-14-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "14"
+      ],
+      "development": true,
+      "id": "selector-14-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [
+        "15"
+      ],
+      "development": true,
+      "id": "selector-15-byte-00",
+      "stdin_hex": "00"
+    },
+    {
+      "args": [
+        "15"
+      ],
+      "development": true,
+      "id": "selector-15-byte-ff",
+      "stdin_hex": "ff"
+    },
+    {
+      "args": [
+        "15"
+      ],
+      "development": true,
+      "id": "selector-15-byte-41",
+      "stdin_hex": "41"
+    },
+    {
+      "args": [],
+      "development": true,
+      "id": "boundary-00",
+      "stdin_hex": ""
+    },
+    {
+      "args": [
+        "-1"
+      ],
+      "development": true,
+      "id": "boundary-01",
+      "stdin_hex": ""
+    },
+    {
+      "args": [
+        "-16"
+      ],
+      "development": true,
+      "id": "boundary-02",
+      "stdin_hex": ""
+    },
+    {
+      "args": [
+        "16"
+      ],
+      "development": true,
+      "id": "boundary-03",
+      "stdin_hex": ""
+    },
+    {
+      "args": [
+        "17"
+      ],
+      "development": true,
+      "id": "boundary-04",
+      "stdin_hex": ""
+    },
+    {
+      "args": [
+        "4294967295"
+      ],
+      "development": true,
+      "id": "boundary-05",
+      "stdin_hex": ""
+    },
+    {
+      "args": [
+        "4294967296"
+      ],
+      "development": true,
+      "id": "boundary-06",
+      "stdin_hex": ""
+    },
+    {
+      "args": [
+        "bad"
+      ],
+      "development": true,
+      "id": "boundary-07",
+      "stdin_hex": ""
+    }
+  ]
+}

@@ -59,7 +59,10 @@ binding, checked emitter, and protected writer passed fresh Sol review.
 Both public fragments retain all cases and defaults. Host syntax checks
 pass. The opt-in reconstruction caller also passed fresh Sol review.
 It records the setting for exact resume and replay. The option remains
-off by default. Public Linux behavior and unvisited-case checks remain open.
+off by default. The public production-caller driver passed fresh Sol source
+review and is on main. Its source check proves byte retention. Both behavior
+controls remain mandatory. Public Linux behavior and unvisited-case checks
+remain open.
 The structural schema 2 wire reader passed fresh Sol review and 596
 additional controls. The static observation plan and shared physical
 transfer checks also passed fresh Sol review. The exact outcome and

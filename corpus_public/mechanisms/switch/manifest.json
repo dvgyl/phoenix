@@ -1,0 +1,11 @@
+{
+  "cases_file": "cases.json",
+  "cases_sha256": "a32a8260c0255066f19a1455311293c141f05beab13afc99f9aa335e25e9c6bb",
+  "kind": "public-switch-control",
+  "numeric_selectors": 12,
+  "schema": 1,
+  "selector_mask": 15,
+  "source_file": "main.c",
+  "source_sha256": "33bed22f17f68305c79fd853a5819037427f2d7432c9f0a321081810c15ee11d",
+  "unvisited_selector": 11
+}

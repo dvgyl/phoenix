@@ -745,3 +745,18 @@
 - Increased the native job limit to 60 minutes. Every existing build,
   integrity, M0, and outcome comparison step remains required. The package
   pins and verification rules remain unchanged. The new run must pass.
+
+## 2026-11-11. Integrate the reviewed public switch driver
+
+- Fresh Sol passed the complete public caller gate at `63515a7`.
+  Its host checks passed 497 tests with one optional Ghidra check skipped.
+  All 64 independent host controls passed. These are software controls.
+  No target, model provider, Docker command, or Ghidra process ran.
+- Integrated the exact reviewed source and tests. Clarified the source
+  check as byte retention. An inactive definition can retain those bytes.
+  The complete driver keeps both positive and negative behavior checks.
+- The 56-case public roster has 53 development cases. Selector 11 remains
+  unvisited during development. All four builds, both oracle engines,
+  exact replay, and the compiled negative control remain required.
+- The Linux VM stays with the private T2 Author. The option remains off
+  by default. No new sealed measurement or later milestone is accepted.
