@@ -616,3 +616,19 @@
 - Production C generation does not use this evidence yet. The
   default pipeline and M1 tag are unchanged. No target ran or
   new benchmark result is claimed.
+
+## 2026-11-11. Integrate the reviewed M2 evaluator
+
+- Integrated exact evaluator source, tests, and evaluation ADRs from
+  `05979af`. Independent Sol and Astra reviews passed. Keep earlier
+  HOLDs and timing failures. The M1 tag stays at `6897e47`.
+- The evaluator fixes the T0 and T1 roster, verifies the exact replay
+  ancestry and origin log, and checks bound evidence before each archive
+  and report publication. A replay cannot select a new ledger identity.
+  Restore the exact origin bytes before resuming an interrupted replay.
+- Integrated only the committed T1 archive hashes and allowed aggregate
+  records. No sealed source or held-out input was read. The Linux VM
+  still belongs to private T2 validation. Worker refresh and public
+  checks are required before the next sealed measurement.
+- This is evaluator code approval. No M2 milestone result or tag is
+  claimed.

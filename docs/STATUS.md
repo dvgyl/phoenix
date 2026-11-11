@@ -30,15 +30,15 @@ The measured revision can accept contradictory pre-freeze checkpoint
 metadata in a synthetic run. The reviewed evidence for the two real runs
 is consistent. Main now binds returned submissions to the exact checkpoint
 bytes and preserves a detected contradiction across retry. Sol and Astra
-passed the shared correction. The combined M2 evaluator remains under
-independent review. Earlier failed runs and review verdicts remain in the
-log. No new sealed run has started.
+passed the shared correction. The combined M2 evaluator passed fresh
+Sol and Astra reviews at `05979af`. The reviewed evaluator and T1
+commitments are on main. Earlier failures remain in the log. No new
+sealed run has started.
 [Capture issue](https://github.com/dvgyl/phoenix/issues/6).
 [Replay issue](https://github.com/dvgyl/phoenix/issues/5).
 
 T1 is sealed with 15 programs and 90 variants. Its source and input
-commitments are on the isolated evaluation branch. T2 private validation
-has started. T3 has five source-screened selections and no runtime-qualified
+commitments are in the repository. T2 private validation is active. T3 has five source-screened selections and no runtime-qualified
 batch. All source and held-out inputs stay sealed.
 
 The reviewed U1 lift evidence and opt-in recovery plan are on main.
@@ -56,7 +56,8 @@ review after each major block and Astra review where required.
 
 ## Next actions
 
-1. Finish the combined M2 evaluator reviews before a new sealed run.
+1. Refresh worker images and pass public evaluator gates before a new
+   sealed M2 run. Wait for the private author to release the Linux VM.
 2. Finish U2 proof, generation, and public behavior checks.
 3. Continue production observation, indirect calls, byte idioms, and repair
    fault localization. Keep the two oracle engines independent.

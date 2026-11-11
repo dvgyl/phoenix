@@ -6,13 +6,20 @@ import subprocess
 from dataclasses import asdict, dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import TypedDict, cast
+from typing import NotRequired, TypedDict, cast
 from uuid import uuid4
 
 from phoenix_eval.build import snapshot_project
 from phoenix_eval.capture_binding import freeze_binding, open_binding, verify_binding
 from phoenix_eval.case import Invocation
-from phoenix_eval.corpus import Variant, committed_hash, heldout_cases, t0_manifest
+from phoenix_eval.corpus import (
+    Tier,
+    Variant,
+    committed_hash,
+    heldout_cases,
+    release_manifest,
+    t0_manifest,
+)
 from phoenix_eval.development import DevelopmentError, verify_development
 from phoenix_eval.docker import Engine, freeze_images, read_program
 from phoenix_eval.integrity import (
@@ -22,6 +29,16 @@ from phoenix_eval.integrity import (
     original_shapes,
 )
 from phoenix_eval.m0 import SEED
+from phoenix_eval.m2 import (
+    Batch,
+    RecordedReport,
+    ReportKind,
+    Scope,
+    read_recorded_report,
+    recorded_kind,
+    summarize,
+    verify_m2_report,
+)
 from phoenix_eval.model_ledger import (
     LedgerIdentity,
     bound_summaries,
@@ -70,16 +87,23 @@ class _Configuration(TypedDict):
     worker_images: dict[str, str]
     checker_images: dict[str, str]
     runtime: dict[str, object]
+    scope: NotRequired[dict[str, object]]
 
 
 @dataclass(frozen=True, slots=True)
 class Task:
     variant: Variant
     method: Method
+    tier: Tier | None = None
+
+    @property
+    def variant_key(self) -> str:
+        prefix = f"{self.tier.lower()}-" if self.tier is not None else ""
+        return f"{prefix}{self.variant.key}"
 
     @property
     def key(self) -> str:
-        return f"{self.variant.key}-{self.method}"
+        return f"{self.variant_key}-{self.method}"
 
 
 def _directory(runs: Path, run_id: str) -> Path:
@@ -287,11 +311,109 @@ def _same_json(left: object, right: object) -> bool:
     )
 
 
-def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bool]:
+def _stable_m2_report(document: dict[str, object]) -> str:
+    stable = {
+        **{
+            key: value
+            for key, value in document.items()
+            if key not in {"run_id", "replay_of", "reproduced", "results"}
+        },
+        "results": _stable_records(cast(list[dict[str, object]], document["results"])),
+    }
+    return json.dumps(stable, sort_keys=True, allow_nan=False)
+
+
+def _m2_scope(workspace: Path) -> Scope:
+    batches = []
+    for tier in Tier:
+        variants, digest = release_manifest(
+            workspace / "sealed/release" / tier.lower(), tier
+        )
+        commitments = CHECKOUT / "docs/corpus_commitments.md"
+        batches.append(
+            Batch(
+                tier,
+                variants,
+                digest,
+                committed_hash(commitments, f"{tier.lower()}-source.tar.gz"),
+                committed_hash(commitments, f"{tier.lower()}-inputs.tar.gz"),
+            )
+        )
+    return Scope.parse(Scope(tuple(batches)).record())
+
+
+@dataclass(frozen=True, slots=True)
+class _ReplayAncestor:
+    path: Path
+    binding: bytes
+    report_sha256: str
+
+    def verify(self, keys: tuple[str, ...]) -> None:
+        verify_binding(self.path, keys, self.binding)
+        verify_m2_report(self.path, self.report_sha256)
+
+
+def _m2_replay_lineage(
+    workspace: Path, replay: Path, keys: tuple[str, ...], first: RecordedReport
+) -> tuple[_ReplayAncestor, ...]:
+    identity = cast(LedgerIdentity, first.document["model_ledger"])
+    configuration = first.document["configuration"]
+    stable = _stable_m2_report(first.document)
+    ancestors: list[_ReplayAncestor] = []
+    visited: set[Path] = set()
+    saved = first
+    while True:
+        if replay in visited or saved.kind != "m2":
+            raise ValueError("The M2 replay lineage is invalid.")
+        visited.add(replay)
+        binding = open_binding(replay, keys)
+        if binding is None:
+            raise ValueError("The M2 replay ancestor has no frozen capture binding.")
+        ancestors.append(_ReplayAncestor(replay, binding, saved.sha256))
+        record = saved.document
+        if (
+            not _same_json(record["configuration"], configuration)
+            or not _same_json(record["model_ledger"], identity)
+            or not _same_json(read_identity(replay / "model-ledger.json"), identity)
+        ):
+            raise ValueError("The M2 replay lineage changed its configuration or log.")
+        source = record["replay_of"]
+        if _stable_m2_report(record) != stable or (
+            source is not None and record["reproduced"] is not True
+        ):
+            raise ValueError("The M2 replay lineage did not reproduce stable results.")
+        if source is None:
+            if identity["pipeline_run"] != f"{replay.name}-rebuild":
+                raise ValueError("The M2 model log has a different origin.")
+            return tuple(ancestors)
+        if not isinstance(source, str):
+            raise ValueError("The M2 replay origin is invalid.")
+        replay = _directory(workspace / "runs", source)
+        saved = read_recorded_report(replay)
+
+
+def _evaluate(
+    workspace: Path, run: Path, replay: Path | None, kind: ReportKind = "m1"
+) -> tuple[Path, bool]:
     release = workspace / "sealed/release/t0"
-    variants, release_hash = t0_manifest(release)
+    scope = _m2_scope(workspace) if kind == "m2" else None
+    if scope is None:
+        variants, release_hash = t0_manifest(release)
+    else:
+        variants, release_hash = (
+            scope.batches[0].variants,
+            scope.batches[0].manifest_sha256,
+        )
     config = _configuration(workspace, release_hash)
+    if scope is not None:
+        config.update({"schema": 2, "scope": scope.record()})
     config_file = run / "configuration.json"
+    if (
+        scope is not None
+        and not config_file.is_file()
+        and ((run / "model-ledger.json").exists() or (run / "submissions").exists())
+    ):
+        raise ValueError("The M2 capture has no recorded configuration.")
     plan = {
         "configuration": config,
         "replay_of": replay.name if replay is not None else None,
@@ -300,9 +422,16 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         json.loads(config_file.read_text(encoding="utf-8")), plan
     ):
         raise ValueError("The evaluation configuration changed after it was recorded.")
-    prior = None
+    prior: dict[str, object] | None = None
+    selected = None
     if replay is not None:
-        prior = json.loads((replay / "m1.json").read_text(encoding="utf-8"))
+        if scope is not None:
+            selected = read_recorded_report(replay)
+            if selected.kind != kind:
+                raise ValueError("The replay report kind does not match the command.")
+            prior = selected.document
+        else:
+            prior = json.loads((replay / f"{kind}.json").read_text(encoding="utf-8"))
         if not _same_json(prior["configuration"], config):
             raise ValueError("Replay requires the same evaluation configuration.")
     tasks = tuple(
@@ -311,21 +440,47 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         if variant.flag == "-O0"
         for method in METHODS
     )
+    if scope is not None:
+        tasks = tuple(
+            Task(variant, method, batch.tier)
+            for batch in scope.batches
+            for variant in batch.variants
+            for method in METHODS
+        )
     keys = tuple(task.key for task in tasks)
     capture_binding = open_binding(run, keys)
     write_report(config_file, plan)
     pipeline_run = f"{run.name}-rebuild"
     replay_pipeline = f"{replay.name}-rebuild" if replay is not None else None
+    replay_pipelines: tuple[str, ...] = (pipeline_run,) if replay is not None else ()
+    ancestors: tuple[_ReplayAncestor, ...] = ()
+    if replay is not None and selected is not None:
+        ancestors = _m2_replay_lineage(workspace, replay, keys, selected)
+        replay_pipeline = f"{ancestors[-1].path.name}-rebuild"
+        replay_pipelines += tuple(
+            f"{item.path.name}-rebuild" for item in ancestors[:-1]
+        )
+
+    def check_replay_ledgers() -> None:
+        for pipeline in replay_pipelines:
+            require_no_replay_ledger(workspace, pipeline)
+
+    def check_ancestors() -> None:
+        for ancestor in ancestors:
+            ancestor.verify(keys)
+
     identity_file = run / "model-ledger.json"
     if identity_file.exists() or identity_file.is_symlink():
         saved_identity = read_identity(identity_file)
         if saved_identity["pipeline_run"] != (replay_pipeline or pipeline_run):
             raise ValueError("The model ledger identity has a different pipeline run.")
         verify_identity(workspace, saved_identity)
-    completed_report = run / "m1.json"
+    completed_report = run / f"{kind}.json"
     if completed_report.exists():
         if capture_binding is None:
             raise ValueError("The completed report has no frozen capture binding.")
+        if scope is not None and recorded_kind(run) != kind:
+            raise ValueError("The completed M2 report has a different scope.")
         completed = json.loads(completed_report.read_text(encoding="utf-8"))
         if not _same_json(completed.get("configuration"), config):
             raise ValueError(
@@ -336,6 +491,7 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
             raise ValueError(
                 "The completed report has a different model ledger identity."
             )
+    original_identity = None
     if replay is not None:
         original_identity = read_identity(replay / "model-ledger.json")
         if (
@@ -347,35 +503,52 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
                 "The replay model ledger identity does not match its origin."
             )
         verify_identity(workspace, original_identity)
-        if open_binding(replay, keys) is None:
+        if not ancestors and open_binding(replay, keys) is None:
             raise ValueError("Replay requires a frozen capture binding at its origin.")
-        require_no_replay_ledger(workspace, pipeline_run)
+        check_ancestors()
+        check_replay_ledgers()
+    if scope is not None:
+        if identity_file.exists() and any(
+            not (run / "submissions" / task.key / "capture/submission.json").is_file()
+            for task in tasks
+        ):
+            raise ValueError("A frozen run cannot capture another submission.")
+    releases = {
+        task.key: workspace / "sealed/release" / task.tier.lower()
+        if task.tier is not None
+        else release
+        for task in tasks
+    }
     submissions = {
         task.key: submit(
             workspace,
             run / "submissions" / task.key,
             pipeline_run,
             task.key,
-            task.variant.executable(release),
+            task.variant.executable(releases[task.key]),
             task.method,
             replay_pipeline,
         )
         for task in tasks
     }
     if replay is not None:
-        verify_identity(workspace, original_identity)
-        require_no_replay_ledger(workspace, pipeline_run)
-    model_ledger = freeze_identity(workspace, run, replay_pipeline or pipeline_run)
+        check_replay_ledgers()
+    model_ledger = freeze_identity(
+        workspace, run, replay_pipeline or pipeline_run, expected=original_identity
+    )
     model_summaries = bound_summaries(workspace, keys, model_ledger)
     capture_binding = freeze_binding(run, keys, capture_binding, submissions)
-    if not _same_json(_configuration(workspace, release_hash), config):
+    current_config = _configuration(workspace, release_hash)
+    if scope is not None:
+        current_config.update({"schema": 2, "scope": _m2_scope(workspace).record()})
+    if not _same_json(current_config, config):
         raise ValueError("The evaluation configuration changed before measurement.")
-    if t0_manifest(release) != (variants, release_hash):
+    if scope is None and t0_manifest(release) != (variants, release_hash):
         raise ValueError("The released binaries changed before measurement.")
     originals = {
-        variant.key: _release_bytes(variant, release)
-        for variant in variants
-        if variant.flag == "-O0"
+        task.variant_key: _release_bytes(task.variant, releases[task.key])
+        for task in tasks
+        if task.method == "phoenix"
     }
     development = {}
     origins = {}
@@ -389,7 +562,7 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
                 config,
             )
         if task.method == "ghidra-raw" and submission.origin_sha256 is not None:
-            origins[task.variant.key] = read_origin(
+            origins[task.variant_key] = read_origin(
                 run / "submissions" / task.key / "capture/origin.json",
                 submission.origin_sha256,
             )
@@ -397,21 +570,53 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
             digest = submission.development_sha256
             if digest is None:
                 raise DevelopmentError("The submission has no development evidence.")
-            development[task.variant.key] = verify_development(
-                originals[task.variant.key],
+            development[task.variant_key] = verify_development(
+                originals[task.variant_key],
                 run / "submissions" / task.key / "capture/development.json",
                 digest,
                 config["worker_images"],
             )
-    verify_identity(workspace, model_ledger)
-    if replay is not None:
-        require_no_replay_ledger(workspace, pipeline_run)
-    verify_binding(run, keys, capture_binding)
-    cases = heldout_cases(
-        workspace / "holdout/t0-inputs.tar.gz",
-        config["heldout_archive_sha256"],
-        {task.variant.name for task in tasks},
-    )
+
+    def check_archive_boundary() -> None:
+        verify_binding(run, keys, capture_binding)
+        check_ancestors()
+        verify_identity(workspace, model_ledger)
+        check_replay_ledgers()
+
+    if scope is None:
+        check_archive_boundary()
+        cases = heldout_cases(
+            workspace / "holdout/t0-inputs.tar.gz",
+            config["heldout_archive_sha256"],
+            {task.variant.name for task in tasks},
+        )
+        task_cases = {task.key: cases[task.variant.name] for task in tasks}
+    else:
+        if prior is not None:
+            previous_sources = {
+                record["task_key"]: record["source_sha256"]
+                for record in cast(list[dict[str, object]], prior["results"])
+            }
+            if previous_sources != {
+                key: submission.source_sha256 for key, submission in submissions.items()
+            }:
+                raise ValueError("Replay changed the frozen source snapshots.")
+        task_cases = {}
+        for batch in scope.batches:
+            check_archive_boundary()
+            cases = heldout_cases(
+                workspace / "holdout" / f"{batch.tier.lower()}-inputs.tar.gz",
+                batch.inputs_sha256,
+                {variant.name for variant in batch.variants},
+                tier=batch.tier,
+            )
+            task_cases.update(
+                {
+                    task.key: cases[task.variant.name]
+                    for task in tasks
+                    if task.tier == batch.tier
+                }
+            )
     records = [
         _measure(
             workspace,
@@ -419,30 +624,38 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
             pipeline_run,
             task,
             submissions[task.key],
-            originals[task.variant.key],
-            cases[task.variant.name],
+            originals[task.variant_key],
+            task_cases[task.key],
             config,
-            development.get(task.variant.key, frozenset()),
-            origins.get(task.variant.key),
+            development.get(task.variant_key, frozenset()),
+            origins.get(task.variant_key),
             model_ledger,
         )
         for task in tasks
     ]
-    verify_identity(workspace, model_ledger)
-    if read_identity(identity_file) != model_ledger:
-        raise ValueError("The model ledger identity changed during measurement.")
-    verify_binding(run, keys, capture_binding)
-    if bound_summaries(
-        workspace, keys, model_ledger
-    ) != model_summaries or not _same_json(
-        [record.get("model") for record in records],
-        [asdict(model_summaries[key]) for key in keys],
-    ):
-        raise ValueError(
-            "The reported model summaries do not reconcile with the ledger."
-        )
-    if replay is not None:
-        require_no_replay_ledger(workspace, pipeline_run)
+
+    def verify_publication() -> None:
+        verify_identity(workspace, model_ledger)
+        if read_identity(identity_file) != model_ledger:
+            raise ValueError("The model ledger identity changed during measurement.")
+        verify_binding(run, keys, capture_binding)
+        if bound_summaries(
+            workspace, keys, model_ledger
+        ) != model_summaries or not _same_json(
+            [record.get("model") for record in records],
+            [asdict(model_summaries[key]) for key in keys],
+        ):
+            raise ValueError(
+                "The reported model summaries do not reconcile with the ledger."
+            )
+        check_ancestors()
+        check_replay_ledgers()
+
+    if scope is not None:
+        for task, record in zip(tasks, records, strict=True):
+            record.update(
+                tier=task.tier, variant_key=task.variant_key, task_key=task.key
+            )
     scores = _scores(records)
     phoenix = scores["phoenix"]
     accepted = phoenix["variants"] == 20 and phoenix["fully_successful"] >= 16
@@ -452,33 +665,55 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         if prior is not None
         else None
     )
-    report = run / "m1.json"
-    write_report(
-        report,
-        {
-            "run_id": run.name,
-            "replay_of": replay.name if replay is not None else None,
-            "reproduced": reproduced,
-            "configuration": config,
-            "corpus": "agent-sealed",
-            "coverage_kind": "recovered_block_entries",
-            "model_ledger": model_ledger,
-            "scores": scores,
-            "results": records,
-            "accepted": accepted,
-        },
-    )
+    report = run / f"{kind}.json"
+    document: dict[str, object] = {
+        "run_id": run.name,
+        "replay_of": replay.name if replay is not None else None,
+        "reproduced": reproduced,
+        "configuration": config,
+        "corpus": "agent-sealed",
+        "coverage_kind": "recovered_block_entries",
+        "model_ledger": model_ledger,
+        "scores": scores,
+        "results": records,
+        "accepted": accepted,
+    }
+    if scope is not None:
+        summary = summarize(records, scope)
+        accepted = summary["accepted"] is True
+        document.update(
+            report_kind="m2",
+            scores=summary,
+            accepted=accepted,
+            source_adequacy="separate_author_evidence",
+        )
+        if prior is not None:
+            reproduced = _stable_m2_report(document) == _stable_m2_report(prior)
+            document["reproduced"] = reproduced
+    write_report(report, document, before_publish=verify_publication)
     return report, accepted and reproduced is not False
 
 
 def evaluate_t0(
     workspace: Path, run_id: str | None = None, replay_id: str | None = None
 ) -> tuple[Path, bool]:
+    return _run_evaluation(workspace, run_id, replay_id, "m1")
+
+
+def evaluate_m2(
+    workspace: Path, run_id: str | None = None, replay_id: str | None = None
+) -> tuple[Path, bool]:
+    return _run_evaluation(workspace, run_id, replay_id, "m2")
+
+
+def _run_evaluation(
+    workspace: Path, run_id: str | None, replay_id: str | None, kind: ReportKind
+) -> tuple[Path, bool]:
     workspace = workspace.resolve()
     runs = workspace / "runs"
     if runs.resolve() != runs:
         raise ValueError("The evaluation run directory cannot be a symbolic link.")
-    run = _directory(runs, run_id or f"m1-{uuid4().hex}")
+    run = _directory(runs, run_id or f"{kind}-{uuid4().hex}")
     replay = _directory(runs, replay_id) if replay_id is not None else None
     if run == replay:
         raise ValueError("Replay requires a new evaluation run ID.")
@@ -488,4 +723,9 @@ def evaluate_t0(
     )
     with os.fdopen(descriptor, "r+") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        return _evaluate(workspace, run, replay)
+        if kind == "m1":
+            return _evaluate(workspace, run, replay)
+        if any(re.fullmatch(r"m[0-9]+", path.stem) for path in run.glob("m*.json")):
+            if recorded_kind(run) != kind:
+                raise ValueError("The run directory has a different report kind.")
+        return _evaluate(workspace, run, replay, kind)

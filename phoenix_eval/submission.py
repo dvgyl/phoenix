@@ -7,6 +7,7 @@ import stat
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -44,7 +45,9 @@ class Submission:
     reconstruction_seconds: float = 0.0
 
 
-def write_report(path: Path, data: object) -> None:
+def write_report(
+    path: Path, data: object, *, before_publish: Callable[[], None] | None = None
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with NamedTemporaryFile(
         dir=path.parent, mode="w", encoding="utf-8", delete_on_close=False
@@ -52,6 +55,8 @@ def write_report(path: Path, data: object) -> None:
         json.dump(data, stream, ensure_ascii=True, indent=2, sort_keys=True)
         stream.write("\n")
         stream.close()
+        if before_publish is not None:
+            before_publish()
         Path(stream.name).replace(path)
 
 
