@@ -8,9 +8,10 @@ _MAX_CASES = 4096
 _MAX_EXPRESSION_DEPTH = 32
 _IDENTIFIER = re.compile(rb"[A-Za-z_][A-Za-z0-9_]*")
 _INTEGER = re.compile(rb"(?:0[xX][0-9A-Fa-f]+|0|[1-9][0-9]*)(?:[uU])?")
+_SOURCE_TRANSFORM = re.compile(rb"\?\?[=/'()!<>-]|\\[ \t\v\f]*[\r\n]")
 _TOKEN = re.compile(
-    rb"(?P<space>[ \t\r\n]+)|(?P<comment>//[^\r\n]*|/\*.*?\*/)|"
-    rb"(?P<token>[A-Za-z_][A-Za-z0-9_]*|(?:0[xX][0-9A-Fa-f]+|0|[1-9][0-9]*)(?:[uU])?|"
+    rb"(?P<space>[ \t\r\n\v\f]+)|(?P<comment>//[^\r\n]*|/\*.*?\*/)|"
+    rb"(?P<token>[A-Za-z_][A-Za-z0-9_]*|(?:[0-9]|\.[0-9])(?:[eEpP][+-]|[A-Za-z0-9_.])*|"
     rb"\+\+|--|&&|\|\||<<|>>|<=|>=|==|!=|[(){}:;,=+*/%&|^<>~!-])",
     re.DOTALL,
 )
@@ -19,8 +20,9 @@ _KEYWORDS = frozenset(
     b"for goto if inline int long register restrict return short signed sizeof static "
     b"struct switch typedef union unsigned void volatile while _Alignas _Alignof "
     b"_Atomic _Bool _Complex _Generic _Imaginary _Noreturn _Static_assert "
-    b"_Thread_local".split()
+    b"_Thread_local _Pragma uint uint32_t".split()
 )
+_UINT_TYPES = frozenset((b"uint", b"uint32_t", b"unsigned"))
 _BINARY = frozenset(b"+ - * / % & | ^ << >> < > <= >= == !=".split())
 _UNARY = frozenset(b"+ - ~ !".split())
 
@@ -68,11 +70,26 @@ class _Token:
     span: Span
 
 
+@dataclass(frozen=True, slots=True)
+class _MaskedParameter:
+    token: _Token
+    mask: int
+
+
+type _SelectorValue = _Token | int | _MaskedParameter
+
+
 def _tokens(source: bytes) -> tuple[_Token, ...]:
-    if not 0 < len(source) <= _MAX_SOURCE or any(
-        marker in source for marker in (b"\0", b"\\", b"??")
+    if (
+        not 0 < len(source) <= _MAX_SOURCE
+        or b"\0" in source
+        or _SOURCE_TRANSFORM.search(source)
     ):
         raise SwitchSourceError("The source is outside the checked switch profile.")
+    try:
+        source.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise SwitchSourceError("The checked switch source is not UTF-8.") from error
     tokens: list[_Token] = []
     offset = 0
     while offset < len(source):
@@ -126,12 +143,19 @@ class _Parser:
 
     def integer(self, maximum: int) -> tuple[int, Span]:
         token = self.take()
-        if len(token.value) > 12 or _INTEGER.fullmatch(token.value) is None:
+        if _INTEGER.fullmatch(token.value) is None:
             raise SwitchSourceError(
                 "The switch profile requires a bounded integer constant."
             )
         digits = token.value.rstrip(b"uU")
-        number = int(digits, 16 if digits.lower().startswith(b"0x") else 10)
+        hexadecimal = digits.lower().startswith(b"0x")
+        if hexadecimal:
+            digits = digits[2:].lstrip(b"0") or b"0"
+        if len(digits) > (8 if hexadecimal else 10):
+            raise SwitchSourceError(
+                "The switch constant is outside its supported range."
+            )
+        number = int(digits, 16 if hexadecimal else 10)
         if number > maximum:
             raise SwitchSourceError(
                 "The switch constant is outside its supported range."
@@ -146,8 +170,13 @@ class _Parser:
             self.operand(depth + 1)
         elif self.next() == b"(":
             self.take()
-            self.expression(depth + 1)
-            self.take(b")")
+            if self.next() in _UINT_TYPES:
+                self.uint32_type()
+                self.take(b")")
+                self.operand(depth + 1)
+            else:
+                self.expression(depth + 1)
+                self.take(b")")
         elif _INTEGER.fullmatch(self.next()) is not None:
             self.integer(0xFFFF_FFFF)
         else:
@@ -158,6 +187,34 @@ class _Parser:
         while self.next() in _BINARY:
             self.take()
             self.operand(depth)
+
+    def selector_operand(self, depth: int) -> _SelectorValue:
+        if depth == _MAX_EXPRESSION_DEPTH:
+            raise SwitchSourceError("The switch expression exceeds its nesting limit.")
+        if self.next() == b"(":
+            self.take()
+            if self.next() in _UINT_TYPES:
+                self.uint32_type()
+                self.take(b")")
+                return self.selector_operand(depth + 1)
+            value = self.selector(depth + 1)
+            self.take(b")")
+            return value
+        if _INTEGER.fullmatch(self.next()) is not None:
+            return self.integer(0xFFFF_FFFF)[0]
+        return self.identifier()
+
+    def selector(self, depth: int = 0) -> _SelectorValue:
+        left = self.selector_operand(depth)
+        if self.next() != b"&":
+            return left
+        self.take()
+        right = self.selector_operand(depth)
+        if not isinstance(left, _Token) or not isinstance(right, int):
+            raise SwitchSourceError(
+                "The selector must mask one parameter with a constant."
+            )
+        return _MaskedParameter(left, right)
 
     def label(self) -> CaseLabel:
         start = self.take()
@@ -190,6 +247,8 @@ class _Parser:
             exit_span = Span(start.span.start, end.span.end)
         elif self.next() != b"}":
             raise SwitchSourceError("The switch arm can fall through to another arm.")
+        elif body_start == body_end:
+            raise SwitchSourceError("The final switch arm needs a statement.")
         return Arm(tuple(labels), Span(body_start, body_end), exit_span)
 
     def parse(self) -> FlatSwitch:
@@ -208,7 +267,7 @@ class _Parser:
         declared = set(parameters)
         if len(declared) != len(parameters):
             raise SwitchSourceError("The switch source repeats a parameter name.")
-        while self.next() in (b"uint", b"uint32_t", b"unsigned"):
+        while self.next() in _UINT_TYPES:
             self.uint32_type()
             name = self.identifier().value
             if name in declared:
@@ -217,13 +276,20 @@ class _Parser:
             self.take(b";")
         switch = self.take(b"switch")
         self.take(b"(")
-        parameter = self.identifier()
-        if parameter.value not in parameters:
+        expression_index = self.index
+        selector = self.selector()
+        if (
+            not isinstance(selector, _MaskedParameter)
+            or selector.token.value not in parameters
+        ):
             raise SwitchSourceError(
                 "The switch selector must use an original parameter."
             )
-        self.take(b"&")
-        mask, mask_span = self.integer(0xFFFF_FFFF)
+        parameter = selector.token
+        expression = Span(
+            self.tokens[expression_index].span.start,
+            self.tokens[self.index - 1].span.end,
+        )
         self.take(b")")
         self.take(b"{")
         arms = []
@@ -255,11 +321,11 @@ class _Parser:
         return FlatSwitch(
             sha256(self.source).hexdigest(),
             switch.span,
-            Span(parameter.span.start, mask_span.end),
+            expression,
             parameter.value.decode("ascii"),
             parameters.index(parameter.value),
             parameter.span,
-            mask,
+            selector.mask,
             tuple(arms),
             Span(tail.span.start, finish.span.end),
         )

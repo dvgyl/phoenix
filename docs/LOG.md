@@ -618,3 +618,17 @@
   evidence or change output. Independent review and production binding
   remain open. Evidence is in `audit/m2-switch-source-profile/` and
   `audit/m2-switch-body-links/`.
+
+## 2026-11-11. Keep C token and statement boundaries
+
+- Sol held `d69c8a0` on six invalid C11 admissions. The lexer split
+  preprocessing numbers, allowed a final label without a statement,
+  and treated the pragma operator as an identifier.
+- Tokenize full preprocessing numbers before checking integer forms.
+  Require a statement after the final label. Reject invalid UTF-8,
+  trigraphs, and line splicing. Keep ordinary C comments and whitespace.
+  Accept supported unsigned casts and equivalent selector parentheses.
+- The 32 focused tests pass. The unchanged review script agrees on
+  all 86 probes, including 37 C11 syntax checks. Both public span
+  records stay exact. No target ran. Fresh independent review remains
+  open. Preserve the earlier HOLD and results.

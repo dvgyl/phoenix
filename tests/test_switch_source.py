@@ -74,6 +74,11 @@ def test_flat_switch_delimits_exact_source_with_stacked_labels() -> None:
         (b"total + second", b"second && total"),
         (b"total + second", b"second ? total : 1"),
         (b"total + second", b"(second, total)"),
+        (b"total + second", b"0x1e+2"),
+        (b"total + second", b"0xFE-1"),
+        (b"return total;", b"return 0x1E-2;"),
+        (b"uint f(", b"uint _Pragma("),
+        (b"total = ~second;", b"/* no statement */"),
         (b"total + second", b"(" * 32 + b"second" + b")" * 32),
         (b"A marker:", b"??/\n A marker:"),
         (b"return total;", b"return total; return 0;"),
@@ -93,3 +98,20 @@ def test_flat_switch_uses_byte_positions_after_utf8_comment() -> None:
     result = parse_flat_switch(source)
     (label,) = result.arms[1].labels
     assert source[label.source.start : label.source.end] == b"case 2:"
+
+
+@pytest.mark.parametrize(
+    "selector",
+    [b"(v & 0x7)", b"(v) & (0x7)", b"(unsigned int)v & 0x7", b"(uint32_t)(v & 0x7)"],
+)
+def test_flat_switch_accepts_unsigned_casts_and_parentheses(selector: bytes) -> None:
+    source = SOURCE.replace(b"v & 0x7", selector).replace(
+        b"total + second", b"(uint)(total + second)"
+    )
+    parsed = parse_flat_switch(source)
+    assert source[parsed.expression.start : parsed.expression.end] == selector
+    assert parsed.mask == 7 and parsed.parameter == "v"
+    assert (
+        source[parsed.parameter_reference.start : parsed.parameter_reference.end]
+        == b"v"
+    )
