@@ -45,6 +45,9 @@ The reviewed U1 lift evidence and opt-in recovery plan are on main.
 Public static checks passed 16 configurations at `49202a7`. Sol and Astra
 passed the exact source review. The public observer controls passed.
 The switch proof and graph export remain on separate branches.
+This branch adds the first static schema 2 observation plan. It passed
+five synthetic checks and 16 saved public configurations. Live trace
+capture and admission remain open.
 Their public target checks and fresh reviews are open.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the

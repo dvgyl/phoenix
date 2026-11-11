@@ -600,3 +600,18 @@
   transport failures are recorded in `audit/m2-production-u1-e1/`.
 - This integration does not enable switch recovery or production
   traces. No target execution or new benchmark result is claimed.
+
+## 2026-11-11. Build static observation plans from checked lift evidence
+
+- Added a separate schema 2 plan that binds the binary, lift, and
+  address proof. Each site can retain entry, continuation, and
+  transfer roles. Calls need a witnessed adjacent continuation.
+  Conflicts remain gaps. Import identities come from the checked
+  relocation evidence.
+- Five synthetic checks passed. The 16 saved public E1 configurations
+  produced stable plans and the expected actual main call bindings.
+  Checks compared every planned instruction with original file bytes.
+  Evidence is in `audit/m2-observation-plan/`.
+- This is a static plan. The separate v1 calibration, accepted
+  oracles, and evaluator are unchanged. No observer or target ran.
+  Independent review and live v2 controls remain open.
