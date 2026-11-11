@@ -634,3 +634,14 @@
   A different owner remains an explicit gap. This profile does not
   infer cross-function returns. Fresh independent review and live
   observation remain open.
+
+## 2026-11-11. Read bounded schema 2 observation records
+
+- Added a separate typed wire reader for entries, transfer attempts,
+  confirmed transfers, continuations, and gaps. It binds four input
+  digests and checks the record count and the checksum over exact bytes.
+- Fourteen focused tests passed. They check complete, incomplete, and
+  limited records, and reject malformed identities and references.
+  The earlier calibration format and both oracle engines stay unchanged.
+- The reader has no runtime caller. An outcome and frame validator must
+  admit the evidence before recovery can use it. No target ran.

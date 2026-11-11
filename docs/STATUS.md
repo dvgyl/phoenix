@@ -49,7 +49,10 @@ This branch adds the first static schema 2 observation plan. It retains
 import gaps and checks original call and thunk operands. The corrected
 U1 and U3 focused suite passed 95 tests. All 16 saved public main calls
 still have the expected import. Live trace capture remains open.
-Their public target checks and fresh reviews are open.
+This branch adds the schema 2 wire reader. Fourteen focused tests pass.
+The reader checks exact input identities, byte limits, event order,
+references, and footer integrity. It does not admit runtime evidence.
+Static plan correction, outcome admission, and live checks remain open.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the
 external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
