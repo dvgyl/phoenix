@@ -63,3 +63,8 @@ review after each major block and Astra review where required.
 4. Finish private T2 validation. Validate T3 in a separate Linux window.
 5. Complete M2 through M4, publish the required artifacts, and replay every
    headline result.
+
+This branch adds bounded C marker binding, checked switch emission,
+and protected writer definitions. The public GCC and Clang fragments
+retain all 24 cases and both defaults. Host syntax checks pass.
+Runtime pipeline integration, Linux behavior, and review remain open.

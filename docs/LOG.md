@@ -616,3 +616,22 @@
 - Production C generation does not use this evidence yet. The
   default pipeline and M1 tag are unchanged. No target ran or
   new benchmark result is claimed.
+
+## 2026-11-11. Preserve checked switch definitions during C generation
+
+- Added exact marker correspondence through the bounded C parser.
+  The lower reader retains source observations. Unsupported syntax
+  gives a function gap. A parsed-marker contradiction gives a conflict.
+  All saved Astra lexical controls pass through the production boundary.
+- Checked emission retains stacked selectors and exact arm, break,
+  and return bytes. It checks the raw selector and original dispatch
+  evidence. Both public GCC and Clang fragments retain all 24 cases
+  and both defaults. The original fragment digests remain unchanged.
+- Added protected definitions to the candidate and writer. The writer
+  supplies exact 32-bit types and supported typed globals before model
+  declarations. The model cannot replace a protected definition during
+  cleanup or repair. Both public writer outputs pass strict host C11
+  syntax checks. No target ran.
+- The focused suites and public controls pass. Fresh independent
+  review, the runtime pipeline caller, and Linux behavior checks remain
+  open. This is a source-generation unit, not an M2 evaluation result.
