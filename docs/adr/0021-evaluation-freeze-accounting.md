@@ -133,3 +133,7 @@ path is an input error.
 
 These checks detect changed evidence at the stated boundaries. They
 do not authenticate the filesystem or provide a filesystem snapshot.
+
+The replay freeze receives the exact ledger identity from the selected
+report. It compares the observed identity before it saves a new
+record. It cannot choose a different origin digest during replay.

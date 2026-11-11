@@ -34,7 +34,10 @@ passed the shared correction. The combined M2 branch now rechecks the saved ance
 access and final publication. Both earlier reviews reproduced the
 ancestor change and cyclic ledger paths. The original probes now pass.
 The parent gate passed 747 tests, 25 opt-in skips, and 92.38% evaluator
-line coverage. Fresh independent reviews remain open. Earlier failed runs and review verdicts remain in the
+line coverage. The next Sol review found a changed origin log could supply a new
+digest at freeze. The freeze now requires the exact selected identity
+before it saves a record. Both focused controls passed. Fresh
+independent review of this correction remains open. Earlier failed runs and review verdicts remain in the
 log. No new sealed run has started.
 [Capture issue](https://github.com/dvgyl/phoenix/issues/6).
 [Replay issue](https://github.com/dvgyl/phoenix/issues/5).

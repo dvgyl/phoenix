@@ -746,3 +746,19 @@
 - Preserve the old failures and HOLDs. Evidence is in
   `audit/m2-lineage-closure/`. Fresh exact Sol and Astra reviews remain
   required. No real measurement, benchmark acceptance, or tag changed.
+
+## 2026-11-11. Keep the selected ledger identity through replay freeze
+
+- Astra passed the ancestor and cyclic path changes at `ab533f8`.
+  Sol passed those controls but reproduced a new digest accepted
+  at freeze after the origin log changed. Both synthetic archives
+  opened. The coordinator published an M2 report with
+  `reproduced=false`. Preserve that HOLD.
+- The freeze now compares the observed digest and pipeline identity
+  with the selected identity before it writes any record. A changed
+  log stops before either archive. Restore the exact original bytes
+  to resume the same synthetic replay.
+- The adapted original control and the permanent coordinator control
+  passed. The original mutation and assertions are unchanged. The
+  adapter only forwards the new keyword argument. Evidence is in
+  `audit/m2-origin-ledger-freeze/`. No real measurement or tag changed.

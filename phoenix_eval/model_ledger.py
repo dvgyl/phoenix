@@ -85,12 +85,20 @@ def verify_identity(workspace: Path, identity: LedgerIdentity) -> None:
         raise ValueError("The model ledger changed after submission.")
 
 
-def freeze_identity(workspace: Path, run: Path, pipeline_run: str) -> LedgerIdentity:
+def freeze_identity(
+    workspace: Path,
+    run: Path,
+    pipeline_run: str,
+    *,
+    expected: LedgerIdentity | None = None,
+) -> LedgerIdentity:
     identity = LedgerIdentity(
         schema=1,
         pipeline_run=pipeline_run,
         sha256=ledger_digest(workspace / "runs" / pipeline_run / "llm.jsonl"),
     )
+    if expected is not None and identity != expected:
+        raise ValueError("The original model ledger changed before replay freeze.")
     record = run / "model-ledger.json"
     if record.exists() or record.is_symlink():
         if read_identity(record) != identity:

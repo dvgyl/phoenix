@@ -11,7 +11,7 @@ from test_m2 import synthetic_engine as synthetic_engine
 from phoenix_eval import m1, submission
 from phoenix_eval.case import Invocation
 from phoenix_eval.corpus import Tier
-from phoenix_eval.model_ledger import bound_summaries, read_identity
+from phoenix_eval.model_ledger import LedgerIdentity, bound_summaries, read_identity
 from phoenix_eval.submission import Submission
 
 REAL_MEASURE = m1._measure
@@ -271,3 +271,45 @@ def test_m2_task_charge_transfer_cannot_hide_in_the_total(
     assert changes == [1, -1] and sum(changes) == 0
     assert synthetic_engine["opened"] == [Tier.T0, Tier.T1]
     assert not (tmp_path / "runs/origin/m2.json").exists()
+
+
+def test_m2_replay_cannot_refreeze_a_changed_origin_ledger(
+    tmp_path: Path, synthetic_engine: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original, _ = m1.evaluate_m2(tmp_path, "origin")
+    first, _ = m1.evaluate_m2(tmp_path, "first", "origin")
+    log = tmp_path / "runs/origin-rebuild/llm.jsonl"
+    before = log.read_bytes()
+    preserved = {path: path.read_bytes() for path in (original, first)}
+    identity = read_identity(original.parent / "model-ledger.json")
+    freeze = getattr(m1, "freeze_identity")
+
+    def edit(
+        workspace: Path,
+        run: Path,
+        pipeline_run: str,
+        *,
+        expected: LedgerIdentity | None = None,
+    ) -> LedgerIdentity:
+        assert expected == identity
+        log.write_bytes(b" " + before)
+        return cast(
+            LedgerIdentity, freeze(workspace, run, pipeline_run, expected=expected)
+        )
+
+    copy = tmp_path / "runs/copy"
+    synthetic_engine["opened"].clear()
+    with monkeypatch.context() as change:
+        change.setattr(m1, "freeze_identity", edit)
+        with pytest.raises(ValueError, match="original model ledger changed"):
+            m1.evaluate_m2(tmp_path, "copy", "first")
+    assert synthetic_engine["opened"] == []
+    assert not (copy / "model-ledger.json").exists()
+    assert not (copy / "m2.json").exists()
+    assert log.read_bytes() == b" " + before
+    assert all(path.read_bytes() == content for path, content in preserved.items())
+    log.write_bytes(before)
+    final, accepted = m1.evaluate_m2(tmp_path, "copy", "first")
+    assert accepted and json.loads(final.read_bytes())["reproduced"] is True
+    assert read_identity(copy / "model-ledger.json") == identity
+    assert not (tmp_path / "runs/copy-rebuild/llm.jsonl").exists()
