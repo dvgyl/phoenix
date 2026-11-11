@@ -65,19 +65,21 @@ def digest(value: object) -> str:
     return value
 
 
-def _read_regular(path: Path, limit: int) -> bytes:
+def _read_regular(path: Path, limit: int, *, private: bool = False) -> bytes:
     descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-    if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-        os.close(descriptor)
-        raise MappingError("The evidence artifact must be a regular file.")
     with os.fdopen(descriptor, "rb") as stream:
+        metadata = os.fstat(stream.fileno())
+        if not stat.S_ISREG(metadata.st_mode):
+            raise MappingError("The evidence artifact must be a regular file.")
+        if private and metadata.st_nlink != 1:
+            raise MappingError("The evidence artifact must not have a hard-link alias.")
         return stream.read(limit)
 
 
-def bounded_read(path: Path, *, limit: int = MAX_BYTES) -> bytes:
+def bounded_read(path: Path, *, limit: int = MAX_BYTES, private: bool = False) -> bytes:
     if type(limit) is not int or not 0 <= limit <= MAX_BYTES:
         raise MappingError("The artifact read limit is invalid.")
-    raw = _read_regular(path, limit + 1)
+    raw = _read_regular(path, limit + 1, private=private)
     if len(raw) > limit:
         label = "64 MiB" if limit == MAX_BYTES else f"{limit} bytes"
         raise MappingError(f"The artifact exceeds {label}.")
@@ -311,8 +313,16 @@ def read_generation(generation: Path, binary: bytes) -> LiftGeneration:
     if type(version) is not int or version not in (1, 2):
         raise MappingError("Invalid evidence commit schema.")
     fields = "schema_version lift_sha256 mapping_sha256"
+    switches = generation / "switches"
     if version == 2:
         fields += " switch_manifest_sha256"
+    else:
+        try:
+            switches.lstat()
+        except FileNotFoundError:
+            pass
+        else:
+            raise MappingError("A schema 1 generation cannot contain switch evidence.")
     object_fields(record, fields)
     if (
         digest(record["lift_sha256"]) != sha256(lift).hexdigest()
@@ -324,7 +334,7 @@ def read_generation(generation: Path, binary: bytes) -> LiftGeneration:
     if version == 2:
         from phoenix.lift.switch_artifacts import read_switch_bundle
 
-        bundle = read_switch_bundle(generation / "switches", index)
+        bundle = read_switch_bundle(switches, index)
         if bundle.manifest_sha256 != digest(record["switch_manifest_sha256"]):
             raise MappingError("The switch manifest differs from the evidence commit.")
     return LiftGeneration(lift, parsed, bundle)

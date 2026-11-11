@@ -542,3 +542,21 @@
   table, selector, load site, and incoming edge evidence. This checkpoint
   publishes artifacts only. It does not use the held recognizer in
   generation. Keep these findings open.
+
+## 2026-11-11. Close switch graph publication conflicts
+
+- Sol held `e048376` on an exporter limit mismatch, a mixed generation
+  record, and a writable hard-link alias to a selected graph.
+- The Java exporter now emits an unsupported operation gap for more
+  than 256 inputs. A host check called the actual Java conversion with
+  256 and 257 inputs. It exported the first and rejected the second.
+  A schema 1 generation now rejects a switch directory. A switch file
+  must have one link when it is read for publication or reuse.
+- The focused suite passed 109 tests. Twenty unchanged publication
+  probes passed. The synthetic 257-input probe bypasses Java and
+  still correctly rejects the invalid graph. The separate Java check
+  verifies that the real exporter emits a gap instead. Both public
+  binaries produced fresh valid Ghidra generations with unchanged
+  ordinary lift bytes. No target ran.
+- Keep the earlier HOLD and evidence under `audit/m2-switch-artifacts/`.
+  Fresh independent review remains open.

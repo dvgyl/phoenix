@@ -41,7 +41,7 @@ class SwitchBundle:
 
 def _read_file(path: Path, limit: int) -> bytes:
     try:
-        return bounded_read(path, limit=limit)
+        return bounded_read(path, limit=limit, private=True)
     except OSError as error:
         raise MappingError("Cannot read the switch evidence file.") from error
 

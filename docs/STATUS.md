@@ -44,11 +44,12 @@ The public U1 evidence gate passed all 16 configurations at `49202a7`.
 Fresh Sol and Astra source reviews passed. The separate observer controls
 also passed.
 
-The opt-in switch artifact export passed on the public GCC and Clang
-binaries. It kept ordinary lift bytes unchanged and bound the normalized
-graphs to their lift generation. Sol held the separate switch recognizer.
-It needs stronger checks against the original instruction sequence.
-No reconstructed target ran and no M2 result is claimed.
+The opt-in switch artifact export passed on public GCC and Clang
+binaries. Sol held the first publication path on three boundary checks.
+This correction rejects mixed generation formats and hard-link aliases.
+The exporter emits a gap for an operation above the reader's input limit.
+Fresh independent review is open. The recognizer remains on a separate
+branch. No reconstructed target ran and no M2 result is claimed.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the
 external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and

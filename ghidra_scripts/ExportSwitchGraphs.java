@@ -31,6 +31,7 @@ public class ExportSwitchGraphs extends GhidraScript {
     private static final int MAX_CANDIDATES = 32;
     private static final int MAX_BLOCKS = 512;
     private static final int MAX_OPERATIONS = 4096;
+    private static final int MAX_INPUTS = 256;
     private static final int MAX_OPERANDS = 16_384;
     private static final int MAX_GRAPH_BYTES = 4 * 1024 * 1024;
     private static final int MAX_TOTAL_BYTES = 16 * 1024 * 1024;
@@ -71,6 +72,16 @@ public class ExportSwitchGraphs extends GhidraScript {
     private static Operand operand(Varnode node) {
         return node == null ? null
                 : new Operand(location(node.getAddress()), node.getSize(), sequence(node.getDef()));
+    }
+
+    private static Operation boundedOperation(PcodeOp op) throws UnavailableGraph {
+        if (op.getNumInputs() > MAX_INPUTS
+                || location(op.getSeqnum().getTarget()) == null
+                || Arrays.stream(op.getInputs()).anyMatch(Objects::isNull)) {
+            throw new UnavailableGraph("unsupported_operation");
+        }
+        return new Operation(sequence(op), op.getMnemonic(), operand(op.getOutput()),
+                Arrays.stream(op.getInputs()).map(ExportSwitchGraphs::operand).toList());
     }
 
     private static String liftDigest(Path lift) throws Exception {
@@ -149,12 +160,7 @@ public class ExportSwitchGraphs extends GhidraScript {
                 if (++operations > MAX_OPERATIONS || operands > MAX_OPERANDS) {
                     throw new UnavailableGraph("operation_limit");
                 }
-                if (location(op.getSeqnum().getTarget()) == null
-                        || Arrays.stream(op.getInputs()).anyMatch(Objects::isNull)) {
-                    throw new UnavailableGraph("unsupported_operation");
-                }
-                body.add(new Operation(sequence(op), op.getMnemonic(), operand(op.getOutput()),
-                        Arrays.stream(op.getInputs()).map(ExportSwitchGraphs::operand).toList()));
+                body.add(boundedOperation(op));
             }
             List<Integer> successors = new ArrayList<>();
             for (int i = 0; i < block.getOutSize(); i++) {

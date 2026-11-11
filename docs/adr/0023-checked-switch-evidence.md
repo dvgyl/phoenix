@@ -42,3 +42,8 @@ switch manifest as well as the lift and mapping. The reader verifies
 all three before exposing a generation. The mapping-only profile still
 writes commit schema 1. A malformed switch bundle cannot select a new
 generation. An exported graph is a proposal, not a checked dispatch.
+
+The exporter limits each operation to 256 inputs, as the reader does.
+A schema 1 directory cannot contain switch evidence. Each switch
+file must have one link. Reject the new generation if either
+publication check fails.

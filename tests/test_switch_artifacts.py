@@ -64,6 +64,7 @@ def test_switch_bundle_binds_one_graph_and_keeps_its_case_map(tmp_path: Path) ->
         "extra",
         "path",
         "alias",
+        "hard-link",
         "duplicate",
         "gap",
         "identity",
@@ -101,6 +102,8 @@ def test_switch_bundle_rejects_changed_or_unavailable_evidence(
     elif fault == "alias":
         old = graph_file.rename(tmp_path / "original")
         graph_file.symlink_to(old)
+    elif fault == "hard-link":
+        (tmp_path.parent / f"{tmp_path.name}-alias").hardlink_to(graph_file)
     elif fault == "duplicate":
         manifest["gaps"] = [
             {"function": graph["function"], "reason": "normalize_unavailable"}
@@ -130,6 +133,7 @@ def test_launcher_publishes_only_complete_switch_generations(
     ordinary_lift = raw_json(document)
     raw = ordinary_lift
     incomplete = False
+    alias_manifest = False
 
     def launch(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
         scripts = [
@@ -147,7 +151,8 @@ def test_launcher_publishes_only_complete_switch_generations(
             switches = Path(args[post + 9])
             switches.mkdir()
             if not incomplete:
-                (switches / "manifest.json").write_bytes(
+                manifest = switches / "manifest.json"
+                manifest.write_bytes(
                     raw_json(
                         {
                             "schema_version": 1,
@@ -158,6 +163,8 @@ def test_launcher_publishes_only_complete_switch_generations(
                         }
                     )
                 )
+                if alias_manifest:
+                    (tmp_path / "manifest-alias").hardlink_to(manifest)
         return subprocess.CompletedProcess(args, 0, "Public Ghidra control.")
 
     monkeypatch.setattr("phoenix.lift.subprocess.run", launch)
@@ -181,6 +188,18 @@ def test_launcher_publishes_only_complete_switch_generations(
     assert read_companion(output.parent, original)[0] == ordinary_lift
 
     incomplete = False
+    alias_manifest = True
+    with pytest.raises(MappingError, match="hard-link alias"):
+        lift_binary(
+            binary,
+            output,
+            installation,
+            java,
+            mapping_companion=True,
+            switch_graphs=True,
+        )
+    assert read_companion(output.parent, original)[0] == ordinary_lift
+    alias_manifest = False
     new = lift_binary(
         binary, output, installation, java, mapping_companion=True, switch_graphs=True
     )
@@ -199,6 +218,15 @@ def test_launcher_publishes_only_complete_switch_generations(
     }
     assert read_companion(output.parent, original)[0] == raw
     assert read_generation(old.export_path.parent, original).lift == ordinary_lift
+    commit = generation / "evidence-commit.json"
+    complete = commit.read_bytes()
+    assert isinstance(record, dict)
+    legacy = {**record, "schema_version": 1}
+    del legacy["switch_manifest_sha256"]
+    commit.write_bytes(raw_json(legacy))
+    with pytest.raises(MappingError, match="schema 1 generation"):
+        read_companion(output.parent, original)
+    commit.write_bytes(complete)
     manifest.write_bytes(manifest.read_bytes() + b"\n")
     with pytest.raises(MappingError, match="manifest differs"):
         read_companion(output.parent, original)
