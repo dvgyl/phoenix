@@ -74,6 +74,9 @@ external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
 2 GiB of memory. Use Standard service. Obtain a fresh independent Sol
 review after each major block and Astra review where required.
 
+This isolated branch adds fixed public recursion and callback controls.
+Host syntax and manifest hashes pass. Linux execution and review remain open.
+
 ## Next actions
 
 1. Refresh worker images and pass public evaluator gates before a new

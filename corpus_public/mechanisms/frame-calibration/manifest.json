@@ -1,0 +1,35 @@
+{
+  "archived_v1_changed": false,
+  "binding_profile": "eager-only-new-calibration",
+  "callback_scopes": [
+    "selected-comparator",
+    "omitted-comparator"
+  ],
+  "cases_sha256": "184767b8a89c741c6d7a8c0e3553efc02a19bf19b0c04ad58dfdc7fe7803a069",
+  "common_flags": [
+    "-std=c11",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-fno-lto",
+    "-fno-optimize-sibling-calls",
+    "-Wl,-z,now"
+  ],
+  "compilers": [
+    "gcc",
+    "clang"
+  ],
+  "kind": "public-frame-calibration",
+  "optimization_levels": [
+    "-O0",
+    "-O2"
+  ],
+  "schema": 1,
+  "sources": {
+    "callback.c": "f5ad05530417ee79917fd28194794c97c9aeb558d06bb6b4f5e86d4f38ac9fec",
+    "recursive.c": "64acaea4f51059f4bf32b6ecef62ab472d375f16405e5e362241fe6aebc04fa4"
+  },
+  "strip_flags": [
+    "--strip-all"
+  ]
+}

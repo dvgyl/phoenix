@@ -760,3 +760,18 @@
   exact replay, and the compiled negative control remain required.
 - The Linux VM stays with the private T2 Author. The option remains off
   by default. No new sealed measurement or later milestone is accepted.
+
+## 2026-11-11. Prepare public recursion and callback controls
+
+- Added separate public fixtures for non-tail indirect recursion, four
+  distinct argument registers, empty returns, and a two-call sequence.
+  The actual compiler output must confirm any shared-role pattern.
+- Added a real qsort callback control. Selected and omitted comparator
+  scopes must both reject capture. Full outcomes still need to agree.
+- Fixed 33 case records and all source hashes before Linux execution.
+  The expected roster has 29 supported cases and four callback rejections.
+  These are expectations. No target ran. Both sources passed strict
+  host C11 syntax checks. Independent review remains required.
+- The first manifest script had a Python string syntax error. It wrote
+  no manifest. The corrected script and hash checks pass. New fixture
+  flags declare eager binding. The archived fixtures remain unchanged.
