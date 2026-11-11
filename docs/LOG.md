@@ -600,3 +600,24 @@
   transport failures are recorded in `audit/m2-production-u1-e1/`.
 - This integration does not enable switch recovery or production
   traces. No target execution or new benchmark result is claimed.
+
+## 2026-11-11. Export ordinary switch tokens with the lift
+
+- The optional ordinary switch artifact comes from the same Ghidra
+  result as the raw C. It records exact byte spans, analyzed operation
+  identities, selector parameter storage, indirect predecessors, and
+  arm successors. The bounded reader resolves operations from the
+  exact lift and checks marker identity.
+- The first host shell launch failed on an empty Bash array. The
+  corrected launch found a selector classification gap. Ghidra
+  uses variable tokens for literals as well as identifiers. Limit
+  parameter evidence to identifiers on the switch line. Preserve
+  both attempts.
+- Both public binaries retain their exact earlier ordinary lift
+  bytes. Each exports 12 case markers, one default, a switch, its
+  parameter, and a return. The reader verifies all operations. Clang's
+  extra computed branch records an ordinary switch gap. Nine
+  synthetic controls passed. Evidence is in
+  `audit/m2-ordinary-switch-evidence/`.
+- The optional standalone artifact does not yet enter the published
+  lift generation. No checked C is emitted and no target ran.
