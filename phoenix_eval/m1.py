@@ -367,7 +367,7 @@ def _evaluate(workspace: Path, run: Path, replay: Path | None) -> tuple[Path, bo
         require_no_replay_ledger(workspace, pipeline_run)
     model_ledger = freeze_identity(workspace, run, replay_pipeline or pipeline_run)
     model_summaries = bound_summaries(workspace, keys, model_ledger)
-    capture_binding = freeze_binding(run, keys, capture_binding)
+    capture_binding = freeze_binding(run, keys, capture_binding, submissions)
     if not _same_json(_configuration(workspace, release_hash), config):
         raise ValueError("The evaluation configuration changed before measurement.")
     if t0_manifest(release) != (variants, release_hash):

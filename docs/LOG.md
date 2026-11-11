@@ -567,3 +567,18 @@
 - The Linux VM then built all 16 public E1 fixtures. Private T2 validation
   now has the VM. Host static checks passed the exact E1 fixture matrix.
   M2 evaluation and production recovery remain open.
+
+## 2026-11-11. Preserve accepted capture evidence on retry
+
+- Integrated the shared capture checks from the reviewed checkpoints
+  `f5f0608` and `99d581b`. The exact source, tests, and capture ADR
+  match the latter branch. The original and replay measurements stay
+  at `6897e47`, and the `m1` tag does not move.
+- The capture reader parses and hashes the same bytes. The freeze
+  compares them with the returned submission before opening held-out
+  archives. A contradiction creates a separate rejection marker and
+  blocks retry. It does not overwrite the existing binding.
+- Independent Sol and Astra reviews passed the exact source and test
+  files. The isolated parent gate passed 533 tests, 25 opt-in skips,
+  and 90.59% evaluator line coverage. Preserve all earlier failed
+  evidence. No new sealed result is claimed.

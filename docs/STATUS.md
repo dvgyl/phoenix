@@ -27,11 +27,12 @@ methods. [Native CI](https://github.com/dvgyl/phoenix/actions/runs/42905864046)
 and both native-to-Mac comparisons passed.
 
 The measured revision can accept contradictory pre-freeze checkpoint
-metadata in a synthetic run. The reviewed evidence for these two real runs
-is consistent. Before future sealed measurement, complete the shared
-capture correction and retain detected rejection across retry. The M2
-coordinator also needs final replay accounting checks. Earlier failed runs
-and review verdicts remain in the log.
+metadata in a synthetic run. The reviewed evidence for the two real runs
+is consistent. Main now binds returned submissions to the exact checkpoint
+bytes and preserves a detected contradiction across retry. Sol and Astra
+passed the shared correction. The combined M2 evaluator remains under
+independent review. Earlier failed runs and review verdicts remain in the
+log. No new sealed run has started.
 [Capture issue](https://github.com/dvgyl/phoenix/issues/6).
 [Replay issue](https://github.com/dvgyl/phoenix/issues/5).
 
@@ -41,7 +42,7 @@ has started. T3 has five source-screened selections and no runtime-qualified
 batch. All source and held-out inputs stay sealed.
 
 The public U1 evidence gate passed all 16 configurations at `49202a7`.
-Fresh source reviews remain open. The separate public observer controls
+Fresh Sol and Astra source reviews passed. The separate public observer controls
 passed. The first two checked switch prototypes are prepared for four-way
 Linux tests. These are public controls and do not count as M2 results.
 
@@ -52,9 +53,9 @@ review after each major block and Astra review where required.
 
 ## Next actions
 
-1. Close durable capture rejection and final replay accounting. Verify both
-   evaluator scopes before a new sealed run.
-2. Finish U1 source review and U2 public build and behavior checks.
+1. Finish the combined M2 evaluator reviews before a new sealed run.
+2. Integrate reviewed U1 evidence. Finish U2 proof, generation, and public
+   behavior checks.
 3. Continue production observation, indirect calls, byte idioms, and repair
    fault localization. Keep the two oracle engines independent.
 4. Finish private T2 validation. Validate T3 in a separate Linux window.
