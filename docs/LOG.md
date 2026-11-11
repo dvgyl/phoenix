@@ -711,3 +711,20 @@
 - The reducer preserves strict call, return, continuation, root, and transit
   checks. No live collector, runtime admission, or inference ran.
   Independent Sol review remains required before main integration.
+
+## 2026-11-11. Require frame admission before local output
+
+- The independent frame review held 69e3768. Structural transit failures
+  and later structural errors could retain local facts after rejection.
+  No negative control produced an admitted tree. Issue 9 tracks closure.
+- A fresh Astra worker reproduced both defects and revised the local
+  retention contract. Every rejected capture now exports no local facts.
+  Successful captures retain exact raw bits and provenance. The first
+  rejection remains unchanged. Removed the incomplete retention scan.
+- The worker passed 363 focused tests, including 178 frame controls.
+  The original canonical controls pass. The old isolated-error retention
+  positive is preserved as a declared contract mismatch. Its separately
+  revised control passes. The full trace plan and wire stay unchanged.
+- Copied the exact b42a7a2 scope dependency. The parent read the complete
+  correction. Fresh Sol review and live capture remain required.
+  No target or private corpus material was used.

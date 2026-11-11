@@ -21,9 +21,30 @@ canonical scope, root addresses, and accepted full outcome before construction.
 This unit adds no public adapter or runtime collector.
 
 An admitted tree has no provider or ABI type claim. Raw local observations
-contain six register bit fields. Missing events, capture errors, and incomplete
-frames export no local facts. A frame-only error rejects the whole tree and
-can retain independent local snapshots. Questioned shared snapshots stay out.
+contain six register bit fields. Local observations require complete frame
+admission. Every rejected capture exports an empty local tuple from both
+`admit_frames` and `local_registers`. Questioned shared snapshots stay out.
+
+The Astra correction task explicitly revises the original retention contract.
+Local retention after a frame-only error is now unsupported. Independent review
+found two errors in that earlier contract's implementation. Structural transit
+errors shared the `transit` code with unsupported destinations. An early semantic
+error also stopped reduction before later structural errors. The shared-value
+scan did not prove that required roles and frames were complete.
+
+The correction preserves the first rejection. It makes no completeness claim
+after a semantic error. Only the existing reducer's successful closure authorizes
+local facts. A separate structural reducer would duplicate the grammar and need
+rules for continuation after disputed control evidence. This correction removes
+the incomplete retention scan and adds no second frame algorithm.
+
+`Rejected.local` retains its field position and narrows to `tuple[()]`.
+Successful captures retain the six raw fields from `Entry`, `CallAttempt`, and
+`Continuation`, with their exact provenance. Return-attempt values remain outside
+the local API. This change does not alter tree admission or authenticate capture.
+The original design and review records remain unchanged in the external audit.
+The revised contract and permanent controls are recorded in
+`audit/m2-frame-retention-correction-astra/` under the workspace root.
 
 Synthetic reducer controls pass. The final exact scope snapshot matches the
 separate scope compiler. Independent source review, the raw boundary, and live

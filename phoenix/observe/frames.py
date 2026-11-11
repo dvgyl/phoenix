@@ -183,7 +183,7 @@ class Admitted:
 @dataclass(frozen=True, slots=True)
 class Rejected:
     rejection: Rejection
-    local: tuple[LocalRegisterObservation, ...]
+    local: tuple[()]
 
 
 type AdmissionResult = Admitted | Rejected
@@ -456,7 +456,6 @@ class _Reducer:
         self.nodes: list[_Node] = []
         self.stack: list[_Node] = []
         self.wait: _Visit | _Resume | _Transit | None = None
-        self.withheld: set[int] = set()
 
     def ref(self, event: Event) -> EventRef:
         return EventRef(self.checked.mapped.trace.sha256, event.sequence)
@@ -526,7 +525,6 @@ class _Reducer:
             ret is None or (ret.rsp, ret.rax) == (registers.rsp, registers.rax)
         )
         if not valid:
-            self.withheld.update(e.sequence for e in events)
             raise _Failure("entry_registers", ret or events[-1], tuple(events))
 
     def bundle(
@@ -882,14 +880,11 @@ class _Reducer:
 
 
 def _local(
-    checked: _CheckedCapture, scope_digest: str, withheld: set[int]
+    checked: _CheckedCapture, scope_digest: str
 ) -> tuple[LocalRegisterObservation, ...]:
-    withheld = withheld | _questioned_snapshots(checked.mapped.trace.events)
     observations: list[LocalRegisterObservation] = []
     for event in checked.mapped.trace.events:
         if isinstance(event, (Entry, CallAttempt, Continuation)):
-            if event.sequence in withheld:
-                continue
             for register, _ in checked.mapped.plan.registers:
                 observations.append(
                     LocalRegisterObservation(
@@ -905,63 +900,16 @@ def _local(
     return tuple(observations)
 
 
-def _questioned_snapshots(events: tuple[Event, ...]) -> set[int]:
-    """Check whole shared bundles, including roles after the first frame error."""
-    withheld: set[int] = set()
-    index = 0
-    while index < len(events):
-        first = events[index]
-        index += 1
-        if not isinstance(first, (Entry, Continuation)):
-            continue
-        snapshots: list[Entry | Continuation | CallAttempt] = [first]
-        if isinstance(first, Continuation) and index < len(events):
-            following = events[index]
-            if isinstance(following, Entry) and following.site == first.site:
-                snapshots.append(following)
-                index += 1
-        ret: ReturnAttempt | None = None
-        if index < len(events):
-            following = events[index]
-            if isinstance(following, CallAttempt) and following.site == first.site:
-                snapshots.append(following)
-                index += 1
-            elif isinstance(following, ReturnAttempt) and following.site == first.site:
-                ret = following
-                index += 1
-        registers = first.registers
-        if any(e.registers != registers for e in snapshots) or (
-            ret is not None and (ret.rsp, ret.rax) != (registers.rsp, registers.rax)
-        ):
-            withheld.update(e.sequence for e in snapshots)
-    return withheld
-
-
 def _reduce(
     checked: _CheckedCapture,
 ) -> tuple[AdmissionResult, tuple[LocalRegisterObservation, ...]]:
     scope_digest: str | None = None
-    reducer: _Reducer | None = None
     try:
         scope_digest = _preflight(checked)
         reducer = _Reducer(checked, scope_digest)
         tree = reducer.run()
     except _Failure as failure:
         trace = checked.mapped.trace
-        local = (
-            ()
-            if failure.capture
-            or scope_digest is None
-            or failure.code
-            in (
-                "missing_event",
-                "duplicate_event",
-                "event_order",
-                "open_frame",
-                "root_missing",
-            )
-            else _local(checked, scope_digest, reducer.withheld if reducer else set())
-        )
         rejection = Rejection(
             "capture" if failure.capture else "frames",
             failure.code,
@@ -973,8 +921,8 @@ def _reduce(
             trace.sha256,
             f"The capture failed the {failure.code} check.",
         )
-        return Rejected(rejection, local), local
-    local = _local(checked, scope_digest, set())
+        return Rejected(rejection, ()), ()
+    local = _local(checked, scope_digest)
     return Admitted(tree), local
 
 
@@ -984,5 +932,5 @@ def admit_frames(checked: _CheckedCapture) -> AdmissionResult:
 
 
 def local_registers(checked: _CheckedCapture) -> tuple[LocalRegisterObservation, ...]:
-    """Return independent raw snapshots after the same admission checks."""
+    """Return raw snapshots only after complete frame admission."""
     return _reduce(checked)[1]

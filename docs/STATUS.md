@@ -65,8 +65,9 @@ external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
 2 GiB of memory. Use Standard service. Obtain a fresh independent Sol
 review after each major block and Astra review where required.
 
-A pure frame reducer is implemented on this isolated branch. Its synthetic
-controls pass. The exact-byte capture boundary and live collector remain open.
+A pure frame reducer is implemented on this isolated branch. Astra corrected
+its local retention errors. Every rejection now exports no local facts.
+Fresh review, the exact-byte capture boundary, and live collector remain open.
 
 ## Next actions
 
