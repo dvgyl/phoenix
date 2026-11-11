@@ -67,6 +67,10 @@ external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
 2 GiB of memory. Use Standard service. Obtain a fresh independent Sol
 review after each major block and Astra review where required.
 
+A public production-caller gate is prepared on this isolated branch. It uses
+a fixed cleanup response and an unvisited selector. Host controls pass.
+Independent review and the four-build Linux gate remain open.
+
 ## Next actions
 
 1. Refresh worker images and pass public evaluator gates before a new

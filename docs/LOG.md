@@ -718,3 +718,19 @@
 - The earlier combined main transfer plans also matched all 16 reviewed
   public plans byte for byte. Their proof and relocation-width metadata
   stayed consistent. No target ran or sealed result changed.
+
+## 2026-11-11. Prepare the public checked-switch caller gate
+
+- Added a fixed 56-case public manifest. The 53 development cases omit
+  selector 11. A fixed mechanical main response leaves the checked switch
+  in the actual production caller. This uses no live model provider.
+- Added exact replay source checks and four-build behavior checks. A
+  disabled emitter must compile and produce the expected stdout mismatch
+  on all three unvisited cases. It retains stale metadata deliberately.
+- The first roster check used an array document where the reader required
+  an object. Corrected it before any target ran. Source controls passed
+  on saved GCC and Clang artifacts. Both positive projects passed strict
+  host C11 syntax checks. The disabled stubs produced unused-parameter
+  warnings with zero syntax errors. The original warning failure is kept.
+- The Linux VM remains with the private author. No target ran for this
+  block. Independent review and actual Linux behavior remain required.
