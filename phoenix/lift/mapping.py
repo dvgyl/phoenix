@@ -13,7 +13,7 @@ from uuid import uuid4
 if TYPE_CHECKING:
     from phoenix.lift.index import LiftIndex
     from phoenix.lift.switch_artifacts import SwitchBundle
-    from phoenix.lift.switch_source import OrdinarySwitches
+    from phoenix.lift.switch_source import OrdinarySourceObservations
 
 GhidraVA = NewType("GhidraVA", int)
 FileOffset = NewType("FileOffset", int)
@@ -203,19 +203,19 @@ class LiftGeneration:
     lift: bytes
     mapping: LiftMapping
     switches: "SwitchBundle | None"
-    ordinary_switches: "OrdinarySwitches | None"
+    ordinary_switches: "OrdinarySourceObservations | None"
 
 
 def _read_ordinary_switches(
     path: Path, index: "LiftIndex", bundle: "SwitchBundle"
-) -> "OrdinarySwitches":
-    from phoenix.lift.switch_source import parse_ordinary_switches
+) -> "OrdinarySourceObservations":
+    from phoenix.lift.switch_source import parse_ordinary_source
 
     remaining = 16 * 1024 * 1024 - bundle.artifact_bytes
     if remaining <= 0:
         raise MappingError("Combined switch evidence exceeds 16 MiB.")
     try:
-        source = parse_ordinary_switches(
+        source = parse_ordinary_source(
             bounded_read(path, limit=remaining, private=True), index
         )
     except OSError as error:

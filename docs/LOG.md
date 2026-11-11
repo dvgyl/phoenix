@@ -634,3 +634,15 @@
   24 decoded labels and both defaults.
 - Evidence is in `audit/m2-switch-source-generation/`. No target
   ran. Independent review and checked C generation remain open.
+
+## 2026-11-11. Bind source observations to lift generations
+
+- Ported the exact source retention and observation contract from the
+  ordinary source branch. Schema 3 retains the same companion bytes
+  and digest. It does not establish C token or switch correctness.
+- Fourteen source and publication tests passed. Both saved public
+  schema 3 generations passed with unchanged record and source
+  identities. Unsupported C syntax remains a generation-layer concern.
+- The initial check used a nonexistent test filename and ran no tests.
+  The corrected focused suite passed. Fresh independent review remains
+  open. No target ran and no new evaluation result is claimed.
