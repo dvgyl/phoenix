@@ -1,9 +1,16 @@
 # Phoenix status
 
 M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
-M1 remains open. Exact `baae648` replay reproduced all stable fields.
-Main is fixed at `6897e47` during a new guarded original and replay.
-There is no M1 tag.
+M1 passed at `6897e47` and has its exact tag. Main records acceptance
+at `49bd659`. M2 is in progress. No new sealed evaluation is ready.
+
+This branch adds a bounded normalized switch graph reader and checked
+relative table recognizer. It has 13 passing synthetic checks. Both saved
+public GCC and Clang switch graphs give 12 cases and one default. The
+checked recognizer rejects seven changed evidence controls for each
+compiler. The complete parent gate passed 594 tests with 26 opt-in skips
+and 90.06% evaluator coverage. The exporter and generated C pipeline are
+not connected. Fresh independent review remains open.
 
 | Method | Behavior passed | Integrity passed | Fully successful |
 | --- | --- | --- | --- |

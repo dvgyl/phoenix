@@ -500,3 +500,27 @@
   Evidence is in `audit/m2-production-u1-closure/`.
 - The opt-in checkpoint stays outside main. Fresh independent Sol and
   Astra reviews and the expanded E1 Linux checks remain required.
+
+## 2026-11-11. Bound the first checked switch profile
+
+- Reused the saved public GCC and Clang switch binaries and Ghidra exports.
+  The default decompiler mode discards the table load. Normalize mode
+  retains it. The normalized graph edges identify the true dispatch
+  path and false default path. The printed raw branch operand alone
+  does not show that normalized direction.
+- Added a bounded typed graph reader and static relative table recognizer.
+  It checks the original mask, compare, and branch instruction bytes.
+  It requires a read-only file-backed table and exact owned instruction
+  witnesses. It preserves every selector even when targets repeat.
+  Unproved shapes stop with an evidence error.
+- Both saved public graphs reproduce all 12 cases and their defaults.
+  Seven changed evidence controls per compiler fail. The first synthetic
+  fixture attempt overlapped its own program-header table with code.
+  Moving the header table corrected the fixture. All 13 synthetic tests
+  pass. The full parent gate passed 594 tests with 26 opt-in skips and
+  90.06% evaluator line coverage.
+- Saved evidence is in `audit/m2-production-u2/` outside the repository.
+  The code has no production caller. Independent review, bound Ghidra
+  publication, checked C generation, and Linux behavior remain required.
+  The separate raw and checked prototype projects have only passed host
+  syntax checks. No sealed M2 result is claimed.

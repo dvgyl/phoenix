@@ -221,10 +221,10 @@ def _operand(value: object) -> Operand | None:
     )
 
 
-def _operations(value: object) -> tuple[Operation, ...]:
+def parse_operations(value: object, limit: int = 1_000_000) -> tuple[Operation, ...]:
     result = []
     identities: set[Sequence] = set()
-    for raw in array(value):
+    for raw in array(value, limit):
         item = object_fields(raw, "sequence opcode output inputs")
         sequence = _sequence(item["sequence"])
         if sequence in identities:
@@ -322,7 +322,7 @@ def parse_lift(raw: bytes, binary: bytes) -> LiftIndex:
                 or address + size - 1 > ranges[owner_index][1]
             ):
                 raise MappingError("An instruction is outside its function ranges.")
-            operations = _operations(ins["pcode"])
+            operations = parse_operations(ins["pcode"])
             if any(op.sequence.address.ram != address for op in operations):
                 raise MappingError("A raw operation has the wrong instruction site.")
             instruction = Instruction(address, size, operations)
@@ -347,7 +347,7 @@ def parse_lift(raw: bytes, binary: bytes) -> LiftIndex:
             _optional_location(statement["end"])
             if statement["operation"] is not None:
                 _sequence(statement["operation"])
-        analyzed = _operations(decompilation["analyzed_pcode"])
+        analyzed = parse_operations(decompilation["analyzed_pcode"])
         definitions = {operation.sequence: operation for operation in analyzed}
         for operation in analyzed:
             if operation.sequence.address.ram not in decoded_addresses:
