@@ -558,6 +558,7 @@ def test_local_target_requires_exact_instruction_start() -> None:
 
 def test_synthetic_external_target_requires_indirect_slot_evidence() -> None:
     binary, document = fixture()
+    binary = indirect_got_call(binary, document)
     call, thunk = document["functions"]
     address = 0x105000
     thunk["entry"] = loc(address)
@@ -722,6 +723,7 @@ def test_inconsistent_rebase_and_overlapping_segments_reject() -> None:
 
 def test_raw_copy_chain_establishes_got_call() -> None:
     binary, document = fixture()
+    binary = indirect_got_call(binary, document)
     call = document["functions"][0]["instructions"][0]
     call["pcode"] = [
         op(0x100100, "COPY", [operand(0x102500)], operand(0x99, "unique")),
@@ -734,6 +736,19 @@ def test_raw_copy_chain_establishes_got_call() -> None:
     call["pcode"][0]["opcode"] = "INT_ADD"
     lift, _, proof = evidence(binary, document)
     assert bind_imports(binary, lift, proof)[0].identity is None
+
+
+def indirect_got_call(binary: bytes, document: dict[str, Any]) -> bytes:
+    changed = bytearray(binary)
+    changed[0x100:0x107] = b"\xff\x15\xfa\x23\x00\x00\xc3"
+    pack_into("<Q", changed, 0xC08, (1 << 32) | 6)
+    function = document["functions"][0]
+    first, resume = function["instructions"]
+    first["size"] = 6
+    resume["address"] = loc(0x100106)
+    resume["pcode"][0]["sequence"]["address"] = resume["address"]
+    function["ranges"][0]["end"] = resume["address"]
+    return bytes(changed)
 
 
 def test_call_edge_cannot_override_the_raw_target() -> None:

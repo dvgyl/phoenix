@@ -615,3 +615,22 @@
 - This is a static plan. The separate v1 calibration, accepted
   oracles, and evaluator are unchanged. No observer or target ran.
   Independent review and live v2 controls remain open.
+
+## 2026-11-11. Bind observation imports to original operands
+
+- Sol held `f2803a0`. It reproduced an import name attached to a
+  call with conflicting bytes, lost import gap reasons, and duplicate
+  raw call operations. The plan now keeps the import gap on the call.
+  A call with contradictory operation kinds or counts stays a gap.
+- The shared import binder checks the original relative call, direct
+  thunk branches, and final RIP-relative memory slot. The plan also
+  checks the bytes and file offset of each instruction witness.
+- The first focused run exposed two synthetic GOT tests that still
+  supplied direct call bytes. Give those controls the actual
+  indirect instruction and its adjacent return. The final focused
+  U1 and U3 suite passed 95 tests. All 16 saved public configurations
+  keep the expected main call and relocation.
+- A continuation must have the same function owner as its call.
+  A different owner remains an explicit gap. This profile does not
+  infer cross-function returns. Fresh independent review and live
+  observation remain open.

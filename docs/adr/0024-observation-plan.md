@@ -27,3 +27,13 @@ import identity. Reject mismatched binary and proof. Test an incomplete
 continuation and a contradictory transfer kind. Live capture, runtime
 mapping, trace admission, and return evidence belong to subsequent
 units. Do not execute a target in this unit.
+
+The initial profile requires a call and its continuation to have the
+same function owner. Keep a different owner as a gap. A planned call
+can share its address with an entry. A continuation can share its
+address with a return. These role combinations do not prove frames.
+
+Keep import gaps separate from physical call roles. Verify supported
+original call and thunk operands before attaching an import identity.
+An unknown import does not erase a witnessed call. A contradictory
+raw transfer count prevents use of that transfer.

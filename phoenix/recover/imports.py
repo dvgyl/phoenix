@@ -18,6 +18,7 @@ from phoenix.recover.addresses import (
     AddressProof,
     ElfImage,
     ElfVA,
+    InstructionWitness,
     checked_end,
     synthetic_external_target,
 )
@@ -449,6 +450,16 @@ def _transfer_slot(lift: LiftIndex, site: GhidraVA) -> GhidraVA | None:
     return slot
 
 
+def _relative_operand(
+    witness: InstructionWitness, encodings: tuple[tuple[bytes, int], ...]
+) -> GhidraVA | None:
+    for opcode, width in encodings:
+        if len(witness.data) == len(opcode) + width and witness.data.startswith(opcode):
+            displacement = int.from_bytes(witness.data[-width:], "little", signed=True)
+            return GhidraVA(witness.ghidra + len(witness.data) + displacement)
+    return None
+
+
 def _binding(
     edge: StaticEdge,
     lift: LiftIndex,
@@ -465,6 +476,15 @@ def _binding(
     if transfer is None:
         return ImportBinding(
             edge.site, edge.caller, None, None, None, (), "conflicting_call_target"
+        )
+    if transfer == "direct" and (
+        edge.target is None
+        or edge.target.ram is None
+        or _relative_operand(proof.witness(edge.site), ((b"\xe8", 4),))
+        != edge.target.ram
+    ):
+        return ImportBinding(
+            edge.site, edge.caller, None, None, None, (), "conflicting_call_bytes"
         )
     path: list[GhidraVA] = []
     transfer_site = edge.site if transfer == "indirect" else None
@@ -532,6 +552,14 @@ def _binding(
         ):
             gap = "conflicting_thunk_target"
             break
+        elif (
+            _relative_operand(
+                proof.witness(site, owner=address), ((b"\xe9", 4), (b"\xeb", 1))
+            )
+            != next_target.ram
+        ):
+            gap = "conflicting_thunk_bytes"
+            break
         path.append(address)
         target = next_target
     else:
@@ -540,6 +568,23 @@ def _binding(
             operand_address = _transfer_slot(lift, transfer_site)
             relocation = None
             if operand_address is not None:
+                opcode = b"\xff\x15" if transfer_site == edge.site else b"\xff\x25"
+                encodings = tuple(
+                    (prefix + opcode, 4) for prefix in (b"", b"\xf2", b"\x3e")
+                )
+                if (
+                    _relative_operand(proof.witness(transfer_site), encodings)
+                    != operand_address
+                ):
+                    return ImportBinding(
+                        edge.site,
+                        edge.caller,
+                        None,
+                        None,
+                        None,
+                        tuple(path),
+                        "conflicting_import_slot_bytes",
+                    )
                 try:
                     relocation = relocations.get(proof.to_elf(operand_address, 8))
                 except MappingError:

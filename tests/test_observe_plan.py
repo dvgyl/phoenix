@@ -1,9 +1,11 @@
 import json
+from copy import deepcopy
+from dataclasses import replace
 from hashlib import sha256
 from typing import Any
 
 import pytest
-from test_recovery_u1 import evidence, fixture, op, operand
+from test_recovery_u1 import evidence, fixture, loc, op, operand
 
 from phoenix.lift.mapping import MappingError
 from phoenix.observe.plan import Call, Jump, Return, build_trace_plan
@@ -43,7 +45,9 @@ def test_plan_keeps_shared_roles_and_binds_original_bytes(base: int) -> None:
         build_trace_plan(binary + b" ", lift, proof)
 
 
-@pytest.mark.parametrize("conflict", ["missing-continuation", "multiple-transfers"])
+@pytest.mark.parametrize(
+    "conflict", ["missing-continuation", "multiple-transfers", "duplicate-call"]
+)
 def test_unproved_transfer_stays_a_gap(conflict: str) -> None:
     binary, document = fixture()
     function: dict[str, Any] = document["functions"][0]
@@ -51,8 +55,9 @@ def test_unproved_transfer_stays_a_gap(conflict: str) -> None:
         function["instructions"].pop()
         gap = "unavailable_continuation"
     else:
+        opcode = "CALL" if conflict == "duplicate-call" else "BRANCHIND"
         function["instructions"][0]["pcode"].append(
-            op(0x100100, "BRANCHIND", [operand(0, "register")], index=1)
+            op(0x100100, opcode, [operand(0, "register")], index=1)
         )
         gap = "conflicting_transfer_roles"
     lift, _, proof = evidence(binary, document)
@@ -72,3 +77,60 @@ def test_plan_refuses_a_lift_with_another_identity() -> None:
     assert lift.lift_sha256 != other.lift_sha256
     with pytest.raises(MappingError, match="identities disagree"):
         build_trace_plan(binary, other, proof)
+
+
+@pytest.mark.parametrize(
+    ("fault", "reason"),
+    [
+        ("call-target", "conflicting_call_bytes"),
+        ("import-slot", "conflicting_import_slot_bytes"),
+        ("symbol", "conflicting_import_identity"),
+    ],
+)
+def test_unconfirmed_import_stays_distinct_from_the_call(
+    fault: str, reason: str
+) -> None:
+    original, document = fixture()
+    binary = bytearray(original)
+    if fault == "call-target":
+        binary[0x101] = 0
+    elif fault == "import-slot":
+        binary[0x142] ^= 8
+    else:
+        document["imports"][0]["name"] = "fread"
+    lift, _, proof = evidence(bytes(binary), document)
+    plan = build_trace_plan(bytes(binary), lift, proof)
+    call = next(site for site in plan.sites if site.address == 0x100)
+    assert isinstance(call.transfer, Call)
+    assert call.transfer.imported is None
+    assert call.transfer.import_gaps == (reason,)
+
+
+def test_plan_does_not_admit_a_continuation_under_another_owner() -> None:
+    binary, document = fixture()
+    function = document["functions"][0]
+    resume = function["instructions"].pop()
+    function["ranges"][0]["end"] = loc(0x100104)
+    second = deepcopy(function)
+    second["entry"] = resume["address"]
+    second["ranges"] = [{"start": resume["address"], "end": resume["address"]}]
+    second["instructions"] = [resume]
+    document["functions"].append(second)
+    lift, _, proof = evidence(binary, document)
+    plan = build_trace_plan(binary, lift, proof)
+    assert (0x100100, "unavailable_continuation") in plan.gaps
+    call = next(site for site in plan.sites if site.address == 0x100)
+    after = next(site for site in plan.sites if site.address == 0x105)
+    assert call.transfer is None and not after.continuation_of
+    assert after.entry and isinstance(after.transfer, Return)
+
+
+def test_plan_refuses_a_replaced_instruction_witness() -> None:
+    binary, document = fixture()
+    lift, _, proof = evidence(binary, document)
+    witnesses = tuple(
+        replace(witness, data=b"\x90") if witness.elf == 0x105 else witness
+        for witness in proof.witnesses
+    )
+    with pytest.raises(MappingError, match="witness differs"):
+        build_trace_plan(binary, lift, replace(proof, witnesses=witnesses))

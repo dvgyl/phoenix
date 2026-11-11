@@ -3,7 +3,7 @@ from dataclasses import asdict, dataclass, field
 from hashlib import sha256
 from typing import Literal
 
-from phoenix.lift.index import LiftIndex
+from phoenix.lift.index import Instruction, LiftIndex
 from phoenix.lift.mapping import GhidraVA, MappingError
 from phoenix.recover.addresses import AddressProof, ElfVA
 from phoenix.recover.imports import ImportBinding, bind_imports
@@ -18,6 +18,7 @@ _TRANSFER_ROLES: tuple[TransferKind, ...] = (
     "indirect_jump",
     "return",
 )
+_TRANSFER_OPCODES = frozenset(("CALL", "CALLIND", "BRANCHIND", "RETURN"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,6 +26,7 @@ class Call:
     kind: Literal["direct_call", "indirect_call"]
     continuation: ElfVA
     imported: ImportBinding | None
+    import_gaps: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,12 +91,16 @@ class TracePlan:
 
 def _transfer(
     site: CandidateSite,
+    instruction: Instruction,
     sites: dict[ElfVA, CandidateSite],
-    bindings: dict[GhidraVA, ImportBinding],
+    bindings: list[ImportBinding],
     gaps: set[tuple[GhidraVA, str]],
 ) -> Transfer | None:
     roles = tuple(role for role in _TRANSFER_ROLES if role in site.roles)
-    if len(roles) > 1:
+    count = sum(
+        operation.opcode in _TRANSFER_OPCODES for operation in instruction.pcode
+    )
+    if len(roles) > 1 or count > 1:
         gaps.add((site.ghidra, "conflicting_transfer_roles"))
         return None
     if not roles:
@@ -115,26 +121,48 @@ def _transfer(
     ):
         gaps.add((site.ghidra, "unavailable_continuation"))
         return None
-    imported = bindings.get(site.ghidra)
-    return Call(kind, continuation.elf, imported)
+    imports = {
+        binding
+        for binding in bindings
+        if binding.identity is not None and binding.gap is None
+    }
+    import_gaps = {binding.gap for binding in bindings if binding.gap is not None}
+    if len(imports) > 1:
+        import_gaps.add("conflicting_import_paths")
+    imported = next(iter(imports)) if len(imports) == 1 and not import_gaps else None
+    return Call(kind, continuation.elf, imported, tuple(sorted(import_gaps)))
 
 
 def build_trace_plan(binary: bytes, lift: LiftIndex, proof: AddressProof) -> TracePlan:
     if sha256(binary).hexdigest() != proof.binary_sha256:
         raise MappingError("The observation plan does not bind the original binary.")
+    for witness in proof.witnesses:
+        size = len(witness.data)
+        if (
+            proof.to_elf(witness.ghidra, size) != witness.elf
+            or proof.image.offset(witness.elf, size) != witness.file_offset
+            or binary[witness.file_offset : witness.file_offset + size] != witness.data
+        ):
+            raise MappingError(
+                "An observation instruction witness differs from the binary."
+            )
     imports = bind_imports(binary, lift, proof)
     candidate = make_candidate(lift, proof, imports)
     sites = {site.elf: site for site in candidate.sites}
     if not sites or len(sites) != len(candidate.sites):
         raise MappingError("The observation plan needs unique witnessed sites.")
-    bindings = {
-        binding.site: binding
-        for binding in imports
-        if binding.identity is not None and binding.gap is None
-    }
+    bindings: dict[GhidraVA, list[ImportBinding]] = {}
+    for binding in imports:
+        bindings.setdefault(binding.site, []).append(binding)
     gaps = set(candidate.gaps)
     transfers = {
-        address: _transfer(site, sites, bindings, gaps)
+        address: _transfer(
+            site,
+            lift.instructions[site.ghidra],
+            sites,
+            bindings.get(site.ghidra, []),
+            gaps,
+        )
         for address, site in sites.items()
     }
     continuations: dict[ElfVA, list[ElfVA]] = {}
