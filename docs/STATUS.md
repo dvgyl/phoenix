@@ -34,8 +34,11 @@ passed the shared correction. The combined M2 evaluator passed fresh
 Sol and Astra reviews at `05979af`. The reviewed evaluator and T1
 commitments are on main. Earlier failures remain in the log. No new
 sealed run has started. The first native CI run failed because a replay
-property test used a Mac-only scratch path. The portable test passed all
-13 affected cases locally. Native CI must confirm the correction.
+property test used a Mac-only scratch path. The correction passed all
+13 affected cases and fresh Sol review. Native CI at `53ee7de` passed
+both architectures and its outcome comparison. Its public case counts
+and full outcome digests match the historical Mac run. The same-revision
+Mac check still needs refreshed images and the Linux VM.
 [Capture issue](https://github.com/dvgyl/phoenix/issues/6).
 [Replay issue](https://github.com/dvgyl/phoenix/issues/5).
 
@@ -49,6 +52,9 @@ passed the exact source review. The public observer controls passed.
 The reviewed conditional switch proof and optional graph publication
 are on main. They retain the ordinary lift and keep generation unchanged.
 The separate bounded C source parser passed on both public fixtures.
+The structural schema 2 wire reader passed fresh Sol review and 596
+additional controls. Runtime mapping, frame admission, and live capture
+remain open. The reader has no production caller.
 Production token binding and public target checks remain open.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the

@@ -642,3 +642,21 @@
   with the standard temporary directory. All 13 affected tests then
   passed with the variable unset. On the Mac, `TMPDIR` still points to
   the external workspace. The measured M1 revision remains unchanged.
+
+## 2026-11-11. Integrate the reviewed observation wire reader
+
+- Fresh Sol passed the exact structural reader at `b09c23d`.
+  Its 14 existing tests and 596 added controls passed. The reader
+  checks the wire structure and identity. It does not establish
+  runtime mapping, frame validity, accepted outcomes, or live support.
+- Integrated the exact reader and tests. The static observation plan
+  remains on its isolated correction branch. No target ran.
+- The same Sol review passed the test portability correction at
+  `53ee7de`. Native CI run 42943227090 passed on x86-64 and ARM64.
+  The native outcome comparator passed. Both downloaded artifact
+  hashes match GitHub's digests.
+- Native public case counts and full outcome digests equal the
+  historical Mac M0 run. The three-mode comparator correctly rejected
+  different evaluator revisions and worker sources. Do not count this
+  as a same-revision Mac check. That check still needs refreshed images
+  after the private author releases the Linux VM.
