@@ -17,27 +17,37 @@ class LedgerIdentity(TypedDict):
     sha256: str | None
 
 
-def ledger_digest(path: Path) -> str | None:
-    if path.resolve() != path:
-        raise ValueError("The model ledger path cannot contain symbolic links.")
+def _open_ledger(path: Path) -> int | None:
+    try:
+        physical = path.resolve() == path
+    except (OSError, RuntimeError):
+        physical = False
+    if not physical:
+        raise ValueError("The model ledger path is invalid or contains symbolic links.")
     try:
         descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except FileNotFoundError:
         return None
+    except OSError as error:
+        raise ValueError("Cannot open the model ledger.") from error
     if not stat.S_ISREG(os.fstat(descriptor).st_mode):
         os.close(descriptor)
         raise ValueError("The model ledger must be a regular file.")
+    return descriptor
+
+
+def ledger_digest(path: Path) -> str | None:
+    descriptor = _open_ledger(path)
+    if descriptor is None:
+        return None
     with os.fdopen(descriptor, "rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
 def read_identity(path: Path) -> LedgerIdentity:
     try:
-        if path.resolve() != path:
-            raise ValueError
-        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-            os.close(descriptor)
+        descriptor = _open_ledger(path)
+        if descriptor is None:
             raise ValueError
         with os.fdopen(descriptor, "rb") as stream:
             content = stream.read(4097)
@@ -63,7 +73,7 @@ def read_identity(path: Path) -> LedgerIdentity:
         ):
             raise ValueError
         return cast(LedgerIdentity, data)
-    except (OSError, ValueError, TypeError):
+    except (OSError, ValueError, TypeError, RecursionError):
         raise ValueError(
             "The model ledger identity record is invalid or missing."
         ) from None
@@ -75,12 +85,20 @@ def verify_identity(workspace: Path, identity: LedgerIdentity) -> None:
         raise ValueError("The model ledger changed after submission.")
 
 
-def freeze_identity(workspace: Path, run: Path, pipeline_run: str) -> LedgerIdentity:
+def freeze_identity(
+    workspace: Path,
+    run: Path,
+    pipeline_run: str,
+    *,
+    expected: LedgerIdentity | None = None,
+) -> LedgerIdentity:
     identity = LedgerIdentity(
         schema=1,
         pipeline_run=pipeline_run,
         sha256=ledger_digest(workspace / "runs" / pipeline_run / "llm.jsonl"),
     )
+    if expected is not None and identity != expected:
+        raise ValueError("The original model ledger changed before replay freeze.")
     record = run / "model-ledger.json"
     if record.exists() or record.is_symlink():
         if read_identity(record) != identity:
@@ -91,8 +109,20 @@ def freeze_identity(workspace: Path, run: Path, pipeline_run: str) -> LedgerIden
 
 
 def require_no_replay_ledger(workspace: Path, pipeline_run: str) -> None:
-    if ledger_digest(workspace / "runs" / pipeline_run / "llm.jsonl") is not None:
-        raise ValueError("Replay must not create a fresh model ledger.")
+    directory = workspace / "runs" / pipeline_run
+    try:
+        descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    except FileNotFoundError:
+        return
+    except OSError as error:
+        raise ValueError("The replay model ledger directory is invalid.") from error
+    try:
+        os.stat("llm.jsonl", dir_fd=descriptor, follow_symlinks=False)
+    except FileNotFoundError:
+        return
+    finally:
+        os.close(descriptor)
+    raise ValueError("Replay must not create a fresh model ledger.")
 
 
 @dataclass(frozen=True)
@@ -281,12 +311,27 @@ def bound_summary(
 ) -> ModelSummary:
     if identity is None:
         identity = read_identity(run / "model-ledger.json")
+    return summarize(_bound_events(workspace, identity), binary)
+
+
+def bound_summaries(
+    workspace: Path, keys: tuple[str, ...], identity: LedgerIdentity
+) -> dict[str, ModelSummary]:
+    events = _bound_events(workspace, identity)
+    if len(keys) != len(set(keys)) or any(event.binary not in keys for event in events):
+        raise ValueError("The model ledger task keys do not match the fixed roster.")
+    return {key: summarize(events, key) for key in keys}
+
+
+def _bound_events(workspace: Path, identity: LedgerIdentity) -> tuple[ModelEvent, ...]:
     path = workspace / "runs" / identity["pipeline_run"] / "llm.jsonl"
-    verify_identity(workspace, identity)
-    content = path.read_bytes() if identity["sha256"] is not None else b""
-    if (
-        identity["sha256"] is not None
-        and hashlib.sha256(content).hexdigest() != identity["sha256"]
-    ):
+    descriptor = _open_ledger(path)
+    if descriptor is None:
+        if identity["sha256"] is None:
+            return ()
         raise ValueError("The model ledger changed after submission.")
-    return summarize(read_events(content.decode("utf-8").splitlines()), binary)
+    with os.fdopen(descriptor, "rb") as stream:
+        content = stream.read()
+    if hashlib.sha256(content).hexdigest() != identity["sha256"]:
+        raise ValueError("The model ledger changed after submission.")
+    return read_events(content.decode("utf-8").splitlines())

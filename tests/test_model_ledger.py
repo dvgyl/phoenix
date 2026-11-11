@@ -1,4 +1,5 @@
 import json
+from dataclasses import asdict
 from hashlib import sha256
 from pathlib import Path
 
@@ -7,8 +8,14 @@ import pytest
 from phoenix_eval import m1
 from phoenix_eval.case import Invocation
 from phoenix_eval.corpus import Variant
-from phoenix_eval.model_ledger import freeze_identity, ledger_digest, read_identity
-from phoenix_eval.submission import Submission
+from phoenix_eval.model_ledger import (
+    LedgerIdentity,
+    bound_summary,
+    freeze_identity,
+    ledger_digest,
+    read_identity,
+)
+from phoenix_eval.submission import Method, Submission, write_report
 from phoenix_eval.toolchain import Compiler
 
 
@@ -22,9 +29,38 @@ def synthetic_evaluator(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     )
     monkeypatch.setattr(m1, "_release_bytes", lambda *_: b"synthetic")
 
-    def submit(*args: object) -> Submission:
+    def submit(
+        workspace: Path,
+        directory: Path,
+        pipeline_run: str,
+        key: str,
+        binary: Path,
+        method: Method,
+        replay: str | None,
+    ) -> Submission:
         events.append("submit")
-        return Submission("phoenix", "synthetic", None, "pipeline-failed")
+        result = Submission(method, key, None, "pipeline-failed", replay)
+        write_report(directory / "capture/submission.json", asdict(result))
+        return result
+
+    def measure(
+        workspace: Path,
+        run: Path,
+        pipeline_run: str,
+        task: m1.Task,
+        captured: Submission,
+        binary: Path | bytes,
+        cases: tuple[Invocation, ...],
+        config: m1._Configuration,
+        development: frozenset[bytes],
+        origin: bytes | None,
+        identity: LedgerIdentity,
+    ) -> dict[str, object]:
+        return {
+            "method": task.method,
+            "fully_successful": False,
+            "model": asdict(bound_summary(workspace, run, task.key, identity)),
+        }
 
     def cases(
         path: Path, digest: str, names: set[str]
@@ -43,9 +79,7 @@ def synthetic_evaluator(monkeypatch: pytest.MonkeyPatch) -> list[str]:
 
     monkeypatch.setattr(m1, "submit", submit)
     monkeypatch.setattr(m1, "heldout_cases", cases)
-    monkeypatch.setattr(
-        m1, "_measure", lambda *_: {"method": "phoenix", "fully_successful": False}
-    )
+    monkeypatch.setattr(m1, "_measure", measure)
     return events
 
 
@@ -57,7 +91,7 @@ def test_changed_ledger_stops_resume_or_replay_before_submission(
     ledger = tmp_path / "runs/origin-rebuild/llm.jsonl"
     ledger.parent.mkdir(parents=True)
     if present:
-        ledger.write_bytes(b"synthetic ledger\n")
+        ledger.write_bytes(b"")
     m1.evaluate_t0(tmp_path, "origin")
     synthetic_evaluator.clear()
     ledger.write_bytes(b"changed synthetic ledger\n")
@@ -75,13 +109,13 @@ def test_replay_preserves_origin_identity_and_creates_no_ledger(
     ledger = tmp_path / "runs/origin-rebuild/llm.jsonl"
     ledger.parent.mkdir(parents=True)
     if present:
-        ledger.write_bytes(b"synthetic ledger\n")
+        ledger.write_bytes(b"")
     original, _ = m1.evaluate_t0(tmp_path, "origin")
     identity = json.loads(original.read_text())["model_ledger"]
     assert identity == {
         "schema": 1,
         "pipeline_run": "origin-rebuild",
-        "sha256": sha256(b"synthetic ledger\n").hexdigest() if present else None,
+        "sha256": sha256(b"").hexdigest() if present else None,
     }
     assert read_identity(original.parent / "model-ledger.json") == identity
     replay, _ = m1.evaluate_t0(tmp_path, "replay", "origin")
@@ -169,7 +203,7 @@ def test_removed_original_ledger_stops_replay(
 ) -> None:
     ledger = tmp_path / "runs/origin-rebuild/llm.jsonl"
     ledger.parent.mkdir(parents=True)
-    ledger.write_bytes(b"synthetic ledger")
+    ledger.write_bytes(b"")
     m1.evaluate_t0(tmp_path, "origin")
     ledger.unlink()
     synthetic_evaluator.clear()
@@ -191,6 +225,15 @@ def test_nonregular_ledger_is_rejected(tmp_path: Path) -> None:
     directory.mkdir()
     with pytest.raises(ValueError, match="regular file"):
         ledger_digest(directory)
+
+
+def test_cyclic_ledger_paths_have_controlled_errors(tmp_path: Path) -> None:
+    record = tmp_path / "model-ledger.json"
+    record.symlink_to(record.name)
+    with pytest.raises(ValueError, match="symbolic link"):
+        ledger_digest(record)
+    with pytest.raises(ValueError, match="invalid or missing"):
+        read_identity(record)
 
 
 def test_resume_rejects_missing_frozen_identity(

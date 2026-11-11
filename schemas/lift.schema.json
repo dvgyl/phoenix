@@ -15,6 +15,375 @@
     "call_edges": {"type": "array", "items": {"$ref": "#/$defs/call_edge"}}
   },
   "$defs": {
+    "evidence_text": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "type_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "path",
+        "name",
+        "kind",
+        "size",
+        "target",
+        "count"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^t(?:0|[1-9][0-9]{0,2})$"
+        },
+        "path": {
+          "$ref": "#/$defs/evidence_text"
+        },
+        "name": {
+          "$ref": "#/$defs/evidence_text"
+        },
+        "kind": {
+          "enum": [
+            "opaque",
+            "pointer",
+            "typedef",
+            "array",
+            "structure",
+            "union",
+            "function"
+          ]
+        },
+        "size": {
+          "type": "integer",
+          "minimum": -1,
+          "maximum": 2147483647
+        },
+        "target": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/evidence_text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "description": "A bounded type description. Size is in bytes. -1 means unknown. Only pointer, typedef, and array links are expanded, to at most 32 nodes per path. Composite members and function signatures stay opaque. IDs follow first encounter within the function."
+    },
+    "register_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "address",
+        "bits",
+        "base",
+        "least_bit"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/evidence_text"
+        },
+        "address": {
+          "$ref": "#/$defs/address"
+        },
+        "bits": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65536
+        },
+        "base": {
+          "$ref": "#/$defs/evidence_text"
+        },
+        "least_bit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        }
+      },
+      "description": "Register names and addresses for storage pieces and their base registers. This is not a complete language register map."
+    },
+    "storage_piece": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "address",
+        "size",
+        "register",
+        "stack_offset"
+      ],
+      "properties": {
+        "address": {
+          "$ref": "#/$defs/address"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192
+        },
+        "register": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/evidence_text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stack_offset": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9223372036854775808,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "description": "One VariableStorage varnode, in API order. Size is in bytes. Stack offsets use the Ghidra stack-space base, not an inferred runtime stack pointer. A null register preserves an unresolved register name or non-register storage."
+    },
+    "storage_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "size",
+        "forced_indirect",
+        "auto_parameter",
+        "pieces"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "unknown",
+            "bad",
+            "unassigned",
+            "void",
+            "assigned"
+          ]
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8192
+        },
+        "forced_indirect": {
+          "type": "boolean"
+        },
+        "auto_parameter": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/evidence_text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pieces": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/storage_piece"
+          }
+        }
+      }
+    },
+    "slot_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "type",
+        "storage"
+      ],
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/evidence_text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/evidence_text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "storage": {
+          "$ref": "#/$defs/storage_evidence"
+        }
+      }
+    },
+    "prototype_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "calling_convention",
+        "custom_storage",
+        "variadic",
+        "no_return",
+        "parameters",
+        "result"
+      ],
+      "properties": {
+        "source": {
+          "enum": [
+            "listing",
+            "decompiler"
+          ]
+        },
+        "calling_convention": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/evidence_text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "custom_storage": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "variadic": {
+          "type": "boolean"
+        },
+        "no_return": {
+          "type": "boolean"
+        },
+        "parameters": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/slot_evidence"
+          }
+        },
+        "result": {
+          "$ref": "#/$defs/slot_evidence"
+        }
+      }
+    },
+    "jump_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "site",
+        "targets",
+        "labels"
+      ],
+      "properties": {
+        "site": {
+          "$ref": "#/$defs/optional_address"
+        },
+        "targets": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "$ref": "#/$defs/optional_address"
+          }
+        },
+        "labels": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          }
+        }
+      },
+      "description": "HighFunction JumpTable arrays in API order. Labels are signed Java Integer values. Pair labels with targets only when the array lengths match. Repeated targets are valid. Null sites or targets remain unresolved. No exhaustive target-set claim is made."
+    },
+    "static_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "status",
+        "listing",
+        "decompiler",
+        "types",
+        "registers",
+        "jump_tables"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "status": {
+          "const": "proposal"
+        },
+        "listing": {
+          "$ref": "#/$defs/prototype_evidence"
+        },
+        "decompiler": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/prototype_evidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "types": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/type_evidence"
+          }
+        },
+        "registers": {
+          "type": "array",
+          "maxItems": 512,
+          "items": {
+            "$ref": "#/$defs/register_evidence"
+          }
+        },
+        "jump_tables": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/jump_evidence"
+          }
+        }
+      },
+      "description": "Optional static proposals, version 1. References are local to this function. The Python reader also checks identities, references, and total limits. These records do not establish verified C types or runtime coverage."
+    },
     "main_evidence": {
       "description": "Executable address passed in RDI to the glibc startup function.",
       "type": "object",
@@ -171,7 +540,8 @@
         "decompilation": {"$ref": "#/$defs/decompilation"},
         "instructions": {"type": "array", "items": {"$ref": "#/$defs/instruction"}},
         "blocks": {"type": "array", "items": {"$ref": "#/$defs/block"}},
-        "flow_edges": {"type": "array", "items": {"$ref": "#/$defs/flow_edge"}}
+        "flow_edges": {"type": "array", "items": {"$ref": "#/$defs/flow_edge"}},
+        "static_evidence": {"$ref": "#/$defs/static_evidence"}
       }
     },
     "import": {

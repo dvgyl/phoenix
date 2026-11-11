@@ -435,3 +435,424 @@
 - The handoff branch preserves the main revision freeze. It also carries
   the already published T1 hash commitments. The next thread must check
   the actual replay and review files before any M1 tag or main advance.
+
+## 2026-11-10. Exact replay failure and repair feedback correction
+
+- Continued from `origin/agent/thread-handoff`. Main stayed at `efcad05`
+  until its replay checks and final Astra review finished.
+- Original run `m1-t0-efcad05` scored Phoenix 17/20 and raw 8/20 fully
+  successful. Phoenix had two integrity failures and one behavior failure.
+  The corrected raw header closed the earlier baseline review finding.
+- Replay `m1-t0-replay-efcad05` did not reproduce. One stable record changed
+  from a measured behavior failure to `pipeline-failed`. The other 39
+  records matched. Final independent Astra review returned HOLD.
+  Matching success counts did not satisfy the exact replay requirement.
+- The full original model log stayed unchanged at SHA-256
+  `728cf1a3f10b21b54c7c747f7dabbbaada85c68b286110d5b865bfe77dd23f44`.
+  Replay created no model log. Both frozen reports remain intact.
+- An independent Standard-service Sol worker proved the development cause.
+  CMake elapsed-time text changed the next repair request. Exact ledger
+  lookup correctly raised `ReplayMissing`. The parent reran all six
+  synthetic diagnosis tests. All six passed without provider calls.
+- A separate Sol worker removed only the known CMake timing suffixes from
+  failed-build feedback before truncation. Raw diagnostics retain their
+  values. No source, outcome, ledger, or integrity check was relaxed.
+- The regression first produced six expected `ReplayMissing` failures.
+  The corrected focused suite passed all nine tests. The parent full
+  quality gate passed 401 tests with 25 opt-in skips and 90.01% evaluator
+  coverage. The unchanged protection test passed in the parent process.
+- A fresh independent Standard-service Sol reviewer passed the exact diff.
+  It ran the nine focused tests and 28 independent probes. It reproduced
+  the six timing failures with the base function. This review does not
+  certify M1. A new candidate measurement and exact replay are required.
+- The defect is tracked in
+  [issue 1](https://github.com/dvgyl/phoenix/issues/1).
+  Full review and test evidence remain under `audit/m1/` in the workspace.
+- Established a fresh independent Sol review after every major work block.
+  Astra milestone, algorithm, and integrity roles remain required.
+  All new CLI workers request Standard service. Fast mode and nested
+  agents are disabled. Source and held-out material stay private.
+
+## 2026-11-10. Evaluation capture binding and complete accounting
+
+- Worked only in `worktrees/m1-follow-up-review-e07ec17` at `baae648`.
+  Main remained frozen. No commit, push, delegation, or real evaluation ran.
+- Reproduced inherited findings R3 and R4 with the actual M1 coordinator and
+  synthetic captures, opaque bytes, and archives. R3 replaced a completed
+  report's source hash after a source and checkpoint change. R4 omitted a valid
+  task charge while the complete model log hash still matched. These probes
+  do not establish real source manipulation, real costs, or a budget bypass.
+- Added a separate capture binding for the complete ordered task roster and
+  every captured file. Check it on resume, before archive access, and before
+  report publication. Preserve atomic capture and freeze publication.
+- Added strict roster validation for the complete model log. Require each
+  reported summary to match the corresponding complete-log summary. Preserve
+  failed-call reservations and all existing accounting validation.
+- ADR 0021 records the data shape and compatibility limits. Older checkpoints
+  without the binding cannot migrate to this engine. Historical runs must use
+  their recorded revisions. Schema-1 report fields and scoring remain unchanged.
+- Synthetic regression and property tests cover replacement, interruption,
+  archive access, completed-report preservation, replay, and full accounting.
+  Detailed commands and outcomes are in
+  `$PHOENIX_ROOT/audit/evaluation-freeze-accounting`.
+- The focused suite passed 167 tests. Ruff, format, and strict mypy passed.
+  `scripts/check` reported 442 passed, 25 skipped, and one failure. Evaluator
+  coverage was 90.29%. The unchanged nested sandbox test failed because the
+  outer guard denied `sandbox_apply`. It was not excluded or modified.
+- Independent Sol review, Astra closure review, the full parent gate, combined
+  M2 integration review, and new candidate measurements remain parent gates.
+  No benchmark score or M1 acceptance is claimed.
+
+## 2026-11-10. Capture schema and replay type correction
+
+- The parent full gate for the initial binding correction passed 443 tests
+  with 25 opt-in skips. The unchanged protection test passed outside the
+  reviewer's outer sandbox. Evaluator line coverage was 90.29%.
+- Independent Astra review closed R3 and R4 within their isolated scope.
+  Independent Sol review held the binding reader. Boolean and floating-point
+  schema values and duplicate JSON fields were accepted. Eight rejection
+  regressions failed before the correction and passed after it.
+- The binding reader now rejects repeated fields at each JSON object. It
+  requires an integer schema value of 1. Raw binding bytes remain the frozen
+  identity. There is no checkpoint migration or retrospective binding.
+- Astra also found that the separate M2 stable projection used Python
+  dictionary equality for configuration values. The parent reproduced the
+  same weakness in M1. An integer and equal float, or a Boolean and equal
+  integer, could compare as equal. Two M1 rejection regressions failed.
+- Configuration and model-summary comparisons now use JSON serialization
+  with sorted keys and non-finite values prohibited. This preserves JSON
+  types. Existing stable result fields and exact model lookup are unchanged.
+- The corrected focused suite passed 52 tests. The parent full gate passed
+  453 tests with 25 opt-in skips and 90.39% evaluator line coverage. Ruff,
+  format and strict mypy passed. Evidence is in
+  `audit/evaluation-freeze-schema-fix/` outside the repository.
+- Fresh independent Sol and Astra review remain required for this exact
+  correction. Combined M2 integration and new measurements remain open.
+- At unchanged main `baae648`, public pipeline checks passed for both methods
+  in all four build configurations. Native CI run 42883642379 passed. The
+  native AMD64 and ARM64 M0 reports matched the current Mac M0 report.
+- Original `m1-t0-baae648` finished with Phoenix 17/20 and raw 8/20 fully
+  successful. Phoenix retained two `embedded_text` failures and one behavior
+  failure. Raw retained 12 compiler failures. Both methods had 792 eligible
+  cases, zero emulator disagreements and zero evaluation errors. Coverage
+  was 790/1079 recovered block entries. Its exact replay is active.
+- The original model ledger has 69 calls and $1.4249648 API-equivalent cost.
+  Its SHA-256 is
+  `56f1b86a7056cb03d2a3607ac4dae09bdbd1e6051f4baafa845fd9ed4a73851e`.
+  Unknown-cost reservations are zero. This run predates automatic capture
+  binding. No retrospective binding or milestone acceptance is claimed.
+
+## 2026-11-10. Completed M1 resume configuration check
+
+- Fresh independent Sol review passed the nine-file shared candidate.
+  It ran 65 fresh coordinator checks and 205 selected regressions.
+- Fresh Astra review held A-F1. Completed M1 resume checked ledger identity
+  but omitted the saved report configuration. Equal integer/float and
+  false/zero substitutions opened the archive and replaced the altered
+  report. The parent reproduced both failed rejection requirements.
+- The coordinator now reads the completed report once and compares its
+  configuration before capture reuse or archive access. It uses the existing
+  type-preserving JSON comparison. Ledger identity is checked as before.
+- Both rejection cases now pass. Tests also require no new capture, no
+  archive read and unchanged report bytes. The focused suite passed 54 tests.
+  The full parent gate passed 455 tests with 25 opt-in skips and 90.40%
+  evaluator line coverage. Ruff, format, strict mypy and protection passed.
+- Evidence is in `audit/evaluation-completed-resume-fix/`. Fresh Sol and
+  Astra review of this exact correction remain open. Prior HOLD reports
+  remain intact. Main and its active exact M1 replay remain unchanged.
+
+## 2026-11-10. Final shared evaluation review
+
+- Fresh independent Astra review passed the exact final nine-file candidate.
+  It reran six prior rejection requirements, 37 fresh coordinator controls,
+  68 preservation cases and 281 selected regressions. A-F1 is closed.
+- A different fresh independent Sol review also passed the exact candidate.
+  It ran 40 fresh probes and 281 selected regressions. Both reviewers checked
+  unchanged hashes before and after review. Both retained their separate
+  outer-guard protection failure. The parent full gate passed that test.
+- Reports are in `audit/evaluation-resume-closure-astra/` and
+  `audit/evaluation-resume-final-sol/`. Earlier HOLD reports remain intact.
+- Retained the reviewed correction on its branch. Main stays at `baae648`
+  through its active exact replay. The correction still needs public/native
+  checks, a new original evaluation, exact replay and milestone review.
+  Combined M2 integration also requires a full gate and fresh reviews.
+
+## 2026-11-10. Exact timing-correction replay and shared integration
+
+- Exact replay `m1-t0-replay-baae648` reproduced every stable field from
+  `m1-t0-baae648`. Both retain Phoenix 17/20 and raw 8/20 fully successful.
+  Phoenix retains two `embedded_text` failures and one behavior failure.
+  Raw retains 12 compiler failures. Both methods have 792 eligible cases,
+  zero emulator disagreements and zero evaluation errors. Recovered block
+  coverage remains 790/1079.
+- The original model log stayed unchanged at SHA-256
+  `56f1b86a7056cb03d2a3607ac4dae09bdbd1e6051f4baafa845fd9ed4a73851e`.
+  Replay created no model log. All 40 per-task summaries reconcile with
+  the complete log. Original use is 69 calls and $1.4249648 API-equivalent
+  cost, with zero unknown-cost reservations.
+- An independent read-only capture observation remained unchanged. It was
+  made during the original run. It does not prove a freeze before held-out
+  access. No historical run file was modified or given a new binding.
+  Full evidence is in `audit/m1/final-baae648/`.
+- Kept main and accepted images fixed until exact replay and these checks
+  finished. Then integrated reviewed shared correction `05d362f` by a
+  fast-forward merge. The parent gate and both fresh independent reviews
+  passed. A new guarded original and exact replay are still required.
+  No M1 tag or milestone acceptance is claimed.
+- Pushed matrix `11da284` and observer helper `c76cc59` on separate branches.
+  Final matrix Sol and Astra reviews passed. Its merge with the shared
+  guards is isolated and uncommitted. Combined review remains open.
+- Started the reusable observer controls after the replay released the VM.
+  A separate Sol worker is implementing the stripped-binary evidence adapter
+  from the completed Astra design. Private Astra authors are preparing T2
+  and qualifying T3. Their sources and detailed logs remain sealed.
+
+## 2026-11-10. Accept M1 at the measured revision
+
+- The guarded original and exact replay at `6897e47` each returned
+  Phoenix 17/20 and Ghidra-raw 8/20 fully successful. The threshold is
+  16/20 Phoenix variants. All 40 stable rows and all stable report fields
+  match. Each method measured 792 eligible cases with no emulator
+  disagreements or evaluation errors. Coverage is 790/1079 recovered
+  block entries.
+- Phoenix retains two `embedded_text` failures and one behavior failure.
+  Raw retains 12 variants with compiler errors. Phoenix compiled 80/80
+  rebuilds with eight warnings. Raw compiled 48/80 rebuilds. Every
+  compiled raw rebuild matched its eligible cases.
+- The parent checked the checkpoint hashes and report fields for all 40
+  rows in each run. Both bindings stayed unchanged. Every model summary
+  reconciles with the complete original log. The log stayed unchanged
+  at SHA-256
+  `ceed478c6f304e4cb388bc6b8599b475ea5e8b701f9d76e1d1b3c7024a2771db`.
+  Replay created no model log. Original cost is $1.7865956 API-equivalent
+  across 86 calls, with no unknown-cost reservations.
+- Public pipeline checks passed for both methods in all four build
+  configurations. Native CI run 42905864046 passed. Both native M0
+  reports match Mac run `m0-3df6909b7713419c9e23110752fb9c4f`.
+- Independent Astra and Sol passed the exact measured source and frozen
+  evidence. The known pre-freeze checkpoint defect and the later
+  synthetic retry defect do not invalidate these checked results.
+  Both actual invocations exited zero with no recorded rejected attempt
+  or restart. Preserve the defects and correct them before future sealed
+  measurement. The verdict does not claim general filesystem integrity.
+- The `m1` tag identifies the measured commit only. Do not assign these
+  results to a later evaluator revision. Earlier HOLDs remain valid for
+  their own runs. Frozen category, binding, and review evidence is under
+  `audit/m1/final-6897e47/` and both milestone review directories outside
+  the repository. No sealed source or held-out input was published.
+- The Linux VM then built all 16 public E1 fixtures. Private T2 validation
+  now has the VM. Host static checks passed the exact E1 fixture matrix.
+  M2 evaluation and production recovery remain open.
+
+## 2026-11-11. Preserve accepted capture evidence on retry
+
+- Integrated the shared capture checks from the reviewed checkpoints
+  `f5f0608` and `99d581b`. The exact source, tests, and capture ADR
+  match the latter branch. The original and replay measurements stay
+  at `6897e47`, and the `m1` tag does not move.
+- The capture reader parses and hashes the same bytes. The freeze
+  compares them with the returned submission before opening held-out
+  archives. A contradiction creates a separate rejection marker and
+  blocks retry. It does not overwrite the existing binding.
+- Independent Sol and Astra reviews passed the exact source and test
+  files. The isolated parent gate passed 533 tests, 25 opt-in skips,
+  and 90.59% evaluator line coverage. Preserve all earlier failed
+  evidence. No new sealed result is claimed.
+
+## 2026-11-11. Integrate reviewed static lift evidence
+
+- Integrated the exact U1 source, tests, schema, and ADRs from
+  `49202a7`. Independent Sol and Astra reviews passed. The local
+  publication check for the shared evaluator had one test deadline
+  failure under concurrent load. The serial retry passed without a
+  code change. Keep the first failure in the session record.
+- The mapping companion checks Ghidra instruction addresses against
+  original ELF file spans. The opt-in plan binds supported import
+  transfers to their original instruction and relocation evidence.
+  Unproved transfers remain gaps.
+- The public static gate used GCC and Clang for 16 PIE, fixed-entry,
+  PLT, GOT, standard, and split-layout combinations. It retained
+  1,404 original instruction witnesses. The exact controls and prior
+  transport failures are recorded in `audit/m2-production-u1-e1/`.
+- This integration does not enable switch recovery or production
+  traces. No target execution or new benchmark result is claimed.
+
+## 2026-11-11. Integrate reviewed static switch evidence
+
+- Integrated the exact recognizer files from `4978a41` and optional
+  graph publication files from `81c9cfe`. Fresh independent Sol
+  review passed both static blocks. Preserve all earlier HOLDs.
+- The recognizer uses admitted original instructions, a read-only
+  table, and known transfer evidence. It assumes ordinary function
+  entry and return behavior. It retains every proved selector,
+  including repeated destinations.
+- The optional export binds graph files to the same lift generation.
+  The saved public GCC and Clang plans retain all 24 cases and both
+  defaults. The ordinary lift bytes match the earlier exports.
+- Production C generation does not use this evidence yet. The
+  default pipeline and M1 tag are unchanged. No target ran or
+  new benchmark result is claimed.
+
+## 2026-11-11. Integrate the reviewed M2 evaluator
+
+- Integrated exact evaluator source, tests, and evaluation ADRs from
+  `05979af`. Independent Sol and Astra reviews passed. Keep earlier
+  HOLDs and timing failures. The M1 tag stays at `6897e47`.
+- The evaluator fixes the T0 and T1 roster, verifies the exact replay
+  ancestry and origin log, and checks bound evidence before each archive
+  and report publication. A replay cannot select a new ledger identity.
+  Restore the exact origin bytes before resuming an interrupted replay.
+- Integrated only the committed T1 archive hashes and allowed aggregate
+  records. No sealed source or held-out input was read. The Linux VM
+  still belongs to private T2 validation. Worker refresh and public
+  checks are required before the next sealed measurement.
+- This is evaluator code approval. No M2 milestone result or tag is
+  claimed.
+
+## 2026-11-11. Remove a Mac-only path from the replay tests
+
+- Both native CI jobs for `3880478` failed in the same 13 replay property
+  tests. The tests required `PHOENIX_ROOT` and a scratch directory named
+  for an earlier review. The evaluator code did not cause the failure.
+- Reproduced the failure with `PHOENIX_ROOT` unset. Replaced the test path
+  with the standard temporary directory. All 13 affected tests then
+  passed with the variable unset. On the Mac, `TMPDIR` still points to
+  the external workspace. The measured M1 revision remains unchanged.
+
+## 2026-11-11. Integrate the reviewed observation wire reader
+
+- Fresh Sol passed the exact structural reader at `b09c23d`.
+  Its 14 existing tests and 596 added controls passed. The reader
+  checks the wire structure and identity. It does not establish
+  runtime mapping, frame validity, accepted outcomes, or live support.
+- Integrated the exact reader and tests. The static observation plan
+  remains on its isolated correction branch. No target ran.
+- The same Sol review passed the test portability correction at
+  `53ee7de`. Native CI run 42943227090 passed on x86-64 and ARM64.
+  The native outcome comparator passed. Both downloaded artifact
+  hashes match GitHub's digests.
+- Native public case counts and full outcome digests equal the
+  historical Mac M0 run. The three-mode comparator correctly rejected
+  different evaluator revisions and worker sources. Do not count this
+  as a same-revision Mac check. That check still needs refreshed images
+  after the private author releases the Linux VM.
+
+## 2026-11-11. Integrate reviewed checked switch generation
+
+- Fresh Sol passed source observations at `1a5df5b`, schema 3
+  publication at `5ede39e`, and bounded binding, emission, and the
+  protected writer at `328b4f0`. Earlier HOLDs remain in the audit.
+  Integrated the exact reviewed source, tests, and two ADRs.
+- The reader proves exact identified UTF-8 source slices. The bounded
+  parser proves complete C syntax and exact marker correspondence.
+  Schema 3 binds ordinary and normalized artifacts to one generation.
+- The emitter retains every proved label and the unchanged arm, break,
+  and return bytes. Protected definitions and typed data precede model
+  declarations. The model cannot replace those definitions in cleanup
+  or repair. Both saved public fragments and writers passed the review.
+- Fresh controls rejected stale source, conflicting markers, wrong
+  selectors and data widths, aliasing, relocation overlaps, changed
+  protected bytes, and model replacements. Legacy initial and repair
+  prompts and project bytes stayed identical in direct comparisons.
+- The runtime pipeline caller remains isolated. No Linux behavior or
+  new evaluation result is claimed. M2 acceptance remains open.
+
+## 2026-11-11. Integrate reviewed physical transfer admission
+
+- Fresh Sol passed `4697be6`. It reproduced the corrected false-call,
+  skipped-thunk, replaced-proof, and continuation controls. The prior
+  HOLDs stay unchanged. Integrated the reviewed plan, classifier, and
+  tests. No target ran.
+- The shared import file also needs the switch proof's relocation
+  write-size metadata. A direct patch failed because main had a
+  different earlier binder. A three-way application exposed three
+  binder conflicts. Selected the reviewed binder in those conflicts.
+- Compared the combined import file with `4697be6`. Its only two
+  additions are the existing relocation write-size field and the
+  existing width value returned by the relocation reader. The
+  combined focused suite passed all 277 tests.
+- Shared proof revalidation and physical byte classification now gate
+  import and observation plans. Static imports still identify symbol
+  requests only. Live capture, runtime mapping, and frame admission
+  remain open. No M2 result or new milestone tag is claimed.
+
+## 2026-11-11. Integrate the reviewed opt-in switch caller
+
+- Fresh Sol passed the exact caller at `d3485cd`. It passed 96
+  focused tests and 81 fresh controls. It checked malformed generation
+  selectors, source and settings changes, per-function gaps, repair and
+  replay persistence, and final source identity. Integrated the exact
+  caller, tests, README option, and ADR 0027.
+- The new option remains off by default. It cannot change Ghidra-raw.
+  Resume and replay retain the recorded value. The checked path reads
+  one schema 3 generation and passes its retained definitions through
+  every cleanup and repair. The package remains the tested snapshot.
+- Both actual saved public plans retain their complete protected
+  source and 12 selectors. Host syntax checks and synthetic orchestration
+  do not establish target behavior. Public dual-oracle, four-way build,
+  unvisited-case, and duplicate-destination gates remain open.
+- The earlier combined main transfer plans also matched all 16 reviewed
+  public plans byte for byte. Their proof and relocation-width metadata
+  stayed consistent. No target ran or sealed result changed.
+
+## 2026-11-11. Integrate the reviewed observation mapping gate
+
+- Fresh Sol passed the exact mapped-observation gate at `d5e1870`.
+  It passed 42 existing observation tests and 113 fresh controls.
+  Integrated the exact source, tests, and ADR 0029.
+- The gate binds raw wire, source, plan, invocation, and runtime identity.
+  It requires the full supplied observer outcome to match the accepted
+  development outcome. It checks runtime bias, executable ranges,
+  opaque external targets, event roles, and transfer confirmations.
+- An internal target identifies executable bytes. It does not establish
+  an instruction start or function entry. The mapped result does not
+  admit frames, target closure, runtime calibration, or inference.
+  A later collector and receipt must bind actual capture evidence.
+- No target ran. The separate Corpus Author health check reported a
+  healthy bounded validation batch, progress, and no owner action.
+  The Linux VM remains private. Source and held-out inputs stay sealed.
+
+## 2026-11-11. Allow the native image checks to finish
+
+- Native run 42954976284 passed its arm64 job. The amd64 job passed the
+  source gate and worker image build. It reached the 30-minute job limit
+  while downloading pinned integrity toolchain packages. The log reports
+  cancellation at 04:17:07 UTC. No amd64 M0 report was produced.
+- Increased the native job limit to 60 minutes. Every existing build,
+  integrity, M0, and outcome comparison step remains required. The package
+  pins and verification rules remain unchanged. The new run must pass.
+
+## 2026-11-11. Integrate the reviewed public switch driver
+
+- Fresh Sol passed the complete public caller gate at `63515a7`.
+  Its host checks passed 497 tests with one optional Ghidra check skipped.
+  All 64 independent host controls passed. These are software controls.
+  No target, model provider, Docker command, or Ghidra process ran.
+- Integrated the exact reviewed source and tests. Clarified the source
+  check as byte retention. An inactive definition can retain those bytes.
+  The complete driver keeps both positive and negative behavior checks.
+- The 56-case public roster has 53 development cases. Selector 11 remains
+  unvisited during development. All four builds, both oracle engines,
+  exact replay, and the compiled negative control remain required.
+- The Linux VM stays with the private T2 Author. The option remains off
+  by default. No new sealed measurement or later milestone is accepted.
+
+## 2026-11-11. Prepare the requested continuation handoff
+
+- Merged accepted main `3939fbc` into the handoff branch. Preserved both
+  historical log sequences. Main implementation and milestone tags remain
+  unchanged by this documentation work.
+- Updated the native check record. Run 42959931595 passed both native
+  architectures and their outcome comparison at exact `3939fbc`. Verified
+  archive and report hashes remain in `audit/m2-ci-3939fbc`.
+- Recorded scope `09e984b`, pure frames `b85feba`, capture `9672a0f`, and
+  public fixtures `cd59f7f`. Kept pending code separate from accepted main.
+- The full capture review was blocked by provider screening. No code
+  verdict was produced. A distinct parser-only review passed 69 existing
+  tests and 128 independent tests. The full review gate remains open.
+- Preserved 29 old public source draft files in eight archival patches.
+  Each patch applies to its recorded base. Verified every file byte and
+  executable mode through a separate index. The original worktrees remain.
+- Preserved corpus sealing. Read only approved private Author progress.
+  The private T2 Author remains the VM owner. Later milestones and all
+  requirements in SPEC section 9 remain open.

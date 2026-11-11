@@ -243,3 +243,50 @@ def test_replay_rejects_a_conflicting_destination_checkpoint(
     assert "replay checkpoint differs" in capsys.readouterr().err
     runtime.assert_not_called()
     reconstruct.assert_not_called()
+
+
+@pytest.mark.parametrize("command", ("--resume", "--replay"))
+def test_cli_rejects_a_changed_checked_switch_setting(
+    saved_run: tuple[Path, Path, Mock, Mock],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    command: str,
+) -> None:
+    _, _, runtime, reconstruct = saved_run
+    monkeypatch.setattr(
+        sys, "argv", ["phoenix", "run", command, "case", "--checked-switches"]
+    )
+    assert main() == 2
+    assert "recorded checked_switches" in capsys.readouterr().err
+    runtime.assert_not_called()
+    reconstruct.assert_not_called()
+
+
+def test_cli_records_and_replays_checked_switch_generation(
+    saved_run: tuple[Path, Path, Mock, Mock],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _, _, _, reconstruct = saved_run
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "phoenix",
+            "run",
+            str(tmp_path / "public.elf"),
+            "--run-id",
+            "checked",
+            "--checked-switches",
+            "--max-repairs",
+            "0",
+        ],
+    )
+    assert main() == 0
+    record = json.loads((tmp_path / "runs/checked/public/run.json").read_text())
+    assert record["checked_switches"] is True
+    assert reconstruct.call_args.args[4].checked_switches is True
+    reconstruct.reset_mock()
+    monkeypatch.setattr(sys, "argv", ["phoenix", "run", "--replay", "checked"])
+    assert main() == 0
+    assert reconstruct.call_args.args[4].checked_switches is True

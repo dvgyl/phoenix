@@ -1,0 +1,252 @@
+{
+  "schema": "phoenix-public-draft-checkpoints-1",
+  "purpose": "Preserve old public source drafts. These patches are not accepted code.",
+  "worktrees": [
+    {
+      "worktree": "/Volumes/PhoenixWork/worktrees/m1-analyze",
+      "branch": "agent/m1-analyze",
+      "base_commit": "55626073e4693193e5e4a64e4317e31767c9d73a",
+      "patch": "m1-analyze.patch",
+      "patch_sha256": "87345bd9d0081f0bb34b6c83377581fb0962add822cadaedbf5d1f82e8b90bff",
+      "files": [
+        {
+          "path": "phoenix/analyze/__init__.py",
+          "bytes": 5679,
+          "sha256": "39c1b2454b5fa67bd1981c503b40fb7555b273cc70e17cb1309e73b215ea3458",
+          "executable": false
+        },
+        {
+          "path": "tests/test_analyze.py",
+          "bytes": 6436,
+          "sha256": "ffd0901f39a80e354c15f9fd75869cb1d61e268c9dc824d111f99198320dc6f4",
+          "executable": false
+        }
+      ]
+    },
+    {
+      "worktree": "/Volumes/PhoenixWork/worktrees/m1-compiler-integrity",
+      "branch": "agent/m1-compiler-integrity",
+      "base_commit": "80f4de0e3cc274602dd7dee7da6a7032e1080423",
+      "patch": "m1-compiler-integrity.patch",
+      "patch_sha256": "b0dffac1b0f934bdc2d49e8aa114aa71b5cd1148e113103fb1f1424dc47661c6",
+      "files": [
+        {
+          "path": "containers/Dockerfile.integrity",
+          "bytes": 2274,
+          "sha256": "c07b039c7cdc7cdef8f6a2cb00c2216d7f5bc93ab3fbdc99d1e7302d3fb82b19",
+          "executable": false
+        },
+        {
+          "path": "containers/c-integrity.cc",
+          "bytes": 25089,
+          "sha256": "4f3107ac60f113b626e5765ff7cca0d150869c610c7afc3e670b94efcc2c4c77",
+          "executable": false
+        },
+        {
+          "path": "scripts/build-integrity",
+          "bytes": 1156,
+          "sha256": "3ce43ce08405a77a2d771b416405dd82e019f588919a1a1a345f4dd03b0e9d8b",
+          "executable": true
+        },
+        {
+          "path": "tests/test_compiler_integrity.py",
+          "bytes": 14609,
+          "sha256": "9233d24dc6f6494254bb20c1a7ac266acdbcaecbece1bd42365def19d3d0610d",
+          "executable": false
+        },
+        {
+          "path": "tools.lock",
+          "bytes": 1062,
+          "sha256": "72ad852e83058857db2b3a0336d3fc522fb4dd5f152d35fe105f3a9bc9538686",
+          "executable": false
+        }
+      ]
+    },
+    {
+      "worktree": "/Volumes/PhoenixWork/worktrees/m1-heldout-pair",
+      "branch": "agent/m1-heldout-pair",
+      "base_commit": "80f4de0e3cc274602dd7dee7da6a7032e1080423",
+      "patch": "m1-heldout-pair.patch",
+      "patch_sha256": "646dfcb1b6da90dffdf0888b2bfeadd209d3a3b8e895eedb85612e0b7e265e1c",
+      "files": [
+        {
+          "path": "phoenix_eval/pair.py",
+          "bytes": 8951,
+          "sha256": "0956b601b0aa7a983f7cc861d42d71f49fbebe853a3cc750f23519066aec7d67",
+          "executable": false
+        },
+        {
+          "path": "tests/test_pair.py",
+          "bytes": 12714,
+          "sha256": "84af409cd0eeae5ee1b3041a92d25d8814352977cf69f6b7fc13ec53bb92d307",
+          "executable": false
+        }
+      ]
+    },
+    {
+      "worktree": "/Volumes/PhoenixWork/worktrees/m1-immutable-inputs",
+      "branch": "agent/m1-immutable-inputs",
+      "base_commit": "2ce518abd1548b9fd3f70f2d2530ab20c0f6fbc1",
+      "patch": "m1-immutable-inputs.patch",
+      "patch_sha256": "cea2997a86017c6e187602afaeb0de0c66b25d8b229d3f3764796a76e95300ff",
+      "files": [
+        {
+          "path": "phoenix_eval/build.py",
+          "bytes": 5983,
+          "sha256": "87b044bc483dc1ef2e28b3b843b5db47e18e47c42dea9987946308b2a413a296",
+          "executable": false
+        },
+        {
+          "path": "phoenix_eval/coverage.py",
+          "bytes": 8051,
+          "sha256": "9ac9f531f7e50b55ecd28a00e31565ff0d0f3daddf5319b32f917a47bbfef8af",
+          "executable": false
+        },
+        {
+          "path": "phoenix_eval/docker.py",
+          "bytes": 6327,
+          "sha256": "2993e2988969260c63f6ab9ab8c26144b6aaf7a8e08302b4fffa7ff5fa326132",
+          "executable": false
+        },
+        {
+          "path": "phoenix_eval/pair.py",
+          "bytes": 10117,
+          "sha256": "43cc10706e98795be16c5af07524ceb1e23e3922112c6b0e079acdc2fe89e719",
+          "executable": false
+        },
+        {
+          "path": "tests/test_build.py",
+          "bytes": 3311,
+          "sha256": "955a1890daedafc2486e1acce02ce493e445bb2644f700673eda90920d110efe",
+          "executable": false
+        },
+        {
+          "path": "tests/test_coverage.py",
+          "bytes": 6047,
+          "sha256": "824d0ce1d133acc1bce29930b0fdcbf7079a1ae36d1a56b101b859c5770a30f9",
+          "executable": false
+        },
+        {
+          "path": "tests/test_docker.py",
+          "bytes": 4775,
+          "sha256": "f2818ba3885d2a584704d807e80b3498158c38566fcff17009e8f4c7490bd38f",
+          "executable": false
+        },
+        {
+          "path": "tests/test_pair.py",
+          "bytes": 17467,
+          "sha256": "bb4f0aa21619dc81b87ebc670615d37748084c8e2a7695f79c29dc0b0457461f",
+          "executable": false
+        }
+      ]
+    },
+    {
+      "worktree": "/Volumes/PhoenixWork/worktrees/m1-ingest",
+      "branch": null,
+      "base_commit": "4f5e2e4d1f4fe61eaa7be0ad9107c16c49395fef",
+      "patch": "m1-ingest.patch",
+      "patch_sha256": "b94c4f206d71c3d8090b679b06d24f392e936dbf7b776cfb3d13e1f45be50d7d",
+      "files": [
+        {
+          "path": "phoenix/ingest/__init__.py",
+          "bytes": 14835,
+          "sha256": "0f7f44255edc0419352ddbfd3c80df8e8f03ca48b0e6bd372ff13c189ce366e7",
+          "executable": false
+        },
+        {
+          "path": "tests/test_ingest.py",
+          "bytes": 8224,
+          "sha256": "707b1bf223ff5b21cff6e7dfafd1405ebe92429fde9710904b7dac0f5620f036",
+          "executable": false
+        }
+      ]
+    },
+    {
+      "worktree": "/Volumes/PhoenixWork/worktrees/m1-integrity",
+      "branch": null,
+      "base_commit": "4f5e2e4d1f4fe61eaa7be0ad9107c16c49395fef",
+      "patch": "m1-integrity.patch",
+      "patch_sha256": "f6fbd972e68d8ac967d583469c3aae2c987474e74f5db9a35084490ce8f5e0b4",
+      "files": [
+        {
+          "path": "phoenix_eval/integrity.py",
+          "bytes": 20297,
+          "sha256": "173af728b3ffa2fe3e9f54611a8c396dc66d5b6b82a6a5ec49a4b9a0d660dc1b",
+          "executable": false
+        },
+        {
+          "path": "tests/test_integrity.py",
+          "bytes": 12888,
+          "sha256": "7457fda610b2210fe3e62f5c941fb74a6602941f4916370cecb7ab80309c331f",
+          "executable": false
+        }
+      ]
+    },
+    {
+      "worktree": "/Volumes/PhoenixWork/worktrees/m1-lift",
+      "branch": null,
+      "base_commit": "4f5e2e4d1f4fe61eaa7be0ad9107c16c49395fef",
+      "patch": "m1-lift.patch",
+      "patch_sha256": "a93d0dc73d51c622bb9b292bf1dfd23907b7cb955eb38bf220a27ce5746b804b",
+      "files": [
+        {
+          "path": "ghidra_scripts/ExportLift.java",
+          "bytes": 16933,
+          "sha256": "aa4e171e93881fa2ef01ec7416bf37e610401e7f188372750c6dec73b9d69bf5",
+          "executable": false
+        },
+        {
+          "path": "phoenix/lift/__init__.py",
+          "bytes": 3072,
+          "sha256": "7c41fd9d1940f670c58254d686820c3f715705618ba23deb5f47e30612e75fc7",
+          "executable": false
+        },
+        {
+          "path": "schemas/lift.schema.json",
+          "bytes": 8213,
+          "sha256": "8e8d50d8dd5fa3eded4e803c1be470a3587ba7fa94ce2fd7b43f1d44c785b798",
+          "executable": false
+        },
+        {
+          "path": "tests/test_lift.py",
+          "bytes": 5742,
+          "sha256": "789c216ac6753dd37c082df5b449656274521b99ba466abcdf2b63bf7e58577d",
+          "executable": false
+        }
+      ]
+    },
+    {
+      "worktree": "/Volumes/PhoenixWork/worktrees/m1-pipeline-identity",
+      "branch": "agent/m1-pipeline-identity",
+      "base_commit": "2ce518abd1548b9fd3f70f2d2530ab20c0f6fbc1",
+      "patch": "m1-pipeline-identity.patch",
+      "patch_sha256": "92467023b8b093ed48e682d30434aa1bad24ccac6f53d6a567b460302805e8c3",
+      "files": [
+        {
+          "path": "phoenix/__main__.py",
+          "bytes": 13642,
+          "sha256": "57d3231b1a80ef449d1c5834cf7288a0e6256975bce725b17128b1f89b2368e0",
+          "executable": false
+        },
+        {
+          "path": "phoenix_eval/provenance.py",
+          "bytes": 4660,
+          "sha256": "51247db926b14f5a32c00dac45c281bb2d59d25145149cf85502feb49dcd182f",
+          "executable": false
+        },
+        {
+          "path": "tests/test_cli.py",
+          "bytes": 6894,
+          "sha256": "484c83cfa86bf32827e21bddd9dfedc91a6c63480693b76c36a1d332b440a269",
+          "executable": false
+        },
+        {
+          "path": "tests/test_provenance.py",
+          "bytes": 3558,
+          "sha256": "ebe7a0fe737a1f7aa1044d75c5ac35732c3be2ff0d5e33ceb85796156e5a6374",
+          "executable": false
+        }
+      ]
+    }
+  ]
+}

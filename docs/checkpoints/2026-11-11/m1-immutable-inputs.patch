@@ -1,0 +1,486 @@
+diff --git a/phoenix_eval/build.py b/phoenix_eval/build.py
+index c9c7243..bc7f5fc 100644
+--- a/phoenix_eval/build.py
++++ b/phoenix_eval/build.py
+@@ -51,0 +52,6 @@ class BuildResult:
++@dataclass(frozen=True)
++class ProjectSnapshot:
++    files: tuple[tuple[str, bytes], ...]
++    archive: bytes
++
++
+@@ -77 +83,2 @@ def project_files(project: Path) -> dict[str, bytes]:
+-def project_archive(project: Path) -> bytes:
++def snapshot_project(project: Path) -> ProjectSnapshot:
++    files = tuple(project_files(project).items())
+@@ -80 +87 @@ def project_archive(project: Path) -> bytes:
+-        for name, data in project_files(project).items():
++        for name, data in files:
+@@ -86 +93,6 @@ def project_archive(project: Path) -> bytes:
+-    return output.getvalue()
++    return ProjectSnapshot(files, output.getvalue())
++
++
++def project_archive(project: Path | ProjectSnapshot) -> bytes:
++    snapshot = snapshot_project(project) if isinstance(project, Path) else project
++    return snapshot.archive
+@@ -90 +102 @@ def build_project(
+-    project: Path,
++    project: Path | ProjectSnapshot,
+diff --git a/phoenix_eval/coverage.py b/phoenix_eval/coverage.py
+index c8aeff8..29e1df2 100644
+--- a/phoenix_eval/coverage.py
++++ b/phoenix_eval/coverage.py
+@@ -9 +9 @@ from phoenix_eval.case import CaseResult, Invocation
+-from phoenix_eval.docker import Engine, docker_cli, run_batch
++from phoenix_eval.docker import Engine, docker_cli, read_program, run_batch
+@@ -91,2 +91,2 @@ def read_executable_bounds(program: bytes) -> tuple[int, int]:
+-def inspect_x86(binary: Path, image: str | None = None) -> BlockInventory:
+-    program = binary.read_bytes()
++def inspect_x86(binary: Path | bytes, image: str | None = None) -> BlockInventory:
++    program = read_program(binary)
+diff --git a/phoenix_eval/docker.py b/phoenix_eval/docker.py
+index f5d57c8..1e991e6 100644
+--- a/phoenix_eval/docker.py
++++ b/phoenix_eval/docker.py
+@@ -121,0 +122,9 @@ def docker_args(
++def read_program(binary: Path | bytes) -> bytes:
++    if isinstance(binary, Path):
++        with binary.open("rb") as file:
++            binary = file.read(MAX_PROGRAM_BYTES + 1)
++    if not 0 < len(binary) <= MAX_PROGRAM_BYTES:
++        raise ValueError("Invalid program size.")
++    return binary
++
++
+@@ -123 +132 @@ def run_batch(
+-    binary: Path,
++    binary: Path | bytes,
+@@ -134,4 +143 @@ def run_batch(
+-    with binary.open("rb") as file:
+-        program = file.read(MAX_PROGRAM_BYTES + 1)
+-    if not 0 < len(program) <= MAX_PROGRAM_BYTES:
+-        raise ValueError("Invalid program size.")
++    program = read_program(binary)
+@@ -189 +195 @@ def run_cases(
+-    binary: Path,
++    binary: Path | bytes,
+diff --git a/phoenix_eval/pair.py b/phoenix_eval/pair.py
+index 328320b..1e0461a 100644
+--- a/phoenix_eval/pair.py
++++ b/phoenix_eval/pair.py
+@@ -8,0 +9 @@ from enum import StrEnum
++from hashlib import sha256
+@@ -12 +13,6 @@ from pathlib import Path
+-from phoenix_eval.build import BuildResult, build_project
++from phoenix_eval.build import (
++    BuildResult,
++    ProjectSnapshot,
++    build_project,
++    snapshot_project,
++)
+@@ -15 +21 @@ from phoenix_eval.coverage import BlockInventory, inspect_x86
+-from phoenix_eval.docker import MAX_BATCH, Engine, run_cases
++from phoenix_eval.docker import MAX_BATCH, Engine, read_program, run_cases
+@@ -29,0 +36 @@ class BuildReport:
++    executable_sha256: str | None = None
+@@ -51 +58 @@ def _run(
+-    binary: Path,
++    binary: bytes,
+@@ -93 +100 @@ def _originals(
+-    original: Path,
++    original: bytes,
+@@ -151 +158 @@ def _evaluate_build(
+-    project: Path,
++    project: ProjectSnapshot | None,
+@@ -163 +170 @@ def _evaluate_build(
+-            if destination.exists(follow_symlinks=False)
++            if project is None or destination.exists(follow_symlinks=False)
+@@ -179,0 +187,6 @@ def _evaluate_build(
++    try:
++        program = read_program(build.executable)
++    except (OSError, ValueError):
++        return BuildReport(
++            architecture, compiler, True, build.warnings, 0, 1, {"build_error": 1}
++        )
+@@ -183 +196 @@ def _evaluate_build(
+-    rebuilt = _run(destination, tuple(case for case, _ in eligible), engine, image)
++    rebuilt = _run(program, tuple(case for case, _ in eligible), engine, image)
+@@ -195 +208,8 @@ def _evaluate_build(
+-        architecture, compiler, True, build.warnings, matched, errors, dict(failures)
++        architecture,
++        compiler,
++        True,
++        build.warnings,
++        matched,
++        errors,
++        dict(failures),
++        executable_sha256=sha256(program).hexdigest() if eligible else None,
+@@ -200,2 +220,2 @@ def evaluate_pair(
+-    original: Path,
+-    project: Path,
++    original: Path | bytes,
++    project: Path | ProjectSnapshot,
+@@ -209,0 +230 @@ def evaluate_pair(
++    The executable digest identifies the bytes supplied to the behavior checks.
+@@ -221,0 +243,9 @@ def evaluate_pair(
++    try:
++        program = read_program(original)
++    except (OSError, ValueError):
++        program = None
++    try:
++        snapshot = snapshot_project(project) if isinstance(project, Path) else project
++    except (OSError, ValueError):
++        snapshot = None
++
+@@ -223 +253 @@ def evaluate_pair(
+-    if cases:
++    if cases and program is not None:
+@@ -225 +255 @@ def evaluate_pair(
+-            inspected = inspect_x86(original, image_ids["amd64"])
++            inspected = inspect_x86(program, image_ids["amd64"])
+@@ -231,3 +261,10 @@ def evaluate_pair(
+-    eligible, disagreements, original_errors, covered = _originals(
+-        original, cases, engine, image_ids, inventory
+-    )
++    if program is None:
++        eligible: list[tuple[Invocation, Outcome]] = []
++        disagreements = covered = 0
++        original_errors: Counter[str] = Counter()
++        if cases:
++            original_errors["worker_error"] = len(cases)
++    else:
++        eligible, disagreements, original_errors, covered = _originals(
++            program, cases, engine, image_ids, inventory
++        )
+@@ -236 +273 @@ def evaluate_pair(
+-            project,
++            snapshot,
+diff --git a/tests/test_build.py b/tests/test_build.py
+index 447c771..6719af6 100644
+--- a/tests/test_build.py
++++ b/tests/test_build.py
+@@ -1,0 +2,2 @@ import subprocess
++import tarfile
++from io import BytesIO
+@@ -7 +9 @@ import pytest
+-from phoenix_eval.build import build_project
++from phoenix_eval.build import build_project, project_archive, snapshot_project
+@@ -57,0 +60,30 @@ def test_only_a_successful_build_for_the_selected_architecture_emits_an_elf(
++
++
++def test_build_uses_captured_project_archive(
++    project: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    snapshot = snapshot_project(project)
++    assert project_archive(project) == snapshot.archive
++    (project / "src/main.c").write_text("int main(void) { return 1; }\n")
++    assert project_archive(project) != snapshot.archive
++
++    runner = Mock(return_value=subprocess.CompletedProcess(("docker",), 1, b"", b""))
++    monkeypatch.setattr(subprocess, "run", runner)
++    build_project(snapshot, project / "program", Engine.ARM64, Compiler.GCC)
++
++    payload = runner.call_args.kwargs["input"]
++    assert payload == snapshot.archive
++    with tarfile.open(fileobj=BytesIO(payload)) as archive:
++        captured = {}
++        for entry in archive:
++            stream = archive.extractfile(entry)
++            assert stream is not None
++            captured[entry.name.removeprefix("project/")] = stream.read()
++    assert (
++        tuple(captured.items())
++        == snapshot.files
++        == (
++            ("CMakeLists.txt", b"add_executable(program src/main.c)\n"),
++            ("src/main.c", b"int main(void) { return 0; }\n"),
++        )
++    )
+diff --git a/tests/test_coverage.py b/tests/test_coverage.py
+index e7ed253..bc77b9e 100644
+--- a/tests/test_coverage.py
++++ b/tests/test_coverage.py
+@@ -0,0 +1 @@
++import subprocess
+@@ -2,0 +4 @@ from pathlib import Path
++from struct import pack_into
+@@ -125,2 +126,0 @@ def test_elf_coverage_uses_the_first_executable_load_segment() -> None:
+-    from struct import pack_into
+-
+@@ -137,0 +138,27 @@ def test_elf_coverage_uses_the_first_executable_load_segment() -> None:
++
++
++@pytest.mark.parametrize("from_path", [False, True])
++def test_inspection_sends_original_elf_bytes(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, from_path: bool
++) -> None:
++    elf = bytearray(64 + 56)
++    elf[:6] = b"\x7fELF\x02\x01"
++    pack_into("<H", elf, 18, 62)
++    pack_into("<QQ", elf, 24, 0x1000, 64)
++    pack_into("<HH", elf, 54, 56, 1)
++    pack_into("<IIQQ", elf, 64, 1, 5, 0, 0x1000)
++    program = bytes(elf)
++    path = tmp_path / "program"
++    if from_path:
++        path.write_bytes(program)
++
++    def fake_docker(
++        command: tuple[str, ...], *, input: bytes, **kwargs: object
++    ) -> subprocess.CompletedProcess[bytes]:
++        assert input == program
++        return subprocess.CompletedProcess(command, 0, LISTING.encode("ascii"))
++
++    monkeypatch.setattr(subprocess, "run", fake_docker)
++    assert coverage.inspect_x86(path if from_path else program) == recover_blocks(
++        0x1000, 0x1000, LISTING
++    )
+diff --git a/tests/test_docker.py b/tests/test_docker.py
+index 19f3689..3708559 100644
+--- a/tests/test_docker.py
++++ b/tests/test_docker.py
+@@ -0,0 +1,3 @@
++import json
++import subprocess
++from base64 import b64decode
+@@ -2,0 +6 @@ from typing import BinaryIO
++from unittest.mock import Mock
+@@ -9 +13,8 @@ from phoenix_eval.case import Invocation
+-from phoenix_eval.docker import Engine, WorkerError, freeze_images, run_batch
++from phoenix_eval.docker import (
++    MAX_BATCH,
++    Engine,
++    WorkerError,
++    freeze_images,
++    run_batch,
++    run_cases,
++)
+@@ -11,0 +23 @@ from phoenix_eval.wire import decode_invocation, encode_result
++from phoenix_eval.worker import MAX_PROGRAM_BYTES
+@@ -35,2 +46,0 @@ def test_target_arguments_go_to_worker_stdin(args: list[str]) -> None:
+-            import subprocess
+-
+@@ -61,2 +70,0 @@ def test_worker_rejects_incomplete_responses(
+-    import subprocess
+-
+@@ -80,2 +87,0 @@ def test_worker_image_must_match_checkout_sources(
+-    import subprocess
+-
+@@ -87,0 +94,34 @@ def test_worker_image_must_match_checkout_sources(
++
++
++def test_worker_receives_the_same_bytes_in_each_batch(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    program = b"synthetic executable\x00\xff"
++    expected = Outcome(b"", b"", Exited(0), TreeSnapshot())
++    batches = []
++
++    def fake_docker(
++        command: tuple[str, ...], *, stdin: BinaryIO, stdout: BinaryIO, **kwargs: object
++    ) -> subprocess.CompletedProcess[bytes]:
++        header = json.loads(stdin.readline())
++        assert b64decode(header["binary"]) == program
++        cases = tuple(decode_invocation(line.decode("ascii")) for line in stdin)
++        batches.append(len(cases))
++        stdout.write((encode_result(expected) + "\n").encode("ascii") * len(cases))
++        return subprocess.CompletedProcess(command, 0)
++
++    monkeypatch.setattr(subprocess, "run", fake_docker)
++    cases = (Invocation(),) * (MAX_BATCH + 1)
++    assert run_cases(program, cases, Engine.AMD64) == (expected,) * len(cases)
++    assert batches == [MAX_BATCH, 1]
++
++
++@pytest.mark.parametrize("size", [0, MAX_PROGRAM_BYTES + 1])
++def test_worker_rejects_invalid_byte_input_size(
++    monkeypatch: pytest.MonkeyPatch, size: int
++) -> None:
++    runner = Mock()
++    monkeypatch.setattr(subprocess, "run", runner)
++    with pytest.raises(ValueError, match="Invalid program size"):
++        run_batch(bytes(size), (Invocation(),), Engine.AMD64)
++    runner.assert_not_called()
+diff --git a/tests/test_pair.py b/tests/test_pair.py
+index 8b6827a..935da15 100644
+--- a/tests/test_pair.py
++++ b/tests/test_pair.py
+@@ -3,0 +4 @@ from dataclasses import asdict, replace
++from hashlib import sha256
+@@ -10 +11 @@ from phoenix_eval import pair
+-from phoenix_eval.build import BuildResult
++from phoenix_eval.build import BuildResult, ProjectSnapshot, snapshot_project
+@@ -13 +14 @@ from phoenix_eval.coverage import BlockInventory
+-from phoenix_eval.docker import Engine, WorkerError
++from phoenix_eval.docker import MAX_BATCH, Engine, WorkerError
+@@ -16,0 +18 @@ from phoenix_eval.trace import CodeTrace
++from phoenix_eval.worker import MAX_PROGRAM_BYTES
+@@ -31,0 +34,9 @@ class FakeWorker:
++        self.original_bytes = self.original.name.encode()
++        self.original.write_bytes(self.original_bytes)
++        (self.project / "src").mkdir(parents=True)
++        (self.project / "CMakeLists.txt").write_bytes(
++            b"add_executable(program src/main.c)"
++        )
++        self.source = self.project / "src/main.c"
++        self.source.write_bytes(b"int main(void) { return 0; }")
++        self.snapshot = snapshot_project(self.project)
+@@ -50,2 +61,2 @@ class FakeWorker:
+-    def inspect_x86(self, binary: Path, image: str) -> BlockInventory:
+-        assert binary == self.original
++    def inspect_x86(self, binary: bytes, image: str) -> BlockInventory:
++        assert binary == self.original_bytes
+@@ -62 +73 @@ class FakeWorker:
+-        binary: Path,
++        binary: bytes,
+@@ -70,2 +81 @@ class FakeWorker:
+-        if binary != self.original:
+-            assert binary.read_bytes() == binary.name.encode()
++        name = binary.decode("ascii")
+@@ -73,3 +83,3 @@ class FakeWorker:
+-            assert binary == self.original and engine is Engine.QEMU_X86_64
+-        self.calls.append((binary.name, engine, trace, cases))
+-        if binary.name in self.worker_errors:
++            assert binary == self.original_bytes and engine is Engine.QEMU_X86_64
++        self.calls.append((name, engine, trace, cases))
++        if name in self.worker_errors:
+@@ -77 +87 @@ class FakeWorker:
+-        if binary.name in self.truncated_results:
++        if name in self.truncated_results:
+@@ -81,2 +91 @@ class FakeWorker:
+-            self.outcomes.get((binary.name, engine, trace, case), default)
+-            for case in cases
++            self.outcomes.get((name, engine, trace, case), default) for case in cases
+@@ -87 +96 @@ class FakeWorker:
+-        project: Path,
++        project: ProjectSnapshot,
+@@ -94 +103 @@ class FakeWorker:
+-        assert project == self.project
++        assert project == self.snapshot
+@@ -219,0 +229,123 @@ def test_duplicate_invocations_count_across_batches(worker: FakeWorker) -> None:
++@pytest.mark.parametrize("from_paths", [True, False])
++def test_pair_uses_captured_inputs_across_all_builds_and_batches(
++    worker: FakeWorker, monkeypatch: pytest.MonkeyPatch, from_paths: bool
++) -> None:
++    def inspect(binary: bytes, image: str) -> BlockInventory:
++        worker.original.write_bytes(b"edited before the first worker")
++        return worker.inspect_x86(binary, image)
++
++    def build(
++        project: ProjectSnapshot,
++        destination: Path,
++        engine: Engine,
++        compiler: Compiler,
++        *,
++        image: str,
++    ) -> BuildResult:
++        worker.source.write_bytes(b"edited before a later build")
++        return worker.build_project(project, destination, engine, compiler, image=image)
++
++    observed: dict[str, list[bytes]] = {name: [] for name in ARTIFACTS}
++
++    def run(
++        binary: bytes,
++        cases: tuple[Invocation, ...],
++        engine: Engine,
++        *,
++        trace: bool,
++        image: str,
++    ) -> tuple[CaseResult, ...]:
++        if binary == worker.original_bytes:
++            worker.original.write_bytes(b"edited between workers")
++        else:
++            name = binary.decode("ascii")
++            observed[name].append(binary)
++            (worker.build_directory / name).write_bytes(b"edited between batches")
++        return worker.run_cases(binary, cases, engine, trace=trace, image=image)
++
++    monkeypatch.setattr(pair, "inspect_x86", inspect)
++    monkeypatch.setattr(pair, "build_project", build)
++    monkeypatch.setattr(pair, "run_cases", run)
++    if not from_paths:
++        worker.original.unlink()
++        worker.source.unlink()
++
++    cases = (worker.cases[0],) * (MAX_BATCH + 1)
++    report = pair.evaluate_pair(
++        worker.original if from_paths else worker.original_bytes,
++        worker.project if from_paths else worker.snapshot,
++        cases,
++        worker.build_directory,
++        IMAGES,
++    )
++
++    assert report.behavior_passed
++    assert report.eligible_cases == len(cases)
++    original_calls = [call for call in worker.calls if call[0] == worker.original.name]
++    assert len(original_calls) == 6
++    for artifact, report_build in zip(ARTIFACTS, report.builds, strict=True):
++        first, second = observed[artifact]
++        assert first == second == artifact.encode()
++        assert report_build.executable_sha256 == sha256(first).hexdigest()
++        assert (worker.build_directory / artifact).read_bytes() != first
++
++
++def test_pair_rejects_an_oversize_original_path(worker: FakeWorker) -> None:
++    with worker.original.open("wb") as stream:
++        stream.truncate(MAX_PROGRAM_BYTES + 1)
++
++    report = worker.evaluate()
++
++    assert not report.behavior_passed
++    assert report.original_error_categories == {"worker_error": len(worker.cases)}
++    assert worker.calls == []
++    assert all(build.executable_sha256 is None for build in report.builds)
++
++
++def test_pair_reports_a_source_capture_failure(worker: FakeWorker) -> None:
++    worker.source.unlink()
++
++    report = worker.evaluate()
++
++    assert not report.behavior_passed
++    assert report.eligible_cases == len(worker.cases)
++    assert report.evaluation_errors == 4
++    assert worker.built == []
++    assert all(
++        not build.compiled
++        and build.executable_sha256 is None
++        and build.failure_categories == {"build_error": 1}
++        for build in report.builds
++    )
++
++
++def test_pair_reports_an_artifact_capture_failure(
++    worker: FakeWorker, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    def build(
++        project: ProjectSnapshot,
++        destination: Path,
++        engine: Engine,
++        compiler: Compiler,
++        *,
++        image: str,
++    ) -> BuildResult:
++        result = worker.build_project(
++            project, destination, engine, compiler, image=image
++        )
++        if destination.name == ARTIFACTS[0]:
++            destination.unlink()
++        return result
++
++    monkeypatch.setattr(pair, "build_project", build)
++
++    report = worker.evaluate()
++
++    assert not report.behavior_passed
++    assert report.evaluation_errors == 1
++    first, *_ = report.builds
++    assert first.compiled and first.executable_sha256 is None
++    assert first.failure_categories == {"build_error": 1}
++    assert all(name != ARTIFACTS[0] for name, _, _, _ in worker.calls)
++
++
+@@ -322,0 +455 @@ def test_worker_errors_and_malformed_batches_do_not_leak(
++        "executable_sha256",

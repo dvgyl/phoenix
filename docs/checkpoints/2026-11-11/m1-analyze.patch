@@ -1,0 +1,346 @@
+diff --git a/phoenix/analyze/__init__.py b/phoenix/analyze/__init__.py
+new file mode 100644
+index 0000000..98bccea
+--- /dev/null
++++ b/phoenix/analyze/__init__.py
+@@ -0,0 +1,170 @@
++"""Collect development cases from a stripped Linux executable."""
++
++import re
++from collections.abc import Iterator
++from dataclasses import dataclass
++from pathlib import Path
++
++from phoenix_eval.case import CaseResult, Invocation
++from phoenix_eval.coverage import BlockInventory, inspect_x86, mutate_inputs
++from phoenix_eval.docker import MAX_BATCH, Engine, WorkerError, run_batch
++from phoenix_eval.outcome import EntryKind, Outcome, TreeEntry, TreeSnapshot
++
++__all__ = ["Analysis", "DevelopmentCase", "analyze"]
++
++_OPTION = re.compile(
++    rb"(?<=[\x00\s\[(])(?:--[a-zA-Z0-9][a-zA-Z0-9-]{0,23}|-[a-zA-Z])"
++    rb"(?=[\x00\s=,\])])"
++)
++
++
++@dataclass(frozen=True)
++class DevelopmentCase:
++    invocation: Invocation
++    expected: Outcome
++
++
++@dataclass(frozen=True)
++class Analysis:
++    cases: tuple[DevelopmentCase, ...]
++    covered_blocks: int
++    recovered_blocks: int
++    candidate_count: int
++    emulator_sensitive: int
++    invalid_candidates: int
++
++
++def _seeds(binary: Path) -> tuple[Invocation, ...]:
++    text = b"alpha,1\nbeta,2\n"
++    file = TreeEntry("input.txt", EntryKind.FILE, 0o644, text)
++    seeds = (
++        Invocation(),
++        Invocation(("--help",)),
++        Invocation(("--version",)),
++        Invocation(("0",)),
++        Invocation(("sample", "1")),
++        Invocation(stdin=text),
++        Invocation(stdin=b"\x00\x01\x7f\x80\xff\n"),
++        Invocation(args=(file.path,), tree=TreeSnapshot(entries=(file,))),
++    )
++    with binary.open("rb") as stream:
++        evidence = stream.read(1024 * 1024)
++    hints: dict[Invocation, None] = {}
++    for match in _OPTION.finditer(evidence):
++        hint = Invocation((match[0].decode("ascii"),))
++        if hint not in seeds:
++            hints[hint] = None
++            if len(hints) == 6:
++                break
++    return seeds + tuple(hints)
++
++
++def _run(
++    binary: Path,
++    cases: tuple[Invocation, ...],
++    engine: Engine,
++    image: str,
++    *,
++    trace: bool = False,
++) -> Iterator[CaseResult]:
++    for offset in range(0, len(cases), MAX_BATCH):
++        batch = cases[offset : offset + MAX_BATCH]
++        results = run_batch(binary, batch, engine, trace=trace, image=image)
++        if len(results) != len(batch):
++            raise WorkerError("The analysis worker returned the wrong result count.")
++        if any(
++            isinstance(result, Outcome) and (result.trace is not None) != trace
++            for result in results
++        ):
++            raise WorkerError("The analysis worker returned an unexpected trace state.")
++        yield from results
++
++
++def _observe(
++    binary: Path,
++    cases: tuple[Invocation, ...],
++    images: dict[str, str],
++    inventory: BlockInventory,
++) -> tuple[list[tuple[DevelopmentCase, frozenset[int]]], int]:
++    rosetta = _run(binary, cases, Engine.ROSETTA, images["amd64"])
++    qemu = _run(binary, cases, Engine.QEMU_X86_64, images["arm64"])
++    matched = {}
++    sensitive = 0
++    for case, first, second in zip(cases, rosetta, qemu, strict=True):
++        if isinstance(first, Outcome) and isinstance(second, Outcome):
++            if first == second:
++                matched[case] = first
++            else:
++                sensitive += 1
++
++    observed = []
++    traced = _run(
++        binary, tuple(matched), Engine.QEMU_X86_64, images["arm64"], trace=True
++    )
++    for (case, expected), result in zip(matched.items(), traced, strict=True):
++        if (
++            isinstance(result, Outcome)
++            and result.trace is not None
++            and result == expected
++        ):
++            hits = inventory.hits(result.trace)
++            if inventory.entry in hits:
++                observed.append((DevelopmentCase(case, result), hits))
++    return observed, sensitive
++
++
++def _input_kind(case: Invocation) -> str:
++    if case.tree.entries:
++        return "file"
++    if case.stdin:
++        return "binary" if b"\0" in case.stdin else "text"
++    return "argv" if case.args else "empty"
++
++
++def analyze(binary: Path, images: dict[str, str], seed: int) -> Analysis:
++    """Select matched cases and report coverage of recovered block entries.
++
++    The candidate count includes distinct seeds and mutations. Invalid
++    candidates include sandbox failures and unusable traced outcomes.
++    """
++    for platform in ("amd64", "arm64"):
++        if not re.fullmatch(r"sha256:[a-f0-9]{64}", images.get(platform, "")):
++            raise ValueError(f"Analysis requires a pinned {platform} worker image ID.")
++
++    inventory = inspect_x86(binary, images["amd64"])
++    seeds = _seeds(binary)
++    observed, sensitive = _observe(binary, seeds, images, inventory)
++    if not observed:
++        raise ValueError("Analysis found no valid development cases.")
++
++    selected = []
++    covered: set[int] = set()
++    kinds = set()
++    for case, hits in observed:
++        kind = _input_kind(case.invocation)
++        if hits - covered or kind not in kinds:
++            selected.append(case)
++            covered.update(hits)
++            kinds.add(kind)
++
++    mutations = tuple(
++        case
++        for case in mutate_inputs(tuple(case.invocation for case in selected), seed)
++        if case not in seeds
++    )
++    mutated, mutation_sensitive = _observe(binary, mutations, images, inventory)
++    for case, hits in mutated:
++        if hits - covered:
++            selected.append(case)
++            covered.update(hits)
++
++    candidate_count = len(seeds) + len(mutations)
++    sensitive += mutation_sensitive
++    return Analysis(
++        cases=tuple(selected),
++        covered_blocks=len(covered),
++        recovered_blocks=len(inventory.blocks),
++        candidate_count=candidate_count,
++        emulator_sensitive=sensitive,
++        invalid_candidates=candidate_count - sensitive - len(observed) - len(mutated),
++    )
+diff --git a/tests/test_analyze.py b/tests/test_analyze.py
+new file mode 100644
+index 0000000..c7a73fb
+--- /dev/null
++++ b/tests/test_analyze.py
+@@ -0,0 +1,164 @@
++from dataclasses import replace
++from pathlib import Path
++
++import pytest
++
++import phoenix.analyze as stage
++from phoenix_eval.case import CaseFailure, CaseResult, FailureKind, Invocation
++from phoenix_eval.coverage import BlockInventory
++from phoenix_eval.docker import Engine, WorkerError
++from phoenix_eval.outcome import EntryKind, Exited, Outcome, TreeEntry, TreeSnapshot
++from phoenix_eval.trace import CodeTrace
++
++IMAGES = {"amd64": "sha256:" + "a" * 64, "arm64": "sha256:" + "b" * 64}
++BLOCKS = frozenset((0x1000, 0x1004, 0x1008))
++INVENTORY = BlockInventory(0x1000, 0x1000, BLOCKS, BLOCKS)
++BASE_TRACE = CodeTrace(0x2000, 0x2010, (0x2000,))
++BASE_OUTCOME = Outcome(b"stdout", b"stderr", Exited(3), TreeSnapshot())
++
++
++def test_analysis_selects_matched_inputs_and_mutation_gains(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    binary = tmp_path / "program"
++    binary.write_bytes(b"\0--extra\0Usage: program [--mode]\0")
++    calls: list[tuple[Engine, bool, Invocation]] = []
++    original_file = b"alpha,1\nbeta,2\n"
++    output = TreeEntry("result", EntryKind.FILE, 0o600, b"bytes")
++    tree = TreeSnapshot(entries=(output,))
++
++    def inspect(path: Path, image: str) -> BlockInventory:
++        assert path == binary and image == IMAGES["amd64"]
++        return INVENTORY
++
++    def run(
++        path: Path,
++        cases: tuple[Invocation, ...],
++        engine: Engine,
++        *,
++        trace: bool,
++        image: str,
++    ) -> tuple[CaseResult, ...]:
++        assert path == binary and image == IMAGES[engine.platform]
++        assert 0 < len(cases) <= 3
++        results: list[CaseResult] = []
++        for case in cases:
++            calls.append((engine, trace, case))
++            outcome = replace(BASE_OUTCOME, tree=tree)
++            if case.args == ("--version",):
++                results.append(CaseFailure(FailureKind.TIMEOUT, "Timeout."))
++                continue
++            if case.args == ("0",) and engine is Engine.QEMU_X86_64:
++                other = replace(output, mode=0o644)
++                outcome = replace(outcome, tree=TreeSnapshot(entries=(other,)))
++            if trace:
++                hits = BASE_TRACE.hits
++                if case.args == ("sample", "1"):
++                    outcome = replace(outcome, stderr=b"Trace changed stderr.")
++                if case.args == ("--extra",):
++                    hits = (0x2004,)
++                if case.args == ("--mode",):
++                    hits = (0x2000, 0x2004)
++                if case.tree.entries and case.tree.entries[0].data != original_file:
++                    hits = (0x2000, 0x2008)
++                outcome = replace(outcome, trace=replace(BASE_TRACE, hits=hits))
++            results.append(outcome)
++        return tuple(results)
++
++    monkeypatch.setattr(stage, "inspect_x86", inspect)
++    monkeypatch.setattr(stage, "run_batch", run)
++    monkeypatch.setattr(stage, "MAX_BATCH", 3)
++
++    result = stage.analyze(binary, IMAGES, seed=42)
++    replay_calls = calls.copy()
++    calls.clear()
++    replay = stage.analyze(binary, IMAGES, seed=42)
++    assert calls == replay_calls
++    assert result == replay
++    assert [case.expected.trace for case in result.cases] == [
++        case.expected.trace for case in replay.cases
++    ]
++
++    empty, argv, text, raw, file, mode, mutated_file = result.cases
++    assert empty.invocation == Invocation()
++    assert argv.invocation.args == ("--help",)
++    assert text.invocation.stdin == original_file
++    assert b"\0" in raw.invocation.stdin
++    (entry,) = file.invocation.tree.entries
++    (mutated_entry,) = mutated_file.invocation.tree.entries
++    assert file.invocation.args == mutated_file.invocation.args == (entry.path,)
++    assert entry.data != mutated_entry.data
++    assert replace(mutated_entry, data=entry.data) == entry
++    assert mode.invocation.args == ("--mode",)
++    probed = {case for _, _, case in calls}
++    assert any(
++        case != text.invocation
++        and replace(case, stdin=original_file) == text.invocation
++        and len(case.stdin) == len(original_file)
++        for case in probed
++    )
++    assert all(
++        case.expected == replace(BASE_OUTCOME, tree=tree) for case in result.cases
++    )
++    assert empty.expected.trace == BASE_TRACE
++    assert mutated_file.expected.trace == replace(BASE_TRACE, hits=(0x2000, 0x2008))
++    assert result.covered_blocks == 3
++    assert result.recovered_blocks == 3
++    assert result.candidate_count == len(probed) == 16
++    assert result.emulator_sensitive == 1
++    assert result.invalid_candidates == 3
++
++
++@pytest.mark.parametrize(
++    ("problem", "error", "message"),
++    (
++        ("timeout", ValueError, "no valid"),
++        ("missing-trace", WorkerError, "trace state"),
++        ("worker-error", WorkerError, "protocol failed"),
++        ("late-worker-error", WorkerError, "protocol failed"),
++        ("short-response", WorkerError, "wrong result count"),
++    ),
++)
++def test_analysis_fails_closed(
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    problem: str,
++    error: type[Exception],
++    message: str,
++) -> None:
++    binary = tmp_path / "program"
++    binary.touch()
++
++    def run(
++        _binary: Path,
++        cases: tuple[Invocation, ...],
++        _engine: Engine,
++        *,
++        trace: bool,
++        image: str,
++    ) -> tuple[CaseResult, ...]:
++        if problem == "timeout":
++            return (CaseFailure(FailureKind.TIMEOUT, "Timeout."),) * len(cases)
++        if trace and problem == "worker-error":
++            raise WorkerError("The worker protocol failed.")
++        if trace and problem == "short-response":
++            return ()
++        if problem == "late-worker-error":
++            if trace and any(case.args == ("--help",) and case.stdin for case in cases):
++                raise WorkerError("The worker protocol failed.")
++            outcome = replace(BASE_OUTCOME, trace=BASE_TRACE) if trace else BASE_OUTCOME
++            return (outcome,) * len(cases)
++        return (BASE_OUTCOME,) * len(cases)
++
++    monkeypatch.setattr(stage, "inspect_x86", lambda *_: INVENTORY)
++    monkeypatch.setattr(stage, "run_batch", run)
++    with pytest.raises(error, match=message):
++        stage.analyze(binary, IMAGES, seed=0)
++
++
++@pytest.mark.parametrize("images", ({}, {**IMAGES, "amd64": "phoenix-worker:amd64"}))
++def test_analysis_requires_pinned_images(
++    tmp_path: Path, images: dict[str, str]
++) -> None:
++    with pytest.raises(ValueError, match="pinned amd64"):
++        stage.analyze(tmp_path / "unused", images, seed=0)

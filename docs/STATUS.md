@@ -1,74 +1,104 @@
 # Phoenix status
 
 M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
-M1 remains open. The corrected run meets its numerical threshold.
-Exact replay and final independent Astra review remain active at
-`efcad059d362bc61a4069268e1122d74e89c6054`.
+M1 passed at `6897e4753d8acedfae57af63e6426faf116bed2e`.
+M2 work is in progress. No M2 result or later milestone is accepted.
 
-| Method | Behavior passed | Integrity passed | Fully successful |
+| M1 method | Behavior passed | Integrity passed | Fully successful |
 | --- | --- | --- | --- |
 | Phoenix | 19/20 | 18/20 | 17/20 |
 | Ghidra-raw | 8/20 | 8/20 | 8/20 |
 
-These are the `-O0` results from `m1-t0-efcad05`. Two Phoenix variants
-failed the exact-byte check. One failed behavior. Twelve raw variants
-failed compilation. All 792 original cases per method were eligible.
-There were zero emulator disagreements and evaluation errors.
-Tests reached 790 of 1,079 recovered block entries. This measure is
-separate from source branch adequacy.
+Original `m1-t0-6897e47` and exact replay `m1-t0-replay-6897e47`
+agree in every stable field. Each method has 792 eligible variant-case
+pairs, zero emulator disagreements, and zero evaluation errors. Coverage
+reaches 790 of 1,079 recovered block entries. This is separate from source
+branch adequacy. Phoenix has two `embedded_text` failures and one behavior
+failure. Raw has 12 failed variants with compiler errors. Phoenix compiled
+all 80 builds with eight warnings. Raw compiled 48 of 80 builds.
 
-The original model log has SHA-256
-`728cf1a3f10b21b54c7c747f7dabbbaada85c68b286110d5b865bfe77dd23f44`.
-It records 80 calls and $1.603504 of API-equivalent model cost.
-There are zero unknown-cost reservations. Median reconstruction time
-was 51.893 seconds across all 20 Phoenix variants, including failures
-and waits. Replay `m1-t0-replay-efcad05` is active. Main and accepted
-image IDs stay fixed through that replay.
+Both 40-task bindings match the report fields and complete model summaries.
+The original log and both saved bindings stayed unchanged. Replay created no
+model log. Phoenix used 86 model calls with $1.7865956 API-equivalent cost
+and zero unknown-cost reservations. Median original reconstruction time was
+46.79 seconds per variant. Independent Sol and Astra reviews passed these
+exact measured results. The public pipeline passed all four builds for both
+methods. [Native CI](https://github.com/dvgyl/phoenix/actions/runs/42905864046)
+and both native-to-Mac comparisons passed.
 
-The earlier `m1-t0-5695148` result remains Phoenix 17/20 and raw 0/20.
-Its exact replay reproduced all stable fields. Final review held that
-revision because its raw header conflicted with fortified glibc.
-The correction passed the 393-test host gate and all 48 Linux
-compiler-integrity checks. The first run, `m1-t0-ce6a34d`, remains
-zero fully successful variants for both methods. Its replay also passed.
+The measured revision can accept contradictory pre-freeze checkpoint
+metadata in a synthetic run. The reviewed evidence for the two real runs
+is consistent. Main now binds returned submissions to the exact checkpoint
+bytes and preserves a detected contradiction across retry. Sol and Astra
+passed the shared correction. The combined M2 evaluator passed fresh
+Sol and Astra reviews at `05979af`. The reviewed evaluator and T1
+commitments are on main. Earlier failures remain in the log. No new
+sealed run has started. The first native CI run failed because a replay
+property test used a Mac-only scratch path. The correction passed all
+13 affected cases and fresh Sol review. Native CI at `53ee7de` passed
+both architectures and its outcome comparison. Its public case counts
+and full outcome digests match the historical Mac run. The same-revision
+Mac check still needs refreshed images and the Linux VM. The later
+`3c11d94` native arm64 job passed. Its amd64 job reached the 30-minute
+limit during pinned integrity package downloads. The native job limit
+is now 60 minutes. Replacement run 42959082671 passed. Native run
+42959931595 at `3939fbc` also passed both architectures and their
+comparison. Its archive and report identities were verified. The current
+same-revision Mac check remains open.
+[Capture issue](https://github.com/dvgyl/phoenix/issues/6).
+[Replay issue](https://github.com/dvgyl/phoenix/issues/5).
 
-Both native CI jobs passed at the current revision after package-delivery
-retries. The correct checksum pins stayed fixed. Native x86-64 and ARM64
-outcomes match Mac M0 run `m0-43bba34c9d8d426aa1c029de0e5071c1`.
-[CI run 42859828267](https://github.com/dvgyl/phoenix/actions/runs/42859828267).
+T1 is sealed with 15 programs and 90 variants. Its source and input
+commitments are in the repository. T2 private validation is active. T3 has five source-screened selections and no runtime-qualified
+batch. All source and held-out inputs stay sealed.
 
-The separate author completed T1 with 15 programs and 90 variants.
-The lead checked release hashes and ELF contracts. Private sources
-and inputs remain sealed. Source sizes are 304 to 316 C LOC.
-This limited size range must remain visible in the final report.
-Minimum source branch coverage is 184/197. Minimum mutation detection
-is 11/12. The T1 archive hashes are committed before reconstruction.
+The reviewed U1 lift evidence and opt-in recovery plan are on main.
+Public static checks passed 16 configurations at `49202a7`. Sol and Astra
+passed the exact source review. The public observer controls passed.
+The reviewed conditional switch proof and optional graph publication
+are on main. They retain the ordinary lift and keep generation unchanged.
+The ordinary source observations, schema 3 publication, bounded C
+binding, checked emitter, and protected writer passed fresh Sol review.
+Both public fragments retain all cases and defaults. Host syntax checks
+pass. The opt-in reconstruction caller also passed fresh Sol review.
+It records the setting for exact resume and replay. The option remains
+off by default. The public production-caller driver passed fresh Sol source
+review and is on main. Its source check proves byte retention. Both behavior
+controls remain mandatory. Public Linux behavior and unvisited-case checks
+remain open.
+The structural schema 2 wire reader passed fresh Sol review and 596
+additional controls. The static observation plan and shared physical
+transfer checks also passed fresh Sol review. The exact outcome and
+runtime mapping gate passed fresh Sol review. Its mapped result does not
+authorize recovery. Frame admission and live capture remain open.
 
-M2 work remains isolated. The public trace fixture builder now works
-without a shared host mount. All 16 builds and static plans passed.
-Its host gate passed 496 tests. The observer image and live calibration
-remain pending. The static lift extension passed fresh independent review after
-its storage validation fixes. Its parent gate passed 489 tests.
-The parent live switch check confirmed separate arrays of 13 destinations
-and 12 labels for both compilers. The T2 author ended with one incomplete draft and zero validated variants.
-A fresh author must continue privately after the resource gate opens.
-T3 candidates remain unqualified after the metadata survey.
-
-The internal-drive free-space baseline is 14,432,616 KiB.
-The workspace is the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
-The dedicated Colima VM has four CPUs and 2 GiB of memory.
+The internal free-space baseline is 14,432,616 KiB. The workspace is the
+external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
+2 GiB of memory. Use Standard service. Obtain a fresh independent Sol
+review after each major block and Astra review where required.
 
 ## Next actions
 
-1. Finish exact M1 replay and verify stable fields and the full model log.
-2. Obtain final exact milestone review before tagging M1.
-3. Integrate the committed T1 hashes after the main revision freeze ends.
-4. Complete public trace runtime calibration and static evidence review.
-5. Build M2 recovery from validated public evidence and evaluate T0 and T1.
+1. Refresh worker images and pass public evaluator gates before a new
+   sealed M2 run. Wait for the private author to release the Linux VM.
+2. Finish U2 proof, generation, and public behavior checks.
+3. Continue production observation, indirect calls, byte idioms, and repair
+   fault localization. Keep the two oracle engines independent.
+4. Finish private T2 validation. Validate T3 in a separate Linux window.
+5. Complete M2 through M4, publish the required artifacts, and replay every
+   headline result.
 
-## Thread handoff
+## Continuation handoff
 
-The owner requested a new-thread handoff. Read `docs/HANDOFF.md`.
-The M2 matrix writer has stopped with partial code and a failed lint gate.
-M1 replay and its read-only Astra review were active at handoff. Check their
-current process and report state. Main stays at efcad05 through exact replay.
+Read `docs/HANDOFF.md` for exact worktrees, reviews, and process state.
+Scope checkpoint `09e984b` passed local checks and is under fresh Sol review.
+Frame checkpoint `b85feba` passed its pure contract review. Its scope
+dependency still needs replacement. Capture checkpoint `9672a0f` passed
+a parser-only review. The provider blocked its full review for possible
+cybersecurity risk. That full review remains open. Public fixture
+checkpoint `cd59f7f` is under fresh Sol review. No new observation code
+from those checkpoints is accepted on main.
+
+The handoff preserves 29 old public draft files in eight archival patches.
+Each patch reproduced the original bytes and executable modes. Private
+corpus material, held-out inputs, binaries, and scratch output stay outside Git.

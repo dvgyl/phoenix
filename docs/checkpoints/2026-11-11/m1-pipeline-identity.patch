@@ -1,0 +1,519 @@
+diff --git a/phoenix/__main__.py b/phoenix/__main__.py
+index 3c4ed86..94b7df1 100644
+--- a/phoenix/__main__.py
++++ b/phoenix/__main__.py
+@@ -32 +32,5 @@ from phoenix_eval.platforms import verify_runtime
+-from phoenix_eval.provenance import CHECKOUT, evaluator_build
++from phoenix_eval.provenance import (
++    evaluator_build,
++    lifting_tool_identity,
++    pipeline_source_digest,
++)
+@@ -35,0 +40 @@ _ID = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,95}")
++_PIPELINE_ROOT = Path(__file__).resolve().parents[1]
+@@ -42,0 +48,2 @@ class _RunRecord(TypedDict):
++    pipeline_source_sha256: str
++    lifting_tool_identity: dict[str, str]
+@@ -90 +97 @@ def _default_tools(workspace: Path) -> tuple[Path, Path]:
+-    with (CHECKOUT / "tools.lock").open("rb") as stream:
++    with (_PIPELINE_ROOT / "tools.lock").open("rb") as stream:
+@@ -138 +145,6 @@ def _locked_run(
+-        if not args.replay or source is None or local.get("replay_from") != source.name:
++        if (
++            not args.replay
++            or source is None
++            or previous is None
++            or local.get("replay_from") != source.name
++        ):
+@@ -139,0 +152,4 @@ def _locked_run(
++        expected = {**previous, "replay_from": source.name, "started": local["started"]}
++        if local != expected:
++            raise ValueError("The replay checkpoint differs from the original record.")
++    requested = original
+@@ -145,12 +161,2 @@ def _locked_run(
+-        requested = _safe_input(requested, workspace)
+-        requested_metadata = inspect_binary(requested)
+-        with requested.open("rb") as stream:
+-            binary_data = stream.read(MAX_PROGRAM_BYTES + 1)
+-        if len(binary_data) > MAX_PROGRAM_BYTES:
+-            raise ValueError("The executable exceeds the sandbox program size limit.")
+-        original.parent.mkdir(parents=True, exist_ok=True)
+-        original.write_bytes(binary_data)
+-        original.chmod(0o600)
+-    metadata = inspect_binary(_safe_input(original, workspace))
+-    if not args.resume and metadata.sha256 != requested_metadata.sha256:
+-        raise ValueError("The input binary changed while it was being copied.")
++    requested = _safe_input(requested, workspace)
++    metadata = inspect_binary(requested)
+@@ -160 +165,0 @@ def _locked_run(
+-    verify_runtime("apple-silicon")
+@@ -162,3 +167 @@ def _locked_run(
+-    images = freeze_images(
+-        (Engine.ROSETTA, Engine.ARM64), provenance.worker_source_sha256
+-    )
++    pipeline_digest = pipeline_source_digest(_PIPELINE_ROOT)
+@@ -165,0 +169,2 @@ def _locked_run(
++        if pipeline_digest != previous.get("pipeline_source_sha256"):
++            raise ValueError("Resume and replay require the recorded pipeline source.")
+@@ -169 +173,0 @@ def _locked_run(
+-            or images != previous["images"]
+@@ -172 +176 @@ def _locked_run(
+-                "Resume and replay require the recorded revision and images."
++                "Resume and replay require the recorded revision and worker source."
+@@ -173,0 +178,33 @@ def _locked_run(
++        ghidra, java = Path(previous["ghidra"]), Path(previous["java_home"])
++        overrides = {
++            "ghidra": str(args.ghidra.resolve()) if args.ghidra is not None else None,
++            "java_home": (
++                str(args.java_home.resolve()) if args.java_home is not None else None
++            ),
++            "seed": args.seed,
++            "repair_limit": args.max_repairs,
++            "astra_repair": args.astra_repair,
++            "method": args.method,
++            "budget_binary": args.budget_binary,
++            "budget_run": args.budget_run,
++        }
++        for name, value in overrides.items():
++            if value is not None and value != previous.get(name):
++                raise ValueError(f"Resume and replay require the recorded {name}.")
++    else:
++        ghidra, java = _default_tools(workspace)
++        ghidra, java = (
++            (args.ghidra or ghidra).resolve(),
++            (args.java_home or java).resolve(),
++        )
++    tool_identity = lifting_tool_identity(ghidra, java)
++    if previous is not None and tool_identity != previous.get("lifting_tool_identity"):
++        raise ValueError("Resume and replay require the recorded lifting tools.")
++
++    verify_runtime("apple-silicon")
++    images = freeze_images(
++        (Engine.ROSETTA, Engine.ARM64), provenance.worker_source_sha256
++    )
++    if previous is not None:
++        if images != previous["images"]:
++            raise ValueError("Resume and replay require the recorded worker images.")
+@@ -177,2 +214,2 @@ def _locked_run(
+-            Path(previous["ghidra"]),
+-            Path(previous["java_home"]),
++            ghidra,
++            java,
+@@ -181 +218 @@ def _locked_run(
+-            Method(previous.get("method", Method.PHOENIX)),
++            Method(previous["method"]),
+@@ -185 +221,0 @@ def _locked_run(
+-        ghidra, java = _default_tools(workspace)
+@@ -188,6 +224,9 @@ def _locked_run(
+-            args.seed,
+-            (args.ghidra or ghidra).resolve(),
+-            (args.java_home or java).resolve(),
+-            args.max_repairs,
+-            args.astra_repair,
+-            args.method,
++            args.seed if args.seed is not None else SEED,
++            ghidra,
++            java,
++            args.max_repairs if args.max_repairs is not None else 20,
++            bool(args.astra_repair),
++            args.method or Method.PHOENIX,
++        )
++        budget = Budget(
++            args.budget_binary or 5 * NANODOLLARS, args.budget_run or 200 * NANODOLLARS
+@@ -195 +234,13 @@ def _locked_run(
+-        budget = Budget(args.budget_binary, args.budget_run)
++
++    if not args.resume:
++        with requested.open("rb") as stream:
++            binary_data = stream.read(MAX_PROGRAM_BYTES + 1)
++        if len(binary_data) > MAX_PROGRAM_BYTES:
++            raise ValueError("The executable exceeds the sandbox program size limit.")
++        if _safe_input(original, workspace) != original:
++            raise ValueError("Use a regular file for the saved input binary.")
++        original.parent.mkdir(parents=True, exist_ok=True)
++        original.write_bytes(binary_data)
++        original.chmod(0o600)
++        if inspect_binary(original).sha256 != metadata.sha256:
++            raise ValueError("The input binary changed while it was being copied.")
+@@ -213,0 +265,2 @@ def _locked_run(
++        "pipeline_source_sha256": pipeline_digest,
++        "lifting_tool_identity": tool_identity,
+@@ -298,8 +351,6 @@ def main() -> int:
+-    run.add_argument("--seed", type=int, default=SEED)
+-    run.add_argument(
+-        "--method", type=Method, choices=list(Method), default=Method.PHOENIX
+-    )
+-    run.add_argument("--max-repairs", type=int, default=20)
+-    run.add_argument("--astra-repair", action="store_true")
+-    run.add_argument("--budget-binary", type=_dollars, default=5 * NANODOLLARS)
+-    run.add_argument("--budget-run", type=_dollars, default=200 * NANODOLLARS)
++    run.add_argument("--seed", type=int)
++    run.add_argument("--method", type=Method, choices=list(Method))
++    run.add_argument("--max-repairs", type=int)
++    run.add_argument("--astra-repair", action="store_true", default=None)
++    run.add_argument("--budget-binary", type=_dollars)
++    run.add_argument("--budget-run", type=_dollars)
+diff --git a/phoenix_eval/provenance.py b/phoenix_eval/provenance.py
+index 7fca11d..2cb928a 100644
+--- a/phoenix_eval/provenance.py
++++ b/phoenix_eval/provenance.py
+@@ -51,0 +52,72 @@ def checker_source_digest(root: Path = CHECKOUT) -> str:
++def pipeline_source_digest(root: Path = CHECKOUT) -> str:
++    """Hash pipeline files by relative path and content."""
++
++    def raise_walk_error(error: OSError) -> None:
++        raise error
++
++    root = root.resolve()
++    paths = [
++        root / name
++        for name in ("schemas/lift.schema.json", "pyproject.toml", "tools.lock")
++    ]
++    for name in ("phoenix", "ghidra_scripts"):
++        directory = root / name
++        if not directory.is_dir() or directory.is_symlink():
++            raise ValueError(f"Use a project source directory at {directory}.")
++        for parent, dirs, files in directory.walk(on_error=raise_walk_error):
++            dirs[:] = [
++                name
++                for name in dirs
++                if not name.startswith(".") and name != "__pycache__"
++            ]
++            paths.extend(
++                parent / name
++                for name in files
++                if not name.startswith(".")
++                and Path(name).suffix not in {".pyc", ".pyo", ".class"}
++            )
++    for path in paths:
++        if path.resolve() != path or not path.is_file():
++            raise ValueError(f"Use a regular project file at {path}.")
++    return _source_digest(root, paths)
++
++
++def lifting_tool_identity(ghidra: Path, java_home: Path) -> dict[str, str]:
++    """Hash the pinned Ghidra lift components and the Java launcher and release."""
++    ghidra_files = [
++        ghidra / name
++        for name in (
++            "support/analyzeHeadless",
++            "support/launch.sh",
++            "support/launch.properties",
++            "support/LaunchSupport.jar",
++            "Ghidra/application.properties",
++            "Ghidra/Configurations/Public_Release/lib/Public_Release.jar",
++            "Ghidra/Framework/Utility/lib/Utility.jar",
++            "Ghidra/Framework/SoftwareModeling/lib/SoftwareModeling.jar",
++            "Ghidra/Features/Base/lib/Base.jar",
++            "Ghidra/Features/Decompiler/lib/Decompiler.jar",
++            "Ghidra/Processors/x86/lib/x86.jar",
++        )
++    ]
++    native = sorted(ghidra.glob("Ghidra/Features/Decompiler/os/*/decompile"))
++    if not native:
++        raise ValueError("Install the Ghidra native decompiler.")
++    ghidra_files.extend(native)
++    ghidra_files.extend(
++        path
++        for path in sorted(ghidra.glob("Ghidra/Processors/x86/data/languages/*"))
++        if path.suffix in {".sla", ".ldefs", ".pspec", ".cspec", ".opinion", ".dwarf"}
++    )
++    identity = {}
++    for prefix, root, paths in (
++        ("ghidra", ghidra, ghidra_files),
++        ("java", java_home, [java_home / "bin/java", java_home / "release"]),
++    ):
++        for path in paths:
++            with path.open("rb") as stream:
++                key = f"{prefix}/{path.relative_to(root).as_posix()}"
++                identity[key] = hashlib.file_digest(stream, "sha256").hexdigest()
++    return identity
++
++
+diff --git a/tests/test_cli.py b/tests/test_cli.py
+index 7b71c07..60374d1 100644
+--- a/tests/test_cli.py
++++ b/tests/test_cli.py
+@@ -0,0 +1 @@
++import json
+@@ -1,0 +3 @@ import sys
++from hashlib import sha256
+@@ -2,0 +5 @@ from pathlib import Path
++from unittest.mock import Mock
+@@ -4,0 +8 @@ import pytest
++from test_provenance import DECOMPILER, PIPELINE_FILE, write_project, write_tools
+@@ -5,0 +10 @@ import pytest
++from phoenix import __main__ as cli
+@@ -6,0 +12,7 @@ from phoenix.__main__ import main
++from phoenix.ingest import BinaryMetadata
++from phoenix.pipeline import Method, Reconstruction, Settings
++from phoenix_eval.provenance import (
++    BuildEvidence,
++    lifting_tool_identity,
++    pipeline_source_digest,
++)
+@@ -26,0 +39,155 @@ def test_cli_rejects_an_alias_to_a_protected_input(
++
++
++@pytest.fixture
++def saved_run(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> tuple[Path, Path, Mock, Mock]:
++    checkout = tmp_path / "checkout"
++    write_project(checkout)
++    ghidra, java = write_tools(tmp_path / "tools")
++    binary = tmp_path / "public.elf"
++    binary.write_bytes(b"Synthetic input")
++    runtime = Mock()
++    reconstruct = Mock(return_value=Reconstruction(tmp_path / "out", True))
++    monkeypatch.setenv("PHOENIX_ROOT", str(tmp_path))
++    monkeypatch.setattr(cli, "_PIPELINE_ROOT", checkout)
++    monkeypatch.setattr(cli, "_default_tools", lambda _: (ghidra, java))
++    monkeypatch.setattr(
++        cli, "evaluator_build", lambda: BuildEvidence("revision", "worker-source")
++    )
++    monkeypatch.setattr(cli, "verify_runtime", runtime)
++    monkeypatch.setattr(cli, "freeze_images", lambda *_: {"amd64": "worker-image"})
++    monkeypatch.setattr(
++        cli,
++        "inspect_binary",
++        lambda path: BinaryMetadata(sha256(path.read_bytes()).hexdigest(), 0, ()),
++    )
++    provider = Mock()
++    provider.name = "synthetic"
++    monkeypatch.setattr(cli, "select_provider", Mock(return_value=provider))
++    monkeypatch.setattr(cli, "reconstruct", reconstruct)
++    monkeypatch.setattr(
++        sys,
++        "argv",
++        [
++            "phoenix",
++            "run",
++            str(binary),
++            "--run-id",
++            "case",
++            "--seed",
++            "123",
++            "--max-repairs",
++            "0",
++            "--method",
++            "ghidra-raw",
++        ],
++    )
++    assert main() == 0
++    record = json.loads((tmp_path / "runs/case/public/run.json").read_text())
++    assert record["pipeline_source_sha256"] == pipeline_source_digest(checkout)
++    assert record["lifting_tool_identity"] == lifting_tool_identity(ghidra, java)
++    runtime.reset_mock()
++    reconstruct.reset_mock()
++    return checkout, ghidra, runtime, reconstruct
++
++
++@pytest.mark.parametrize("command", ("--resume", "--replay"))
++@pytest.mark.parametrize(
++    ("change", "error"),
++    (
++        ("source", "recorded pipeline source"),
++        ("tool", "recorded lifting tools"),
++        ("settings", "recorded seed"),
++        ("legacy", "recorded pipeline source"),
++        ("input", "saved input binary SHA-256 has changed"),
++    ),
++)
++def test_cli_rejects_changed_checkpoint_before_execution(
++    saved_run: tuple[Path, Path, Mock, Mock],
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    capsys: pytest.CaptureFixture[str],
++    command: str,
++    change: str,
++    error: str,
++) -> None:
++    checkout, ghidra, runtime, reconstruct = saved_run
++    record_path = tmp_path / "runs/case/public/run.json"
++    options: list[str] = []
++    if change == "source":
++        (checkout / PIPELINE_FILE).write_bytes(b"Changed pipeline code")
++    elif change == "tool":
++        (ghidra / DECOMPILER).write_bytes(b"Changed decompiler")
++    elif change == "settings":
++        options = ["--seed", "999"]
++    elif change == "legacy":
++        record = json.loads(record_path.read_text())
++        del record["pipeline_source_sha256"]
++        del record["lifting_tool_identity"]
++        record_path.write_text(json.dumps(record))
++    else:
++        (record_path.parent / "ingest/original.elf").write_bytes(b"Changed input")
++
++    if command == "--replay":
++        options += ["--run-id", "replayed"]
++    monkeypatch.setattr(sys, "argv", ["phoenix", "run", command, "case", *options])
++    original_record = record_path.read_bytes()
++    assert main() == 2
++    assert error in capsys.readouterr().err
++    runtime.assert_not_called()
++    reconstruct.assert_not_called()
++    assert record_path.read_bytes() == original_record
++    assert not (tmp_path / "runs/replayed/public/run.json").exists()
++
++
++@pytest.mark.parametrize("command", ("--resume", "--replay"))
++def test_cli_uses_saved_settings(
++    saved_run: tuple[Path, Path, Mock, Mock],
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    command: str,
++) -> None:
++    _, _, _, reconstruct = saved_run
++    source = tmp_path / "runs/case/public/run.json"
++    record = source.read_bytes()
++    options = ["--run-id", "replayed"] if command == "--replay" else []
++    monkeypatch.setattr(sys, "argv", ["phoenix", "run", command, "case", *options])
++    assert main() == 0
++    reconstruct.assert_called_once()
++    settings: Settings = reconstruct.call_args.args[4]
++    assert (settings.seed, settings.repair_limit, settings.method) == (
++        123,
++        0,
++        Method.GHIDRA_RAW,
++    )
++    assert source.read_bytes() == record
++    if command == "--replay":
++        replay = json.loads((tmp_path / "runs/replayed/public/run.json").read_text())
++        original = json.loads(record)
++        assert replay["pipeline_source_sha256"] == original["pipeline_source_sha256"]
++        assert replay["lifting_tool_identity"] == original["lifting_tool_identity"]
++
++
++def test_replay_rejects_a_conflicting_destination_checkpoint(
++    saved_run: tuple[Path, Path, Mock, Mock],
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    capsys: pytest.CaptureFixture[str],
++) -> None:
++    _, _, runtime, reconstruct = saved_run
++    monkeypatch.setattr(
++        sys, "argv", ["phoenix", "run", "--replay", "case", "--run-id", "replayed"]
++    )
++    assert main() == 0
++    record_path = tmp_path / "runs/replayed/public/run.json"
++    record = json.loads(record_path.read_text())
++    record["pipeline_source_sha256"] = "different"
++    record_path.write_text(json.dumps(record))
++    runtime.reset_mock()
++    reconstruct.reset_mock()
++
++    assert main() == 2
++    assert "replay checkpoint differs" in capsys.readouterr().err
++    runtime.assert_not_called()
++    reconstruct.assert_not_called()
+diff --git a/tests/test_provenance.py b/tests/test_provenance.py
+new file mode 100644
+index 0000000..c839a00
+--- /dev/null
++++ b/tests/test_provenance.py
+@@ -0,0 +1,103 @@
++from hashlib import sha256
++from pathlib import Path
++
++import pytest
++
++from phoenix_eval.provenance import lifting_tool_identity, pipeline_source_digest
++
++PIPELINE_FILE = "phoenix/generate/raw.py"
++DECOMPILER = "Ghidra/Features/Decompiler/os/mac_arm_64/decompile"
++DECOMPILER_JAR = "Ghidra/Features/Decompiler/lib/Decompiler.jar"
++PROJECT_FILES = (
++    PIPELINE_FILE,
++    "ghidra_scripts/ExportLift.java",
++    "schemas/lift.schema.json",
++    "pyproject.toml",
++    "tools.lock",
++)
++
++
++def write_project(root: Path) -> None:
++    for name in PROJECT_FILES:
++        path = root / name
++        path.parent.mkdir(parents=True, exist_ok=True)
++        path.write_bytes(name.encode())
++
++
++def write_tools(root: Path) -> tuple[Path, Path]:
++    ghidra = root / "ghidra"
++    java = root / "jdk"
++    for name in (
++        "support/analyzeHeadless",
++        "support/launch.sh",
++        "support/launch.properties",
++        "support/LaunchSupport.jar",
++        "Ghidra/application.properties",
++        "Ghidra/Configurations/Public_Release/lib/Public_Release.jar",
++        "Ghidra/Framework/Utility/lib/Utility.jar",
++        "Ghidra/Framework/SoftwareModeling/lib/SoftwareModeling.jar",
++        "Ghidra/Features/Base/lib/Base.jar",
++        DECOMPILER_JAR,
++        "Ghidra/Processors/x86/lib/x86.jar",
++        "Ghidra/Processors/x86/data/languages/x86-64.sla",
++        DECOMPILER,
++    ):
++        path = ghidra / name
++        path.parent.mkdir(parents=True, exist_ok=True)
++        path.write_bytes(name.encode())
++    (java / "bin").mkdir(parents=True)
++    (java / "bin/java").write_bytes(b"Java launcher")
++    (java / "release").write_bytes(b'JAVA_VERSION="25.0.5"')
++    return ghidra, java
++
++
++@pytest.mark.parametrize("name", PROJECT_FILES)
++def test_pipeline_source_digest_uses_file_content(tmp_path: Path, name: str) -> None:
++    write_project(tmp_path)
++    before = pipeline_source_digest(tmp_path)
++    (tmp_path / name).write_bytes(name.upper().encode())
++    assert pipeline_source_digest(tmp_path) != before
++
++
++def test_pipeline_source_digest_uses_paths_and_ignores_caches(tmp_path: Path) -> None:
++    first, second = tmp_path / "first", tmp_path / "second"
++    write_project(first)
++    write_project(second)
++    before = pipeline_source_digest(first)
++    for name in (
++        "phoenix/__pycache__/raw.py",
++        "phoenix/.pytest_cache/data",
++        "phoenix/loose.pyc",
++        "ghidra_scripts/ExportLift.class",
++        "outside.py",
++    ):
++        path = second / name
++        path.parent.mkdir(parents=True, exist_ok=True)
++        path.write_bytes(b"Excluded file")
++    assert pipeline_source_digest(second) == before
++    (second / PIPELINE_FILE).rename(second / "phoenix/generate/moved.py")
++    assert pipeline_source_digest(second) != before
++
++
++@pytest.mark.parametrize(
++    ("prefix", "name"),
++    (
++        ("ghidra", "support/analyzeHeadless"),
++        ("ghidra", DECOMPILER),
++        ("ghidra", DECOMPILER_JAR),
++        ("ghidra", "Ghidra/Processors/x86/data/languages/x86-64.sla"),
++        ("java", "bin/java"),
++        ("java", "release"),
++    ),
++)
++def test_lifting_tool_identity_uses_installed_bytes(
++    tmp_path: Path, prefix: str, name: str
++) -> None:
++    ghidra, java = write_tools(tmp_path)
++    path = (ghidra if prefix == "ghidra" else java) / name
++    before = lifting_tool_identity(ghidra, java)
++    key = f"{prefix}/{name}"
++    assert before[key] == sha256(path.read_bytes()).hexdigest()
++    path.write_bytes(b"Changed tool file")
++    after = lifting_tool_identity(ghidra, java)
++    assert after == {**before, key: sha256(b"Changed tool file").hexdigest()}

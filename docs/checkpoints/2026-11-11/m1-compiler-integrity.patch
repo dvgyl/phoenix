@@ -1,0 +1,1105 @@
+diff --git a/tools.lock b/tools.lock
+index 638a93e..7170682 100644
+--- a/tools.lock
++++ b/tools.lock
+@@ -19,0 +20,5 @@ temurin_macos_arm64_archive_sha256 = "36dc14d797aaff6d89aab302cd053fdba6207dfdcf
++clang18_deb = "1:18.1.3-1ubuntu1"
++libclang_cpp18_deb = "1:18.1.3-1ubuntu1"
++libllvm18_deb = "1:18.1.3-1ubuntu1"
++libclang18_dev_deb = "1:18.1.3-1ubuntu1"
++llvm18_dev_deb = "1:18.1.3-1ubuntu1"
+diff --git a/containers/Dockerfile.integrity b/containers/Dockerfile.integrity
+new file mode 100644
+index 0000000..d5827ae
+--- /dev/null
++++ b/containers/Dockerfile.integrity
+@@ -0,0 +1,41 @@
++ARG UBUNTU_BASE=ubuntu@sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852
++FROM ${UBUNTU_BASE} AS runtime
++ARG UBUNTU_SNAPSHOT
++ARG CLANG18_DEB
++ARG LIBCLANG_CPP18_DEB
++ARG LIBLLVM18_DEB
++ADD --checksum=sha256:641de77d8f142cfd62a1a6f964ba67b20754d3337c480efb529d086075a06c9a \
++    https://snapshot.ubuntu.com/ubuntu/20261107T000000Z/pool/main/c/ca-certificates/ca-certificates_20240203_all.deb \
++    /opt/ubuntu-ca.deb
++RUN --mount=type=cache,id=phoenix-integrity-apt,target=/var/cache/phoenix-apt,sharing=locked \
++    dpkg-deb -x /opt/ubuntu-ca.deb /opt/ubuntu-ca && \
++    mkdir -p /etc/ssl/certs && \
++    cat /opt/ubuntu-ca/usr/share/ca-certificates/mozilla/*.crt > /etc/ssl/certs/ca-certificates.crt && \
++    rm -rf /opt/ubuntu-ca /opt/ubuntu-ca.deb && \
++    printf '%s\n' 'Types: deb' \
++        "URIs: https://snapshot.ubuntu.com/ubuntu/$UBUNTU_SNAPSHOT/" \
++        'Suites: noble noble-updates noble-security' 'Components: main universe' \
++        'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
++        'Check-Valid-Until: no' > /etc/apt/sources.list.d/ubuntu.sources && \
++    apt-get -o Acquire::Retries=3 --error-on=any update && \
++    apt-get -o Acquire::Retries=3 -o Dir::Cache::archives=/var/cache/phoenix-apt install -y --no-install-recommends \
++        "clang-18=$CLANG18_DEB" "libclang-cpp18=$LIBCLANG_CPP18_DEB" "libllvm18=$LIBLLVM18_DEB" && \
++    rm -rf /var/lib/apt/lists/*
++
++FROM runtime AS build
++ARG LIBCLANG18_DEV_DEB
++ARG LLVM18_DEV_DEB
++RUN --mount=type=cache,id=phoenix-integrity-apt,target=/var/cache/phoenix-apt,sharing=locked \
++    apt-get -o Acquire::Retries=3 --error-on=any update && \
++    apt-get -o Acquire::Retries=3 -o Dir::Cache::archives=/var/cache/phoenix-apt install -y --no-install-recommends \
++        "libclang-18-dev=$LIBCLANG18_DEV_DEB" "llvm-18-dev=$LLVM18_DEV_DEB" && \
++    rm -rf /var/lib/apt/lists/*
++COPY c-integrity.cc /build/c-integrity.cc
++RUN clang++-18 -std=c++17 -O1 -Wall -Wextra -Werror \
++        -isystem /usr/lib/llvm-18/include /build/c-integrity.cc \
++        -l:libclang-cpp.so.18.1 -lLLVM-18 -Wl,--strip-all -o /phoenix-c-integrity
++
++FROM runtime
++COPY --from=build /phoenix-c-integrity /opt/phoenix/bin/phoenix-c-integrity
++USER 19704:19704
++ENTRYPOINT ["/opt/phoenix/bin/phoenix-c-integrity"]
+diff --git a/containers/c-integrity.cc b/containers/c-integrity.cc
+new file mode 100644
+index 0000000..c7a6fca
+--- /dev/null
++++ b/containers/c-integrity.cc
+@@ -0,0 +1,587 @@
++#include <clang/AST/ASTContext.h>
++#include <clang/AST/RecursiveASTVisitor.h>
++#include <clang/Basic/SourceManager.h>
++#include <clang/Basic/TargetInfo.h>
++#include <clang/Basic/Version.h>
++#include <clang/Frontend/CompilerInstance.h>
++#include <clang/Frontend/FrontendAction.h>
++#include <clang/Lex/PPCallbacks.h>
++#include <clang/Lex/Preprocessor.h>
++#include <clang/Tooling/Tooling.h>
++#include <llvm/ADT/DenseMap.h>
++#include <llvm/ADT/DenseSet.h>
++#include <llvm/ADT/SmallString.h>
++#include <llvm/ADT/SmallVector.h>
++#include <llvm/ADT/StringExtras.h>
++#include <llvm/Support/FileSystem.h>
++#include <llvm/Support/FormatVariadic.h>
++#include <llvm/Support/JSON.h>
++#include <llvm/Support/VirtualFileSystem.h>
++#include <llvm/Support/raw_ostream.h>
++
++#include <cstdlib>
++#include <optional>
++#include <string>
++#include <system_error>
++#include <vector>
++
++using namespace clang;
++using llvm::StringRef;
++namespace json = llvm::json;
++
++namespace {
++
++constexpr size_t maxBytes = 8 * 1024 * 1024;
++constexpr size_t maxRecords = 32768;
++constexpr StringRef resourceDir = "/usr/lib/llvm-18/lib/clang/18";
++constexpr StringRef resourceHeaders = "/usr/lib/llvm-18/lib/clang/18/include";
++
++std::string physicalPath(StringRef path) {
++    llvm::SmallString<256> result;
++    if (llvm::sys::fs::real_path(path, result))
++        return {};
++    return result.str().str();
++}
++
++bool isUnder(StringRef path, StringRef root) {
++    return path.consume_front(root) && path.starts_with("/");
++}
++
++bool systemHeader(StringRef name, StringRef path, StringRef root) {
++    return !isUnder(name, root) &&
++           (isUnder(path, "/usr/include") || isUnder(path, resourceHeaders));
++}
++
++struct Location {
++    std::string scope;
++    std::string file;
++    unsigned offset = 0;
++
++    bool project() const { return scope == "project"; }
++
++    json::Object json() const {
++        if (file.empty())
++            return json::Object{{"scope", scope}};
++        return json::Object{{"scope", scope}, {"file", file}, {"offset", offset}};
++    }
++};
++
++struct Evidence {
++    std::string root;
++    std::string target;
++    std::string unit;
++    json::Array records;
++    json::Array calls;
++    json::Object error;
++    size_t byteCount = 0;
++    bool walked = false;
++
++    bool fail(StringRef category, StringRef message, const Location &loc = {}) {
++        if (error.empty()) {
++            error = json::Object{{"category", category.str()}, {"message", message.str()}};
++            if (!loc.scope.empty())
++                error["location"] = loc.json();
++        }
++        return false;
++    }
++
++    json::Object report() {
++        json::Object report{{"schema", 1},
++                            {"policy", "m1-v1"},
++                            {"clang_version", getClangFullVersion()},
++                            {"target", target},
++                            {"translation_unit", unit}};
++        if (error.empty()) {
++            report["status"] = "complete";
++            report["record_count"] = records.size();
++            report["records"] = std::move(records);
++            report["calls"] = std::move(calls);
++        } else {
++            report["status"] = "unchecked";
++            report["error"] = std::move(error);
++        }
++        return report;
++    }
++};
++
++class SourceFiles : public llvm::vfs::ProxyFileSystem {
++    Evidence &evidence;
++    bool restricted = false;
++
++public:
++    explicit SourceFiles(Evidence &evidence)
++        : ProxyFileSystem(llvm::vfs::getRealFileSystem()), evidence(evidence) {}
++
++    void restrictReads() { restricted = true; }
++
++    llvm::ErrorOr<std::unique_ptr<llvm::vfs::File>>
++    openFileForRead(const llvm::Twine &requested) override {
++        if (!restricted)
++            return ProxyFileSystem::openFileForRead(requested);
++        std::string name = requested.str();
++        std::string path = physicalPath(name);
++        if (path.empty())
++            return std::make_error_code(std::errc::no_such_file_or_directory);
++        if ((!isUnder(path, evidence.root) && !systemHeader(name, path, evidence.root)) ||
++            !llvm::sys::fs::is_regular_file(path)) {
++            evidence.fail("unapproved_file", "A source file is outside the approved roots or is not a regular file.");
++            return std::make_error_code(std::errc::permission_denied);
++        }
++        uint64_t size;
++        if (llvm::sys::fs::file_size(path, size) || size > maxBytes) {
++            evidence.fail("limit", "Source file limit exceeded.");
++            return std::make_error_code(std::errc::file_too_large);
++        }
++        return ProxyFileSystem::openFileForRead(path);
++    }
++};
++
++class SourcePolicy {
++    SourceManager &sm;
++    Evidence &evidence;
++    llvm::DenseMap<FileID, Location> files;
++    size_t projectBytes = 0;
++
++    Location file(FileID id) {
++        if (auto it = files.find(id); it != files.end())
++            return it->second;
++        Location result{"synthetic", {}};
++        if (auto entry = sm.getFileEntryRefForID(id)) {
++            StringRef name = entry->getName();
++            std::string path = physicalPath(name);
++            if (isUnder(path, evidence.root) && json::isUTF8(path)) {
++                result = {"project", path.substr(evidence.root.size() + 1)};
++                auto size = entry->getSize();
++                if (size < 0 || static_cast<uint64_t>(size) > maxBytes - projectBytes ||
++                    files.size() >= maxRecords)
++                    evidence.fail("limit", "Source file limit exceeded.", result);
++                else
++                    projectBytes += size;
++            } else if (systemHeader(name, path, evidence.root)) {
++                result = {"system", path};
++            } else {
++                result = {"unapproved_file", {}};
++                evidence.fail("unapproved_file", "A source file is outside the approved roots.");
++            }
++        }
++        files.try_emplace(id, result);
++        return result;
++    }
++
++    Location at(SourceLocation loc) {
++        if (loc.isInvalid())
++            return {"synthetic", {}};
++        auto [id, offset] = sm.getDecomposedLoc(loc);
++        Location result = file(id);
++        if (!result.file.empty() && offset > sm.getFileIDSize(id)) {
++            evidence.fail("source_location", "A source offset is outside its file.", result);
++            return {"invalid", {}};
++        }
++        result.offset = offset;
++        return result;
++    }
++
++public:
++    SourcePolicy(SourceManager &sm, Evidence &evidence) : sm(sm), evidence(evidence) {}
++
++    Location expansion(SourceLocation loc) { return at(sm.getExpansionLoc(loc)); }
++    Location spelling(SourceLocation loc) { return at(sm.getSpellingLoc(loc)); }
++};
++
++class Preprocessing : public PPCallbacks {
++    SourcePolicy &source;
++    Evidence &evidence;
++
++    void reject(SourceLocation loc) {
++        auto where = source.expansion(loc);
++        if (where.project())
++            evidence.fail("unsupported_preprocessing",
++                          "This project preprocessing directive is not permitted.", where);
++    }
++
++public:
++    Preprocessing(SourcePolicy &source, Evidence &evidence)
++        : source(source), evidence(evidence) {}
++
++    void FileChanged(SourceLocation loc, FileChangeReason reason,
++                     SrcMgr::CharacteristicKind, FileID) override {
++        if (reason == EnterFile)
++            source.expansion(loc);
++        if (reason == RenameFile)
++            reject(loc);
++    }
++
++    void MacroDefined(const Token &name, const MacroDirective *) override {
++        reject(name.getLocation());
++    }
++    void MacroUndefined(const Token &name, const MacroDefinition &,
++                        const MacroDirective *) override {
++        reject(name.getLocation());
++    }
++    void If(SourceLocation loc, SourceRange, ConditionValueKind) override { reject(loc); }
++    void Ifdef(SourceLocation loc, const Token &, const MacroDefinition &) override {
++        reject(loc);
++    }
++    void Ifndef(SourceLocation loc, const Token &, const MacroDefinition &) override {
++        reject(loc);
++    }
++    void PragmaDirective(SourceLocation loc, PragmaIntroducerKind) override { reject(loc); }
++    void Ident(SourceLocation loc, StringRef) override { reject(loc); }
++};
++
++class Inventory : public RecursiveASTVisitor<Inventory> {
++    ASTContext &context;
++    SourcePolicy &source;
++    Evidence &evidence;
++    llvm::DenseSet<unsigned> &unseenStrings;
++    llvm::DenseSet<unsigned> nonObjectStrings;
++    llvm::DenseSet<unsigned> seenStrings;
++    std::vector<const StringLiteral *> literals;
++
++    bool record(StringRef kind, SourceLocation loc, StringRef bytes,
++                StringRef name = {}, StringRef type = {}, json::Array tokens = {}) {
++        auto where = source.expansion(loc);
++        if (bytes.size() > maxBytes - evidence.byteCount ||
++            evidence.records.size() >= maxRecords)
++            return evidence.fail("limit", "Storage evidence limit exceeded.", where);
++        evidence.byteCount += bytes.size();
++        json::Object item{{"kind", kind.str()},
++                          {"file", where.file},
++                          {"offset", where.offset},
++                          {"spelling", source.spelling(loc).json()},
++                          {"bytes_hex", llvm::toHex(bytes, true)}};
++        if (!name.empty())
++            item["declaration"] = name.str();
++        if (!type.empty())
++            item["canonical_type"] = type.str();
++        if (!tokens.empty())
++            item["tokens"] = std::move(tokens);
++        evidence.records.push_back(std::move(item));
++        return evidence.error.empty();
++    }
++
++    bool hasRuntimeInput(const Stmt *stmt) {
++        llvm::SmallVector<const Stmt *, 16> pending{stmt};
++        while (!pending.empty()) {
++            const Stmt *part = pending.pop_back_val();
++            if (auto *reference = dyn_cast<DeclRefExpr>(part);
++                reference && isa<VarDecl>(reference->getDecl()))
++                return true;
++            if (isa<CallExpr>(part))
++                return true;
++            for (auto *child : part->children()) {
++                if (child)
++                    pending.push_back(child);
++            }
++        }
++        return false;
++    }
++
++    bool supported(QualType type) {
++        if (auto *array = context.getAsConstantArrayType(type))
++            return supported(array->getElementType());
++        return type->isIntegerType() && !type->isBitIntType();
++    }
++
++    bool serialize(QualType type, const Expr *init, llvm::MutableArrayRef<char> bytes) {
++        if (!init || isa<ImplicitValueInitExpr>(init))
++            return true;
++        init = init->IgnoreParens();
++        if (auto *array = context.getAsConstantArrayType(type)) {
++            auto *list = dyn_cast<InitListExpr>(init);
++            auto *literal = dyn_cast<StringLiteral>(init);
++            if (list && list->isSemanticForm() && list->isStringLiteralInit())
++                literal = dyn_cast<StringLiteral>(list->getInit(0)->IgnoreParenImpCasts());
++            if (literal) {
++                if (literal->getCharByteWidth() != 1)
++                    return evidence.fail("unsupported_string", "Wide strings are not supported.",
++                                         source.expansion(literal->getBeginLoc()));
++                if (!array->getElementType()->isCharType() || literal->getByteLength() > bytes.size())
++                    return false;
++                llvm::copy(literal->getBytes(), bytes.begin());
++                nonObjectStrings.insert(literal->getBeginLoc().getRawEncoding());
++                return true;
++            }
++            if (!list || !list->isSemanticForm() ||
++                (list->hasArrayFiller() && !isa<ImplicitValueInitExpr>(list->getArrayFiller())))
++                return false;
++            QualType element = array->getElementType();
++            auto stride = context.getTypeSizeInChars(element).getQuantity();
++            if (stride <= 0 || list->getNumInits() > bytes.size() / stride)
++                return false;
++            for (unsigned i = 0; i < list->getNumInits(); ++i) {
++                const Expr *child = list->getInit(i);
++                if (!child)
++                    child = list->getArrayFiller();
++                if (!serialize(element, child, bytes.slice(i * stride, stride)))
++                    return false;
++            }
++            return true;
++        }
++
++        Expr::EvalResult result;
++        if (!init->EvaluateAsInt(result, context) || result.HasUndefinedBehavior)
++            return false;
++        unsigned width = context.getIntWidth(type);
++        if (width == 0 || width > 128 || width > bytes.size() * 8)
++            return false;
++        llvm::APInt value = result.Val.getInt().extOrTrunc(width);
++        value = value.zextOrTrunc(bytes.size() * 8);
++        for (size_t i = 0; i < bytes.size(); ++i) {
++            size_t index = context.getTargetInfo().isBigEndian() ? bytes.size() - i - 1 : i;
++            bytes[index] = static_cast<char>(value.extractBitsAsZExtValue(8, i * 8));
++        }
++        return true;
++    }
++
++public:
++    Inventory(ASTContext &context, SourcePolicy &source, Evidence &evidence,
++              llvm::DenseSet<unsigned> &unseenStrings)
++        : context(context), source(source), evidence(evidence), unseenStrings(unseenStrings) {}
++
++    bool VisitDecl(Decl *decl) {
++        if (decl->isImplicit() || !source.expansion(decl->getLocation()).project())
++            return evidence.error.empty();
++        auto where = source.expansion(decl->getLocation());
++        for (const auto *attr : decl->attrs()) {
++            if (!attr->isImplicit() && source.expansion(attr->getLocation()).project())
++                return evidence.fail("unsupported_attribute",
++                                     "Project declaration attributes are not supported.", where);
++        }
++        if (auto *assertion = dyn_cast<StaticAssertDecl>(decl)) {
++            if (auto *message = assertion->getMessage())
++                nonObjectStrings.insert(message->getBeginLoc().getRawEncoding());
++        }
++        if (isa<FileScopeAsmDecl>(decl))
++            return evidence.fail("unsupported_assembly", "File-scope assembly is not supported.", where);
++        if (auto *field = dyn_cast<FieldDecl>(decl); field && field->isBitField())
++            return evidence.fail("unsupported_type", "Bit-fields are not supported.", where);
++        return true;
++    }
++
++    bool VisitVarDecl(VarDecl *decl) {
++        SourceLocation loc = decl->getLocation();
++        auto where = source.expansion(loc);
++        if (decl->isImplicit() || !where.project() || isa<ParmVarDecl>(decl))
++            return evidence.error.empty();
++        if (decl->getType()->isVariablyModifiedType())
++            return evidence.fail("unsupported_type", "Variable array bounds are not supported.", where);
++        auto definition = decl->isThisDeclarationADefinition();
++        if (definition == VarDecl::DeclarationOnly ||
++            (definition == VarDecl::TentativeDefinition && decl->getActingDefinition() != decl))
++            return true;
++
++        const Expr *init = decl->getInit();
++        if (!init && !decl->hasGlobalStorage())
++            return true;
++
++        QualType type = context.getCanonicalType(decl->getType());
++        if (!supported(type))
++            return evidence.fail("unsupported_storage",
++                                 "Only integer objects and arrays of integers are supported.", where);
++        auto size = context.getTypeSizeInChars(type).getQuantity();
++        if (size <= 0 || static_cast<uint64_t>(size) > maxBytes - evidence.byteCount)
++            return evidence.fail("limit", "Object storage limit exceeded.", where);
++        std::string bytes(size, '\0');
++        if (!serialize(type, init, llvm::MutableArrayRef<char>(bytes.data(), bytes.size()))) {
++            if (type->isIntegerType() && decl->hasLocalStorage() &&
++                !type.isConstQualified() && init && hasRuntimeInput(init))
++                return true;
++            return evidence.fail("unresolved_initializer",
++                                 "Clang could not resolve the initializer storage.", where);
++        }
++        return record("storage", loc, bytes, decl->getName(), type.getAsString());
++    }
++
++    bool VisitVariableArrayTypeLoc(VariableArrayTypeLoc loc) {
++        auto where = source.expansion(loc.getBeginLoc());
++        return !where.project() ||
++               evidence.fail("unsupported_type", "Variable array bounds are not supported.", where);
++    }
++
++    bool VisitStmt(Stmt *stmt) {
++        auto where = source.expansion(stmt->getBeginLoc());
++        if (!where.project())
++            return evidence.error.empty();
++        if (isa<AsmStmt>(stmt))
++            return evidence.fail("unsupported_assembly", "Inline assembly is not supported.", where);
++        if (isa<CompoundLiteralExpr>(stmt))
++            return evidence.fail("unsupported_storage", "Compound literals are not supported.", where);
++        if (isa<AttributedStmt>(stmt))
++            return evidence.fail("unsupported_attribute", "Statement attributes are not supported.", where);
++        return true;
++    }
++
++    bool VisitCallExpr(CallExpr *call) {
++        auto where = source.expansion(call->getExprLoc());
++        if (!where.project())
++            return evidence.error.empty();
++        const FunctionDecl *callee = call->getDirectCallee();
++        if (callee && !callee->isExternallyVisible() && !callee->getBuiltinID())
++            return true;
++        if (evidence.calls.size() >= maxRecords)
++            return evidence.fail("limit", "Call evidence limit exceeded.", where);
++        json::Object fact{{"file", where.file}, {"offset", where.offset}};
++        if (callee) {
++            fact["kind"] = callee->getBuiltinID() ? "builtin" : "external_linkage";
++            fact["name"] = callee->getNameAsString();
++        } else {
++            fact["kind"] = "indirect";
++        }
++        evidence.calls.push_back(std::move(fact));
++        return true;
++    }
++
++    bool VisitStringLiteral(StringLiteral *literal) {
++        bool project = false;
++        for (unsigned i = 0; i < literal->getNumConcatenated(); ++i) {
++            auto loc = literal->getStrTokenLoc(i);
++            project |= source.expansion(loc).project() || source.spelling(loc).project();
++            unseenStrings.erase(loc.getRawEncoding());
++        }
++        if (!project || !seenStrings.insert(literal->getBeginLoc().getRawEncoding()).second)
++            return evidence.error.empty();
++        if (!source.expansion(literal->getBeginLoc()).project())
++            return evidence.fail("source_location", "A project literal has no project expansion location.");
++        if (literal->getCharByteWidth() != 1)
++            return evidence.fail("unsupported_string", "Wide strings are not supported.",
++                                 source.expansion(literal->getBeginLoc()));
++        literals.push_back(literal);
++        return evidence.error.empty();
++    }
++
++    bool finish() {
++        if (!unseenStrings.empty())
++            return evidence.fail("missing_literal",
++                                 "A project string token has no string literal in the syntax tree.");
++        for (auto *literal : literals) {
++            auto loc = literal->getBeginLoc();
++            json::Array tokens;
++            for (unsigned i = 0; i < literal->getNumConcatenated(); ++i) {
++                auto token = literal->getStrTokenLoc(i);
++                tokens.push_back(json::Object{{"expansion", source.expansion(token).json()},
++                                              {"spelling", source.spelling(token).json()}});
++            }
++            if (!record("literal", loc, literal->getBytes(), {}, {}, std::move(tokens)))
++                return false;
++            if (!nonObjectStrings.contains(loc.getRawEncoding())) {
++                std::string storage = literal->getBytes().str();
++                storage.push_back('\0');
++                if (!record("literal_storage", loc, storage))
++                    return false;
++            }
++        }
++        return true;
++    }
++};
++
++class Consumer : public ASTConsumer {
++    SourcePolicy &source;
++    Evidence &evidence;
++    llvm::DenseSet<unsigned> &unseenStrings;
++
++public:
++    Consumer(SourcePolicy &source, Evidence &evidence, llvm::DenseSet<unsigned> &unseenStrings)
++        : source(source), evidence(evidence), unseenStrings(unseenStrings) {}
++
++    void HandleTranslationUnit(ASTContext &context) override {
++        if (!evidence.error.empty() || context.getDiagnostics().hasErrorOccurred())
++            return;
++        if (context.getTargetInfo().getCharWidth() != 8) {
++            evidence.fail("target", "The target must have 8-bit bytes.");
++            return;
++        }
++        Inventory inventory(context, source, evidence, unseenStrings);
++        evidence.walked = inventory.TraverseDecl(context.getTranslationUnitDecl()) && inventory.finish();
++    }
++};
++
++class Action : public ASTFrontendAction {
++    Evidence &evidence;
++    SourceFiles &files;
++    std::optional<SourcePolicy> source;
++    llvm::DenseSet<unsigned> unseenStrings;
++
++public:
++    Action(Evidence &evidence, SourceFiles &files) : evidence(evidence), files(files) {}
++
++    bool BeginInvocation(CompilerInstance &) override {
++        files.restrictReads();
++        return true;
++    }
++
++    std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &ci, StringRef) override {
++        source.emplace(ci.getSourceManager(), evidence);
++        auto &pp = ci.getPreprocessor();
++        pp.addPPCallbacks(std::make_unique<Preprocessing>(*source, evidence));
++        pp.setTokenWatcher([this](const Token &token) {
++            if (!tok::isStringLiteral(token.getKind()) || !evidence.error.empty())
++                return;
++            auto loc = token.getLocation();
++            if (source->expansion(loc).project() || source->spelling(loc).project()) {
++                if (unseenStrings.size() >= maxRecords)
++                    evidence.fail("limit", "String token limit exceeded.");
++                else
++                    unseenStrings.insert(loc.getRawEncoding());
++            }
++        });
++        return std::make_unique<Consumer>(*source, evidence, unseenStrings);
++    }
++};
++
++int run(int argc, char **argv, Evidence &evidence) {
++    if (argc != 10)
++        return evidence.fail("arguments", "Specify one project, one C file, and the fixed C11 flags."), 2;
++    StringRef root = argv[1];
++    StringRef unit = argv[2];
++    StringRef target = argv[4];
++    if (!root.consume_front("--project=") || !root.starts_with("/") ||
++        !target.consume_front("--target=") ||
++        (target != "x86_64-linux-gnu" && target != "aarch64-linux-gnu") ||
++        StringRef(argv[3]) != "--" || StringRef(argv[5]) != "-std=c11" ||
++        StringRef(argv[6]) != "-pedantic-errors" || StringRef(argv[7]) != "-Wall" ||
++        StringRef(argv[8]) != "-Wextra" || argv[9] != ("-I" + root + "/include").str())
++        return evidence.fail("arguments", "The project, target, or C11 flags are invalid."), 2;
++
++    evidence.root = physicalPath(root);
++    evidence.target = target.str();
++    std::string path = physicalPath(unit);
++    if (evidence.root != root || !llvm::sys::fs::is_directory(root) ||
++        !isUnder(path, root) || path != unit || !unit.ends_with(".c") ||
++        !llvm::sys::fs::is_regular_file(unit) || !json::isUTF8(path))
++        return evidence.fail("arguments", "Use physical paths for the project and its C file."), 2;
++    evidence.unit = path.substr(root.size() + 1);
++    std::string include = (root + "/include").str();
++    if (llvm::sys::fs::exists(include) && physicalPath(include) != include)
++        return evidence.fail("unapproved_file", "The project include directory must use its physical path."), 2;
++    if (!llvm::sys::fs::is_directory(("/usr/include/" + target).str()))
++        return evidence.fail("target", "The image has no system headers for this target."), 2;
++
++    for (const char *name : {"CPATH", "C_INCLUDE_PATH", "CPLUS_INCLUDE_PATH", "OBJC_INCLUDE_PATH",
++                             "DEPENDENCIES_OUTPUT", "SUNPRO_DEPENDENCIES", "CCC_OVERRIDE_OPTIONS"})
++        unsetenv(name);
++    std::vector<std::string> command{
++        "/usr/bin/clang-18", "--no-default-config", argv[4], argv[5], argv[6], argv[7], argv[8],
++        argv[9], "-Werror=#warnings", "-Werror=initializer-overrides", "-Werror=division-by-zero",
++        "-fsyntax-only", "-x", "c", "-nostdinc",
++        ("-resource-dir=" + resourceDir).str(), "-isystem", resourceHeaders.str(),
++        "-isystem", ("/usr/include/" + target).str(), "-isystem", "/usr/include", path};
++    auto vfs = llvm::makeIntrusiveRefCnt<SourceFiles>(evidence);
++    auto files = llvm::makeIntrusiveRefCnt<FileManager>(FileSystemOptions{}, vfs);
++    tooling::ToolInvocation invocation(command, std::make_unique<Action>(evidence, *vfs), files.get());
++    bool compiled = invocation.run();
++    if (!compiled)
++        evidence.fail("compiler_error", "Clang rejected the translation unit.");
++    if (!evidence.walked)
++        evidence.fail("incomplete", "The syntax tree inventory did not finish.");
++    return evidence.error.empty() ? 0 : 1;
++}
++
++} // namespace
++
++int main(int argc, char **argv) {
++    Evidence evidence;
++    int status = run(argc, argv, evidence);
++    llvm::outs() << llvm::formatv("{0}\n", json::Value(evidence.report()));
++    return status;
++}
+diff --git a/scripts/build-integrity b/scripts/build-integrity
+new file mode 100755
+index 0000000..0314a20
+--- /dev/null
++++ b/scripts/build-integrity
+@@ -0,0 +1,33 @@
++#!/bin/sh
++set -eu
++
++case "$#:${1:-}" in
++    1:amd64|1:arm64) architecture=$1 ;;
++    *) printf '%s\n' 'Specify amd64 or arm64.' >&2; exit 2 ;;
++esac
++cd "$(dirname "$0")/.."
++
++locked() {
++    value=$(sed -n "s/^$1 = \"\(.*\)\"$/\1/p" tools.lock)
++    if [ -z "$value" ]; then
++        printf 'Missing pin for %s.\n' "$1" >&2
++        exit 2
++    fi
++    printf '%s\n' "$value"
++}
++
++base=$(locked ubuntu_base)
++snapshot=$(locked ubuntu_snapshot)
++clang=$(locked clang18_deb)
++libclang=$(locked libclang_cpp18_deb)
++libllvm=$(locked libllvm18_deb)
++libclang_dev=$(locked libclang18_dev_deb)
++llvm_dev=$(locked llvm18_dev_deb)
++
++COPYFILE_DISABLE=1 tar --format ustar -C containers -cf - Dockerfile.integrity c-integrity.cc |
++    docker buildx build --load --platform "linux/$architecture" \
++        --build-arg "UBUNTU_BASE=$base" --build-arg "UBUNTU_SNAPSHOT=$snapshot" \
++        --build-arg "CLANG18_DEB=$clang" --build-arg "LIBCLANG_CPP18_DEB=$libclang" \
++        --build-arg "LIBLLVM18_DEB=$libllvm" --build-arg "LIBCLANG18_DEV_DEB=$libclang_dev" \
++        --build-arg "LLVM18_DEV_DEB=$llvm_dev" \
++        -f Dockerfile.integrity -t "phoenix-c-integrity-dev:$architecture" -
+diff --git a/tests/test_compiler_integrity.py b/tests/test_compiler_integrity.py
+new file mode 100644
+index 0000000..6342f1f
+--- /dev/null
++++ b/tests/test_compiler_integrity.py
+@@ -0,0 +1,410 @@
++import io
++import json
++import os
++import subprocess
++import tarfile
++from collections.abc import Iterator
++from contextlib import contextmanager
++from pathlib import Path
++
++import pytest
++
++ARCHITECTURES = os.environ.get("PHOENIX_COMPILER_INTEGRITY_ARCHES", "")
++TARGETS = {"amd64": "x86_64-linux-gnu", "arm64": "aarch64-linux-gnu"}
++FLAGS = ("-std=c11", "-pedantic-errors", "-Wall", "-Wextra", "-I/snapshot/include")
++
++pytestmark = pytest.mark.skipif(
++    not ARCHITECTURES,
++    reason="Set PHOENIX_COMPILER_INTEGRITY_ARCHES to run Docker checks.",
++)
++
++
++@pytest.fixture(params=ARCHITECTURES.split(","))
++def arch(request: pytest.FixtureRequest) -> str:
++    architecture = str(request.param)
++    assert architecture in TARGETS
++    return architecture
++
++
++@contextmanager
++def staged_snapshot(arch: str, snapshot: Path, image: str) -> Iterator[str]:
++    archive = io.BytesIO()
++    with tarfile.open(fileobj=archive, mode="w") as tar:
++        for child in sorted(snapshot.iterdir()):
++            tar.add(child, arcname=child.name)
++    volume = (
++        subprocess.check_output(["docker", "volume", "create"], timeout=10)
++        .decode()
++        .strip()
++    )
++    try:
++        subprocess.run(
++            [
++                "docker",
++                "run",
++                "--rm",
++                "-i",
++                "--pull=never",
++                f"--platform=linux/{arch}",
++                "--network=none",
++                "--read-only",
++                "--cap-drop=ALL",
++                "--security-opt=no-new-privileges",
++                "--user=0:0",
++                f"--mount=type=volume,src={volume},dst=/snapshot",
++                "--entrypoint=/bin/tar",
++                image,
++                "--no-same-owner",
++                "--no-same-permissions",
++                "-xf",
++                "-",
++                "-C",
++                "/snapshot",
++            ],
++            input=archive.getvalue(),
++            capture_output=True,
++            check=True,
++            timeout=30,
++        )
++        yield volume
++    finally:
++        subprocess.run(
++            ["docker", "volume", "rm", volume],
++            check=True,
++            capture_output=True,
++            timeout=10,
++        )
++
++
++def docker(
++    arch: str, snapshot: Path, image: str, entrypoint: str, *args: str
++) -> subprocess.CompletedProcess[bytes]:
++    with staged_snapshot(arch, snapshot, image) as volume:
++        return subprocess.run(
++            [
++                "docker",
++                "run",
++                "--rm",
++                "--pull=never",
++                f"--platform=linux/{arch}",
++                "--network=none",
++                "--read-only",
++                "--cap-drop=ALL",
++                "--security-opt=no-new-privileges",
++                "--pids-limit=64",
++                "--memory=1536m",
++                "--memory-swap=1536m",
++                "--user=19704:19704",
++                "--tmpfs=/work:rw,noexec,nosuid,nodev,size=32m,mode=1777",
++                f"--mount=type=volume,src={volume},dst=/snapshot,readonly",
++                "--env=TMPDIR=/work",
++                "--env=HOME=/nonexistent",
++                "--env=SOURCE_DATE_EPOCH=1794268800",
++                f"--entrypoint={entrypoint}",
++                image,
++                *args,
++            ],
++            capture_output=True,
++            check=False,
++            timeout=60,
++        )
++
++
++def checker(
++    arch: str, snapshot: Path, *extra: str
++) -> subprocess.CompletedProcess[bytes]:
++    return docker(
++        arch,
++        snapshot,
++        f"phoenix-c-integrity-dev:{arch}",
++        "/opt/phoenix/bin/phoenix-c-integrity",
++        "--project=/snapshot",
++        "/snapshot/case.c",
++        "--",
++        f"--target={TARGETS[arch]}",
++        *FLAGS,
++        *extra,
++    )
++
++
++@pytest.fixture
++def snapshot(tmp_path: Path) -> Path:
++    tmp_path.chmod(0o755)
++    (tmp_path / "include").mkdir()
++    return tmp_path
++
++
++def nums(values: list[int] | range) -> str:
++    return ",".join(map(str, values))
++
++
++def octal(values: range) -> str:
++    return '"' + "".join(f"\\{value:03o}" for value in values) + '"'
++
++
++def compiler_sections(arch: str, snapshot: Path) -> dict[str, bytes]:
++    # Emit unused declarations so their bytes are available in the object file.
++    image = subprocess.check_output(
++        ["docker", "image", "inspect", "--format={{.Id}}", f"phoenix-worker:{arch}"],
++        text=True,
++        timeout=10,
++    ).strip()
++    result = docker(
++        arch,
++        snapshot,
++        image,
++        "/bin/sh",
++        "-ec",
++        r"""
++        clang-18 "$@" -O0 -femit-all-decls -fdata-sections \
++            -c /snapshot/case.c -o /work/case.o
++        objdump -h /work/case.o |
++            awk '$2 ~ /^\.(data|rodata)\./ { print $2 }' |
++            while read -r section; do
++                objcopy --dump-section "$section=/work/section" \
++                    /work/case.o /work/copy.o
++                printf '%s ' "$section"
++                od -An -v -tx1 /work/section | tr -d ' \n'
++                printf '\n'
++            done
++        """,
++        "sh",
++        f"--target={TARGETS[arch]}",
++        *FLAGS,
++    )
++    assert result.returncode == 0, result.stderr.decode()
++    return {
++        name: bytes.fromhex(data)
++        for name, data in (
++            line.split(" ", 1) for line in result.stdout.decode().splitlines()
++        )
++    }
++
++
++def test_compiler_storage_and_literals(arch: str, snapshot: Path) -> None:
++    header = b"static const unsigned char header_value[] = {9, 0, 8};\n"
++    (snapshot / "include" / "generated.h").write_bytes(header)
++    values = range(128, 192)
++    short = octal(range(128, 191))
++    length_32 = "k" * 32
++    length_33 = "m" * 33
++    source = f"""
++#include <stdint.h>
++#include <inttypes.h>
++#include "generated.h"
++typedef unsigned char byte;
++typedef byte byte_alias;
++typedef char text_byte;
++enum {{ first = 3 }};
++_Static_assert(first == 3, "static assertion text");
++static const byte_alias unused[2][32] = {{
++    {{{nums(values[:32])}}}, {{{nums(values[32:])}}}
++}};
++unsigned char rows[2][3000] = {{{{42}},{{43}}}};
++uint_least8_t least[] = {{{nums([value + 256 for value in values])}}};
++uint_fast8_t fast[] = {{{nums([value + 256 for value in values])}}};
++unsigned char wrapped[] = {{{nums([value + 256 for value in values])}}};
++unsigned int wide[] = {{{nums(values)}}};
++unsigned char separate_left[] = {{{nums(values[:32])}}};
++unsigned char separate_right[] = {{{nums(values[32:])}}};
++char payload_32[] = "{length_32}";
++char payload_33[] = "{length_33}";
++char padded_string[5000] = "a";
++char padded_numeric[5000] = {{97}};
++signed char from_char[] = {{'\\377'}};
++signed char from_int[] = {{-1}};
++text_byte exact[63] = {short};
++char plus_null[64] = {short};
++char inferred[] = {short};
++char longer[65] = {short};
++char translated[] = "A??/n" "B\\
++C";
++char utf8[] = u8"λ";
++char embedded_null[] = "a\\0b";
++const char blank[] = "";
++unsigned int elided[3][4] = {{1,2,3,4,[2][3]=first}};
++unsigned char designated[5][3] = {{[4] = {{[2] = (unsigned char)260}}}};
++uint64_t integer = {{ UINT64_C(0x0102030405060708) }};
++_Bool truth = 17;
++int char_extension = (char)255;
++char format[] = "%" PRId64;
++char nested_strings[3][4] = {{"ab", [2] = "c"}};
++char braced_fixed[5] = {{"abc"}};
++char braced_inferred[] = {{"ab"}};
++char braced_rows[2][4] = {{{{"a"}}, {{"bc"}}}};
++static const unsigned char at_limit[4096] = {{1}};
++static const unsigned char above_limit[4097] = {{2}};
++extern void read_local(const unsigned char *);
++extern void report(const char *);
++static void uncalled(int n) {{
++    const unsigned char local[] = {{5, 0, 7, 8, 1, 2, 3, 4}};
++    int runtime = n + 3;
++    read_local(local);
++    if (runtime)
++        report("Status: the requested " "file is available.\\n");
++}}
++""".encode()
++    (snapshot / "case.c").write_bytes(source)
++    result = checker(arch, snapshot)
++    assert result.returncode == 0, (result.stdout.decode(), result.stderr.decode())
++    report = json.loads(result.stdout)
++    assert report["status"] == "complete"
++    assert report["schema"] == 1
++    assert report["policy"] == "m1-v1"
++    assert report["translation_unit"] == "case.c"
++    assert report["target"] == TARGETS[arch]
++    assert "18.1.3" in report["clang_version"]
++    records = report["records"]
++    assert report["record_count"] == len(records)
++    storage = {
++        item["declaration"]: item for item in records if item["kind"] == "storage"
++    }
++    sections = compiler_sections(arch, snapshot)
++    expected_objects = {
++        "header_value",
++        "unused",
++        "rows",
++        "least",
++        "fast",
++        "wrapped",
++        "wide",
++        "separate_left",
++        "separate_right",
++        "payload_32",
++        "payload_33",
++        "char_extension",
++        "padded_string",
++        "padded_numeric",
++        "from_char",
++        "from_int",
++        "exact",
++        "plus_null",
++        "inferred",
++        "longer",
++        "translated",
++        "utf8",
++        "embedded_null",
++        "blank",
++        "elided",
++        "designated",
++        "integer",
++        "truth",
++        "format",
++        "nested_strings",
++        "braced_fixed",
++        "braced_inferred",
++        "braced_rows",
++        "at_limit",
++        "above_limit",
++        "local",
++    }
++    assert storage.keys() == expected_objects
++    for name in sorted(expected_objects):
++        suffix = ".cst8" if name == "local" else "." + name
++        matching = [
++            data for section, data in sections.items() if section.endswith(suffix)
++        ]
++        assert len(matching) == 1, (name, sections.keys())
++        assert bytes.fromhex(storage[name]["bytes_hex"]) == matching[0], name
++
++    assert storage["header_value"]["file"] == "include/generated.h"
++    assert storage["header_value"]["offset"] == header.index(b"header_value")
++    assert storage["unused"]["offset"] == source.index(b"unused")
++    assert storage["exact"]["bytes_hex"] == bytes(values[:-1]).hex()
++    assert storage["inferred"]["bytes_hex"] == bytes(values[:-1]).hex() + "00"
++    assert (
++        storage["padded_string"]["bytes_hex"] == storage["padded_numeric"]["bytes_hex"]
++    )
++    assert storage["from_char"]["bytes_hex"] == storage["from_int"]["bytes_hex"] == "ff"
++    assert bytes(values) not in bytes.fromhex(storage["wide"]["bytes_hex"])
++    assert storage["separate_left"]["bytes_hex"] == bytes(values[:32]).hex()
++    assert storage["separate_right"]["bytes_hex"] == bytes(values[32:]).hex()
++    assert storage["char_extension"]["bytes_hex"] == (
++        "ffffffff" if arch == "amd64" else "ff000000"
++    )
++
++    literals = {item["offset"]: item for item in records if item["kind"] == "literal"}
++    assert bytes.fromhex(literals[source.index(b'"A??/')]["bytes_hex"]) == b"A\nBC"
++    assert bytes.fromhex(literals[source.index(b'"a\\0b"')]["bytes_hex"]) == b"a\0b"
++    assert literals[source.index(b'"static assertion text"')]["bytes_hex"] == (
++        b"static assertion text".hex()
++    )
++    for payload in (length_32, length_33):
++        offset = source.index(f'"{payload}"'.encode())
++        assert literals[offset]["bytes_hex"] == payload.encode().hex()
++    format_literal = literals[source.index(b'"%"')]
++    assert format_literal["tokens"][0]["spelling"]["scope"] == "project"
++    assert format_literal["tokens"][1]["spelling"]["scope"] == "system"
++    assert format_literal["tokens"][1]["expansion"]["offset"] == source.index(b"PRId64")
++    literal_storage = [item for item in records if item["kind"] == "literal_storage"]
++    assert len(literal_storage) == 1
++    message = b"Status: the requested file is available.\n\0"
++    assert literal_storage[0]["bytes_hex"] == message.hex()
++    assert any(message in data for name, data in sections.items() if ".str" in name)
++    assert {item["name"] for item in report["calls"]} == {"report", "read_local"}
++
++
++@pytest.mark.parametrize(
++    ("source", "category"),
++    [
++        (
++            '#define GAP\nchar a[] = "Status: the requested "'
++            ' GAP "file is available.\\n";',
++            "unsupported_preprocessing",
++        ),
++        ("#if 0\nchar a[5000];\n#endif\n", "unsupported_preprocessing"),
++        ('#line 7 "spoofed.c"\nchar a[] = "literal";\n', "unsupported_preprocessing"),
++        ("#pragma once\nint a = 1;\n", "unsupported_preprocessing"),
++        ('#include "/etc/os-release"\n', "unapproved_file"),
++        ("int broken = ;\n", "compiler_error"),
++        ('#include <stddef.h>\nwchar_t a[] = L"wide";\n', "unsupported_string"),
++        ('const char *a = "relocation";\n', "unsupported_storage"),
++        ("struct S { int n; }; struct S a = {7};\n", "unsupported_storage"),
++        ("int a = 1; void f(int n) { int b[n]; }\n", "unsupported_type"),
++        ("void f(int n) { int a[] = {n}; }\n", "unresolved_initializer"),
++        ('void f(void) { __asm__("nop"); }\n', "unsupported_assembly"),
++        ("unsigned char oversized[8388609] = {1};\n", "limit"),
++    ],
++)
++def test_incomplete_source(
++    arch: str, snapshot: Path, source: str, category: str
++) -> None:
++    (snapshot / "case.c").write_text(source + "\n")
++    result = checker(arch, snapshot)
++    assert result.returncode == 1
++    report = json.loads(result.stdout)
++    assert report["status"] == "unchecked"
++    assert report["error"]["category"] == category, result.stderr.decode()
++    assert "records" not in report
++
++
++def test_rejects_extra_compiler_arguments(arch: str, snapshot: Path) -> None:
++    (snapshot / "case.c").write_text("int a;\n")
++    result = checker(arch, snapshot, "-include", "/etc/os-release")
++    assert result.returncode == 2
++    assert json.loads(result.stdout)["error"]["category"] == "arguments"
++
++
++def test_implicit_static_zero(arch: str, snapshot: Path) -> None:
++    (snapshot / "case.c").write_text(
++        "extern int repeated; int repeated; int repeated; extern int other;\n"
++        "int inferred[];\n"
++        "void f(void) { static unsigned char local_zero[2]; }\n"
++    )
++    result = checker(arch, snapshot)
++    assert result.returncode == 0, (result.stdout.decode(), result.stderr.decode())
++    report = json.loads(result.stdout)
++    assert report["record_count"] == 3
++    assert {item["declaration"]: item["bytes_hex"] for item in report["records"]} == {
++        "repeated": "00000000",
++        "inferred": "00000000",
++        "local_zero": "0000",
++    }
++
++
++def test_include_cannot_escape_via_symlink(arch: str, snapshot: Path) -> None:
++    (snapshot / "include" / "alias.h").symlink_to("/usr/include/stdint.h")
++    (snapshot / "case.c").write_text('#include "alias.h"\n')
++    result = checker(arch, snapshot)
++    assert result.returncode == 1, (result.stdout.decode(), result.stderr.decode())
++    assert json.loads(result.stdout)["error"]["category"] == "unapproved_file"

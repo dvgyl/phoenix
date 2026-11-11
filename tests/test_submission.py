@@ -133,3 +133,41 @@ def test_raw_lift_summary_is_bound_before_measurement(
         snapshot.write_bytes(b"changed")
         with pytest.raises(SubmissionError, match="summary changed"):
             submit(tmp_path, directory, "pipeline", "raw", original, "ghidra-raw")
+
+
+@pytest.mark.parametrize("kind", ["directory", "fifo"])
+def test_checkpoint_rejection_closes_nonregular_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    import errno
+    import os
+
+    from phoenix_eval.submission import read_submission
+
+    path = tmp_path / "submission.json"
+    if kind == "directory":
+        path.mkdir()
+    else:
+        os.mkfifo(path)
+    descriptors = []
+    open_file = os.open
+
+    def opened(path: Path, flags: int) -> int:
+        descriptor = open_file(path, flags)
+        descriptors.append(descriptor)
+        return descriptor
+
+    with monkeypatch.context() as patch:
+        patch.setattr(os, "open", opened)
+        with pytest.raises(SubmissionError, match="checkpoint"):
+            read_submission(path)
+    assert len(descriptors) == 1
+    try:
+        with pytest.raises(OSError) as error:
+            os.fstat(descriptors[0])
+        assert error.value.errno == errno.EBADF
+    finally:
+        try:
+            os.close(descriptors[0])
+        except OSError as error:
+            assert error.errno == errno.EBADF

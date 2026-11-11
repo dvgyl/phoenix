@@ -57,6 +57,7 @@ class _RunRecord(TypedDict):
     java_home: str
     repair_limit: int
     astra_repair: bool
+    checked_switches: bool
     method: str
     replay_from: str | None
     provider: str
@@ -184,6 +185,7 @@ def _locked_run(
             "seed": args.seed,
             "repair_limit": args.max_repairs,
             "astra_repair": args.astra_repair,
+            "checked_switches": args.checked_switches,
             "method": args.method,
             "budget_binary": args.budget_binary,
             "budget_run": args.budget_run,
@@ -224,6 +226,7 @@ def _locked_run(
             previous["astra_repair"],
             checker_images,
             Method(previous["method"]),
+            previous.get("checked_switches", False),
         )
         budget = Budget(previous["budget_binary"], previous["budget_run"])
     else:
@@ -236,6 +239,7 @@ def _locked_run(
             bool(args.astra_repair),
             checker_images,
             args.method or Method.PHOENIX,
+            bool(args.checked_switches),
         )
         budget = Budget(
             args.budget_binary or 5 * NANODOLLARS, args.budget_run or 200 * NANODOLLARS
@@ -280,6 +284,7 @@ def _locked_run(
         "java_home": str(settings.java_home),
         "repair_limit": settings.repair_limit,
         "astra_repair": settings.astra_repair,
+        "checked_switches": settings.checked_switches,
         "method": settings.method,
         "replay_from": source.name if args.replay and source is not None else None,
         "provider": selected.name,
@@ -373,6 +378,12 @@ def main() -> int:
     run.add_argument("--method", type=Method, choices=list(Method))
     run.add_argument("--max-repairs", type=int)
     run.add_argument("--astra-repair", action="store_true", default=None)
+    run.add_argument(
+        "--checked-switches",
+        action="store_true",
+        default=None,
+        help="Preserve supported switches with checked source bindings.",
+    )
     run.add_argument("--budget-binary", type=_dollars)
     run.add_argument("--budget-run", type=_dollars)
     args = parser.parse_args()

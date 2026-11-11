@@ -1,0 +1,839 @@
+diff --git a/ghidra_scripts/ExportLift.java b/ghidra_scripts/ExportLift.java
+new file mode 100644
+index 0000000..bb2c66a
+--- /dev/null
++++ b/ghidra_scripts/ExportLift.java
+@@ -0,0 +1,347 @@
++// Export Phoenix lift evidence as JSON.
++// @category Phoenix
++
++import java.io.BufferedWriter;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.StandardCopyOption;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
++
++import com.google.gson.FieldNamingPolicy;
++import com.google.gson.Gson;
++import com.google.gson.GsonBuilder;
++
++import ghidra.app.decompiler.ClangNode;
++import ghidra.app.decompiler.ClangStatement;
++import ghidra.app.decompiler.DecompInterface;
++import ghidra.app.decompiler.DecompileResults;
++import ghidra.app.script.GhidraScript;
++import ghidra.program.model.address.Address;
++import ghidra.program.model.address.AddressRange;
++import ghidra.program.model.address.AddressSetView;
++import ghidra.program.model.block.BasicBlockModel;
++import ghidra.program.model.block.CodeBlock;
++import ghidra.program.model.block.CodeBlockIterator;
++import ghidra.program.model.block.CodeBlockReference;
++import ghidra.program.model.block.CodeBlockReferenceIterator;
++import ghidra.program.model.data.StringDataInstance;
++import ghidra.program.model.listing.Data;
++import ghidra.program.model.listing.Function;
++import ghidra.program.model.listing.FunctionManager;
++import ghidra.program.model.listing.Instruction;
++import ghidra.program.model.listing.Listing;
++import ghidra.program.model.pcode.PcodeOp;
++import ghidra.program.model.pcode.Varnode;
++import ghidra.program.model.scalar.Scalar;
++import ghidra.program.model.symbol.ExternalLocation;
++import ghidra.program.model.symbol.ExternalLocationIterator;
++import ghidra.program.model.symbol.ExternalManager;
++import ghidra.program.model.symbol.FlowType;
++import ghidra.program.model.symbol.Reference;
++import ghidra.program.model.symbol.ReferenceManager;
++
++public class ExportLift extends GhidraScript {
++    private record Location(String space, String offset) {}
++    private record Range(Location start, Location end) {}
++    private record Operand(Location address, int size, Sequence definition) {}
++    private record Sequence(Location address, int index) {}
++    private record Operation(Sequence sequence, String opcode, Operand output,
++            List<Operand> inputs) {}
++    private record DecodedInstruction(Location address, int size, String text,
++            List<Operation> pcode) {}
++    private record Statement(String text, Location start, Location end, Sequence operation) {}
++    private record Decompilation(String rawC, String status, String diagnostic,
++            List<Operation> analyzedPcode, List<Statement> statements) {}
++    private record Parameter(String name, String type) {}
++    private record Signature(String callingConvention, String returnType,
++            List<Parameter> parameters, boolean variadic) {}
++    private record Block(Location entry, List<Range> ranges) {}
++    private record FlowEdge(Location fromBlock, Location toBlock, Location site,
++            Location target, String kind) {}
++    private record CallEdge(Location caller, Location site, Location target, String kind,
++            boolean indirect) {}
++    private record LiftedFunction(Location entry, String name, Signature signature,
++            Location thunkTarget, List<Range> ranges, Decompilation decompilation,
++            List<DecodedInstruction> instructions, List<Block> blocks, List<FlowEdge> flowEdges) {}
++    private record Import(Location address, String library, String name, Location libraryAddress) {}
++    private record DefinedString(Location address, String value, String type, int size) {}
++    private record DataReference(Location from, Location to, String kind, int operandIndex) {}
++    private record LiftExport(int schemaVersion, Location imageBase, List<LiftedFunction> functions,
++            List<Import> imports, List<DefinedString> strings, List<DataReference> dataReferences,
++            List<CallEdge> callEdges) {}
++
++    @Override
++    public void run() throws Exception {
++        String[] args = getScriptArgs();
++        if (args.length != 1) {
++            throw new IllegalArgumentException("Supply the path for the lift export.");
++        }
++        Path output = Path.of(args[0]).toAbsolutePath();
++        LiftExport export = collectEvidence();
++        Gson gson = new GsonBuilder()
++                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
++                .serializeNulls().disableHtmlEscaping().create();
++        Path partial = Files.createTempFile(output.getParent(), ".lift-", ".json");
++        try {
++            try (BufferedWriter writer = Files.newBufferedWriter(partial)) {
++                gson.toJson(export, writer);
++            }
++            monitor.checkCancelled();
++            Files.move(partial, output, StandardCopyOption.ATOMIC_MOVE);
++        } finally {
++            Files.deleteIfExists(partial);
++        }
++    }
++
++    private LiftExport collectEvidence() throws Exception {
++        Listing listing = currentProgram.getListing();
++        FunctionManager functions = currentProgram.getFunctionManager();
++        BasicBlockModel blockModel = new BasicBlockModel(currentProgram);
++        List<LiftedFunction> lifted = new ArrayList<>();
++        DecompInterface decompiler = new DecompInterface();
++        try {
++            recoverGlibcMain(listing, functions);
++            if (!decompiler.openProgram(currentProgram)) {
++                throw new IllegalStateException(decompiler.getLastMessage());
++            }
++            for (Function function : functions.getFunctions(true)) {
++                monitor.checkCancelled();
++                lifted.add(liftFunction(function, listing, blockModel, decompiler));
++            }
++        } finally {
++            decompiler.dispose();
++        }
++        return new LiftExport(1, location(currentProgram.getImageBase()), lifted,
++                imports(), strings(listing), dataReferences(), calls(listing, functions));
++    }
++
++    private void recoverGlibcMain(Listing listing, FunctionManager functions) throws Exception {
++        for (Address entry : currentProgram.getSymbolTable().getExternalEntryPointIterator()) {
++            monitor.checkCancelled();
++            Function startup = functions.getFunctionAt(entry);
++            if (startup == null || startup.isExternal()) {
++                continue;
++            }
++            for (Instruction call : listing.getInstructions(startup.getBody(), true)) {
++                if (!callsGlibcStartup(call, functions)) {
++                    continue;
++                }
++                // The first System V AMD64 argument is in RDI.
++                Instruction setup = listing.getInstructionBefore(call.getAddress());
++                if (setup == null || !startup.getBody().contains(setup.getAddress())
++                        || !call.getAddress().equals(setup.getFallThrough())
++                        || setup.getRegister(0) == null
++                        || !setup.getRegister(0).getName().equals("RDI")) {
++                    continue;
++                }
++                Object[] source = setup.getOpObjects(1);
++                boolean immediate = setup.getMnemonicString().equals("MOV")
++                        && source.length == 1 && source[0] instanceof Scalar;
++                if (!immediate && !setup.getMnemonicString().equals("LEA")) {
++                    continue;
++                }
++                for (Reference reference : setup.getOperandReferences(1)) {
++                    Address main = reference.getToAddress();
++                    if (reference.getReferenceType().isData()
++                            && currentProgram.getMemory().getExecuteSet().contains(main)
++                            && functions.getFunctionContaining(main) == null
++                            && (listing.getInstructionAt(main) != null || disassemble(main))) {
++                        createFunction(main, null);
++                    }
++                }
++            }
++        }
++    }
++
++    private static boolean callsGlibcStartup(Instruction instruction, FunctionManager functions) {
++        if (!instruction.getFlowType().isCall()) {
++            return false;
++        }
++        Address[] targets = instruction.getFlows();
++        if (targets != null) {
++            for (Address target : targets) {
++                Function function = functions.getFunctionAt(target);
++                if (function != null && function.isThunk()) {
++                    function = function.getThunkedFunction(true);
++                }
++                if (function != null && function.isExternal()
++                        && function.getName().equals("__libc_start_main")) {
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
++
++    private LiftedFunction liftFunction(Function function, Listing listing, BasicBlockModel model,
++            DecompInterface decompiler) throws Exception {
++        AddressSetView body = function.getBody();
++        List<DecodedInstruction> instructions = new ArrayList<>();
++        for (Instruction instruction : listing.getInstructions(body, true)) {
++            monitor.checkCancelled();
++            instructions.add(new DecodedInstruction(location(instruction.getAddress()),
++                    instruction.getLength(), instruction.toString(),
++                    Arrays.stream(instruction.getPcode()).map(ExportLift::operation).toList()));
++        }
++
++        List<Block> blocks = new ArrayList<>();
++        List<FlowEdge> edges = new ArrayList<>();
++        CodeBlockIterator blockIterator = model.getCodeBlocksContaining(body, monitor);
++        while (blockIterator.hasNext()) {
++            CodeBlock block = blockIterator.next();
++            Location entry = location(block.getFirstStartAddress());
++            blocks.add(new Block(entry, ranges(block.intersect(body))));
++            CodeBlockReferenceIterator destinations = block.getDestinations(monitor);
++            while (destinations.hasNext()) {
++                CodeBlockReference edge = destinations.next();
++                if (!edge.getFlowType().isCall() && body.contains(edge.getReferent())) {
++                    edges.add(new FlowEdge(entry, location(edge.getDestinationAddress()),
++                            location(edge.getReferent()), location(edge.getReference()),
++                            edge.getFlowType().toString()));
++                }
++            }
++        }
++
++        List<Parameter> parameters = Arrays.stream(function.getParameters())
++                .map(parameter -> new Parameter(parameter.getName(),
++                        parameter.getDataType().getPathName())).toList();
++        Signature signature = new Signature(function.getCallingConventionName(),
++                function.getReturnType().getPathName(), parameters, function.hasVarArgs());
++        Function thunk = function.getThunkedFunction(true);
++        return new LiftedFunction(location(function.getEntryPoint()), function.getName(), signature,
++                thunk == null ? null : location(thunk.getEntryPoint()), ranges(body),
++                decompile(function, decompiler), instructions, blocks, edges);
++    }
++
++    private Decompilation decompile(Function function, DecompInterface decompiler) {
++        DecompileResults result = decompiler.decompileFunction(function, 60, monitor);
++        var code = result.getDecompiledFunction();
++        var high = result.getHighFunction();
++        List<Operation> analyzed = new ArrayList<>();
++        if (high != null) {
++            high.getPcodeOps().forEachRemaining(op -> analyzed.add(operation(op)));
++        }
++        List<Statement> statements = new ArrayList<>();
++        if (result.getCCodeMarkup() != null) {
++            collectStatements(result.getCCodeMarkup(), statements);
++        }
++        String status = result.isTimedOut() ? "timeout"
++                : code != null && high != null ? "ok" : "incomplete";
++        return new Decompilation(code == null ? null : code.getC(), status,
++                result.getErrorMessage(), analyzed, statements);
++    }
++
++    private static void collectStatements(ClangNode node, List<Statement> statements) {
++        if (node instanceof ClangStatement statement) {
++            statements.add(new Statement(statement.toString(), location(statement.getMinAddress()),
++                    location(statement.getMaxAddress()), sequence(statement.getPcodeOp())));
++        }
++        for (int index = 0; index < node.numChildren(); index++) {
++            collectStatements(node.Child(index), statements);
++        }
++    }
++
++    private List<Import> imports() {
++        ExternalManager manager = currentProgram.getExternalManager();
++        List<Import> imports = new ArrayList<>();
++        for (String library : manager.getExternalLibraryNames()) {
++            ExternalLocationIterator locations = manager.getExternalLocations(library);
++            while (locations.hasNext()) {
++                ExternalLocation imported = locations.next();
++                imports.add(new Import(location(imported.getExternalSpaceAddress()), library,
++                        imported.getLabel(), location(imported.getAddress())));
++            }
++        }
++        return imports;
++    }
++
++    private List<DefinedString> strings(Listing listing) throws Exception {
++        List<DefinedString> strings = new ArrayList<>();
++        for (Data data : listing.getDefinedData(true)) {
++            monitor.checkCancelled();
++            if (StringDataInstance.isString(data)) {
++                String value = StringDataInstance.getStringDataInstance(data).getStringValue();
++                if (value != null) {
++                    strings.add(new DefinedString(location(data.getAddress()), value,
++                            data.getDataType().getPathName(), data.getLength()));
++                }
++            }
++        }
++        return strings;
++    }
++
++    private List<DataReference> dataReferences() throws Exception {
++        ReferenceManager references = currentProgram.getReferenceManager();
++        List<DataReference> data = new ArrayList<>();
++        for (Address from : references.getReferenceSourceIterator(currentProgram.getMemory(), true)) {
++            monitor.checkCancelled();
++            for (Reference reference : references.getReferencesFrom(from)) {
++                if (reference.getReferenceType().isData()) {
++                    data.add(new DataReference(location(from), location(reference.getToAddress()),
++                            reference.getReferenceType().toString(), reference.getOperandIndex()));
++                }
++            }
++        }
++        return data;
++    }
++
++    private List<CallEdge> calls(Listing listing, FunctionManager functions) throws Exception {
++        List<CallEdge> calls = new ArrayList<>();
++        for (Instruction instruction : listing.getInstructions(true)) {
++            monitor.checkCancelled();
++            FlowType type = instruction.getFlowType();
++            if (!type.isCall()) {
++                continue;
++            }
++            Address address = instruction.getAddress();
++            Location site = location(address);
++            Function function = functions.getFunctionContaining(address);
++            Location caller = function == null ? null : location(function.getEntryPoint());
++            Address[] flows = instruction.getFlows();
++            if ((flows == null || flows.length == 0) && !type.isComputed()) {
++                flows = instruction.getDefaultFlows();
++            }
++            if (flows == null || flows.length == 0) {
++                calls.add(new CallEdge(caller, site, null, type.toString(), type.isComputed()));
++            } else {
++                Arrays.sort(flows);
++                for (Address target : flows) {
++                    calls.add(new CallEdge(caller, site, location(target), type.toString(),
++                            type.isComputed()));
++                }
++            }
++        }
++        return calls;
++    }
++
++    private static List<Range> ranges(AddressSetView addresses) {
++        List<Range> result = new ArrayList<>();
++        for (AddressRange range : addresses.getAddressRanges()) {
++            result.add(new Range(location(range.getMinAddress()), location(range.getMaxAddress())));
++        }
++        return result;
++    }
++
++    private static Operation operation(PcodeOp op) {
++        return new Operation(sequence(op), op.getMnemonic(), operand(op.getOutput()),
++                Arrays.stream(op.getInputs()).map(ExportLift::operand).toList());
++    }
++
++    private static Sequence sequence(PcodeOp op) {
++        return op == null ? null
++                : new Sequence(location(op.getSeqnum().getTarget()), op.getSeqnum().getTime());
++    }
++
++    private static Operand operand(Varnode node) {
++        return node == null ? null
++                : new Operand(location(node.getAddress()), node.getSize(), sequence(node.getDef()));
++    }
++
++    private static Location location(Address address) {
++        return address == null || address.equals(Address.NO_ADDRESS) ? null
++                : new Location(address.getAddressSpace().getName(),
++                        "0x" + Long.toUnsignedString(address.getOffset(), 16));
++    }
++}
+diff --git a/phoenix/lift/__init__.py b/phoenix/lift/__init__.py
+new file mode 100644
+index 0000000..2977e9d
+--- /dev/null
++++ b/phoenix/lift/__init__.py
+@@ -0,0 +1,90 @@
++"""Lift a binary with Ghidra headless analysis."""
++
++import os
++import subprocess
++from dataclasses import dataclass
++from pathlib import Path
++from tempfile import TemporaryDirectory
++
++
++@dataclass(frozen=True)
++class LiftResult:
++    export_path: Path
++
++
++class LiftError(RuntimeError):
++    """Ghidra did not produce a complete lift export."""
++
++
++def lift_binary(
++    binary: Path, output: Path, installation: Path, java_home: Path
++) -> LiftResult:
++    """Write a lift JSON file to output and return its absolute path."""
++    binary = binary.resolve()
++    output = output.resolve()
++    launcher = installation.resolve() / "support" / "analyzeHeadless"
++    java_home = java_home.resolve()
++    script_dir = Path(__file__).resolve().parents[2] / "ghidra_scripts"
++    for path in (binary, launcher, java_home / "bin" / "java"):
++        if not path.is_file():
++            raise FileNotFoundError(path)
++    if binary == output:
++        raise ValueError("The output path must differ from the binary path.")
++
++    output.parent.mkdir(parents=True, exist_ok=True)
++    with (
++        TemporaryDirectory(prefix="phoenix-lift-") as directory,
++        TemporaryDirectory(prefix=".phoenix-lift-", dir=output.parent) as staging,
++    ):
++        work = Path(directory)
++        staged = Path(staging) / "lift.json"
++        # Ghidra's launcher and analyzers both need workspace-local Java paths.
++        java_path = str(work).replace("\\", "\\\\").replace('"', '\\"')
++        (work / "java.args").write_text(
++            f'-Duser.home="{java_path}"\n'
++            f'-Djava.io.tmpdir="{java_path}"\n'
++            f'-Dapplication.settingsdir="{java_path}"\n'
++            f'-Dapplication.cachedir="{java_path}"\n'
++            f'-Dapplication.tempdir="{java_path}"\n',
++            encoding="utf-8",
++        )
++        env = {
++            **os.environ,
++            "JAVA_HOME": str(java_home),
++            "JDK_JAVA_OPTIONS": "@java.args",
++            "PATH": f"{java_home / 'bin'}{os.pathsep}{os.defpath}",
++            "XDG_CONFIG_HOME": str(work),
++        }
++        process = subprocess.run(
++            [
++                str(launcher),
++                str(work),
++                "phoenix",
++                "-import",
++                str(binary),
++                "-readOnly",
++                "-scriptPath",
++                str(script_dir),
++                "-log",
++                str(work / "analysis.log"),
++                "-scriptlog",
++                str(work / "script.log"),
++                "-postScript",
++                "ExportLift.java",
++                str(staged),
++            ],
++            cwd=work,
++            env=env,
++            stdout=subprocess.PIPE,
++            stderr=subprocess.STDOUT,
++            encoding="utf-8",
++            errors="replace",
++            check=False,
++        )
++        if process.returncode != 0 or not staged.is_file():
++            raise LiftError(
++                f"Ghidra did not complete the lift (exit {process.returncode}).\n"
++                f"{process.stdout[-12000:]}"
++            )
++        staged.replace(output)
++    return LiftResult(export_path=output)
+diff --git a/schemas/lift.schema.json b/schemas/lift.schema.json
+new file mode 100644
+index 0000000..1c1b318
+--- /dev/null
++++ b/schemas/lift.schema.json
+@@ -0,0 +1,212 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "title": "Phoenix lift export",
++  "type": "object",
++  "additionalProperties": false,
++  "required": ["schema_version", "image_base", "functions", "imports", "strings", "data_references", "call_edges"],
++  "properties": {
++    "schema_version": {"const": 1},
++    "image_base": {"$ref": "#/$defs/address"},
++    "functions": {"type": "array", "items": {"$ref": "#/$defs/function"}},
++    "imports": {"type": "array", "items": {"$ref": "#/$defs/import"}},
++    "strings": {"type": "array", "items": {"$ref": "#/$defs/string"}},
++    "data_references": {"type": "array", "items": {"$ref": "#/$defs/data_reference"}},
++    "call_edges": {"type": "array", "items": {"$ref": "#/$defs/call_edge"}}
++  },
++  "$defs": {
++    "address": {
++      "description": "Ghidra address space and unsigned hexadecimal offset.",
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["space", "offset"],
++      "properties": {
++        "space": {"type": "string", "minLength": 1},
++        "offset": {"type": "string", "pattern": "^0x(?:0|[1-9a-f][0-9a-f]{0,15})$"}
++      }
++    },
++    "optional_address": {"anyOf": [{"$ref": "#/$defs/address"}, {"type": "null"}]},
++    "range": {
++      "description": "Inclusive address range.",
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["start", "end"],
++      "properties": {
++        "start": {"$ref": "#/$defs/address"},
++        "end": {"$ref": "#/$defs/address"}
++      }
++    },
++    "operand": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["address", "size", "definition"],
++      "properties": {
++        "address": {"$ref": "#/$defs/address"},
++        "size": {"type": "integer", "minimum": 0},
++        "definition": {"$ref": "#/$defs/optional_sequence"}
++      }
++    },
++    "sequence": {
++      "description": "Ghidra sequence address and operation number. Raw and analyzed p-code use separate sequences.",
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["address", "index"],
++      "properties": {
++        "address": {"$ref": "#/$defs/address"},
++        "index": {"type": "integer", "minimum": 0}
++      }
++    },
++    "operation": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["sequence", "opcode", "output", "inputs"],
++      "properties": {
++        "sequence": {"$ref": "#/$defs/sequence"},
++        "opcode": {"type": "string"},
++        "output": {"anyOf": [{"$ref": "#/$defs/operand"}, {"type": "null"}]},
++        "inputs": {"type": "array", "items": {"$ref": "#/$defs/operand"}}
++      }
++    },
++    "optional_sequence": {"anyOf": [{"$ref": "#/$defs/sequence"}, {"type": "null"}]},
++    "instruction": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["address", "size", "text", "pcode"],
++      "properties": {
++        "address": {"$ref": "#/$defs/address"},
++        "size": {"type": "integer", "minimum": 1},
++        "text": {"type": "string"},
++        "pcode": {"type": "array", "items": {"$ref": "#/$defs/operation"}}
++      }
++    },
++    "statement": {
++      "description": "Decompiler statement markup. Address bounds can span gaps.",
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["text", "start", "end", "operation"],
++      "properties": {
++        "text": {"type": "string"},
++        "start": {"$ref": "#/$defs/optional_address"},
++        "end": {"$ref": "#/$defs/optional_address"},
++        "operation": {"$ref": "#/$defs/optional_sequence"}
++      }
++    },
++    "decompilation": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["raw_c", "status", "diagnostic", "analyzed_pcode", "statements"],
++      "properties": {
++        "raw_c": {"type": ["string", "null"]},
++        "status": {"enum": ["ok", "timeout", "incomplete"]},
++        "diagnostic": {"type": ["string", "null"]},
++        "analyzed_pcode": {"type": "array", "items": {"$ref": "#/$defs/operation"}},
++        "statements": {"type": "array", "items": {"$ref": "#/$defs/statement"}}
++      }
++    },
++    "signature": {
++      "description": "Ghidra listing signature. Types use Ghidra data type paths.",
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["calling_convention", "return_type", "parameters", "variadic"],
++      "properties": {
++        "calling_convention": {"type": ["string", "null"]},
++        "return_type": {"type": "string"},
++        "parameters": {
++          "type": "array",
++          "items": {
++            "type": "object",
++            "additionalProperties": false,
++            "required": ["name", "type"],
++            "properties": {"name": {"type": "string"}, "type": {"type": "string"}}
++          }
++        },
++        "variadic": {"type": "boolean"}
++      }
++    },
++    "block": {
++      "description": "Instruction block. Ranges include only addresses in the function body.",
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["entry", "ranges"],
++      "properties": {
++        "entry": {"$ref": "#/$defs/address"},
++        "ranges": {"type": "array", "items": {"$ref": "#/$defs/range"}}
++      }
++    },
++    "flow_edge": {
++      "description": "Control flow without calls. The destination block can be outside the function.",
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["from_block", "to_block", "site", "target", "kind"],
++      "properties": {
++        "from_block": {"$ref": "#/$defs/address"},
++        "to_block": {"$ref": "#/$defs/address"},
++        "site": {"$ref": "#/$defs/address"},
++        "target": {"$ref": "#/$defs/address"},
++        "kind": {"type": "string"}
++      }
++    },
++    "function": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["entry", "name", "signature", "thunk_target", "ranges", "decompilation", "instructions", "blocks", "flow_edges"],
++      "properties": {
++        "entry": {"$ref": "#/$defs/address"},
++        "name": {"type": "string"},
++        "signature": {"$ref": "#/$defs/signature"},
++        "thunk_target": {"$ref": "#/$defs/optional_address"},
++        "ranges": {"type": "array", "items": {"$ref": "#/$defs/range"}},
++        "decompilation": {"$ref": "#/$defs/decompilation"},
++        "instructions": {"type": "array", "items": {"$ref": "#/$defs/instruction"}},
++        "blocks": {"type": "array", "items": {"$ref": "#/$defs/block"}},
++        "flow_edges": {"type": "array", "items": {"$ref": "#/$defs/flow_edge"}}
++      }
++    },
++    "import": {
++      "description": "External symbol. The address in the external library can be unknown.",
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["address", "library", "name", "library_address"],
++      "properties": {
++        "address": {"$ref": "#/$defs/address"},
++        "library": {"type": "string"},
++        "name": {"type": ["string", "null"]},
++        "library_address": {"$ref": "#/$defs/optional_address"}
++      }
++    },
++    "string": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["address", "value", "type", "size"],
++      "properties": {
++        "address": {"$ref": "#/$defs/address"},
++        "value": {"type": "string"},
++        "type": {"type": "string"},
++        "size": {"type": "integer", "minimum": 1}
++      }
++    },
++    "data_reference": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["from", "to", "kind", "operand_index"],
++      "properties": {
++        "from": {"$ref": "#/$defs/address"},
++        "to": {"$ref": "#/$defs/address"},
++        "kind": {"type": "string"},
++        "operand_index": {"type": "integer"}
++      }
++    },
++    "call_edge": {
++      "description": "The target is null when Ghidra has no destination. The caller is null outside a known function.",
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["caller", "site", "target", "kind", "indirect"],
++      "properties": {
++        "caller": {"$ref": "#/$defs/optional_address"},
++        "site": {"$ref": "#/$defs/address"},
++        "target": {"$ref": "#/$defs/optional_address"},
++        "kind": {"type": "string"},
++        "indirect": {"type": "boolean"}
++      }
++    }
++  }
++}
+diff --git a/tests/test_lift.py b/tests/test_lift.py
+new file mode 100644
+index 0000000..b30abf6
+--- /dev/null
++++ b/tests/test_lift.py
+@@ -0,0 +1,166 @@
++import json
++import os
++from pathlib import Path
++
++import pytest
++
++from phoenix.lift import LiftError, lift_binary
++
++
++def fake_install(tmp_path: Path, script: str) -> tuple[Path, Path, Path]:
++    installation = tmp_path / "Ghidra install"
++    launcher = installation / "support" / "analyzeHeadless"
++    launcher.parent.mkdir(parents=True)
++    launcher.write_text(f"#!/bin/sh\nset -eu\n{script}\n", encoding="utf-8")
++    launcher.chmod(0o755)
++    java_home = tmp_path / "Java home"
++    java = java_home / "bin" / "java"
++    java.parent.mkdir(parents=True)
++    java.touch()
++    binary = tmp_path / "fixture with spaces.elf"
++    binary.write_bytes(b"public fixture")
++    return binary, installation, java_home
++
++
++def test_lift_publishes_the_headless_export(tmp_path: Path) -> None:
++    binary, installation, java_home = fake_install(
++        tmp_path,
++        """
++        test "$(command -v java)" = "$JAVA_HOME/bin/java"
++        while [ "$1" != "-import" ]; do shift; done
++        test "$(cat "$2")" = "public fixture"
++        shift 2
++        test "$1" = "-readOnly"
++        while [ "$1" != "-postScript" ]; do shift; done
++        test "$2" = "ExportLift.java"
++        printf '%s\n' '{"schema_version":1}' > "$3"
++        """,
++    )
++    (java_home / "bin" / "java").chmod(0o755)
++    output = tmp_path / "new run" / "lift.json"
++
++    result = lift_binary(binary, output, installation, java_home)
++
++    assert result.export_path == output
++    assert json.loads(output.read_text(encoding="utf-8")) == {"schema_version": 1}
++    assert binary.read_bytes() == b"public fixture"
++
++
++@pytest.mark.parametrize(
++    "script",
++    [
++        "echo 'post-script failed'; exit 0",
++        """
++        for output do :; done
++        printf '{}' > "$output"
++        echo 'post-script failed'
++        exit 1
++        """,
++    ],
++)
++def test_failed_lift_keeps_previous_export(tmp_path: Path, script: str) -> None:
++    binary, installation, java_home = fake_install(tmp_path, script)
++    output = tmp_path / "lift.json"
++    output.write_bytes(b"previous export")
++
++    with pytest.raises(LiftError, match="post-script failed"):
++        lift_binary(binary, output, installation, java_home)
++
++    assert output.read_bytes() == b"previous export"
++
++
++def test_lift_rejects_binary_as_output(tmp_path: Path) -> None:
++    binary, installation, java_home = fake_install(tmp_path, "exit 1")
++    alias = tmp_path / "alias"
++    alias.symlink_to(binary)
++
++    with pytest.raises(ValueError, match="output path"):
++        lift_binary(binary, alias, installation, java_home)
++
++    assert binary.read_bytes() == b"public fixture"
++
++
++def test_headless_bitstats(tmp_path: Path) -> None:
++    fixture = os.environ.get("PHOENIX_LIFT_FIXTURE")
++    if fixture is None:
++        pytest.skip("Set PHOENIX_LIFT_FIXTURE to the public bitstats ELF path.")
++    binary = Path(fixture)
++    installation = Path(os.environ["PHOENIX_LIFT_GHIDRA"])
++    java_home = Path(os.environ["PHOENIX_LIFT_JAVA"])
++    result = lift_binary(
++        binary,
++        tmp_path / ".new run" / "lift.json",
++        installation,
++        java_home,
++    )
++    export = json.loads(result.export_path.read_text(encoding="utf-8"))
++
++    assert export["schema_version"] == 1
++    assert export["image_base"]["space"] == "ram"
++    assert int(export["image_base"]["offset"], 16) >= 0
++    getenv = next(
++        item["address"] for item in export["imports"] if item["name"] == "getenv"
++    )
++    usage = next(
++        item["address"]
++        for item in export["strings"]
++        if item["value"] == "use sum or count\n"
++    )
++    usage_sites = [
++        ref["from"] for ref in export["data_references"] if ref["to"] == usage
++    ]
++    function = next(
++        fn
++        for fn in export["functions"]
++        if any(ins["address"] in usage_sites for ins in fn["instructions"])
++    )
++
++    decompilation = function["decompilation"]
++    assert decompilation["status"] == "ok"
++    assert "getenv(" in decompilation["raw_c"]
++    assert any(
++        op["opcode"] == "CALL" and op["sequence"]["address"] == ins["address"]
++        for ins in function["instructions"]
++        for op in ins["pcode"]
++    )
++    analyzed = decompilation["analyzed_pcode"]
++    assert any(
++        stmt["operation"] == op["sequence"]
++        for stmt in decompilation["statements"]
++        for op in analyzed
++        if op["opcode"] == "CALL"
++    )
++    assert any(
++        edge["from_block"]["space"] == edge["to_block"]["space"]
++        and int(edge["from_block"]["offset"], 16) >= int(edge["to_block"]["offset"], 16)
++        for edge in function["flow_edges"]
++    )
++    getenv_targets = [getenv] + [
++        fn["entry"] for fn in export["functions"] if fn["thunk_target"] == getenv
++    ]
++    assert any(
++        edge["caller"] == function["entry"] and edge["target"] in getenv_targets
++        for edge in export["call_edges"]
++    )
++
++    init = next(fn["entry"] for fn in export["functions"] if fn["name"] == "_DT_INIT")
++    call = next(
++        edge
++        for edge in export["call_edges"]
++        if edge["caller"] == init and edge["indirect"]
++    )
++    assert call["target"] is not None
++    original = binary.read_bytes()
++    pattern = bytes.fromhex("ffd04883c408c3")
++    assert original.count(pattern) == 1
++    unknown_call = tmp_path / "bitstats-unknown-call.elf"
++    # RCX has no known value at this call. RAX holds the original import pointer.
++    unknown_call.write_bytes(original.replace(pattern, bytes.fromhex("ffd14883c408c3")))
++    result = lift_binary(
++        unknown_call, tmp_path / "unknown-call.json", installation, java_home
++    )
++    modified = json.loads(result.export_path.read_text(encoding="utf-8"))
++    assert any(
++        edge["site"] == call["site"] and edge["indirect"] and edge["target"] is None
++        for edge in modified["call_edges"]
++    )

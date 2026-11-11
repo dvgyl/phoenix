@@ -1,3 +1,4 @@
+import re
 from dataclasses import replace
 from pathlib import Path
 
@@ -84,9 +85,14 @@ def feedback(
 ) -> str:
     for check in verification.checks:
         if check.build.executable is None:
+            diagnostics = re.sub(
+                r"(?m)^(-- (?:Configuring|Generating) done) \([0-9]+(?:\.[0-9]+)?s\)$",
+                r"\1",
+                check.build.diagnostics,
+            )
             return (
                 f"The {check.build.engine} {check.build.compiler} build failed.\n"
-                + check.build.diagnostics[-4_000:]
+                + diagnostics[-4_000:]
             )
     for check in verification.checks:
         for index, kinds in enumerate(check.differences):

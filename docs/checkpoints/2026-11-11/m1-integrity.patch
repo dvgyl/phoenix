@@ -1,0 +1,978 @@
+diff --git a/phoenix_eval/integrity.py b/phoenix_eval/integrity.py
+new file mode 100644
+index 0000000..a9141ba
+--- /dev/null
++++ b/phoenix_eval/integrity.py
+@@ -0,0 +1,589 @@
++"""Check output bytes without building or executing a program.
++
++This module does not check behavior or detect emulators or loaders.
++"""
++
++import re
++from bisect import bisect_right
++from collections.abc import Iterable, Iterator, Mapping
++from dataclasses import dataclass
++from hashlib import sha256
++from math import prod
++from typing import Literal
++
++type Rule = Literal[
++    "embedded_text",
++    "memorized_output",
++    "unjustified_blob",
++    "unsupported_byte_array",
++    "unsupported_c_trigraph",
++]
++type Representation = Literal["raw", "c_string", "c_initializer"]
++type _Token = re.Match[bytes]
++type _ByteKind = Literal["unsigned", "signed", "plain"]
++
++_TEXT_MIN = 64
++_OUTPUT_LIMIT = 32
++_BLOB_LIMIT = 4096
++_MAX_ARRAY_BYTES = 16 * 1024 * 1024
++_MAX_ARRAY_DIMENSIONS = 64
++
++_LINE_SPLICE = re.compile(rb"\\\r?\n")
++_TRIGRAPH = re.compile(rb"\?\?[=/()'<>!-]")
++_TOKEN = re.compile(
++    rb"(?P<skip>\s+|//[^\r\n]*|/\*.*?\*/)"
++    rb'|(?P<string>(?:u8|[LuU])?"(?:[^"\\\r\n]|\\[^\r\n])*")'
++    rb"|(?P<char>(?:[LuU])?'(?:[^'\\\r\n]|\\[^\r\n])*')"
++    rb"|(?:[0-9]|\.[0-9])(?:[eEpP][+-]|[a-zA-Z0-9_.])*"
++    rb"|[a-zA-Z_][a-zA-Z_0-9]*|<:|:>|<%|%>|.",
++    re.DOTALL,
++)
++_ESCAPE = re.compile(rb"\\(x[0-9a-fA-F]+|[0-7]{1,3}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|.)")
++_SIMPLE_ESCAPE = dict(zip(b"'\x22?\\abfnrtv", b"'\x22?\\\a\b\f\n\r\t\v", strict=True))
++_INTEGER = re.compile(
++    rb"(0x[0-9a-f]+|0b[01]+|0[0-7]*|[1-9][0-9]*)(?:u(?:ll?)?|ll?u?)?", re.I
++)
++_IDENTIFIER = re.compile(rb"[a-zA-Z_][a-zA-Z_0-9]*")
++_GROUP_END = {b"(": b")", b"[": b"]", b"{": b"}"}
++_DIGRAPH = {b"<:": b"[", b":>": b"]", b"<%": b"{", b"%>": b"}"}
++_BYTE_TYPES = {b"char", b"uint8_t", b"int8_t"}
++_TYPE_MODIFIERS = {
++    b"const",
++    b"volatile",
++    b"_Atomic",
++    b"signed",
++    b"unsigned",
++    b"auto",
++    b"extern",
++    b"register",
++    b"static",
++    b"_Thread_local",
++}
++
++
++@dataclass(frozen=True, slots=True)
++class BlobEvidence:
++    """Identify the artifact and blob in a report and give the reason for its use."""
++
++    artifact: str
++    sha256: str
++    reason: str
++
++
++@dataclass(frozen=True, slots=True)
++class IntegrityFinding:
++    """Give an artifact byte offset and a byte count for one finding.
++
++    For a decoded C sequence, the offset identifies its first token. For
++    embedded text, the count is the size of one matching window. For an
++    unsupported byte array, the offset and count identify the initializer.
++    """
++
++    rule: Rule
++    artifact: str
++    representation: Representation
++    offset: int
++    length: int
++    original_offset: int | None = None
++    sha256: str | None = None
++
++
++@dataclass(frozen=True, slots=True)
++class _ByteArray:
++    kind: _ByteKind
++    bounds: tuple[int | None, ...] | None
++    start: int
++    stop: int
++
++
++@dataclass(frozen=True, slots=True)
++class _CSequence:
++    representation: Representation
++    offset: int
++    storage: bytes | None
++    literal: bytes | None = None
++
++
++def _decode_literal(body: bytes) -> bytes | None:
++    decoded = bytearray()
++    start = 0
++    for escape in _ESCAPE.finditer(body):
++        decoded.extend(body[start : escape.start()])
++        value = escape[1]
++        marker = value[:1]
++        if marker in (b"u", b"U") and len(value) > 1:
++            try:
++                decoded.extend(chr(int(value[1:], 16)).encode("utf-8"))
++            except ValueError:
++                return None
++        else:
++            if marker == b"x" and len(value) > 1:
++                number = int(value[1:], 16)
++            elif marker in b"01234567":
++                number = int(value, 8)
++            else:
++                number = _SIMPLE_ESCAPE.get(value[0], -1)
++            if not 0 <= number <= 255:
++                return None
++            decoded.append(number)
++        start = escape.end()
++    decoded.extend(body[start:])
++    return bytes(decoded)
++
++
++def _c_strings(tokens: list[_Token]) -> dict[int, tuple[int, bytes | None]]:
++    strings: dict[int, tuple[int, bytes | None]] = {}
++    i = 0
++    while i < len(tokens):
++        if tokens[i].lastgroup != "string":
++            i += 1
++            continue
++        start = i
++        payload = bytearray()
++        supported = True
++        while i < len(tokens) and tokens[i].lastgroup == "string":
++            literal = tokens[i][0]
++            quote = literal.index(b'"')
++            value = (
++                _decode_literal(literal[quote + 1 : -1])
++                if literal[:quote] in (b"", b"u8")
++                else None
++            )
++            if value is None:
++                supported = False
++            else:
++                payload.extend(value)
++            i += 1
++        strings[start] = (i, bytes(payload) if supported else None)
++    return strings
++
++
++def _integer_value(token: bytes) -> int | None:
++    match = _INTEGER.fullmatch(token)
++    if match is None:
++        return None
++    digits = match[1].lower()
++    if digits.startswith((b"0x", b"0b")):
++        base, digits = (16 if digits[1:2] == b"x" else 2), digits[2:]
++    else:
++        base = 8 if digits.startswith(b"0") else 10
++    digits = digits.lstrip(b"0")
++    if len(digits) > 64:
++        return None
++    number = int(digits or b"0", base)
++    return number if number < 2**64 else None
++
++
++def _initializer_byte(
++    tokens: list[_Token], i: int, kind: _ByteKind
++) -> tuple[int, int] | None:
++    sign = 1
++    token = tokens[i][0]
++    if token in (b"+", b"-"):
++        sign = -1 if token == b"-" else 1
++        i += 1
++        if i == len(tokens):
++            return None
++        token = tokens[i][0]
++    if tokens[i].lastgroup == "char" and token.startswith(b"'"):
++        value = _decode_literal(token[1:-1])
++        if value is None or len(value) != 1:
++            return None
++        number = value[0]
++    else:
++        integer = _integer_value(token)
++        if integer is None:
++            return None
++        number = integer
++
++    number *= sign
++    upper = 127 if kind == "signed" else 255
++    if kind == "unsigned" or -128 <= number <= upper:
++        return i + 1, number % 256
++    return None
++
++
++def _c_initializers(
++    tokens: list[_Token], values: list[bytes], covered: set[int]
++) -> Iterator[tuple[int, bytes]]:
++    scopes: list[bytes] = []
++    payload = bytearray()
++    offset = 0
++    for i, value in enumerate(values):
++        if i in covered:
++            continue
++        if value in (b"{", b"(", b"["):
++            scopes.append(value)
++        elif value in (b"}", b")", b"]") and scopes:
++            scopes.pop()
++        if value not in (b"{", b",", b"}"):
++            continue
++        if value == b"," and (not scopes or scopes[-1] != b"{"):
++            continue
++
++        byte = None
++        if value != b"}" and i + 1 < len(tokens):
++            item = _initializer_byte(tokens, i + 1, "plain")
++            if (
++                item is not None
++                and item[0] < len(values)
++                and values[item[0]] in (b",", b"}")
++            ):
++                byte = item[1]
++        if payload and (value == b"{" or byte is None):
++            yield offset, bytes(payload)
++            payload.clear()
++        if byte is not None:
++            if not payload:
++                offset = tokens[i + 1].start()
++            payload.append(byte)
++
++
++def _group_ends(values: list[bytes]) -> dict[int, int]:
++    stack: list[int] = []
++    ends: dict[int, int] = {}
++    for i, value in enumerate(values):
++        if value in _GROUP_END:
++            stack.append(i)
++        elif stack and value == _GROUP_END[values[stack[-1]]]:
++            ends[stack.pop()] = i
++    return ends
++
++
++def _skip_to(
++    values: list[bytes], ends: dict[int, int], start: int, stop_at: tuple[bytes, ...]
++) -> int:
++    i = start
++    while i < len(values) and values[i] not in stop_at:
++        i = ends.get(i, i) + 1
++    return i
++
++
++def _array_bounds(
++    values: list[bytes], ends: dict[int, int], brackets: list[int]
++) -> tuple[int | None, ...] | None:
++    bounds: list[int | None] = []
++    for index, start in enumerate(brackets):
++        end = ends[start]
++        if index == 0 and end == start + 1:
++            bounds.append(None)
++        else:
++            size = _integer_value(values[start + 1]) if end == start + 2 else None
++            if size is None or size == 0:
++                return None
++            bounds.append(size)
++    return tuple(bounds)
++
++
++def _byte_arrays(values: list[bytes], ends: dict[int, int]) -> Iterator[_ByteArray]:
++    initializer_end = (b",", b";", b")", b"}")
++    declarator_end = (b"=", b"{", *initializer_end)
++    for i, value in enumerate(values):
++        if value not in _BYTE_TYPES:
++            continue
++        start = i + 1
++        while start < len(values) and values[start] in _TYPE_MODIFIERS:
++            start += 1
++        before = i - 1
++        while before >= 0 and values[before] in _TYPE_MODIFIERS:
++            before -= 1
++        specifiers = values[before + 1 : start]
++        kind: _ByteKind = "plain"
++        if value == b"uint8_t" or b"unsigned" in specifiers:
++            kind = "unsigned"
++        elif value == b"int8_t" or b"signed" in specifiers:
++            kind = "signed"
++        atomic_type = b"_Atomic" in specifiers or (
++            before > 0 and values[before - 1 : before + 1] == [b"_Atomic", b"("]
++        )
++        if atomic_type and values[start : start + 1] == [b")"]:
++            start += 1
++
++        while start < len(values):
++            stop = _skip_to(values, ends, start, declarator_end)
++            if stop == len(values):
++                break
++            delimiter = values[stop]
++            # In a compound literal, the initializer follows the closing parenthesis.
++            compound = delimiter == b")" and values[stop + 1 : stop + 2] == [b"{"]
++            if delimiter == b"=" or compound:
++                initializer = stop + 1
++                end = _skip_to(values, ends, initializer, initializer_end)
++                cursor = start
++                parentheses: list[int] = []
++                while cursor < stop and values[cursor] == b"(" and cursor in ends:
++                    parentheses.append(ends[cursor])
++                    cursor += 1
++                name = cursor
++                if cursor < stop and _IDENTIFIER.fullmatch(values[cursor]):
++                    cursor += 1
++                brackets: list[int] = []
++                while cursor < stop:
++                    if values[cursor] == b"[" and cursor in ends:
++                        brackets.append(cursor)
++                        cursor = ends[cursor] + 1
++                    elif parentheses and cursor == parentheses[-1]:
++                        parentheses.pop()
++                        cursor += 1
++                    else:
++                        break
++                if brackets:
++                    bounds = (
++                        _array_bounds(values, ends, brackets)
++                        if cursor == stop and not atomic_type
++                        else None
++                    )
++                    yield _ByteArray(kind, bounds, initializer, end)
++                else:
++                    special = _skip_to(
++                        values, ends, name, (b"*", b"[", *declarator_end)
++                    )
++                    if special < stop and values[special] == b"[":
++                        yield _ByteArray(kind, None, initializer, end)
++                stop = end
++            if compound or values[stop : stop + 1] != [b","]:
++                break
++            start = stop + 1
++
++
++def _array_storage(
++    array: _ByteArray,
++    tokens: list[_Token],
++    values: list[bytes],
++    ends: dict[int, int],
++    strings: dict[int, tuple[int, bytes | None]],
++) -> bytes | None:
++    bounds = array.bounds
++    if bounds is None or len(bounds) > _MAX_ARRAY_DIMENSIONS:
++        return None
++    if prod(bound for bound in bounds if bound is not None) > _MAX_ARRAY_BYTES:
++        return None
++
++    def read(start: int, depth: int) -> tuple[int, bytes] | None:
++        bound = bounds[depth]
++        leaf = depth == len(bounds) - 1
++        braced = values[start] == b"{" and start in ends
++        body = start + int(braced)
++        end = ends[start] if braced else array.stop
++        literal = strings.get(body) if leaf else None
++        if literal is not None:
++            after, payload = literal
++            if payload is None or (bound is not None and len(payload) > bound):
++                return None
++            if braced:
++                if after != end and not (after + 1 == end and values[after] == b","):
++                    return None
++                after = end + 1
++            size = len(payload) + 1 if bound is None else bound
++            if size > _MAX_ARRAY_BYTES:
++                return None
++            return after, payload.ljust(size, b"\0")
++        if not braced:
++            return None
++        data = bytearray()
++        count = 0
++        while body < end:
++            if leaf:
++                item = _initializer_byte(tokens, body, array.kind)
++                if item is None:
++                    return None
++                body, byte = item
++                data.append(byte)
++            else:
++                child = read(body, depth + 1)
++                if child is None:
++                    return None
++                body, child_bytes = child
++                if len(data) + len(child_bytes) > _MAX_ARRAY_BYTES:
++                    return None
++                data.extend(child_bytes)
++            count += 1
++            if body < end:
++                if values[body] != b",":
++                    return None
++                body += 1
++        if bound is not None:
++            if count > bound:
++                return None
++            stride = prod(size for size in bounds[depth + 1 :] if size is not None)
++            data.extend(bytes((bound - count) * stride))
++        if len(data) > _MAX_ARRAY_BYTES:
++            return None
++        return end + 1, bytes(data)
++
++    if array.start >= array.stop:
++        return None
++    result = read(array.start, 0)
++    if result is None or result[0] != array.stop:
++        return None
++    return result[1]
++
++
++def _c_payloads(
++    artifact: str, source: bytes
++) -> Iterator[_CSequence | IntegrityFinding]:
++    trigraph = _TRIGRAPH.search(source)
++    if trigraph is not None:
++        yield IntegrityFinding(
++            "unsupported_c_trigraph", artifact, "raw", trigraph.start(), 3
++        )
++        return
++
++    splices: list[int] = []
++    removed = [0]
++    for splice in _LINE_SPLICE.finditer(source):
++        splices.append(splice.start() - removed[-1])
++        removed.append(removed[-1] + len(splice[0]))
++    tokens = [
++        token
++        for token in _TOKEN.finditer(_LINE_SPLICE.sub(b"", source))
++        if token.lastgroup != "skip"
++    ]
++
++    def offset(position: int) -> int:
++        return position + removed[bisect_right(splices, position)]
++
++    values = [_DIGRAPH.get(token[0], token[0]) for token in tokens]
++    ends = _group_ends(values)
++    strings = _c_strings(tokens)
++    covered: set[int] = set()
++    checked_strings: set[int] = set()
++    for array in _byte_arrays(values, ends):
++        if array.start in covered or array.start >= array.stop:
++            continue
++        covered.update(range(array.start, array.stop))
++        storage = _array_storage(array, tokens, values, ends, strings)
++        if storage is None:
++            start = offset(tokens[array.start].start())
++            end = offset(tokens[array.stop - 1].end() - 1) + 1
++            yield IntegrityFinding(
++                "unsupported_byte_array", artifact, "c_initializer", start, end - start
++            )
++            continue
++        first = array.start
++        while values[first] == b"{":
++            first += 1
++        if array.bounds is not None and len(array.bounds) == 1 and first in strings:
++            checked_strings.add(first)
++            yield _CSequence(
++                "c_string", offset(tokens[first].start()), storage, strings[first][1]
++            )
++        else:
++            yield _CSequence("c_initializer", offset(tokens[first].start()), storage)
++
++    for i, (_, payload) in strings.items():
++        if payload is not None and i not in checked_strings:
++            storage = None if i in covered else payload + b"\0"
++            yield _CSequence("c_string", offset(tokens[i].start()), storage, payload)
++    for position, payload in _c_initializers(tokens, values, covered):
++        yield _CSequence("c_initializer", offset(position), payload)
++
++
++def _text_match(data: bytes, windows: set[bytes]) -> tuple[int, bytes] | None:
++    if windows:
++        for offset in range(len(data) - _TEXT_MIN + 1):
++            window = data[offset : offset + _TEXT_MIN]
++            if window in windows:
++                return offset, window
++    return None
++
++
++def check_integrity(
++    *,
++    original_text: bytes,
++    original_rodata: bytes,
++    generated_c: Mapping[str, bytes],
++    built_executables: Mapping[str, bytes],
++    dev_outputs: Iterable[bytes],
++    raw_blobs: Mapping[str, bytes] | None = None,
++    blob_evidence: Iterable[BlobEvidence] = (),
++) -> tuple[IntegrityFinding, ...]:
++    """Return byte check failures for the supplied artifacts.
++
++    Supply C sources and headers as source bytes. Give each artifact a unique
++    name. Supply extra binary data files as raw blobs. The blob check covers
++    these files, literal string payloads, and decoded byte arrays. Evidence
++    applies only to the blob check. Supply executable bytes for the raw scan.
++
++    The C scan handles ordinary and UTF-8 strings and byte arrays with
++    literal bounds and explicit rows. It permits an inferred outer bound.
++    It reports unsupported initializers for recognized byte arrays and
++    rejects C11 trigraphs. It limits decoded arrays to 16 MiB and 64
++    dimensions. It does not expand macros or resolve typedefs.
++    """
++    windows = {
++        original_text[i : i + _TEXT_MIN]
++        for i in range(len(original_text) - _TEXT_MIN + 1)
++    }
++    outputs = {
++        output
++        for output in dev_outputs
++        if len(output) > _OUTPUT_LIMIT and output not in original_rodata
++    }
++    justified = {
++        (item.artifact, item.sha256) for item in blob_evidence if item.reason.strip()
++    }
++    findings: list[IntegrityFinding] = []
++
++    def check(
++        artifact: str,
++        representation: Representation,
++        data: bytes | None,
++        offset: int,
++        *,
++        blob: bool,
++        literal: bytes | None = None,
++    ) -> None:
++        match = _text_match(data, windows) if data is not None else None
++        if match is not None:
++            position, window = match
++            findings.append(
++                IntegrityFinding(
++                    "embedded_text",
++                    artifact,
++                    representation,
++                    offset + position if representation == "raw" else offset,
++                    _TEXT_MIN,
++                    original_offset=original_text.find(window),
++                )
++            )
++        if literal is not None and literal in outputs:
++            findings.append(
++                IntegrityFinding(
++                    "memorized_output", artifact, representation, offset, len(literal)
++                )
++            )
++        blob_data = literal if literal is not None else data
++        if blob and blob_data is not None and len(blob_data) > _BLOB_LIMIT:
++            digest = sha256(blob_data).hexdigest()
++            if (artifact, digest) not in justified:
++                findings.append(
++                    IntegrityFinding(
++                        "unjustified_blob",
++                        artifact,
++                        representation,
++                        offset,
++                        len(blob_data),
++                        sha256=digest,
++                    )
++                )
++
++    for name, executable in sorted(built_executables.items()):
++        check(name, "raw", executable, 0, blob=False)
++    for name, source in sorted(generated_c.items()):
++        check(name, "raw", source, 0, blob=False)
++        for item in _c_payloads(name, source):
++            if isinstance(item, IntegrityFinding):
++                findings.append(item)
++            else:
++                check(
++                    name,
++                    item.representation,
++                    item.storage,
++                    item.offset,
++                    blob=item.storage is not None,
++                    literal=item.literal,
++                )
++    for name, data in sorted((raw_blobs or {}).items()):
++        check(name, "raw", data, 0, blob=True)
++    return tuple(findings)
+diff --git a/tests/test_integrity.py b/tests/test_integrity.py
+new file mode 100644
+index 0000000..62cd559
+--- /dev/null
++++ b/tests/test_integrity.py
+@@ -0,0 +1,377 @@
++from hashlib import sha256
++
++import pytest
++
++from phoenix_eval.integrity import BlobEvidence, IntegrityFinding, check_integrity
++
++_SOURCE = "src/output.c"
++_TEXT = bytes(range(128, 224))
++_OUTPUT = b"Status: the requested file is available.\n"
++
++
++def _scan(
++    *,
++    text: bytes = b"",
++    rodata: bytes = b"",
++    source: bytes = b"",
++    executable: bytes = b"",
++    outputs: tuple[bytes, ...] = (),
++    raw: bytes | None = None,
++    evidence: tuple[BlobEvidence, ...] = (),
++) -> tuple[IntegrityFinding, ...]:
++    return check_integrity(
++        original_text=text,
++        original_rodata=rodata,
++        generated_c={_SOURCE: source},
++        built_executables={"build/output": executable},
++        dev_outputs=outputs,
++        raw_blobs={"data.bin": raw} if raw is not None else None,
++        blob_evidence=evidence,
++    )
++
++
++@pytest.mark.parametrize("length", [63, 64, 65])
++def test_text_match_in_raw_source_and_executable(length: int) -> None:
++    data = _TEXT[7 : 7 + length]
++    findings = _scan(
++        text=_TEXT,
++        source=b"/* " + data + b" */",
++        executable=b"ELF prefix" + data + b" suffix",
++    )
++    expected = (
++        IntegrityFinding(
++            "embedded_text", "build/output", "raw", 10, 64, original_offset=7
++        ),
++        IntegrityFinding("embedded_text", _SOURCE, "raw", 3, 64, original_offset=7),
++    )
++    assert findings == (expected if length >= 64 else ())
++
++
++@pytest.mark.parametrize(
++    "format_byte",
++    ["0x{:02x}U", "{:d}", "0{:o}ul", "0b{:b}LL", r"'\{:03o}'"],
++)
++def test_text_match_in_byte_initializers(format_byte: str) -> None:
++    data = _TEXT[5:69]
++    prefix = b"static const unsigned char table[] = {"
++    initializer = b", /* byte */\n".join(
++        format_byte.format(byte).encode() for byte in data
++    )
++    assert _scan(text=_TEXT, source=prefix + b"0x00, " + initializer + b",};") == (
++        IntegrityFinding(
++            "embedded_text",
++            _SOURCE,
++            "c_initializer",
++            len(prefix),
++            64,
++            original_offset=5,
++        ),
++    )
++
++
++def test_text_match_in_signed_bytes_after_line_splice() -> None:
++    prefix = b"static const signed char table[] = {\\\r\n"
++    initializer = b", ".join(str(byte - 256).encode() for byte in _TEXT[:64])
++    assert _scan(text=_TEXT, source=prefix + initializer + b"};") == (
++        IntegrityFinding("embedded_text", _SOURCE, "c_initializer", len(prefix), 64, 0),
++    )
++
++
++def test_text_match_in_adjacent_escaped_strings() -> None:
++    first = b"".join(rb"\x%02x" % byte for byte in _TEXT[:32])
++    second = b"".join(rb"\%03o" % byte for byte in _TEXT[32:64])
++    source = b'char code[] = "' + first + b'" /* adjacent */ "' + second + b'";'
++    assert _scan(text=_TEXT, source=source) == (
++        IntegrityFinding(
++            "embedded_text", _SOURCE, "c_string", source.index(b'"'), 64, 0
++        ),
++    )
++
++
++@pytest.mark.parametrize("shape", [b"[][32]", b"[2][32]", b"[1][2][32]"])
++def test_text_match_crosses_contiguous_rows(shape: bytes) -> None:
++    first = b",".join(str(byte).encode() for byte in _TEXT[:32])
++    second = b",".join(str(byte).encode() for byte in _TEXT[32:64])
++    rows = b"{{" + first + b"},{" + second + b"}}"
++    if shape.startswith(b"[1]"):
++        rows = b"{" + rows + b"}"
++    source = b"unsigned char table" + shape + b" = " + rows + b";"
++    assert _scan(text=_TEXT, source=source) == (
++        IntegrityFinding(
++            "embedded_text", _SOURCE, "c_initializer", source.index(first), 64, 0
++        ),
++    )
++
++
++def test_text_requires_one_consecutive_run() -> None:
++    data = _TEXT[:64]
++    first = b",".join(str(byte).encode() for byte in data[:32])
++    second = b",".join(str(byte).encode() for byte in data[32:])
++    source = (
++        b"unsigned char first[] = {" + first + b"}, second[] = {" + second + b"};\n"
++        b"unsigned char padded[][33] = {{" + first + b"},{" + second + b"}};\n"
++        b"char commented[] = {" + first + b" /* ," + second + b" */};\n"
++        b"void f(void) { call(" + first + b"," + second + b"); }"
++    )
++    assert (
++        _scan(text=_TEXT, source=source, executable=data[:32] + b"\0" + data[32:]) == ()
++    )
++
++
++def test_nested_array_blob_uses_one_object_digest() -> None:
++    first, second = b"42," * 3000, b"43," * 3000
++    source = b"unsigned char table[2][3000] = {{" + first + b"},{" + second + b"}};"
++    data = b"*" * 3000 + b"+" * 3000
++    digest = sha256(data).hexdigest()
++    assert _scan(source=source) == (
++        IntegrityFinding(
++            "unjustified_blob",
++            _SOURCE,
++            "c_initializer",
++            source.index(first),
++            len(data),
++            sha256=digest,
++        ),
++    )
++    assert (
++        _scan(source=source, evidence=(BlobEvidence(_SOURCE, digest, "Codec table."),))
++        == ()
++    )
++
++
++def test_nested_array_string_rows_use_the_declared_width() -> None:
++    first = b"".join(rb"\%03o" % byte for byte in _TEXT[:31])
++    second = b"".join(rb"\%03o" % byte for byte in _TEXT[32:64])
++    prefix = b'char rows[][32] = {"'
++    source = prefix + first + b'", {"' + second + b'"}};'
++    assert _scan(text=_TEXT[:31] + b"\0" + _TEXT[32:64], source=source) == (
++        IntegrityFinding(
++            "embedded_text", _SOURCE, "c_initializer", len(prefix) - 1, 64, 0
++        ),
++    )
++
++
++@pytest.mark.parametrize(
++    "declaration",
++    [
++        b"unsigned char table[2][WIDTH] = {{1}, {2}};",
++        b"unsigned char table[2][2] = {[1] = {1, 2}};",
++        b"unsigned char table[2][2] = {1, 2, 3, 4};",
++        b"unsigned char table[] = {1, 2 + 3};",
++        b"signed char table[] = {298};",
++        b"char table[20000000] = {1};",
++        b"char (table[2][WIDTH * 2]) = {{1}, {2}};",
++        b"_Atomic(unsigned char) table[2] = {1, 2};",
++    ],
++)
++def test_unsupported_byte_array_is_a_failure(declaration: bytes) -> None:
++    prefix = b"\\\n"
++    initializer = declaration.index(b"{")
++    assert _scan(source=prefix + declaration) == (
++        IntegrityFinding(
++            "unsupported_byte_array",
++            _SOURCE,
++            "c_initializer",
++            len(prefix) + initializer,
++            len(declaration) - initializer - 1,
++        ),
++    )
++
++
++@pytest.mark.parametrize(
++    "type_name", [b"unsigned char", b"char const unsigned", b"uint8_t"]
++)
++@pytest.mark.parametrize("adjustment", [-512, 256])
++def test_unsigned_array_values_convert_modulo_256(
++    type_name: bytes, adjustment: int
++) -> None:
++    initializer = b",".join(str(byte + adjustment).encode() for byte in _TEXT[:64])
++    prefix = type_name + b" table[] = {"
++    assert _scan(text=_TEXT, source=prefix + initializer + b"};") == (
++        IntegrityFinding("embedded_text", _SOURCE, "c_initializer", len(prefix), 64, 0),
++    )
++
++
++def test_unsigned_array_blob_digest_uses_converted_bytes() -> None:
++    prefix = b"unsigned char table[] = {"
++    data = b"*" * 4097
++    assert _scan(source=prefix + b"298," * len(data) + b"};") == (
++        IntegrityFinding(
++            "unjustified_blob",
++            _SOURCE,
++            "c_initializer",
++            len(prefix),
++            len(data),
++            sha256=sha256(data).hexdigest(),
++        ),
++    )
++
++
++def test_pointer_array_keeps_its_string_terminators() -> None:
++    data = _TEXT[:63]
++    prefix = b"const char *table[] = {"
++    literal = b'"' + b"".join(rb"\%03o" % byte for byte in data) + b'"'
++    assert _scan(text=data + b"\0", source=prefix + literal + b"};") == (
++        IntegrityFinding("embedded_text", _SOURCE, "c_string", len(prefix), 64, 0),
++    )
++
++
++def test_parenthesized_array_declarator_honors_string_bound() -> None:
++    data = _TEXT[:63]
++    literal = b'"' + b"".join(rb"\%03o" % byte for byte in data) + b'"'
++    assert (
++        _scan(text=data + b"\0", source=b"char (table)[63] = " + literal + b";") == ()
++    )
++
++
++@pytest.mark.parametrize("body", [b"??/n", b"\\??/\nn"])
++def test_c11_trigraph_cannot_hide_an_output_match(body: bytes) -> None:
++    source = b'char answer[] = "' + _OUTPUT[:-1] + body + b'";'
++    assert _scan(source=source, outputs=(_OUTPUT,)) == (
++        IntegrityFinding(
++            "unsupported_c_trigraph", _SOURCE, "raw", source.index(b"??/"), 3
++        ),
++    )
++
++
++@pytest.mark.parametrize(
++    ("bound", "braced", "stores_nul"),
++    [
++        (b"", False, True),
++        (b"64", True, True),
++        (b"63", False, False),
++        (b"63", True, False),
++    ],
++)
++def test_string_terminator_counts_only_if_stored(
++    bound: bytes, braced: bool, stores_nul: bool
++) -> None:
++    data = _TEXT[:63]
++    literal = b'"' + b"".join(rb"\%03o" % byte for byte in data) + b'"'
++    initializer = b"{" + literal + b"}" if braced else literal
++    source = b"char table[" + bound + b"] = " + initializer + b";"
++    expected = [
++        IntegrityFinding(
++            "memorized_output", _SOURCE, "c_string", source.index(literal), 63
++        )
++    ]
++    if stores_nul:
++        expected.insert(
++            0,
++            IntegrityFinding(
++                "embedded_text", _SOURCE, "c_string", source.index(literal), 64, 0
++            ),
++        )
++    assert _scan(
++        text=data + b"\0", source=source, outputs=(data, data + b"\0")
++    ) == tuple(expected)
++
++
++@pytest.mark.parametrize("length", [32, 33])
++def test_output_length_boundary(length: int) -> None:
++    data = b"x" * length
++    source = b'char answer[] = "' + data + b'";'
++    expected = (IntegrityFinding("memorized_output", _SOURCE, "c_string", 16, length),)
++    assert _scan(source=source, outputs=(data,)) == (expected if length > 32 else ())
++
++
++def test_output_match_decodes_c_escapes_and_concatenates_literals() -> None:
++    prefix = b"char answer[] = \\\n"
++    source = (
++        prefix
++        + rb'u8"\123tatus: \"ready\" at C:\\tmp\t" /* part two */'
++        + rb'"\x01" "a\0\u00e9\U0001f642\?\a\b\f\r\v\n"'
++        + b";"
++    )
++    output = 'Status: "ready" at C:\\tmp\t\x01a\0é🙂?\a\b\f\r\v\n'.encode()
++    assert _scan(source=source, outputs=(output,)) == (
++        IntegrityFinding(
++            "memorized_output", _SOURCE, "c_string", len(prefix), len(output)
++        ),
++    )
++
++
++def test_output_match_requires_an_exact_literal_absent_from_rodata() -> None:
++    source = rb'char answer[] = "Status: the requested file is available.\n";'
++    assert (
++        _scan(source=source, outputs=(_OUTPUT,), rodata=b"prefix\0" + _OUTPUT + b"\0")
++        == ()
++    )
++    assert _scan(source=source, outputs=(_OUTPUT[:-1], b"prefix " + _OUTPUT)) == ()
++    assert _scan(executable=_OUTPUT, outputs=(_OUTPUT,)) == ()
++
++
++def test_comments_wide_strings_and_invalid_escapes_do_not_form_byte_strings() -> None:
++    literal = rb'"Status: the requested file is available.\n"'
++    source = (
++        b"// continued comment\\\n" + literal + b"\n"
++        b"/* " + literal + b" */\n"
++        b"char c = '\"';\n"
++        b"const void *wide = L" + literal + b";\n"
++        b"const char *invalid = " + literal + rb'"\x100";'
++    )
++    assert _scan(source=source, outputs=(_OUTPUT,)) == ()
++
++
++@pytest.mark.parametrize("length", [4096, 4097])
++def test_blob_size_uses_decoded_bytes(length: int) -> None:
++    data = b"*" * length
++    digest = sha256(data).hexdigest()
++    prefix = b"char table[] = {"
++    initializer = b"0x2a," * length
++    expected = (
++        IntegrityFinding(
++            "unjustified_blob",
++            _SOURCE,
++            "c_initializer",
++            len(prefix),
++            length,
++            sha256=digest,
++        ),
++        IntegrityFinding(
++            "unjustified_blob", "data.bin", "raw", 0, length, sha256=digest
++        ),
++    )
++    assert _scan(source=prefix + initializer + b"};", raw=data) == (
++        expected if length > 4096 else ()
++    )
++
++
++def test_blob_evidence_must_match_the_artifact_and_bytes_and_give_a_reason() -> None:
++    data = b"*" * 4097
++    digest = sha256(data).hexdigest()
++    finding = IntegrityFinding(
++        "unjustified_blob", "data.bin", "raw", 0, len(data), sha256=digest
++    )
++    assert _scan(
++        raw=data,
++        evidence=(
++            BlobEvidence("other.bin", digest, "Lookup table for the codec."),
++            BlobEvidence("data.bin", sha256(data + b"x").hexdigest(), "Old table."),
++            BlobEvidence("data.bin", digest, " \t"),
++        ),
++    ) == (finding,)
++    assert (
++        _scan(raw=data, evidence=(BlobEvidence("data.bin", digest, "Codec table."),))
++        == ()
++    )
++
++
++def test_blob_evidence_does_not_waive_other_rules() -> None:
++    data = b"Z" * 4097
++    source = b'char table[] = "' + data[:2048] + b'" "' + data[2048:] + b'";'
++    assert {
++        finding.rule
++        for finding in _scan(text=data[:64], source=source, outputs=(data,))
++    } == {
++        "embedded_text",
++        "memorized_output",
++        "unjustified_blob",
++    }
++    evidence = (BlobEvidence(_SOURCE, sha256(data).hexdigest(), "Codec table."),)
++    assert {
++        finding.rule
++        for finding in _scan(
++            text=data[:64], source=source, outputs=(data,), evidence=evidence
++        )
++    } == {"embedded_text", "memorized_output"}
