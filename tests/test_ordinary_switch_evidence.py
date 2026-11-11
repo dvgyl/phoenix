@@ -6,7 +6,7 @@ from test_recovery_u1 import fixture, loc, op, raw_json
 
 from phoenix.lift.index import LiftIndex, parse_lift
 from phoenix.lift.mapping import MappingError
-from phoenix.lift.switch_source import parse_ordinary_switches
+from phoenix.lift.switch_source import parse_ordinary_source
 
 _ENTRY = 0x100100
 _SOURCE = "/* 📘 */ ".encode() + (
@@ -105,7 +105,7 @@ def proposal() -> tuple[LiftIndex, dict[str, Any]]:
 def test_ordinary_evidence_resolves_exact_operations_and_source_spans() -> None:
     lift, document = proposal()
     raw = raw_json(document)
-    artifact = parse_ordinary_switches(raw, lift)
+    artifact = parse_ordinary_source(raw, lift)
     (body,) = artifact.bodies
     assert artifact.sha256 == sha256(raw).hexdigest()
     assert body.source_sha256 == sha256(_SOURCE).hexdigest()
@@ -152,10 +152,10 @@ def test_ordinary_evidence_rejects_inconsistent_records(fault: str) -> None:
             {"function": body["function"], "reason": "ordinary_source_limit"}
         ]
     with pytest.raises(MappingError):
-        parse_ordinary_switches(raw_json(document), lift)
+        parse_ordinary_source(raw_json(document), lift)
 
 
-@pytest.mark.parametrize("fault", ["digest", "length", "characters", "split-utf8"])
+@pytest.mark.parametrize("fault", ["digest", "length", "split-utf8"])
 def test_ordinary_evidence_binds_the_exact_utf8_source(fault: str) -> None:
     lift, document = proposal()
     (body,) = document["bodies"]
@@ -164,10 +164,19 @@ def test_ordinary_evidence_binds_the_exact_utf8_source(fault: str) -> None:
         body["source_sha256"] = "0" * 64
     elif fault == "length":
         body["source_bytes"] += 1
-    elif fault == "characters":
-        switch["start"] -= 3
-        switch["end"] -= 3
     else:
         switch["start"] = _SOURCE.index("📘".encode()) + 1
     with pytest.raises(MappingError, match="source|token"):
-        parse_ordinary_switches(raw_json(document), lift)
+        parse_ordinary_source(raw_json(document), lift)
+
+
+def test_lower_reader_retains_source_slices_without_proving_c_tokens() -> None:
+    lift, document = proposal()
+    switch = document["bodies"][0]["markers"][0]
+    switch["start"] += 1
+    parsed = parse_ordinary_source(raw_json(document), lift)
+    (body,) = parsed.bodies
+    assert body.source == _SOURCE
+    marker = body.markers[0]
+    assert body.source[marker.start : marker.end] == b"witch"
+    assert marker.kind == "switch"

@@ -635,3 +635,17 @@
   expected acceptance and 17 expected rejections. Both public
   artifacts still match the saved source and operation identities.
   No target ran. Fresh independent review remains open.
+
+## 2026-11-11. Separate source observations from C token proof
+
+- Sol held `ec13fed` for three partial C tokens. Astra reproduced
+  these defects and comment, string, and translation controls. Its
+  design assigns exact source identity to the reader and complete C
+  token correspondence to the existing bounded generation parser.
+- Renamed the lower types to source observations. Retained exact
+  immutable UTF-8 bytes and all identity, record, and ownership checks.
+  Removed the incomplete lexical heuristic. Split UTF-8 spans reject.
+  Valid source slices remain claims until generation binds them.
+- The wire format and saved public artifacts stay unchanged.
+  No target ran. The lower reader does not authorize C emission.
+  Independent review and the production binding checks remain open.

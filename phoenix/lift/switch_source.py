@@ -20,9 +20,6 @@ _MAX_SOURCE_BYTES = 1024 * 1024
 _MAX_FUNCTIONS = 32
 _MAX_MARKERS = 4100
 _MAX_NEIGHBORS = 32
-_IDENTIFIER = re.compile(rb"[A-Za-z_][A-Za-z0-9_]*")
-_IDENTIFIER_PART = re.compile(rb"[A-Za-z0-9_]")
-_CASE_TOKEN = re.compile(rb"-?(?:0[xX][0-9a-fA-F]+|[0-9]+)[uUlL]{0,3}")
 _GAPS = frozenset(
     {
         "ordinary_source_unavailable",
@@ -64,7 +61,7 @@ class Block:
 
 
 @dataclass(frozen=True, slots=True)
-class Marker:
+class SourceMarkerObservation:
     start: int
     end: int
     kind: MarkerKind
@@ -75,18 +72,19 @@ class Marker:
 
 
 @dataclass(frozen=True, slots=True)
-class OrdinaryBody:
+class OrdinarySourceObservation:
     function: GhidraVA
     source_sha256: str
     source_bytes: int
-    markers: tuple[Marker, ...]
+    markers: tuple[SourceMarkerObservation, ...]
+    source: bytes
 
 
 @dataclass(frozen=True, slots=True)
-class OrdinarySwitches:
+class OrdinarySourceObservations:
     binary_sha256: str
     lift_sha256: str
-    bodies: tuple[OrdinaryBody, ...]
+    bodies: tuple[OrdinarySourceObservation, ...]
     gaps: tuple[tuple[GhidraVA, str], ...]
     sha256: str
 
@@ -141,7 +139,7 @@ def _block(value: object, operations: dict[Sequence, Operation]) -> Block:
 
 def _marker(
     value: object, operations: dict[Sequence, Operation], source_size: int
-) -> Marker:
+) -> SourceMarkerObservation:
     item = object_fields(value, "start end kind value operation block parameter")
     start, end = uint(item["start"], source_size), uint(item["end"], source_size)
     name = text(item["kind"])
@@ -164,7 +162,7 @@ def _marker(
         parameter is not None
     ) != (kind == "parameter"):
         raise MappingError("The ordinary marker fields do not match its kind.")
-    return Marker(
+    return SourceMarkerObservation(
         start,
         end,
         kind,
@@ -175,26 +173,16 @@ def _marker(
     )
 
 
-def _check_token(source: bytes, marker: Marker) -> None:
-    token = source[marker.start : marker.end]
-    before = source[marker.start - 1 : marker.start] if marker.start else b""
-    after = source[marker.end : marker.end + 1]
-    if (
-        _IDENTIFIER_PART.fullmatch(before) is not None
-        or _IDENTIFIER_PART.fullmatch(after) is not None
-    ):
-        raise MappingError("The ordinary marker cuts through a source token.")
-    if marker.kind == "parameter":
-        matches = _IDENTIFIER.fullmatch(token) is not None
-    elif marker.kind == "case":
-        matches = _CASE_TOKEN.fullmatch(token) is not None
-    else:
-        matches = token == marker.kind.encode("ascii")
-    if not matches:
-        raise MappingError("The ordinary marker does not match its source bytes.")
+def _check_slice(source: bytes, marker: SourceMarkerObservation) -> None:
+    try:
+        source[marker.start : marker.end].decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise MappingError(
+            "The ordinary source slice splits a UTF-8 character."
+        ) from error
 
 
-def _body(value: object, lift: LiftIndex) -> OrdinaryBody:
+def _body(value: object, lift: LiftIndex) -> OrdinarySourceObservation:
     item = object_fields(value, "function source_sha256 source_bytes markers")
     entry = ram(item["function"])
     function = lift.functions.get(entry)
@@ -218,7 +206,7 @@ def _body(value: object, lift: LiftIndex) -> OrdinaryBody:
         marker = _marker(value_marker, operations, source_size)
         if marker.start < previous:
             raise MappingError("The ordinary source marker spans overlap.")
-        _check_token(source, marker)
+        _check_slice(source, marker)
         previous = marker.end
         if marker.block is not None:
             block = marker.block
@@ -230,10 +218,12 @@ def _body(value: object, lift: LiftIndex) -> OrdinaryBody:
         markers.append(marker)
     if not markers:
         raise MappingError("The ordinary switch body has no source markers.")
-    return OrdinaryBody(entry, source_sha256, source_size, tuple(markers))
+    return OrdinarySourceObservation(
+        entry, source_sha256, source_size, tuple(markers), source
+    )
 
 
-def parse_ordinary_switches(raw: bytes, lift: LiftIndex) -> OrdinarySwitches:
+def parse_ordinary_source(raw: bytes, lift: LiftIndex) -> OrdinarySourceObservations:
     if not 0 < len(raw) <= _MAX_BYTES:
         raise MappingError("The ordinary switch artifact exceeds its size limit.")
     item = object_fields(
@@ -263,7 +253,7 @@ def parse_ordinary_switches(raw: bytes, lift: LiftIndex) -> OrdinarySwitches:
     entries = [body.function for body in bodies] + [entry for entry, _ in gaps]
     if len(entries) != len(set(entries)):
         raise MappingError("The ordinary switch artifact repeats a function.")
-    return OrdinarySwitches(
+    return OrdinarySourceObservations(
         binary_sha256,
         lift_sha256,
         tuple(sorted(bodies, key=lambda body: body.function)),
