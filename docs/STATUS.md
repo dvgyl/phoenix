@@ -65,6 +65,9 @@ external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
 2 GiB of memory. Use Standard service. Obtain a fresh independent Sol
 review after each major block and Astra review where required.
 
+The requested observation scope is implemented on this isolated branch.
+Its static tests pass. Independent source review and live capture remain open.
+
 ## Next actions
 
 1. Refresh worker images and pass public evaluator gates before a new

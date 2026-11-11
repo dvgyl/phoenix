@@ -699,3 +699,14 @@
   import and observation plans. Static imports still identify symbol
   requests only. Live capture, runtime mapping, and frame admission
   remain open. No M2 result or new milestone tag is claimed.
+
+## 2026-11-11. Compile a requested observation scope
+
+- Added a separate bounded scope certificate from the required Astra design.
+  The complete trace plan and original gap records remain unchanged.
+- Local static checks passed 397 tests, including 134 scope controls.
+  All 16 saved public E1 plans stayed byte-identical. Each certificate
+  retains complete site dispositions, witnesses, and original gaps.
+- The first import transit profile supports eager resolution only.
+  Unsupported active paths reject. No target or collector ran.
+  Independent review remains required before main integration.
