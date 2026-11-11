@@ -835,6 +835,7 @@ def test_later_capture_cannot_replace_returned_submission(
     assert json.loads((engine.run / "capture-binding.json").read_bytes())["phase"] == (
         "capturing"
     )
+    assert (engine.run / "capture-rejected.json").is_file()
 
 
 @pytest.mark.parametrize("category", ["pipeline-failed", "invalid-project"])

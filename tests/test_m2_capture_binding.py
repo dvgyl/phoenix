@@ -8,7 +8,7 @@ import pytest
 from test_evaluation_freeze import ledger_attempt
 from test_m2 import synthetic_engine as synthetic_engine
 
-from phoenix_eval import m1
+from phoenix_eval import m1, submission
 from phoenix_eval.case import Invocation
 from phoenix_eval.corpus import Tier
 from phoenix_eval.model_ledger import bound_summaries, read_identity
@@ -89,6 +89,16 @@ def test_later_m2_capture_cannot_change_an_earlier_failure(
     assert (
         json.loads((run / "capture-binding.json").read_text())["phase"] == "capturing"
     )
+    marker = run / "capture-rejected.json"
+    ledger = tmp_path / "runs/origin-rebuild/llm.jsonl"
+    retained = {path: path.read_bytes() for path in (first, marker, ledger)}
+    monkeypatch.setattr(m1, "submit", submission.submit)
+    with pytest.raises(ValueError, match="capture was rejected"):
+        m1.evaluate_m2(tmp_path, "origin")
+    assert len(synthetic_engine["submitted"]) == 260
+    assert synthetic_engine["opened"] == []
+    assert not (run / "m2.json").exists()
+    assert all(path.read_bytes() == content for path, content in retained.items())
 
 
 @pytest.mark.parametrize("change", ["capture", "ledger"])

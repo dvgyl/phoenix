@@ -702,3 +702,26 @@
 - A separate Astra worker owns the shared durable capture rejection fix.
   The combined evaluator still needs that port and exact independent
   reviews before any new sealed measurement.
+
+## 2026-11-11. Preserve durable capture rejection on M2 retry
+
+- The original combined probe detected a checkpoint contradiction, then
+  showed that a second invocation could freeze and publish the rejected
+  checkpoint. Astra reproduced the same mechanism through the real M1
+  failed-result branch. The first correction changed an existing binding
+  inode. The parent reproduced the unwanted write through a hard link.
+- The shared code now creates a separate exclusive rejection marker.
+  It syncs the directory before the details. Any marker presence blocks
+  retry before submission reuse or archive access. Valid interrupted
+  captures and valid interrupted freeze publication remain resumable.
+- Ported the exact shared module and tests. Kept the M2 coordinator,
+  late publication checks, and original model identity. A permanent M2
+  regression uses the real saved reader and failed-result branch. It
+  requires no archive access and no report on either invocation.
+- All 27 focused controls passed. The final parent gate passed 743 tests,
+  with 25 opt-in skips and 92.29% evaluator line coverage. Ruff, format,
+  strict mypy, and protection passed. Evidence is in
+  `audit/m2-durable-capture-port/`.
+- Fresh Sol passed the exact shared marker candidate. The exact shared
+  Astra and combined Sol and Astra reviews remain required. No new
+  sealed measurement or M2 result is claimed.

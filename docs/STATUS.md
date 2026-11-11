@@ -1,16 +1,16 @@
 # Phoenix status
 
 This isolated branch integrates the shared capture guards and the M2
-matrix. Fresh Sol review held three further findings at `1cf064b`.
-This checkpoint corrects replay publication and cyclic replay log paths.
-The durable capture rejection correction and fresh combined reviews remain
-open. The branch is not ready for sealed M2 use.
+matrix. It corrects the three new findings from the combined Sol review
+at `1cf064b`. The final report is staged before its last evidence checks.
+A cyclic replay-local model log gives a controlled error. A separate
+durable marker blocks retry after a detected checkpoint contradiction.
 
-The final report is staged before its last capture and ledger checks.
-An earlier or current replay cannot publish a fresh model log after report
-rendering. A cyclic log path gives a controlled error. Eight focused
-requirements passed. The complete parent gate passed 730 tests, with 25
-opt-in skips and 92.27% evaluator line coverage.
+The parent final gate passed 743 tests with 25 opt-in skips and 92.29%
+evaluator line coverage. All 27 focused retry, replay publication,
+path, and archive checks passed. The exact shared marker passed Sol
+review. Fresh shared Astra and combined Sol and Astra reviews are open.
+The branch is not ready for sealed M2 use.
 [Replay issue](https://github.com/dvgyl/phoenix/issues/5).
 [Capture issue](https://github.com/dvgyl/phoenix/issues/6).
 
@@ -61,7 +61,7 @@ of memory. Standard service and fresh Sol review apply to every major block.
 
 ## Next actions
 
-1. Port the durable capture rejection correction and verify the full gate.
+1. Finish independent review of durable capture rejection and its M2 port.
 2. Obtain fresh independent Sol and Astra reviews of the combined source.
 3. Keep new sealed measurement closed until the evaluator passes.
 4. Complete production M2 recovery and its public evidence gates.
