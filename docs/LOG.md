@@ -642,3 +642,28 @@
   with the standard temporary directory. All 13 affected tests then
   passed with the variable unset. On the Mac, `TMPDIR` still points to
   the external workspace. The measured M1 revision remains unchanged.
+
+## 2026-11-11. Connect checked switch definitions to reconstruction
+
+- Combined the separately reviewed source-observation, publication,
+  binding, emitter, and protected writer blocks on an isolated branch.
+  Their fresh Sol review passed at their exact source revisions.
+- Added an explicit `--checked-switches` setting, recorded in each run.
+  Resume and replay retain its value. The raw baseline rejects it.
+  The default remains off before public Linux behavior checks.
+- The caller reads the selected schema 3 generation and recovers from
+  its exact lift bytes. It constructs the protected switch plan once
+  and retains its definitions through cleanup and repair. The package
+  reports their source, graph, proof, and typed-data identities.
+- Caller controls retain protected cases across repair, resume, and
+  exact recorded-response replay. CLI controls reject changed options.
+  Ordinary pipeline tests remain green. Both actual saved public
+  binaries retain one protected switch with all 12 numeric selectors.
+- The first orchestration fixture omitted a required lift field.
+  The fixture was corrected. One audit comparison also needed JSON
+  tuple normalization. Neither failure changed production semantics.
+  All failed logs remain in `audit/m2-switch-pipeline/`.
+- These host controls do not establish target behavior. The local gate
+  must pass before this commit. Fresh independent caller review and
+  public Linux reconstruction checks remain open. No sealed measurement
+  or target execution occurred.

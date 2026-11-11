@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from dataclasses import replace
 from hashlib import sha256
 from struct import pack_into
@@ -89,6 +90,8 @@ def normalized() -> list[dict[str, Any]]:
 
 def switch_fixture(
     layout: str = "normal",
+    *,
+    prepare_function: Callable[[dict[str, Any]], None] | None = None,
 ) -> tuple[bytes, LiftIndex, AddressProof, dict[str, Any]]:
     original, document = fixture()
     binary = bytearray(original)
@@ -210,6 +213,8 @@ def switch_fixture(
             )
         )
     document["call_edges"] = []
+    if prepare_function is not None:
+        prepare_function(function)
     data = bytes(binary)
     raw = raw_json(document)
     lift = parse_lift(raw, data)

@@ -37,6 +37,7 @@ class SwitchBundle:
     graphs: tuple[SwitchGraph, ...]
     gaps: tuple[tuple[GhidraVA, str], ...]
     manifest_sha256: str
+    artifact_bytes: int
 
 
 def _read_file(path: Path, limit: int) -> bytes:
@@ -127,4 +128,5 @@ def read_switch_bundle(directory: Path, lift: LiftIndex) -> SwitchBundle:
         tuple(sorted(graphs, key=lambda graph: graph.function)),
         tuple(sorted(gaps)),
         sha256(manifest_bytes).hexdigest(),
+        len(manifest_bytes) + _MAX_BUNDLE_BYTES - remaining,
     )

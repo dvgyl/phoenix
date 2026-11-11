@@ -111,14 +111,16 @@ public class ExportLift extends GhidraScript {
     @Override
     public void run() throws Exception {
         String[] args = getScriptArgs();
-        if (args.length != 1) {
-            throw new IllegalArgumentException("Supply the path for the lift export.");
+        if (args.length < 1 || args.length > 2) {
+            throw new IllegalArgumentException(
+                    "Supply the lift path and an optional ordinary switch evidence path.");
         }
         Path output = Path.of(args[0]).toAbsolutePath();
-        LiftExport export = collectEvidence();
         Gson gson = new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .serializeNulls().disableHtmlEscaping().create();
+        OrdinarySwitchEvidence switches = args.length == 2 ? new OrdinarySwitchEvidence(gson) : null;
+        LiftExport export = collectEvidence(switches);
         Path partial = Files.createTempFile(output.getParent(), ".lift-", ".json");
         try {
             try (BufferedWriter writer = Files.newBufferedWriter(partial)) {
@@ -129,9 +131,12 @@ public class ExportLift extends GhidraScript {
         } finally {
             Files.deleteIfExists(partial);
         }
+        if (switches != null) {
+            switches.write(Path.of(args[1]), output, currentProgram.getExecutableSHA256());
+        }
     }
 
-    private LiftExport collectEvidence() throws Exception {
+    private LiftExport collectEvidence(OrdinarySwitchEvidence switches) throws Exception {
         Listing listing = currentProgram.getListing();
         FunctionManager functions = currentProgram.getFunctionManager();
         BasicBlockModel blockModel = new BasicBlockModel(currentProgram);
@@ -144,7 +149,7 @@ public class ExportLift extends GhidraScript {
             }
             for (Function function : functions.getFunctions(true)) {
                 monitor.checkCancelled();
-                lifted.add(liftFunction(function, listing, blockModel, decompiler));
+                lifted.add(liftFunction(function, listing, blockModel, decompiler, switches));
             }
         } finally {
             decompiler.dispose();
@@ -221,14 +226,21 @@ public class ExportLift extends GhidraScript {
     }
 
     private LiftedFunction liftFunction(Function function, Listing listing, BasicBlockModel model,
-            DecompInterface decompiler) throws Exception {
+            DecompInterface decompiler, OrdinarySwitchEvidence switches) throws Exception {
         AddressSetView body = function.getBody();
         List<DecodedInstruction> instructions = new ArrayList<>();
+        boolean switchCandidate = false;
         for (Instruction instruction : listing.getInstructions(body, true)) {
             monitor.checkCancelled();
+            List<Operation> pcode = Arrays.stream(instruction.getPcode())
+                    .map(ExportLift::operation).toList();
             instructions.add(new DecodedInstruction(location(instruction.getAddress()),
-                    instruction.getLength(), instruction.toString(),
-                    Arrays.stream(instruction.getPcode()).map(ExportLift::operation).toList()));
+                    instruction.getLength(), instruction.toString(), pcode));
+            if (switches != null && instruction.getFlowType().isJump()
+                    && instruction.getFlowType().isComputed()
+                    && pcode.stream().anyMatch(op -> op.opcode().equals("BRANCHIND"))) {
+                switchCandidate = true;
+            }
         }
 
         List<Block> blocks = new ArrayList<>();
@@ -255,13 +267,15 @@ public class ExportLift extends GhidraScript {
         Signature signature = new Signature(function.getCallingConventionName(),
                 function.getReturnType().getPathName(), parameters, function.hasVarArgs());
         Function thunk = function.getThunkedFunction(true);
-        Decompiled decoded = decompile(function, decompiler);
+        Decompiled decoded = decompile(function, decompiler,
+                switchCandidate && !function.isThunk() ? switches : null);
         return new LiftedFunction(location(function.getEntryPoint()), function.getName(), signature,
                 thunk == null ? null : location(thunk.getEntryPoint()), ranges(body),
                 decoded.code(), instructions, blocks, edges, staticEvidence(function, decoded.high()));
     }
 
-    private Decompiled decompile(Function function, DecompInterface decompiler) {
+    private Decompiled decompile(Function function, DecompInterface decompiler,
+            OrdinarySwitchEvidence switches) throws Exception {
         DecompileResults result = decompiler.decompileFunction(function, 60, monitor);
         var code = result.getDecompiledFunction();
         var high = result.getHighFunction();
@@ -275,6 +289,9 @@ public class ExportLift extends GhidraScript {
         }
         String status = result.isTimedOut() ? "timeout"
                 : code != null && high != null ? "ok" : "incomplete";
+        if (switches != null) {
+            switches.capture(function, result);
+        }
         return new Decompiled(new Decompilation(code == null ? null : code.getC(), status,
                 result.getErrorMessage(), analyzed, statements), high);
     }

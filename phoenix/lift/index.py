@@ -76,6 +76,7 @@ class Function:
     analyzed: tuple[Operation, ...]
     static_evidence: StaticEvidence | None
     blocks: tuple[Block, ...] = ()
+    raw_c: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -336,7 +337,9 @@ def parse_lift(raw: bytes, binary: bytes) -> LiftIndex:
             function["decompilation"],
             "raw_c status diagnostic analyzed_pcode statements",
         )
-        _string(decompilation["raw_c"], optional=True)
+        source = decompilation["raw_c"]
+        if source is not None and not isinstance(source, str):
+            raise MappingError("Expected lift text.")
         _string(decompilation["diagnostic"], optional=True)
         if decompilation["status"] not in ("ok", "timeout", "incomplete"):
             raise MappingError("Invalid decompilation status.")
@@ -414,6 +417,7 @@ def parse_lift(raw: bytes, binary: bytes) -> LiftIndex:
             if "static_evidence" in function
             else None,
             tuple(blocks),
+            source if decompilation["status"] == "ok" else None,
         )
     for value in array(item["call_edges"]):
         edge = object_fields(value, "caller site target kind indirect")

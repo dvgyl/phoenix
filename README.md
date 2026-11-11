@@ -62,6 +62,11 @@ uv run --locked phoenix run --resume "$phoenix_run"
 uv run --locked phoenix run --replay "$phoenix_run"
 ```
 
+Use `--checked-switches` to retain supported switch definitions during
+cleanup and repair. The option records unsupported functions as gaps.
+It requires the Phoenix method. Its value stays fixed during resume and
+replay. The option is off by default while public Linux checks remain open.
+
 ## Evaluate the sealed T0 batch
 
 Use the agent-sealed release and the held-out archive in the workspace.

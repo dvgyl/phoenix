@@ -66,3 +66,9 @@ review after each major block and Astra review where required.
 4. Finish private T2 validation. Validate T3 in a separate Linux window.
 5. Complete M2 through M4, publish the required artifacts, and replay every
    headline result.
+
+This branch adds the opt-in checked-switch reconstruction caller.
+The CLI records the option and rejects changes during resume and replay.
+Synthetic repair and replay controls retain the exact protected source.
+Both saved public binaries produce a complete protected switch plan.
+Independent caller review and Linux behavior remain open.

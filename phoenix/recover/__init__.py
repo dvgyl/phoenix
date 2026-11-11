@@ -258,7 +258,11 @@ def _data_evidence(
 
 
 def recover(lift: Path, binary: Path | None = None) -> Program:
-    export = cast(_Export, json.loads(lift.read_text(encoding="utf-8")))
+    return recover_bytes(lift.read_bytes(), binary)
+
+
+def recover_bytes(lift: bytes, binary: Path | None = None) -> Program:
+    export = cast(_Export, json.loads(lift))
     if export.get("schema_version") != 1:
         raise RecoveryError("The lift uses an unsupported schema version.")
     evidence = export.get("main")
