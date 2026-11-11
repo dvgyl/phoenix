@@ -97,6 +97,76 @@ def guard(scope: ScopeSelection, address: int = 0x105) -> Any:
     return next(g.rule for g in scope.guard_instructions if g.address == address)
 
 
+@pytest.mark.parametrize("name", ("elf", "file_offset", "ghidra", "owner"))
+def test_proof_address_fields_require_exact_integer_types(name: str) -> None:
+    binary, document = fixture()
+    lift, proof, plan, request = inputs(binary, document)
+    first = proof.witnesses[0]
+    changes: dict[str, Any] = {name: float(getattr(first, name))}
+    alias = replace(first, **changes)
+    supplied = replace(proof, witnesses=(alias, *proof.witnesses[1:]))
+    assert isinstance(select_scope(binary, lift, supplied, plan, request), Rejection)
+
+
+def test_lift_main_evidence_rejects_a_float_address_alias() -> None:
+    binary, document = fixture()
+    lift, proof, plan, request = inputs(binary, document)
+    alias: Any = float(request.root)
+    supplied = replace(request, root_evidence=LiftMain(lift.lift_sha256, alias))
+    result = select_scope(binary, lift, proof, plan, supplied)
+    assert isinstance(result, Rejection) and result.code == "scope_root"
+
+
+@pytest.mark.parametrize("data", (b"\xc7\xf8\xf5\xff\xff\xff", b"\x66\xc7\xf8\xfa\xff"))
+def test_transaction_abort_branch_never_gets_an_ordinary_guard(data: bytes) -> None:
+    binary, document = control(data, None)
+    assert isinstance(guard(compile_scope(binary, document)), Reject)
+
+
+@pytest.mark.parametrize("indirect", (False, True))
+def test_reported_external_owner_call_to_root_rejects_selection(indirect: bool) -> None:
+    binary, document = fixture()
+    image = bytearray(binary)
+    function = deepcopy(document["functions"][0])
+    start = 0x100180
+    target = 0x100100
+    data = (
+        b"\xff\xd0"
+        if indirect
+        else b"\xe8" + (target - start - 5).to_bytes(4, "little", signed=True)
+    )
+    end = start + len(data)
+    function.update(entry=loc(start), ranges=[{"start": loc(start), "end": loc(end)}])
+    function["instructions"][0].update(
+        address=loc(start),
+        size=len(data),
+        pcode=[
+            op(
+                start,
+                "CALLIND" if indirect else "CALL",
+                [operand(0, "register") if indirect else operand(target)],
+            )
+        ],
+    )
+    function["instructions"][1].update(
+        address=loc(end), pcode=[op(end, "RETURN", [operand(0, "register")])]
+    )
+    image[0x180 : 0x181 + len(data)] = data + b"\xc3"
+    document["functions"].append(function)
+    document["call_edges"].append(
+        {
+            "caller": loc(start),
+            "site": loc(start),
+            "target": loc(target),
+            "kind": "COMPUTED_CALL" if indirect else "UNCONDITIONAL_CALL",
+            "indirect": indirect,
+        }
+    )
+    lift, proof, plan, request = inputs(bytes(image), document)
+    result = select_scope(bytes(image), lift, proof, plan, request)
+    assert isinstance(result, Rejection) and result.code == "scope_root"
+
+
 @pytest.mark.parametrize("base", [0, 0x400000])
 @pytest.mark.parametrize("delta", [0x100000, 0x200000])
 def test_exact_partition_routes_roles_and_serialization(base: int, delta: int) -> None:

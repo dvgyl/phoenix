@@ -2,7 +2,7 @@
 
 import json
 from bisect import bisect_right
-from dataclasses import asdict, dataclass, field, fields
+from dataclasses import asdict, dataclass, field, fields, is_dataclass
 from hashlib import sha256
 from pathlib import Path
 from typing import Literal
@@ -363,6 +363,22 @@ def _require(condition: bool, code: RejectCode, detail: str) -> None:
         raise _Failure(code, detail)
 
 
+def _exact_evidence(derived: object, supplied: object) -> bool:
+    if type(derived) is not type(supplied):
+        return False
+    if is_dataclass(derived) and not isinstance(derived, type):
+        return all(
+            _exact_evidence(getattr(derived, item.name), getattr(supplied, item.name))
+            for item in fields(derived)
+        )
+    if isinstance(derived, tuple) and isinstance(supplied, tuple):
+        return len(derived) == len(supplied) and all(
+            _exact_evidence(left, right)
+            for left, right in zip(derived, supplied, strict=True)
+        )
+    return derived == supplied
+
+
 def _roles(site: TraceSite | None) -> tuple[str, ...]:
     if site is None:
         return ()
@@ -420,7 +436,8 @@ def _request(
     evidence = requested.root_evidence
     if isinstance(evidence, LiftMain):
         _require(
-            evidence.lift_sha256 == lift.lift_sha256
+            type(evidence.main_elf) is int
+            and evidence.lift_sha256 == lift.lift_sha256
             and evidence.main_elf == requested.root
             and proof.to_elf(lift.main) == requested.root,
             "scope_root",
@@ -654,6 +671,8 @@ def _control_bytes(data: bytes) -> bool:
     if cursor == len(data):
         return True
     opcode = data[cursor]
+    if opcode == 0xC7 and data[cursor + 1 : cursor + 2] == b"\xf8":
+        return True
     if opcode in (
         0x9A,
         0xEA,
@@ -721,6 +740,12 @@ def _compile(
         "The full plan differs from its exact reconstruction.",
     )
     checked = check_transfers(binary, lift, proof)
+    _require(
+        _exact_evidence(checked.proof, proof),
+        "scope_identity",
+        "The supplied proof fields differ in value or exact type.",
+    )
+    proof = checked.proof
     selected = _request(requested, lift, proof, full_plan)
     _require(
         len(proof.witnesses) <= limits.guarded_instructions,
@@ -747,6 +772,21 @@ def _compile(
                 or proof.witness(fact_address).owner == proof.to_ghidra(requested.root),
                 "scope_root",
                 "The requested root has an internal caller.",
+            )
+    for edge in lift.edges:
+        reported = checked.sites.get(edge.site)
+        if (
+            edge.kind == "call"
+            and edge.target is not None
+            and edge.target.ram == proof.to_ghidra(requested.root)
+            and reported is not None
+            and reported.physical is not None
+            and reported.physical.kind in ("direct_call", "indirect_call")
+        ):
+            _require(
+                proof.witness(edge.site).owner == proof.to_ghidra(requested.root),
+                "scope_root",
+                "The requested root has a reported internal caller.",
             )
     positions: dict[ElfVA, list[tuple[str, int]]] = {}
     successors: dict[ElfVA, ElfVA | None] = {}

@@ -25,3 +25,10 @@ full outcome equality. Frame admission and live calibration are separate gates.
 The supplied Astra design defines the algorithm. Static scope tests and all
 16 saved public E1 comparisons pass. No target ran. Independent source review
 and live capture remain required. The agent-sealed corpus is unchanged.
+
+The first independent review held the implementation at `2cfce37`.
+The correction requires exact proof field types and uses reconstructed proof
+values for certificate output. It also rejects XBEGIN encodings and reported
+incoming indirect callers from other proved owners. A reported target is
+conservative selection evidence. It does not prove an executed destination.
+The original HOLD and failing controls remain in the audit record.

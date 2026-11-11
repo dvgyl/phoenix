@@ -710,3 +710,18 @@
 - The first import transit profile supports eager resolution only.
   Unsupported active paths reject. No target or collector ran.
   Independent review remains required before main integration.
+
+## 2026-11-11. Correct the scope review findings
+
+- The exact Sol review held 2cfce37. The parent reproduced seven failures
+  among 179 independent controls. Main did not receive the held source.
+- Scope construction now compares evidence field types as well as values.
+  It uses the reconstructed proof for output. Lift-main evidence requires
+  an integer address. Numeric aliases cannot enter certificate JSON.
+- XBEGIN bytes receive a rejecting guard, including the prefixed form.
+  A reported incoming indirect call from another proved owner also blocks
+  root selection. It remains a reported target, not an executed target.
+- All 179 unchanged independent controls pass after the correction.
+  Added permanent controls for all three defect groups. The supplied-object
+  scope boundary changed. The shared transfer checker remains unchanged.
+  Fresh review remains required. No target ran or sealed data changed.
