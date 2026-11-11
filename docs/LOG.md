@@ -616,3 +616,21 @@
 - Production C generation does not use this evidence yet. The
   default pipeline and M1 tag are unchanged. No target ran or
   new benchmark result is claimed.
+
+## 2026-11-11. Bind ordinary switch evidence to the graph generation
+
+- Added commit schema 3 for a generation with ordinary switch source
+  markers and normalized graphs. It includes the exact artifact
+  digests. Both formats must report the same function scope. The
+  combined switch evidence stays within 16 MiB.
+- The existing mapping and graph-only profiles keep schemas 1 and 2.
+  A missing source artifact, a different scope, or a writable
+  hard-link alias leaves the earlier generation selected. The
+  reader rejects a substituted schema 2 record and changed
+  ordinary source evidence.
+- The focused suite passed 22 tests. Actual host Ghidra published
+  one schema 3 generation per public compiler. Each retains exact
+  earlier ordinary lift bytes. The case marker targets match all
+  24 decoded labels and both defaults.
+- Evidence is in `audit/m2-switch-source-generation/`. No target
+  ran. Independent review and checked C generation remain open.

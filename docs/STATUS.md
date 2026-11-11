@@ -47,7 +47,10 @@ passed the exact source review. The public observer controls passed.
 The reviewed conditional switch proof and optional graph publication
 are on main. They retain the ordinary lift and keep generation unchanged.
 The separate bounded C source parser passed on both public fixtures.
-Production token binding and public target checks remain open.
+This branch binds ordinary token evidence and normalized graphs in
+one optional lift generation. Both public generations and the 22
+focused checks passed. Checked C emission and Linux behavior remain
+separate gates.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the
 external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and

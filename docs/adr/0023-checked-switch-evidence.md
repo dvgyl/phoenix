@@ -71,3 +71,12 @@ The exporter limits each operation to 256 inputs, as the reader does.
 A schema 1 directory cannot contain switch evidence. Each switch
 file must have one link. Reject the new generation if either
 publication check fails.
+
+## Bind ordinary markers to the graph generation
+
+When both optional artifacts are requested, commit schema 3 binds
+the ordinary marker digest and graph manifest digest. Require the
+same function scope, including explicit gaps. The combined switch
+artifacts must fit within 16 MiB. The checked marker reader resolves
+ordinary operation identities from the exact lift. This publication
+does not establish the semantics of the C bodies.
