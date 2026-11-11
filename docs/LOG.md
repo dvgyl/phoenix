@@ -524,3 +524,21 @@
   publication, checked C generation, and Linux behavior remain required.
   The separate raw and checked prototype projects have only passed host
   syntax checks. No sealed M2 result is claimed.
+
+## 2026-11-11. Check switch dispatch against original instructions
+
+- The fresh Sol review held `3835b40`. The recognizer accepted a
+  reversed table at a different base, a default branch into dispatch,
+  a different normalized selector register, and a load at a return.
+  The parent reproduced all four acceptances.
+- Check the contiguous original mask, compare, and unsigned guard.
+  Decode the following original RIP-relative address, indexed signed
+  load, addition, and indirect jump. The normalized expression must
+  name the same base, register, and operation sites. Reject known
+  edges and raw transfers that enter the middle of the sequence.
+- The 18 focused tests pass. The unchanged review script now confirms
+  three positives and rejects 18 conflicting inputs. Both public
+  results are byte-identical to the earlier plans.
+- Keep the original HOLD and failures. Evidence is in
+  `audit/m2-production-u2/`. No Linux target ran and no M2 result
+  is claimed. Fresh independent review remains required.

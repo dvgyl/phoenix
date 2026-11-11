@@ -9,6 +9,7 @@ from phoenix.recover.addresses import AddressProof, ElfVA
 from phoenix.recover.imports import read_dynamic_imports
 
 MAX_SELECTORS = 4096
+_GPR_OFFSETS = (0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38)
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,6 +33,16 @@ class SwitchDispatch:
     cases: tuple[SwitchCase, ...]
     default: ElfVA
     default_ghidra: GhidraVA
+
+
+@dataclass(frozen=True, slots=True)
+class _TableTransfer:
+    base: GhidraVA
+    load: GhidraVA
+    add: GhidraVA
+    jump: GhidraVA
+    end: GhidraVA
+    target_register: int
 
 
 def _constant(operand: Operand, width: int) -> int:
@@ -61,6 +72,71 @@ def _above_displacement(data: bytes) -> int:
     if len(data) == 6 and data[:2] == b"\x0f\x87":
         return int.from_bytes(data[2:], "little", signed=True)
     raise MappingError("The raw range guard is not an unsigned branch above.")
+
+
+def _decode_table_transfer(
+    proof: AddressProof, entry: GhidraVA, start: GhidraVA, selector: int
+) -> _TableTransfer:
+    lea = proof.witness(start, owner=entry).data
+    if len(lea) != 7 or lea[:2] != b"\x48\x8d" or lea[2] & 0xC7 != 0x05:
+        raise MappingError("The switch has no supported RIP-relative table address.")
+    base_register = (lea[2] >> 3) & 7
+    load = GhidraVA(start + len(lea))
+    base = GhidraVA(load + int.from_bytes(lea[3:], "little", signed=True))
+    mov = proof.witness(load, owner=entry).data
+    if (
+        selector == 4
+        or base_register in (4, 5, selector)
+        or len(mov) != 4
+        or mov[:2] != b"\x48\x63"
+        or mov[2] & 0xC7 != 0x04
+        or mov[3] != 0x80 | (selector << 3) | base_register
+    ):
+        raise MappingError("The raw signed table load uses an unsupported address.")
+    target = (mov[2] >> 3) & 7
+    add = GhidraVA(load + len(mov))
+    addition = proof.witness(add, owner=entry).data
+    if target in (4, base_register) or addition != bytes(
+        (0x48, 0x01, 0xC0 | (base_register << 3) | target)
+    ):
+        raise MappingError("The raw table addition does not preserve its base.")
+    jump = GhidraVA(add + len(addition))
+    transfer = proof.witness(jump, owner=entry).data
+    expected = bytes((0xFF, 0xE0 | target))
+    if transfer not in (expected, b"\x3e" + expected):
+        raise MappingError("The raw jump does not use the computed table target.")
+    return _TableTransfer(base, load, add, jump, GhidraVA(jump + len(transfer)), target)
+
+
+def _check_dispatch_entries(
+    lift: LiftIndex,
+    entry: GhidraVA,
+    end: GhidraVA,
+    instruction_sites: tuple[GhidraVA, ...],
+) -> None:
+    fallthrough = set(zip(instruction_sites[:-1], instruction_sites[1:], strict=True))
+    for edge in lift.edges:
+        target = edge.target.ram if edge.target is not None else None
+        if (
+            target is not None
+            and entry < target < end
+            and (
+                edge.caller != entry
+                or edge.kind != "flow"
+                or edge.flow_type != "FALL_THROUGH"
+                or (edge.site, target) not in fallthrough
+            )
+        ):
+            raise MappingError("A listing edge can bypass part of the switch guard.")
+    if any(
+        entry < op.inputs[0].address.offset < end
+        for instruction in lift.instructions.values()
+        for op in instruction.pcode
+        if op.opcode in ("BRANCH", "CBRANCH", "CALL")
+        and op.inputs
+        and op.inputs[0].address.space == "ram"
+    ):
+        raise MappingError("A raw transfer can bypass part of the switch guard.")
 
 
 def recover_switch(
@@ -204,7 +280,9 @@ def recover_switch(
     guard_register, raw_limit = _register_immediate(compare_witness.data, 7)
     next_site = guard_site + len(guard_witness.data)
     if (
-        compare_site + len(compare_witness.data) != guard_site
+        mask_site != entry
+        or less.sequence.address.ram != guard_site
+        or compare_site + len(compare_witness.data) != guard_site
         or raw_register != guard_register
         or raw_mask & 0xFFFF_FFFF != mask
         or raw_limit != limit - 1
@@ -212,7 +290,25 @@ def recover_switch(
         or next_site + _above_displacement(guard_witness.data) != default
     ):
         raise MappingError("The selector mask or range disagrees with the raw bytes.")
-    proof.witness(dispatch.start, owner=entry)
+    if selector.address.offset != _GPR_OFFSETS[raw_register]:
+        raise MappingError("The normalized selector does not name the raw register.")
+    transfer = _decode_table_transfer(proof, entry, dispatch.start, raw_register)
+    if transfer.jump != site or entry <= default < transfer.end:
+        raise MappingError("The dispatch or default disagrees with the raw sequence.")
+    _check_dispatch_entries(
+        lift,
+        entry,
+        transfer.end,
+        (
+            entry,
+            compare_site,
+            guard_site,
+            dispatch.start,
+            transfer.load,
+            transfer.add,
+            site,
+        ),
+    )
     final_add = definition(branch, branch.inputs[0], "INT_ADD", 8, 2)
     sign = definition(final_add, final_add.inputs[0], "INT_SEXT", 8, 1)
     load = definition(sign, sign.inputs[0], "LOAD", 4, 2)
@@ -224,8 +320,17 @@ def recover_switch(
         _constant(load.inputs[0], 4) != graph.memory_space_id
         or positions[load.sequence][0] != dispatch.index
         or _constant(address_add.inputs[1], 8) != base
+        or base != transfer.base
         or _constant(scale.inputs[1], 8) != 4
         or extend.inputs != (selector,)
+        or extend.sequence.address.ram != mask_site
+        or any(
+            op.sequence.address.ram != transfer.load
+            for op in (scale, address_add, load, sign)
+        )
+        or final_add.sequence.address.ram != transfer.add
+        or branch.inputs[0].address.space != "register"
+        or branch.inputs[0].address.offset != _GPR_OFFSETS[transfer.target_register]
     ):
         raise MappingError(
             "The table expression does not use the checked selector and base."
@@ -261,7 +366,8 @@ def recover_switch(
         and hex_address(table.site.offset) == site
     )
     if (
-        decoded != {blocks[index].start for index in dispatch.successors}
+        any(entry <= target < transfer.end for target in decoded)
+        or decoded != {blocks[index].start for index in dispatch.successors}
         or len(proposed) != 1
         or any(
             target is None or target.space != "ram" for target in proposed[0].targets

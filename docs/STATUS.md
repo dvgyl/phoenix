@@ -1,109 +1,68 @@
 # Phoenix status
 
 M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
-M1 passed at `6897e47` and has its exact tag. Main records acceptance
-at `49bd659`. M2 is in progress. No new sealed evaluation is ready.
+M1 passed at `6897e4753d8acedfae57af63e6426faf116bed2e`.
+M2 work is in progress. No M2 result or later milestone is accepted.
 
-This branch adds a bounded normalized switch graph reader and checked
-relative table recognizer. It has 13 passing synthetic checks. Both saved
-public GCC and Clang switch graphs give 12 cases and one default. The
-checked recognizer rejects seven changed evidence controls for each
-compiler. The complete parent gate passed 594 tests with 26 opt-in skips
-and 90.06% evaluator coverage. The exporter and generated C pipeline are
-not connected. Fresh independent review remains open.
-
-| Method | Behavior passed | Integrity passed | Fully successful |
+| M1 method | Behavior passed | Integrity passed | Fully successful |
 | --- | --- | --- | --- |
 | Phoenix | 19/20 | 18/20 | 17/20 |
 | Ghidra-raw | 8/20 | 8/20 | 8/20 |
 
-These are the original `-O0` results from `m1-t0-efcad05`. Two Phoenix
-variants failed `embedded_text`. One failed behavior. Twelve raw variants
-had compiler failures. All 80 Phoenix builds compiled with zero warnings.
-Both methods had 792 eligible cases, zero emulator disagreements, and
-zero evaluation errors. Coverage reached 790 of 1,079 recovered block
-entries. Source branch adequacy is a separate measure.
+Original `m1-t0-6897e47` and exact replay `m1-t0-replay-6897e47`
+agree in every stable field. Each method has 792 eligible variant-case
+pairs, zero emulator disagreements, and zero evaluation errors. Coverage
+reaches 790 of 1,079 recovered block entries. This is separate from source
+branch adequacy. Phoenix has two `embedded_text` failures and one behavior
+failure. Raw has 12 failed variants with compiler errors. Phoenix compiled
+all 80 builds with eight warnings. Raw compiled 48 of 80 builds.
 
-Replay `m1-t0-replay-efcad05` has `reproduced=false`. It retains 17/20
-Phoenix successes and 8/20 raw successes. One original Phoenix behavior
-failure became `pipeline-failed`, with no source or measurement record.
-The other 39 stable records match. The replay measured only 754 Phoenix
-variant-case pairs. The full original model log stayed unchanged.
-The replay created no model log. Both frozen reports remain intact.
+Both 40-task bindings match the report fields and complete model summaries.
+The original log and both saved bindings stayed unchanged. Replay created no
+model log. Phoenix used 86 model calls with $1.7865956 API-equivalent cost
+and zero unknown-cost reservations. Median original reconstruction time was
+46.79 seconds per variant. Independent Sol and Astra reviews passed these
+exact measured results. The public pipeline passed all four builds for both
+methods. [Native CI](https://github.com/dvgyl/phoenix/actions/runs/42905864046)
+and both native-to-Mac comparisons passed.
 
-Independent Sol diagnosis reproduced the cause. CMake elapsed times
-entered compiler-failure feedback and changed the next repair prompt.
-Exact model-ledger lookup correctly rejected that unrecorded request.
-The correction removes only the two known CMake timing suffixes from
-model feedback before truncation. Raw diagnostics and exact ledger checks
-retain their values. The old replay remains failed evidence.
-[Tracked defect](https://github.com/dvgyl/phoenix/issues/1).
+The measured revision can accept contradictory pre-freeze checkpoint
+metadata in a synthetic run. The reviewed evidence for the two real runs
+is consistent. Main now binds returned submissions to the exact checkpoint
+bytes and preserves a detected contradiction across retry. Sol and Astra
+passed the shared correction. The combined M2 evaluator remains under
+independent review. Earlier failed runs and review verdicts remain in the
+log. No new sealed run has started.
+[Capture issue](https://github.com/dvgyl/phoenix/issues/6).
+[Replay issue](https://github.com/dvgyl/phoenix/issues/5).
 
-Earlier results also remain in the record. `m1-t0-ce6a34d` scored zero
-fully successful variants for both methods and reproduced on replay.
-`m1-t0-5695148` scored Phoenix 17/20 and raw 0/20 and reproduced on replay.
-Its raw score includes the support-header defect corrected at `ff4e427`.
-The later `efcad05` review closed that header finding.
+T1 is sealed with 15 programs and 90 variants. Its source and input
+commitments are on the isolated evaluation branch. T2 private validation
+has started. T3 has five source-screened selections and no runtime-qualified
+batch. All source and held-out inputs stay sealed.
 
-Native CI and the current Mac M0 passed at `6897e47`. All three reports
-match in revision, source hash, seed, cases and outcomes.
-[CI run 42905864046](https://github.com/dvgyl/phoenix/actions/runs/42905864046).
-Guarded M1 original `m1-t0-6897e47` retained Phoenix 17/20 and
-Ghidra-raw 8/20 fully successful. All 40 report rows match their bound
-checkpoints and model summaries. Its exact replay is active.
+The public U1 evidence gate passed all 16 configurations at `49202a7`.
+Sol and Astra passed the exact U1 source review. The separate observer
+controls also passed.
 
-T1 is sealed with 15 programs and 90 variants. Its archive commitments
-are pushed on `agent/t1-commitments`. Integration waits for M1 acceptance.
-A fresh private Astra author has resumed incomplete T2 preparation.
-The source and held-out inputs stay private. T3 qualification is pending.
+Sol held the first switch proof at `3835b40`. The correction binds the
+normalized table expression and selector to exact machine instructions.
+It rejects known entries that bypass the guard. All 21 independent
+controls now pass. Both public plans remain byte-identical. Fresh
+independent review, checked C generation, and Linux behavior are open.
 
-Verified static lift evidence awaits integration after M1. The separate
-public observer calibration passed its fixed positive and mutant controls.
-Wrong-API and missing-register runtime controls passed a fresh Linux run
-and independent Sol review. The observer remains separate from production. The M2 evaluator is in its
-separate worktree, with synthetic checks and review in progress.
-
-The internal-drive free-space baseline is 14,432,616 KiB.
-The workspace is the case-sensitive APFS mount at `/Volumes/PhoenixWork`.
-The dedicated Colima VM has four CPUs and 2 GiB of memory.
-Every major work block requires a fresh independent GPT-6.1 Sol review.
-Milestone and integrity reviews also require Astra. CLI workers use
-Standard service with Fast mode and nested agents disabled.
-
-## Separate U1 candidate
-
-Initial opt-in U1 candidate `ac45adf` remains on its own branch. Independent
-Sol confirmed six saved public static exports and held seven findings.
-The hardening branch corrects them. It rejects conflicting import or target
-evidence, protects the input paths, and preserves the previous complete
-generation after a failed refresh.
-
-The parent also reproduced two selector faults. A symbolic link reached a
-valid selector outside the publication path. A named pipe blocked the
-reader. The reader now requires a regular file and uses a bounded
-nonblocking read without following symbolic links. Both probes pass.
-
-The parent gate passed 578 tests with 26 opt-in skips and 90.06% evaluator
-line coverage. Two fresh Ghidra analyses of public GCC and Clang switch
-fixtures preserved the original binary, lift, and address proof hashes.
-They published a complete generation through the new path. No target ran.
-
-Fresh Sol confirmed the seven earlier fixes and both selector checks.
-It held two more findings. The static plan now rejects a direct call
-target that disagrees with the raw operation. Failed mapping or lift
-validation retains the Ghidra diagnostic without changing the prior
-generation. The corrected parent gate passed 581 tests with 26 opt-in
-skips and 90.06% evaluator line coverage. All six saved exports retained
-1,172 witnesses and 80 named import bindings.
-
-The code remains opt-in. Fresh independent Sol and Astra reviews and the
-expanded E1 Linux fixture checks remain open.
-[Tracked review findings](https://github.com/dvgyl/phoenix/issues/7).
+The internal free-space baseline is 14,432,616 KiB. The workspace is the
+external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
+2 GiB of memory. Use Standard service. Obtain a fresh independent Sol
+review after each major block and Astra review where required.
 
 ## Next actions
 
-1. Complete exact guarded M1 replay on unchanged main.
-2. Obtain milestone review before tagging or M2 integration.
-3. Finish the combined evaluator and fresh observer evidence reviews.
-4. Review U1 independently, then run its pending public Linux fixture gates.
-5. Integrate verified M2 work after M1, then continue through M4 and section 9.
+1. Finish the combined M2 evaluator reviews before a new sealed run.
+2. Integrate reviewed U1 evidence. Finish U2 proof, generation, and public
+   behavior checks.
+3. Continue production observation, indirect calls, byte idioms, and repair
+   fault localization. Keep the two oracle engines independent.
+4. Finish private T2 validation. Validate T3 in a separate Linux window.
+5. Complete M2 through M4, publish the required artifacts, and replay every
+   headline result.

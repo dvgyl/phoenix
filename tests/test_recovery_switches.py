@@ -111,8 +111,11 @@ def switch_fixture(
     )
     second = {"duplicate": 0x118, "interior": 0x101}.get(layout, 0x119)
     pack_into("<ii", binary, 0x400, 0x118 - 0x1000, second - 0x1000)
+    if layout == "alternate":
+        pack_into("<ii", binary, 0x408, 0x119 - 0x1008, 0x118 - 0x1008)
     if layout == "relocated":
         pack_into("<Q", binary, 0xC00, 0x1000)
+    bypass = layout in ("reentry", "raw-reentry")
     instructions = []
     for offset, text, branch in (
         (0x100, "83e703", None),
@@ -124,7 +127,7 @@ def switch_fixture(
         (0x116, "ffe2", "BRANCHIND"),
         (0x118, "c3", None),
         (0x119, "c3", None),
-        (0x120, "c3", None),
+        (0x120, "ebe6" if bypass else "c3", None),
     ):
         data = bytes.fromhex(text)
         binary[offset : offset + len(data)] = data
@@ -136,9 +139,22 @@ def switch_fixture(
                 "pcode": [] if branch is None else [op(BASE + offset, branch, [])],
             }
         )
+    if layout == "raw-reentry":
+        instructions[-1]["pcode"] = [
+            op(
+                BASE + 0x120,
+                "BRANCH",
+                [{"address": location(0x108), "size": 8, "definition": None}],
+            )
+        ]
     function = document["functions"][0]
     function["instructions"] = instructions
-    function["ranges"] = [{"start": location(0x100), "end": location(0x120)}]
+    function["ranges"] = [
+        {
+            "start": location(0x100),
+            "end": location(0x121 if bypass else 0x120),
+        }
+    ]
     function["flow_edges"] = [
         {
             "from_block": location(0x100),
@@ -149,6 +165,16 @@ def switch_fixture(
         }
         for target, kind in ((0x108, "FALL_THROUGH"), (0x120, "CONDITIONAL_JUMP"))
     ]
+    if layout == "reentry":
+        function["flow_edges"].append(
+            {
+                "from_block": location(0x120),
+                "to_block": location(0x108),
+                "site": location(0x120),
+                "target": location(0x108),
+                "kind": "UNCONDITIONAL_JUMP",
+            }
+        )
     function["static_evidence"] = wire(
         replace(
             proposal(),
@@ -252,3 +278,32 @@ def test_graph_reader_rejects_ambiguous_or_unbound_evidence(change: str) -> None
         document["lift_sha256"] = "0" * 64
     with pytest.raises(MappingError):
         parse_switch_graph(raw_json(document), lift)
+
+
+@pytest.mark.parametrize(
+    "conflict", ["alternate", "reentry", "raw-reentry", "register", "load"]
+)
+def test_switch_refuses_a_graph_that_disagrees_with_raw_dispatch(
+    conflict: str,
+) -> None:
+    binary, lift, proof, document = switch_fixture(conflict)
+    guard, dispatch, *_ = document["blocks"]
+    if conflict == "alternate":
+        dispatch["operations"][1]["inputs"][1] = constant(BASE + 0x1008, 8)
+        dispatch["operations"][4]["inputs"][1] = constant(BASE + 0x1008, 8)
+    elif conflict == "register":
+        for operation in guard["operations"] + dispatch["operations"]:
+            for operand in [operation["output"], *operation["inputs"]]:
+                if operand is not None and operand["address"] == loc(0x38, "register"):
+                    operand["address"] = loc(0, "register")
+    elif conflict == "load":
+        load = dispatch["operations"][2]
+        load["sequence"]["address"] = location(0x120)
+        load["output"]["definition"]["address"] = location(0x120)
+        dispatch["operations"][3]["inputs"][0]["definition"]["address"] = location(
+            0x120
+        )
+    with pytest.raises(MappingError):
+        recover_switch(
+            parse_switch_graph(raw_json(document), lift), binary, lift, proof
+        )

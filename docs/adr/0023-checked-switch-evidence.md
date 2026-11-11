@@ -28,3 +28,19 @@ export and generation path must bind their artifacts separately. The
 public runtime test must rebuild the checked switch in four compiler and
 architecture configurations. A saved table or syntax check does not
 satisfy that test.
+
+## Bind the dispatch to the original instruction sequence
+
+The normalized expression alone does not establish the table base or
+selector register. A table with the same destinations in a different
+order can change the case map. Decode the supported original sequence
+from exact owned instruction witnesses. It consists of a mask, compare,
+unsigned branch, RIP-relative address, signed scaled load, addition,
+and register jump. The normalized operations must agree with the
+machine register, table address, and operation sites.
+
+Reject a listing edge or direct raw transfer into the middle of this
+sequence unless the listing edge is an adjacent fall-through. Reject
+a table destination or default inside the sequence. This check covers
+the admitted listing and raw transfer evidence. It does not prove
+completeness for unknown indirect transfers elsewhere in the binary.
