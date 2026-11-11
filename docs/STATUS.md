@@ -75,7 +75,9 @@ external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
 review after each major block and Astra review where required.
 
 This isolated branch adds fixed public recursion and callback controls.
-Host syntax and manifest hashes pass. Linux execution and review remain open.
+Host syntax and manifest hashes pass. Fresh Sol found one unsupported
+README stack claim. The text now states the required live check. Linux
+execution and exact correction review remain open.
 
 ## Next actions
 

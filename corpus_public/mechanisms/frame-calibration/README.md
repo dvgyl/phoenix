@@ -4,9 +4,10 @@ These public fixtures test the declared eager-only frame profile. They do
 not measure reconstruction quality. The archived v1 fixture stays unchanged.
 
 `recursive.c` calls a recursive function through a volatile function pointer.
-The function uses four distinct integer arguments. It changes local stack
-state and uses the child result after each call. A separate empty function
-and call sequence support entry, return, and shared-role calibration.
+The function uses four distinct integer arguments. It uses the child result
+after each call. The live gate must verify a caller stack frame in each
+required build. A separate empty function and call sequence support entry,
+return, and shared-role calibration.
 The compiler output must establish which shared roles actually occur.
 Source shape alone does not establish a machine instruction pattern.
 

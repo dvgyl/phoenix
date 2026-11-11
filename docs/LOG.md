@@ -775,3 +775,15 @@
 - The first manifest script had a Python string syntax error. It wrote
   no manifest. The corrected script and hash checks pass. New fixture
   flags declare eager binding. The archived fixtures remain unchanged.
+
+## 2026-11-11. Correct the public fixture stack claim
+
+- Fresh Sol placed `cd59f7f` on HOLD for one README statement. Source
+  and syntax checks cannot establish a caller stack frame. The other
+  static checks and all 33 case identities passed.
+- Replaced that statement with an explicit live requirement for each
+  required compiled build. Source files, source and case hashes, build
+  flags, and the full live gate remain unchanged.
+- The review found no C defect. Linux builds, actual stack and register
+  observations, and all capture controls remain open. A fresh exact
+  correction review is required.
