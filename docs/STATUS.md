@@ -33,7 +33,9 @@ bytes and preserves a detected contradiction across retry. Sol and Astra
 passed the shared correction. The combined M2 evaluator passed fresh
 Sol and Astra reviews at `05979af`. The reviewed evaluator and T1
 commitments are on main. Earlier failures remain in the log. No new
-sealed run has started.
+sealed run has started. The first native CI run failed because a replay
+property test used a Mac-only scratch path. The portable test passed all
+13 affected cases locally. Native CI must confirm the correction.
 [Capture issue](https://github.com/dvgyl/phoenix/issues/6).
 [Replay issue](https://github.com/dvgyl/phoenix/issues/5).
 

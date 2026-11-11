@@ -632,3 +632,13 @@
   checks are required before the next sealed measurement.
 - This is evaluator code approval. No M2 milestone result or tag is
   claimed.
+
+## 2026-11-11. Remove a Mac-only path from the replay tests
+
+- Both native CI jobs for `3880478` failed in the same 13 replay property
+  tests. The tests required `PHOENIX_ROOT` and a scratch directory named
+  for an earlier review. The evaluator code did not cause the failure.
+- Reproduced the failure with `PHOENIX_ROOT` unset. Replaced the test path
+  with the standard temporary directory. All 13 affected tests then
+  passed with the variable unset. On the Mac, `TMPDIR` still points to
+  the external workspace. The measured M1 revision remains unchanged.

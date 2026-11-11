@@ -1,6 +1,5 @@
 import copy
 import json
-import os
 import platform
 from dataclasses import replace
 from hashlib import sha256
@@ -191,9 +190,7 @@ def test_unknown_or_cyclic_replay_rejected_before_archive(
 def test_saved_counts_are_nonnegative_integers(
     path_parts: tuple[str | int, ...], value: object
 ) -> None:
-    with TemporaryDirectory(
-        dir=Path(os.environ["PHOENIX_ROOT"]) / "tmp/m2-matrix-fix-sol"
-    ) as scratch:
+    with TemporaryDirectory() as scratch:
         directory = Path(scratch)
         path = save_report(directory, results_fixture(scope_fixture()))
         document = json.loads(path.read_text())
