@@ -856,3 +856,20 @@
 - Preserved corpus sealing. Read only approved private Author progress.
   The private T2 Author remains the VM owner. Later milestones and all
   requirements in SPEC section 9 remain open.
+
+## 2026-11-11. Record the completed handoff reviews
+
+- Independent Sol passed the exact handoff at `972f43a`. It reconstructed
+  all eight patches and 29 files. All 164 implementation files outside
+  docs match accepted main. Both historical log sequences remain.
+- Fresh Sol passed scope `09e984b` under the stricter static contract.
+  Its 713 new controls passed. The three withdrawn old positives remain
+  explicit failures. Runtime and integration gates remain open.
+- Fresh Sol passed fixture correction `cf066d6`. It closed the unsupported
+  README stack claim. Source, case, manifest, and build identities stayed
+  unchanged. Linux and live capture checks remain open.
+- Published exact copies of five independent PASS reports and their hashes.
+  The narrow parser PASS does not close the provider-blocked full capture
+  review. No new observation implementation or milestone was promoted.
+- Updated the handoff resume point. The private T2 Author remains active
+  and owns the VM. The original goal through SPEC section 9 remains active.

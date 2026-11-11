@@ -5,6 +5,9 @@ through `SPEC.md` section 9. M0 and M1 are accepted. M2 through M4,
 publication, and the final headline replays remain open. This handoff does
 not pause the goal or approve a later milestone.
 
+Read the final review update below first. It supersedes the earlier active
+review snapshots in this file.
+
 ## Start here
 
 1. Source `/Volumes/Extreme Pro/Phoenix/env.sh` in every shell.
@@ -415,3 +418,52 @@ Package confidence currently uses `tested` and `unverified`. Recovered
 block coverage is not the source branch evidence needed for `verified`.
 M4 and every item in SPEC section 9 remain required. Do not mark the goal
 complete because a handoff, review, checkpoint, or intermediate gate passes.
+
+## Final review update
+
+The independent handoff review passed exact `972f43a752becd763ed8afefa70b79960d440437`.
+It reconstructed all eight patches and all 29 original files independently.
+All 164 implementation files outside `docs` match main `3939fbc` exactly.
+Both historical log sequences remain. This final update changes only
+public records. It adds no pending observation implementation to main.
+
+The completed review states are as follows. The table supersedes the active
+review snapshots above.
+
+| Block | Exact checkpoint | Current review state |
+| --- | --- | --- |
+| Static scope | `09e984b8608743d87ce9b323a9f6a4a2fad9785b` | Fresh Sol PASS for the stricter static contract. |
+| Pure frames | `b85febaa4735c9916a526598b8ba06d0db07919d` | Fresh Sol PASS for the revised pure contract. Dependency port remains open. |
+| Capture parsers | `9672a0f414e6fe128f8a1763c66694f551f2e2f5` | Data-format PASS only. Full capture review remains open. |
+| Public fixtures | `cf066d69162de8657563f087b491995ca5c0a63f` | Fresh Sol PASS after the README correction. All live gates remain open. |
+| Handoff and archival patches | `972f43a752becd763ed8afefa70b79960d440437` | Fresh Sol PASS. This later update records the completed reviews. |
+
+The scope review passed 713 new independent controls. It retains the
+faithful-translation precondition and the three withdrawn old positives.
+It does not approve independent machine semantics, runtime capture, or
+recovery. Issue 8 remains open until verified integration.
+
+The original fixture review placed `cd59f7f` on HOLD for a README stack
+claim. Correction `cf066d6` changes only that README and progress records.
+Fresh Sol closed F1. The C sources, 33-case roster, manifest, ADR, flags,
+and source and case hashes remain unchanged. The live gate must verify
+a caller stack frame in every required compiled build. No Linux fixture
+execution has occurred.
+
+Exact copies of the five named PASS reports are in
+`docs/reviews/2026-11-11`. Their manifest binds the original report bytes.
+The original reports, controls, and logs remain under `PHOENIX_ROOT/audit`.
+The provider-blocked full capture review still has no code verdict.
+Do not treat the narrower parser review as its replacement.
+
+The handoff reviewer could not inspect the private Author status or use
+`ps` under its guard. The parent checked the permitted status and PID.
+The private T2 Author remains active and retains the VM lease. Do not
+infer release from a finished public review. Check the actual current
+private Author status through the approved parent path before any Docker
+command. The public reviewers have ended. Their source worktrees are clean.
+
+The next action is the exact reviewed scope dependency port into the
+frame and capture checkpoints, followed by combined checks. Then continue
+the ordered collector, public runtime, M2, M3, M4, publication, and replay
+work above. The goal remains active. SPEC section 9 remains incomplete.

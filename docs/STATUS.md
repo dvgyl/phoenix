@@ -91,14 +91,20 @@ review after each major block and Astra review where required.
 ## Continuation handoff
 
 Read `docs/HANDOFF.md` for exact worktrees, reviews, and process state.
-Scope checkpoint `09e984b` passed local checks and is under fresh Sol review.
+Scope checkpoint `09e984b` passed local checks and fresh Sol review
+for its stricter static contract.
 Frame checkpoint `b85feba` passed its pure contract review. Its scope
 dependency still needs replacement. Capture checkpoint `9672a0f` passed
 a parser-only review. The provider blocked its full review for possible
 cybersecurity risk. That full review remains open. Public fixture
-checkpoint `cd59f7f` is under fresh Sol review. No new observation code
+checkpoint `cf066d6` passed fresh Sol after its README correction. No new observation code
 from those checkpoints is accepted on main.
 
 The handoff preserves 29 old public draft files in eight archival patches.
 Each patch reproduced the original bytes and executable modes. Private
 corpus material, held-out inputs, binaries, and scratch output stay outside Git.
+
+The handoff and all archival patches passed independent Sol review at
+`972f43a`. Exact report copies are in `docs/reviews/2026-11-11`.
+The next step is the reviewed scope dependency port and combined checks.
+The private T2 Author still owns the Linux VM. The section 9 goal is active.

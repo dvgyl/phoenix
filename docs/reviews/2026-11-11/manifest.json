@@ -1,0 +1,36 @@
+{
+  "schema": "phoenix-public-review-records-1",
+  "copied_utc": "2026-11-11T05:50:37.579525+00:00",
+  "records": [
+    {
+      "published_file": "handoff-972f43a.md",
+      "original_local_report": "/Volumes/PhoenixWork/audit/thread-handoff-20261111-sol/report.md",
+      "sha256": "d30bc45239c362419f7c99b51a83eb0e374cc5e2d8c2bf866fa5130a1ce5cd53",
+      "bytes": 15850
+    },
+    {
+      "published_file": "scope-09e984b.md",
+      "original_local_report": "/Volumes/PhoenixWork/audit/m2-observation-scope-positive-sol/report.md",
+      "sha256": "06aa34a23efa00af4343d36e1255a3626372b3276a1fc3b3a6529138ce610fb8",
+      "bytes": 19481
+    },
+    {
+      "published_file": "frames-b85feba.md",
+      "original_local_report": "/Volumes/PhoenixWork/audit/m2-observation-frames-corrected-sol/report.md",
+      "sha256": "adba7c329aa222d9a89bbe67be23451b5bf570d92463fbe76b7bf41eed64c2aa",
+      "bytes": 14632
+    },
+    {
+      "published_file": "capture-data-formats-9672a0f.md",
+      "original_local_report": "/Volumes/PhoenixWork/audit/m2-capture-data-formats-sol/report.md",
+      "sha256": "8c4260b24a1445dffb65a31bda38874c45906da364fb999f0860d7d29cd4566c",
+      "bytes": 9564
+    },
+    {
+      "published_file": "frame-fixtures-cf066d6.md",
+      "original_local_report": "/Volumes/PhoenixWork/audit/m2-frame-fixture-claim-sol/report.md",
+      "sha256": "1e3c31771d99a1e912faff07fa1a16ca7a32a8f06f6ec104327e64061e54ea6b",
+      "bytes": 13917
+    }
+  ]
+}
