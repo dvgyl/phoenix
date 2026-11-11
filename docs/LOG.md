@@ -655,3 +655,21 @@
 - The candidate API now derives its import bindings from the binary.
   All local callers use the new API. Fresh independent review, live
   trace admission, and Linux controls remain open.
+
+## 2026-11-11. Check mapped observation outcomes and event roles
+
+- Built on the reviewed physical transfer plan and structural wire.
+  The new boundary rebuilds the canonical static plan and parses raw
+  wire bytes with exact binary, plan, invocation, and runtime identities.
+- Requires full accepted-outcome equality. Checks PIE and fixed-entry
+  mapping, executable holes, data targets, event roles, direct call
+  destinations, return target confirmation, and call continuations.
+- All 17 focused controls pass. They retain opaque external targets
+  and reject false mappings, roles, outcomes, source identities, and
+  incomplete capture. The type is MappedObservation. It does not
+  establish frames, target closure, or runtime calibration.
+- The first lint pass found a nullable-site assignment and a missing
+  explicit gap branch in the type flow. Both were corrected. No target,
+  Docker command, or Ghidra process ran. The local gate must pass before
+  this commit. Fresh independent review, the runtime producer, and the
+  frame gate remain open.

@@ -70,3 +70,8 @@ This branch now checks physical transfer bytes through one bounded
 classifier. The parent reran all 249 static tests, 16 saved public
 fixtures, and the pinned decoder comparison. The earlier HOLDs remain.
 Fresh independent review and live observation checks remain open.
+
+This branch adds exact outcome, address mapping, and event-role checks
+after structural wire parsing. All 17 focused controls pass. The result
+is a mapped observation. It does not authorize recovery. Frame admission,
+live capture, and fresh independent review remain open.
