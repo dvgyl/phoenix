@@ -524,3 +524,21 @@
   publication, checked C generation, and Linux behavior remain required.
   The separate raw and checked prototype projects have only passed host
   syntax checks. No sealed M2 result is claimed.
+
+## 2026-11-11. Publish optional switch graph evidence
+
+- The optional Ghidra post-script exports bounded normalized graphs and
+  a manifest. Each graph names the exact binary and ordinary lift.
+  The reader checks file names, size, identity, and bytes.
+- A switch-enabled lift publishes the graphs with its ordinary lift and
+  mapping in one generation. The selector stays on the old generation
+  if the refresh has no valid manifest. Ordinary lifts and mapping-only
+  generations keep their existing formats.
+- The focused lift and recovery suite passed 108 tests. Host Ghidra
+  produced a generation for each public switch binary. GCC produced one
+  graph and Clang produced two. The ordinary lift bytes match the
+  earlier standalone exports. No Linux target ran.
+- Sol held the separate recognizer at `3835b40`. It accepted conflicting
+  table, selector, load site, and incoming edge evidence. This checkpoint
+  publishes artifacts only. It does not use the held recognizer in
+  generation. Keep these findings open.

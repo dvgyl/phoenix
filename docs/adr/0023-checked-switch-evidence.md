@@ -28,3 +28,17 @@ export and generation path must bind their artifacts separately. The
 public runtime test must rebuild the checked switch in four compiler and
 architecture configurations. A saved table or syntax check does not
 satisfy that test.
+
+## Optional graph publication
+
+Switch graphs require the mapping companion. Export the graphs in a
+separate post-script within the same read-only analysis. Limit export
+to 32 functions, 4 MiB per graph and 16 MiB total graph data. Record
+unsupported normalized graphs as gaps. The manifest binds the binary
+and lift digests to each graph digest and function address.
+
+A switch-enabled generation uses commit schema 2. The commit binds the
+switch manifest as well as the lift and mapping. The reader verifies
+all three before exposing a generation. The mapping-only profile still
+writes commit schema 1. A malformed switch bundle cannot select a new
+generation. An exported graph is a proposal, not a checked dispatch.
