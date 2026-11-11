@@ -44,8 +44,10 @@ batch. All source and held-out inputs stay sealed.
 The reviewed U1 lift evidence and opt-in recovery plan are on main.
 Public static checks passed 16 configurations at `49202a7`. Sol and Astra
 passed the exact source review. The public observer controls passed.
-The switch proof and graph export remain on separate branches.
-Their public target checks and fresh reviews are open.
+The reviewed conditional switch proof and optional graph publication
+are on main. They retain the ordinary lift and keep generation unchanged.
+The separate bounded C source parser passed on both public fixtures.
+Production token binding and public target checks remain open.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the
 external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and

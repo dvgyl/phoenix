@@ -7,8 +7,12 @@ import stat
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import NewType, cast
+from typing import TYPE_CHECKING, NewType, cast
 from uuid import uuid4
+
+if TYPE_CHECKING:
+    from phoenix.lift.index import LiftIndex
+    from phoenix.lift.switch_artifacts import SwitchBundle
 
 GhidraVA = NewType("GhidraVA", int)
 FileOffset = NewType("FileOffset", int)
@@ -61,19 +65,24 @@ def digest(value: object) -> str:
     return value
 
 
-def _read_regular(path: Path, limit: int) -> bytes:
+def _read_regular(path: Path, limit: int, *, private: bool = False) -> bytes:
     descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-    if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-        os.close(descriptor)
-        raise MappingError("The evidence artifact must be a regular file.")
     with os.fdopen(descriptor, "rb") as stream:
+        metadata = os.fstat(stream.fileno())
+        if not stat.S_ISREG(metadata.st_mode):
+            raise MappingError("The evidence artifact must be a regular file.")
+        if private and metadata.st_nlink != 1:
+            raise MappingError("The evidence artifact must not have a hard-link alias.")
         return stream.read(limit)
 
 
-def bounded_read(path: Path) -> bytes:
-    raw = _read_regular(path, MAX_BYTES + 1)
-    if len(raw) > MAX_BYTES:
-        raise MappingError("The artifact exceeds 64 MiB.")
+def bounded_read(path: Path, *, limit: int = MAX_BYTES, private: bool = False) -> bytes:
+    if type(limit) is not int or not 0 <= limit <= MAX_BYTES:
+        raise MappingError("The artifact read limit is invalid.")
+    raw = _read_regular(path, limit + 1, private=private)
+    if len(raw) > limit:
+        label = "64 MiB" if limit == MAX_BYTES else f"{limit} bytes"
+        raise MappingError(f"The artifact exceeds {label}.")
     return raw
 
 
@@ -176,14 +185,23 @@ def parse_mapping(raw: bytes, binary: bytes, lift: bytes) -> LiftMapping:
     )
 
 
-def _validate_pair(lift: bytes, mapping: bytes, binary: bytes) -> LiftMapping:
+def _validate_pair(
+    lift: bytes, mapping: bytes, binary: bytes
+) -> tuple[LiftMapping, "LiftIndex"]:
     from phoenix.lift.index import parse_lift
 
     parsed = parse_mapping(mapping, binary, lift)
     index = parse_lift(lift, binary)
     if (index.image_base, index.startup) != (parsed.image_base, parsed.startup):
         raise MappingError("The lift and mapping addresses disagree.")
-    return parsed
+    return parsed, index
+
+
+@dataclass(frozen=True, slots=True)
+class LiftGeneration:
+    lift: bytes
+    mapping: LiftMapping
+    switches: "SwitchBundle | None"
 
 
 def check_publication_paths(directory: Path, binary: Path) -> None:
@@ -204,7 +222,13 @@ def check_publication_paths(directory: Path, binary: Path) -> None:
 
 
 def publish_generation(
-    lift: Path, directory: Path, binary: Path, original: bytes, log: str
+    lift: Path,
+    directory: Path,
+    binary: Path,
+    original: bytes,
+    log: str,
+    *,
+    switch_graphs: bool = False,
 ) -> Path:
     """Publish a complete generation from a private staging directory."""
     staging = lift.parent
@@ -217,19 +241,22 @@ def publish_generation(
             raise MappingError("A staged artifact needs a private regular file.")
     lift_raw = bounded_read(lift)
     mapping_raw = bounded_read(staging / "mapping.json")
-    _validate_pair(lift_raw, mapping_raw, original)
+    _, index = _validate_pair(lift_raw, mapping_raw, original)
+    record: dict[str, int | str] = {
+        "schema_version": 1,
+        "lift_sha256": sha256(lift_raw).hexdigest(),
+        "mapping_sha256": sha256(mapping_raw).hexdigest(),
+    }
+    if switch_graphs:
+        from phoenix.lift.switch_artifacts import read_switch_bundle
+
+        bundle = read_switch_bundle(staging / "switches", index)
+        record["schema_version"] = 2
+        record["switch_manifest_sha256"] = bundle.manifest_sha256
     with (staging / "ghidra.log").open("x", encoding="utf-8") as stream:
         stream.write(log)
     with (staging / "evidence-commit.json").open("x", encoding="utf-8") as stream:
-        json.dump(
-            {
-                "schema_version": 1,
-                "lift_sha256": sha256(lift_raw).hexdigest(),
-                "mapping_sha256": sha256(mapping_raw).hexdigest(),
-            },
-            stream,
-            sort_keys=True,
-        )
+        json.dump(record, stream, sort_keys=True)
         stream.write("\n")
     name = f"generation-{uuid4().hex}"
     selection = staging / _SELECTOR
@@ -240,6 +267,8 @@ def publish_generation(
     artifacts.mkdir()
     for filename in ("lift.json", "mapping.json", "ghidra.log", "evidence-commit.json"):
         (staging / filename).rename(artifacts / filename)
+    if switch_graphs:
+        (staging / "switches").rename(artifacts / "switches")
     check_publication_paths(directory, binary)
     if bounded_read(binary) != original:
         raise MappingError("The input binary changed during the lift.")
@@ -256,17 +285,23 @@ def read_companion(directory: Path, binary: bytes) -> tuple[bytes, LiftMapping]:
         raise MappingError("The evidence publication is incomplete.") from error
     if re.fullmatch(rb"generation-[0-9a-f]{32}\n", selection) is None:
         raise MappingError("Invalid evidence generation selection.")
-    generation = directory / selection[:-1].decode("ascii")
-    if generation.is_symlink():
-        raise MappingError("An evidence generation cannot be a symbolic link.")
+    evidence = read_generation(directory / selection[:-1].decode("ascii"), binary)
+    return evidence.lift, evidence.mapping
+
+
+def read_generation(generation: Path, binary: bytes) -> LiftGeneration:
+    if (
+        generation.is_symlink()
+        or re.fullmatch(r"generation-[0-9a-f]{32}", generation.name) is None
+    ):
+        raise MappingError("Invalid evidence generation directory.")
     for name in ("lift.json", "mapping.json", "evidence-commit.json", "ghidra.log"):
         artifact = generation / name
         if artifact.is_symlink() or not artifact.is_file():
             raise MappingError("The evidence publication is incomplete.")
     try:
         record = object_fields(
-            load_json(bounded_read(generation / "evidence-commit.json")),
-            "schema_version lift_sha256 mapping_sha256",
+            load_json(bounded_read(generation / "evidence-commit.json", limit=4096))
         )
         lift, mapping = (
             bounded_read(generation / "lift.json"),
@@ -274,11 +309,32 @@ def read_companion(directory: Path, binary: bytes) -> tuple[bytes, LiftMapping]:
         )
     except OSError as error:
         raise MappingError("The evidence publication is incomplete.") from error
+    version = record.get("schema_version")
+    if type(version) is not int or version not in (1, 2):
+        raise MappingError("Invalid evidence commit schema.")
+    fields = "schema_version lift_sha256 mapping_sha256"
+    switches = generation / "switches"
+    if version == 2:
+        fields += " switch_manifest_sha256"
+    else:
+        try:
+            switches.lstat()
+        except FileNotFoundError:
+            pass
+        else:
+            raise MappingError("A schema 1 generation cannot contain switch evidence.")
+    object_fields(record, fields)
     if (
-        type(record["schema_version"]) is not int
-        or record["schema_version"] != 1
-        or digest(record["lift_sha256"]) != sha256(lift).hexdigest()
+        digest(record["lift_sha256"]) != sha256(lift).hexdigest()
         or digest(record["mapping_sha256"]) != sha256(mapping).hexdigest()
     ):
         raise MappingError("The evidence commit does not match its artifacts.")
-    return lift, _validate_pair(lift, mapping, binary)
+    parsed, index = _validate_pair(lift, mapping, binary)
+    bundle = None
+    if version == 2:
+        from phoenix.lift.switch_artifacts import read_switch_bundle
+
+        bundle = read_switch_bundle(switches, index)
+        if bundle.manifest_sha256 != digest(record["switch_manifest_sha256"]):
+            raise MappingError("The switch manifest differs from the evidence commit.")
+    return LiftGeneration(lift, parsed, bundle)

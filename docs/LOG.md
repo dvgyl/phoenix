@@ -600,3 +600,19 @@
   transport failures are recorded in `audit/m2-production-u1-e1/`.
 - This integration does not enable switch recovery or production
   traces. No target execution or new benchmark result is claimed.
+
+## 2026-11-11. Integrate reviewed static switch evidence
+
+- Integrated the exact recognizer files from `4978a41` and optional
+  graph publication files from `81c9cfe`. Fresh independent Sol
+  review passed both static blocks. Preserve all earlier HOLDs.
+- The recognizer uses admitted original instructions, a read-only
+  table, and known transfer evidence. It assumes ordinary function
+  entry and return behavior. It retains every proved selector,
+  including repeated destinations.
+- The optional export binds graph files to the same lift generation.
+  The saved public GCC and Clang plans retain all 24 cases and both
+  defaults. The ordinary lift bytes match the earlier exports.
+- Production C generation does not use this evidence yet. The
+  default pipeline and M1 tag are unchanged. No target ran or
+  new benchmark result is claimed.
