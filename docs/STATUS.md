@@ -65,3 +65,8 @@ review after each major block and Astra review where required.
 4. Finish private T2 validation. Validate T3 in a separate Linux window.
 5. Complete M2 through M4, publish the required artifacts, and replay every
    headline result.
+
+This branch now checks physical transfer bytes through one bounded
+classifier. The parent reran all 249 static tests, 16 saved public
+fixtures, and the pinned decoder comparison. The earlier HOLDs remain.
+Fresh independent review and live observation checks remain open.

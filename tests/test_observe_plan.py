@@ -41,7 +41,7 @@ def test_plan_keeps_shared_roles_and_binds_original_bytes(base: int) -> None:
         [name, 64] for name in ("rdi", "rsi", "rdx", "rcx", "rax", "rsp")
     ]
     assert record["address_proof_sha256"] == proof.sha256
-    with pytest.raises(MappingError, match="does not bind the original binary"):
+    with pytest.raises(MappingError, match="identities disagree"):
         build_trace_plan(binary + b" ", lift, proof)
 
 
@@ -132,5 +132,5 @@ def test_plan_refuses_a_replaced_instruction_witness() -> None:
         replace(witness, data=b"\x90") if witness.elf == 0x105 else witness
         for witness in proof.witnesses
     )
-    with pytest.raises(MappingError, match="witness differs"):
+    with pytest.raises(MappingError, match="address proof differs"):
         build_trace_plan(binary, lift, replace(proof, witnesses=witnesses))

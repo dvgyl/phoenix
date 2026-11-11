@@ -2,25 +2,27 @@
 
 from collections import defaultdict
 from dataclasses import dataclass, replace
-from hashlib import sha256
 from struct import Struct
 
 from phoenix.lift.index import (
     ExternalImport,
+    Function,
     LiftIndex,
     Location,
-    Operation,
     StaticEdge,
-    call_transfer_kind,
 )
 from phoenix.lift.mapping import GhidraVA, MappingError
 from phoenix.recover.addresses import (
     AddressProof,
     ElfImage,
     ElfVA,
-    InstructionWitness,
     checked_end,
     synthetic_external_target,
+)
+from phoenix.recover.transfers import (
+    CheckedTransfers,
+    TransferEvidence,
+    check_transfers,
 )
 
 _U32 = Struct("<I")
@@ -450,184 +452,200 @@ def _transfer_slot(lift: LiftIndex, site: GhidraVA) -> GhidraVA | None:
     return slot
 
 
-def _relative_operand(
-    witness: InstructionWitness, encodings: tuple[tuple[bytes, int], ...]
-) -> GhidraVA | None:
-    for opcode, width in encodings:
-        if len(witness.data) == len(opcode) + width and witness.data.startswith(opcode):
-            displacement = int.from_bytes(witness.data[-width:], "little", signed=True)
-            return GhidraVA(witness.ghidra + len(witness.data) + displacement)
-    return None
+_NOPS = frozenset(
+    bytes.fromhex(raw)
+    for raw in (
+        "90",
+        "6690",
+        "0f1f00",
+        "0f1f4000",
+        "0f1f440000",
+        "660f1f440000",
+        "0f1f8000000000",
+        "0f1f840000000000",
+        "660f1f840000000000",
+    )
+)
+_ENDBR64 = bytes.fromhex("f30f1efa")
+
+
+def _thunk_terminal(
+    function: Function, checked: CheckedTransfers
+) -> tuple[GhidraVA, TransferEvidence] | str:
+    entry = function.entry
+    cursor = entry
+    for index, instruction in enumerate(function.instructions):
+        site = instruction.address
+        if site != cursor:
+            return "unsupported_thunk_transfer"
+        witness = checked.proof.witness(site, owner=entry)
+        if index == len(function.instructions) - 1:
+            fact = checked.sites.get(site)
+            if (
+                fact is None
+                or fact.gap is not None
+                or fact.physical is None
+                or fact.physical.kind not in ("direct_jump", "indirect_jump")
+                or function.ranges[0][0] != entry
+                or function.ranges[-1][1] != site + fact.physical.length - 1
+            ):
+                return "unsupported_thunk_transfer"
+            return site, fact
+        if index >= 8 or site + len(witness.data) - entry > 32:
+            return "unsupported_thunk_prefix"
+        if witness.data not in _NOPS and not (
+            site == entry and witness.data == _ENDBR64
+        ):
+            return "unsupported_thunk_prefix"
+        if any(
+            op.opcode != "COPY"
+            or op.output is None
+            or op.output.address.space != "register"
+            or op.inputs != (op.output,)
+            for op in instruction.pcode
+        ):
+            return "unsupported_thunk_prefix"
+        cursor = GhidraVA(site + len(witness.data))
+    return "unsupported_thunk_transfer"
 
 
 def _binding(
     edge: StaticEdge,
     lift: LiftIndex,
-    proof: AddressProof,
+    checked: CheckedTransfers,
     relocations: dict[ElfVA, Relocation],
     imports: dict[Location, ExternalImport],
 ) -> ImportBinding:
-    instruction = lift.instructions.get(edge.site)
-    if instruction is None:
-        return ImportBinding(
-            edge.site, edge.caller, None, None, None, (), "unavailable_instruction"
-        )
-    transfer = call_transfer_kind(instruction, edge.target)
-    if transfer is None:
-        return ImportBinding(
-            edge.site, edge.caller, None, None, None, (), "conflicting_call_target"
-        )
-    if transfer == "direct" and (
-        edge.target is None
-        or edge.target.ram is None
-        or _relative_operand(proof.witness(edge.site), ((b"\xe8", 4),))
-        != edge.target.ram
-    ):
-        return ImportBinding(
-            edge.site, edge.caller, None, None, None, (), "conflicting_call_bytes"
-        )
+    proof = checked.proof
     path: list[GhidraVA] = []
-    transfer_site = edge.site if transfer == "indirect" else None
+
+    def gap(reason: str) -> ImportBinding:
+        return ImportBinding(
+            edge.site, edge.caller, None, None, None, tuple(path), reason
+        )
+
+    witness = proof.witness(edge.site)
+    if edge.caller != witness.owner:
+        return gap("unavailable_instruction")
+    proof.witness(witness.owner, owner=witness.owner)
+    fact = checked.sites.get(edge.site)
+    if fact is None:
+        return gap("unsupported_transfer_encoding")
+    if fact.gap is not None:
+        return gap(fact.gap)
+    physical, operation = fact.physical, fact.operation
+    assert physical is not None and operation is not None
+    if physical.kind not in ("direct_call", "indirect_call"):
+        return gap("conflicting_call_target")
+
     target = edge.target
-    seen: set[Location] = set()
-    gap = "unknown_import"
-    while target is not None and target.space != "EXTERNAL":
-        if target in seen or len(seen) >= 32:
-            gap = "thunk_cycle_or_bound"
-            break
-        seen.add(target)
+    transfer_site = edge.site
+    if physical.kind == "direct_call":
+        if len(operation.inputs) != 1 or operation.inputs[0].address != target:
+            return gap("conflicting_call_target")
+        if (
+            target is None
+            or target.ram is None
+            or physical.destination != target.ram - proof.ghidra_delta
+        ):
+            return gap("conflicting_call_bytes")
         address = target.ram
-        if address is None or address not in lift.functions:
-            break
-        function = lift.functions[address]
-        next_target = function.thunk_target
-        if next_target is None:
-            break
-        synthetic = synthetic_external_target(lift, proof, address)
-        if synthetic is not None:
-            target = synthetic
-            continue
-        if transfer != "direct" and not path:
-            gap = "unproven_indirect_thunk_target"
-            break
-        proof.witness(address, owner=address)
-        transfers: list[tuple[GhidraVA, Operation]] = []
-        next_instruction = address
-        for ins in function.instructions:
-            proof.witness(ins.address, owner=address)
-            if not transfers and ins.address != next_instruction:
+        seen: set[GhidraVA] = set()
+        while True:
+            function = lift.functions.get(address)
+            if function is None or function.thunk_target is None:
+                return gap("unknown_import" if not path else "unavailable_thunk_target")
+            if address in seen or len(seen) >= 32:
+                return gap("thunk_cycle_or_bound")
+            seen.add(address)
+            if synthetic_external_target(lift, proof, address) is not None:
+                return gap("unavailable_thunk_target")
+            proof.witness(address, owner=address)
+            terminal = _thunk_terminal(function, checked)
+            if isinstance(terminal, str):
+                return gap(terminal)
+            transfer_site, fact = terminal
+            physical, operation = fact.physical, fact.operation
+            assert physical is not None and operation is not None
+            path.append(address)
+            target = function.thunk_target
+            if physical.kind == "indirect_jump":
+                if physical.import_slot is None:
+                    return gap("unsupported_thunk_transfer")
                 break
-            next_instruction = GhidraVA(ins.address + ins.size)
-            transfers.extend(
-                (ins.address, op)
-                for op in ins.pcode
-                if op.opcode
-                in (
-                    "BRANCH",
-                    "BRANCHIND",
-                    "CBRANCH",
-                    "CALL",
-                    "CALLIND",
-                    "CALLOTHER",
-                    "RETURN",
-                )
-            )
-        if len(transfers) != 1:
-            gap = "unsupported_thunk_transfer"
-            break
-        site, operation = transfers[0]
-        if operation.opcode == "BRANCHIND":
-            transfer_site = site
-            if next_target.space != "EXTERNAL" and (
-                next_target.ram is None
-                or synthetic_external_target(lift, proof, next_target.ram) is None
+            if (
+                target.ram is None
+                or len(operation.inputs) != 1
+                or operation.inputs[0].address != target
             ):
-                gap = "unsupported_thunk_transfer"
-                break
-        elif (
-            operation.opcode != "BRANCH"
-            or len(operation.inputs) != 1
-            or operation.inputs[0].address != next_target
-            or next_target.ram is None
-        ):
-            gap = "conflicting_thunk_target"
-            break
-        elif (
-            _relative_operand(
-                proof.witness(site, owner=address), ((b"\xe9", 4), (b"\xeb", 1))
+                return gap("conflicting_thunk_target")
+            if physical.destination != target.ram - proof.ghidra_delta:
+                return gap("conflicting_thunk_bytes")
+            address = target.ram
+
+    if target is not None and target.ram is not None:
+        alias = synthetic_external_target(lift, proof, target.ram)
+        if alias is None:
+            return gap(
+                "unsupported_thunk_transfer"
+                if path
+                else "unproven_indirect_thunk_target"
             )
-            != next_target.ram
-        ):
-            gap = "conflicting_thunk_bytes"
-            break
-        path.append(address)
-        target = next_target
-    else:
-        if target is not None and target in imports and transfer_site is not None:
-            gap = "missing_or_ambiguous_got_slot"
-            operand_address = _transfer_slot(lift, transfer_site)
-            relocation = None
-            if operand_address is not None:
-                opcode = b"\xff\x15" if transfer_site == edge.site else b"\xff\x25"
-                encodings = tuple(
-                    (prefix + opcode, 4) for prefix in (b"", b"\xf2", b"\x3e")
-                )
-                if (
-                    _relative_operand(proof.witness(transfer_site), encodings)
-                    != operand_address
-                ):
-                    return ImportBinding(
-                        edge.site,
-                        edge.caller,
-                        None,
-                        None,
-                        None,
-                        tuple(path),
-                        "conflicting_import_slot_bytes",
-                    )
-                try:
-                    relocation = relocations.get(proof.to_elf(operand_address, 8))
-                except MappingError:
-                    pass
-            if relocation is not None:
-                identity = relocation.identity
-                if identity is not None and imports[target].name == identity.symbol:
-                    return ImportBinding(
-                        edge.site,
-                        edge.caller,
-                        identity,
-                        relocation.slot,
-                        relocation.kind,
-                        tuple(path),
-                        None,
-                    )
-                gap = relocation.gap or "conflicting_import_identity"
-    return ImportBinding(edge.site, edge.caller, None, None, None, tuple(path), gap)
+        target = alias
+    if target is None or target not in imports:
+        return gap("unknown_import")
+    raw_slot = _transfer_slot(lift, transfer_site)
+    if raw_slot is None:
+        return gap("missing_or_ambiguous_got_slot")
+    slot = physical.import_slot
+    if slot is None:
+        return gap("unsupported_import_operand")
+    if slot != raw_slot - proof.ghidra_delta:
+        return gap("conflicting_import_slot_bytes")
+    try:
+        relocation = relocations.get(proof.to_elf(raw_slot, 8))
+    except MappingError:
+        relocation = None
+    if relocation is None:
+        return gap("missing_or_ambiguous_got_slot")
+    identity = relocation.identity
+    if identity is None or imports[target].name != identity.symbol:
+        return gap(relocation.gap or "conflicting_import_identity")
+    return ImportBinding(
+        edge.site,
+        edge.caller,
+        identity,
+        relocation.slot,
+        relocation.kind,
+        tuple(path),
+        None,
+    )
 
 
 def bind_imports(
     binary: bytes, lift: LiftIndex, proof: AddressProof
 ) -> tuple[ImportBinding, ...]:
-    if (
-        sha256(binary).hexdigest() != proof.binary_sha256
-        or lift.binary_sha256 != proof.binary_sha256
-        or lift.lift_sha256 != proof.lift_sha256
-    ):
-        raise MappingError("Import evidence identities disagree.")
+    return _bind_checked_imports(binary, lift, check_transfers(binary, lift, proof))
+
+
+def _bind_checked_imports(
+    binary: bytes, lift: LiftIndex, checked_transfers: CheckedTransfers
+) -> tuple[ImportBinding, ...]:
+    proof = checked_transfers.proof
     relocations = {
         record.slot: record for record in read_dynamic_imports(binary, proof.image)
     }
     external_imports = {imported.address: imported for imported in lift.imports}
     result = []
+    call_sites = set()
     for edge in lift.edges:
         if edge.kind != "call":
             continue
+        call_sites.add(edge.site)
         try:
-            witness = proof.witness(edge.site)
-            if edge.caller != witness.owner:
-                raise MappingError("Call ownership disagrees.")
-            proof.witness(witness.owner, owner=witness.owner)
-            result.append(_binding(edge, lift, proof, relocations, external_imports))
+            result.append(
+                _binding(edge, lift, checked_transfers, relocations, external_imports)
+            )
         except MappingError:
             result.append(
                 ImportBinding(
@@ -640,13 +658,30 @@ def bind_imports(
                     "unavailable_instruction",
                 )
             )
+    for site, fact in sorted(checked_transfers.sites.items()):
+        if site in call_sites:
+            continue
+        if (
+            fact.physical is not None
+            and fact.physical.kind in ("direct_call", "indirect_call")
+        ) or (
+            fact.operation is not None and fact.operation.opcode in ("CALL", "CALLIND")
+        ):
+            result.append(
+                ImportBinding(
+                    site,
+                    proof.witness(site).owner if fact.physical is not None else None,
+                    None,
+                    None,
+                    None,
+                    (),
+                    fact.gap or "unknown_import",
+                )
+            )
     by_site: dict[GhidraVA, list[ImportBinding]] = defaultdict(list)
     for binding in result:
         by_site[binding.site].append(binding)
-    identities = {
-        site: {(binding.identity, binding.relocation_slot) for binding in alternatives}
-        for site, alternatives in by_site.items()
-    }
+    identities = {site: set(alternatives) for site, alternatives in by_site.items()}
     checked = []
     for binding in result:
         if binding.identity is not None and len(identities[binding.site]) != 1:

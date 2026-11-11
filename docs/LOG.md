@@ -634,3 +634,24 @@
   A different owner remains an explicit gap. This profile does not
   infer cross-function returns. Fresh independent review and live
   observation remain open.
+
+## 2026-11-11. Check physical transfers before import and trace admission
+
+- Astra reproduced the false call and skipped-thunk defects. Its
+  bounded design separates original address proof, physical transfer
+  kind, observation roles, and static import paths.
+- Added one shared byte classifier. Public boundaries reconstruct and
+  compare the supplied address proof. Import paths now require exact
+  neutral prefixes and a terminal jump. Wrong physical roles cannot
+  retain call or return events. Unproved imports retain their reasons.
+- The parent reviewed the diff and reran the static check script.
+  All 249 tests and all 16 saved public fixtures passed. The pinned
+  decoder comparison passed 34,495 admitted synthetic records. All
+  276 public transfers and 44 static import records remain.
+- The plans now record additional unsupported conditional-branch and
+  halt proposals as gaps. Static symbol requests do not identify the
+  executed runtime provider. The original HOLDs and failed controls
+  remain in the audit. No target ran.
+- The candidate API now derives its import bindings from the binary.
+  All local callers use the new API. Fresh independent review, live
+  trace admission, and Linux controls remain open.
