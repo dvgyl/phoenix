@@ -699,3 +699,15 @@
   import and observation plans. Static imports still identify symbol
   requests only. Live capture, runtime mapping, and frame admission
   remain open. No M2 result or new milestone tag is claimed.
+
+## 2026-11-11. Reduce checked capture frames
+
+- Implemented the required Astra frame algorithm in an isolated worktree.
+  The private checked input has no raw acceptance adapter. A typed receipt
+  does not authenticate capture evidence.
+- The parent read the complete reducer and immutable capture models.
+  Its combined host check passed 166 tests, including 124 frame controls.
+  The exact scope dependency matches the final scope worker source.
+- The reducer preserves strict call, return, continuation, root, and transit
+  checks. No live collector, runtime admission, or inference ran.
+  Independent Sol review remains required before main integration.
