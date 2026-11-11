@@ -621,3 +621,17 @@
   `audit/m2-ordinary-switch-evidence/`.
 - The optional standalone artifact does not yet enter the published
   lift generation. No checked C is emitted and no target ran.
+
+## 2026-11-11. Verify ordinary markers against exact lift source
+
+- Sol held `899af0e` on four inconsistent source claims. The reader
+  checked the source digest format and span bounds, but did not compare
+  them with the actual C in the lift.
+- Retain the ordinary source in the typed lift. The marker reader
+  checks its exact UTF-8 digest and length. It checks each token's
+  byte span against its kind. Character offsets and offsets inside
+  a UTF-8 character stop.
+- Thirteen focused tests passed. The review controls now show one
+  expected acceptance and 17 expected rejections. Both public
+  artifacts still match the saved source and operation identities.
+  No target ran. Fresh independent review remains open.

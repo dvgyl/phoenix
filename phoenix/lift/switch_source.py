@@ -20,6 +20,9 @@ _MAX_SOURCE_BYTES = 1024 * 1024
 _MAX_FUNCTIONS = 32
 _MAX_MARKERS = 4100
 _MAX_NEIGHBORS = 32
+_IDENTIFIER = re.compile(rb"[A-Za-z_][A-Za-z0-9_]*")
+_IDENTIFIER_PART = re.compile(rb"[A-Za-z0-9_]")
+_CASE_TOKEN = re.compile(rb"-?(?:0[xX][0-9a-fA-F]+|[0-9]+)[uUlL]{0,3}")
 _GAPS = frozenset(
     {
         "ordinary_source_unavailable",
@@ -172,13 +175,41 @@ def _marker(
     )
 
 
+def _check_token(source: bytes, marker: Marker) -> None:
+    token = source[marker.start : marker.end]
+    before = source[marker.start - 1 : marker.start] if marker.start else b""
+    after = source[marker.end : marker.end + 1]
+    if (
+        _IDENTIFIER_PART.fullmatch(before) is not None
+        or _IDENTIFIER_PART.fullmatch(after) is not None
+    ):
+        raise MappingError("The ordinary marker cuts through a source token.")
+    if marker.kind == "parameter":
+        matches = _IDENTIFIER.fullmatch(token) is not None
+    elif marker.kind == "case":
+        matches = _CASE_TOKEN.fullmatch(token) is not None
+    else:
+        matches = token == marker.kind.encode("ascii")
+    if not matches:
+        raise MappingError("The ordinary marker does not match its source bytes.")
+
+
 def _body(value: object, lift: LiftIndex) -> OrdinaryBody:
     item = object_fields(value, "function source_sha256 source_bytes markers")
     entry = ram(item["function"])
     function = lift.functions.get(entry)
-    if function is None:
-        raise MappingError("The ordinary switch function is absent from the lift.")
+    if function is None or function.raw_c is None:
+        raise MappingError(
+            "The ordinary switch function source is absent from the lift."
+        )
+    try:
+        source = function.raw_c.encode("utf-8")
+    except UnicodeEncodeError as error:
+        raise MappingError("The ordinary switch source is not UTF-8.") from error
     source_size = uint(item["source_bytes"], _MAX_SOURCE_BYTES)
+    source_sha256 = digest(item["source_sha256"])
+    if len(source) != source_size or sha256(source).hexdigest() != source_sha256:
+        raise MappingError("The ordinary switch source does not match the exact lift.")
     operations = {operation.sequence: operation for operation in function.analyzed}
     markers = []
     previous = 0
@@ -187,6 +218,7 @@ def _body(value: object, lift: LiftIndex) -> OrdinaryBody:
         marker = _marker(value_marker, operations, source_size)
         if marker.start < previous:
             raise MappingError("The ordinary source marker spans overlap.")
+        _check_token(source, marker)
         previous = marker.end
         if marker.block is not None:
             block = marker.block
@@ -198,9 +230,7 @@ def _body(value: object, lift: LiftIndex) -> OrdinaryBody:
         markers.append(marker)
     if not markers:
         raise MappingError("The ordinary switch body has no source markers.")
-    return OrdinaryBody(
-        entry, digest(item["source_sha256"]), source_size, tuple(markers)
-    )
+    return OrdinaryBody(entry, source_sha256, source_size, tuple(markers))
 
 
 def parse_ordinary_switches(raw: bytes, lift: LiftIndex) -> OrdinarySwitches:

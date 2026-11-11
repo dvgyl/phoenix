@@ -9,7 +9,7 @@ from phoenix.lift.mapping import MappingError
 from phoenix.lift.switch_source import parse_ordinary_switches
 
 _ENTRY = 0x100100
-_SOURCE = (
+_SOURCE = "/* 📘 */ ".encode() + (
     b"uint f(uint p){switch(p&1){case 0: out=2; break; default: out=3;} return out;}"
 )
 
@@ -17,7 +17,7 @@ _SOURCE = (
 def proposal() -> tuple[LiftIndex, dict[str, Any]]:
     binary, document = fixture()
     function = document["functions"][0]
-    function["decompilation"]["raw_c"] = _SOURCE.decode("ascii")
+    function["decompilation"]["raw_c"] = _SOURCE.decode("utf-8")
     function["decompilation"]["analyzed_pcode"] = [
         op(_ENTRY, "INT_AND", [], index=1),
         op(_ENTRY, "BRANCHIND", [], index=2),
@@ -152,4 +152,22 @@ def test_ordinary_evidence_rejects_inconsistent_records(fault: str) -> None:
             {"function": body["function"], "reason": "ordinary_source_limit"}
         ]
     with pytest.raises(MappingError):
+        parse_ordinary_switches(raw_json(document), lift)
+
+
+@pytest.mark.parametrize("fault", ["digest", "length", "characters", "split-utf8"])
+def test_ordinary_evidence_binds_the_exact_utf8_source(fault: str) -> None:
+    lift, document = proposal()
+    (body,) = document["bodies"]
+    switch = body["markers"][0]
+    if fault == "digest":
+        body["source_sha256"] = "0" * 64
+    elif fault == "length":
+        body["source_bytes"] += 1
+    elif fault == "characters":
+        switch["start"] -= 3
+        switch["end"] -= 3
+    else:
+        switch["start"] = _SOURCE.index("📘".encode()) + 1
+    with pytest.raises(MappingError, match="source|token"):
         parse_ordinary_switches(raw_json(document), lift)

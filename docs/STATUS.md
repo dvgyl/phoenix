@@ -49,8 +49,10 @@ are on main. They retain the ordinary lift and keep generation unchanged.
 The separate bounded C source parser passed on both public fixtures.
 This branch exports ordinary switch token evidence from the same Ghidra
 result as the ordinary lift. Both public artifacts passed the exact
-operation and source span checks. Generation binding and public target
-checks remain open.
+operation and source span checks. The reader now verifies the claimed
+source bytes and token spans against the exact lift. All 17 inconsistent
+records from the review stop. Generation binding and target checks
+remain open.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the
 external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
