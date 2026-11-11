@@ -1,0 +1,41 @@
+{
+  "state": "interrupted",
+  "verdict": "none",
+  "files": [
+    {
+      "file": "collector-brief.md",
+      "original": "/Volumes/PhoenixWork/audit/m2-collector-transport-design-astra/brief.md",
+      "sha256": "2cc5307dd50ab9024b1dce52e9a3597fe221e0e8d7550aeeb164d592af82c0d8",
+      "bytes": 5646,
+      "approved": false
+    },
+    {
+      "file": "collector-dispatch.txt",
+      "original": "/Volumes/PhoenixWork/audit/m2-collector-transport-design-astra/dispatch.txt",
+      "sha256": "5b9529ecbf09e80c6d6127d621d1631b5d923ddc2bb247dd35ea99847ae6bcc7",
+      "bytes": 123,
+      "approved": false
+    },
+    {
+      "file": "collector-start.utc",
+      "original": "/Volumes/PhoenixWork/audit/m2-collector-transport-design-astra/start.utc",
+      "sha256": "d2c23ea12c30d451aee27738834a2f5e85743a4ed81fb72f8fa9d42b162e200a",
+      "bytes": 21,
+      "approved": false
+    },
+    {
+      "file": "collector-end.utc",
+      "original": "/Volumes/PhoenixWork/audit/m2-collector-transport-design-astra/end.utc",
+      "sha256": "045497e7780b1c3309e4903ddcc1c6656e03bda1aac2d7ec2e8b1ce46b1675c3",
+      "bytes": 21,
+      "approved": false
+    },
+    {
+      "file": "collector-exit-code",
+      "original": "/Volumes/PhoenixWork/audit/m2-collector-transport-design-astra/exit-code",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2,
+      "approved": false
+    }
+  ]
+}

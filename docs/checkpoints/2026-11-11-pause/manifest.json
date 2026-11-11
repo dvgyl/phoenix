@@ -1,0 +1,88 @@
+{
+  "schema": "phoenix-pause-checkpoints-1",
+  "paused_utc": "2026-11-11T06:10:56.185370+00:00",
+  "project_goal": "paused",
+  "full_gates_interrupted": true,
+  "worktrees": [
+    {
+      "worktree": "/Volumes/PhoenixWork/worktrees/m1-preflight-review",
+      "branch": "agent/m2-observation-frames",
+      "base_commit": "b85febaa4735c9916a526598b8ba06d0db07919d",
+      "status_at_pause": "MM docs/LOG.md\nM  docs/STATUS.md\nM  phoenix/observe/scope.py\nM  tests/test_observe_scope.py\n?? docs/adr/0030-requested-observation-scope.md\n",
+      "patch": "m1-preflight-review.patch",
+      "patch_sha256": "d560f30ecd8a50320e07dd972a446672c547565690afbb46656510fe882b1741",
+      "files": [
+        {
+          "path": "docs/LOG.md",
+          "sha256": "550f3764b3eb51c7c8750959a1cb6cbcc1121f6352673bb639f49093716c3651",
+          "bytes": 46715,
+          "executable": false
+        },
+        {
+          "path": "docs/STATUS.md",
+          "sha256": "0e5c73e9749ca7426e4ecf9e1603c18758975cd9a973071c778a9a72903e0c25",
+          "bytes": 4726,
+          "executable": false
+        },
+        {
+          "path": "docs/adr/0030-requested-observation-scope.md",
+          "sha256": "66ee8af0d38c090f9edab0e9165c60d84f28d45085a663a7412ce1dfb21e9905",
+          "bytes": 4878,
+          "executable": false
+        },
+        {
+          "path": "phoenix/observe/scope.py",
+          "sha256": "0cb93cadb4657dfeb776293fe823da439eb186c71978f9c74a7d0c1533867ef4",
+          "bytes": 33943,
+          "executable": false
+        },
+        {
+          "path": "tests/test_observe_scope.py",
+          "sha256": "2a2ba8c115aeb852834b69e82da9a82a2303dbdf40e0a620a0ca7188a138bd6b",
+          "bytes": 44218,
+          "executable": false
+        }
+      ]
+    },
+    {
+      "worktree": "/Volumes/PhoenixWork/worktrees/m1-development-evidence-fix",
+      "branch": "agent/m2-capture-admission",
+      "base_commit": "9672a0f414e6fe128f8a1763c66694f551f2e2f5",
+      "status_at_pause": " M docs/LOG.md\n M docs/STATUS.md\n M phoenix/observe/scope.py\n M tests/test_observe_scope.py\n?? docs/adr/0030-requested-observation-scope.md\n",
+      "patch": "m1-development-evidence-fix.patch",
+      "patch_sha256": "dbaa8f8767c5ce6c6d6bbecde9584686437559be93a231e8551e8754aed10fd3",
+      "files": [
+        {
+          "path": "docs/LOG.md",
+          "sha256": "1bad376397884388971cb8e9ed834600358ad367c39837c5be911e7503309457",
+          "bytes": 50054,
+          "executable": false
+        },
+        {
+          "path": "docs/STATUS.md",
+          "sha256": "680ee55167c159ca5d4023d503490999cd7a2b274fc0337a8cfe187cf94a857d",
+          "bytes": 5265,
+          "executable": false
+        },
+        {
+          "path": "docs/adr/0030-requested-observation-scope.md",
+          "sha256": "66ee8af0d38c090f9edab0e9165c60d84f28d45085a663a7412ce1dfb21e9905",
+          "bytes": 4878,
+          "executable": false
+        },
+        {
+          "path": "phoenix/observe/scope.py",
+          "sha256": "0cb93cadb4657dfeb776293fe823da439eb186c71978f9c74a7d0c1533867ef4",
+          "bytes": 33943,
+          "executable": false
+        },
+        {
+          "path": "tests/test_observe_scope.py",
+          "sha256": "2a2ba8c115aeb852834b69e82da9a82a2303dbdf40e0a620a0ca7188a138bd6b",
+          "bytes": 44218,
+          "executable": false
+        }
+      ]
+    }
+  ]
+}

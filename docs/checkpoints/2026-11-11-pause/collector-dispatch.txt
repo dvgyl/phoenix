@@ -1,0 +1,4 @@
+model=gpt-6-astra
+service=Standard
+checkout=/Volumes/PhoenixWork/phoenix
+revision=3939fbc0d928d7701b289d559835bb466497a69c

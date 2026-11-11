@@ -1,0 +1,493 @@
+diff --git a/docs/LOG.md b/docs/LOG.md
+index 1da75f9..288bc62 100644
+--- a/docs/LOG.md
++++ b/docs/LOG.md
+@@ -787,0 +788,27 @@
++
++## 2026-11-11. Port the reviewed positive-evidence scope
++
++- Copied exact scope source, tests, and ADR from `09e984b`. The ADR is
++  new to this branch and must be added. The source and tests changed. All other observation
++  source files remain byte-identical to the previous checkpoint.
++- Fresh Sol passed that exact stricter scope contract. Its 713 new
++  independent controls passed. The three withdrawn empty-translation
++  positives remain explicit failures under the older broad contract.
++- The combined capture host suite passed 924 tests after the port.
++  These are unit checks, not evaluation results. The first identity
++  verifier wrongly required all copied files to differ. Corrected the
++  verifier to check exact bytes and the permitted changed-path set.
++- The pure-frame and parser-only PASS verdicts retain their own limits.
++  The full capture review and all runtime, deployment, and recovery
++  gates remain open. No target or private corpus material was used.
++
++## 2026-11-11. Pause the dependency port
++
++- The owner requested a safe pause. Stopped the full quality gate before
++  completion. No new source commit or push was made.
++- The copied ADR is untracked. The earlier changed-path check inspected
++  tracked differences only. It incorrectly described that ADR as already
++  present. The pause snapshot includes the ADR and all pending changes.
++- Exact source and test bytes still match the reviewed scope checkpoint.
++  The focused tests passed before the pause. Full quality and independent
++  dependency-port review remain required.
+diff --git a/docs/STATUS.md b/docs/STATUS.md
+index 61c6597..5f0f6fe 100644
+--- a/docs/STATUS.md
++++ b/docs/STATUS.md
+@@ -72,2 +72,3 @@ This isolated branch adds exact-byte capture admission. Its synthetic checks
+-pass. Scope correction, frame review, collector calibration, and this block
+-require independent closure before recovery use.
++pass. Fresh Sol passed the stricter scope and revised pure-frame contracts.
++The full capture review and live collector checks remain open. Recovery
++use is not approved.
+@@ -84,0 +86,6 @@ require independent closure before recovery use.
++
++The exact reviewed `09e984b` scope dependency is now installed. The
++combined host suite passed 924 tests. Fresh Sol passed the revised pure
++frame contract and the separate data-format contract. The full capture
++review remains open after provider screening. Dependency review and all
++live capture gates remain open. This checkpoint is not production approval.
+diff --git a/phoenix/observe/scope.py b/phoenix/observe/scope.py
+index 91dd317..0e44841 100644
+--- a/phoenix/observe/scope.py
++++ b/phoenix/observe/scope.py
+@@ -14,0 +15,2 @@ from phoenix.recover.imports import (
++    _ENDBR64,
++    _NOPS,
+@@ -35,0 +38,24 @@ type RejectCode = Literal[
++_ORDINARY_INPUTS = {
++    **dict.fromkeys(
++        (
++            "COPY INT_ZEXT INT_SEXT INT_2COMP INT_NEGATE BOOL_NEGATE "
++            "FLOAT_NAN FLOAT_NEG FLOAT_ABS FLOAT_SQRT FLOAT_INT2FLOAT "
++            "FLOAT_FLOAT2FLOAT FLOAT_TRUNC FLOAT_CEIL FLOAT_FLOOR FLOAT_ROUND "
++            "POPCOUNT LZCOUNT"
++        ).split(),
++        1,
++    ),
++    **dict.fromkeys(
++        (
++            "LOAD PIECE SUBPIECE INT_EQUAL INT_NOTEQUAL INT_SLESS INT_SLESSEQUAL "
++            "INT_LESS INT_LESSEQUAL INT_ADD INT_SUB INT_CARRY INT_SCARRY "
++            "INT_SBORROW INT_XOR INT_AND INT_OR INT_LEFT INT_RIGHT INT_SRIGHT "
++            "INT_MULT INT_DIV INT_SDIV INT_REM INT_SREM BOOL_XOR BOOL_AND "
++            "BOOL_OR FLOAT_EQUAL FLOAT_NOTEQUAL FLOAT_LESS FLOAT_LESSEQUAL "
++            "FLOAT_ADD FLOAT_SUB FLOAT_MULT FLOAT_DIV"
++        ).split(),
++        2,
++    ),
++    "STORE": 3,
++}
++
+@@ -614,3 +640,2 @@ def _user_rule(
+-    branch = _branch(
+-        witness, lift.instructions[witness.ghidra], witnesses, checked.proof
+-    )
++    instruction = lift.instructions[witness.ghidra]
++    branch = _branch(witness, instruction, witnesses, checked.proof)
+@@ -655,0 +681,17 @@ def _user_rule(
++    neutral = witness.data in _NOPS or (
++        witness.data == _ENDBR64 and witness.ghidra == witness.owner
++    )
++    if not instruction.pcode and not neutral:
++        return Reject("missing_ordinary_evidence")
++    for operation in instruction.pcode:
++        if _ORDINARY_INPUTS.get(operation.opcode) != len(operation.inputs) or (
++            operation.output is None
++        ) != (operation.opcode == "STORE"):
++            return Reject("unsupported_ordinary_pcode")
++        if neutral and (
++            operation.opcode != "COPY"
++            or operation.output is None
++            or operation.output.address.space != "register"
++            or operation.inputs != (operation.output,)
++        ):
++            return Reject("conflicting_neutral_pcode")
+@@ -663 +705 @@ def _control_bytes(data: bytes) -> bool:
+-    # Missing raw p-code cannot turn a known control encoding into fallthrough.
++    # These vetoes do not prove that other bytes have ordinary flow.
+@@ -674 +716 @@ def _control_bytes(data: bytes) -> bool:
+-    if opcode == 0xC7 and data[cursor + 1 : cursor + 2] == b"\xf8":
++    if opcode in (0xC6, 0xC7) and data[cursor + 1 : cursor + 2] == b"\xf8":
+diff --git a/tests/test_observe_scope.py b/tests/test_observe_scope.py
+index f87e9c1..fae1967 100644
+--- a/tests/test_observe_scope.py
++++ b/tests/test_observe_scope.py
+@@ -943,0 +944,291 @@ def test_unmapped_omitted_owner_keeps_its_gaps_dormant() -> None:
++
++
++@pytest.mark.parametrize("immediate", range(256))
++def test_xabort_requires_rejection_without_a_transaction_entry_precondition(
++    immediate: int,
++) -> None:
++    binary, document = control(bytes((0xC6, 0xF8, immediate)), None)
++    assert isinstance(guard(compile_scope(binary, document)), Reject)
++
++
++@pytest.mark.parametrize(
++    "prefix",
++    (
++        "",
++        "66",
++        "67",
++        "f0",
++        "f2",
++        "f3",
++        "2e",
++        "36",
++        "3e",
++        "26",
++        "64",
++        "65",
++        "40",
++        "48",
++        "4f",
++        "666748",
++        "f26648",
++    ),
++)
++@pytest.mark.parametrize("data", ("c6f800", "c7f800000000", "c7f80000"))
++@pytest.mark.parametrize("raw_evidence", ("empty", "copy", "callother"))
++def test_transaction_bytes_reject_with_missing_or_conflicting_raw_evidence(
++    prefix: str,
++    data: str,
++    raw_evidence: str,
++) -> None:
++    binary, document = control(bytes.fromhex(prefix + data), None)
++    register = operand(0, "register")
++    if raw_evidence != "empty":
++        document["functions"][0]["instructions"][1]["pcode"] = [
++            op(
++                0x100105,
++                "COPY" if raw_evidence == "copy" else "CALLOTHER",
++                [register],
++                register if raw_evidence == "copy" else None,
++            )
++        ]
++    assert isinstance(guard(compile_scope(binary, document)), Reject)
++
++
++@pytest.mark.parametrize(
++    "data",
++    (
++        "4889c0",
++        "31c0",
++        "c6c000",
++        "c7c000000000",
++        "c6f000",
++        "c6f900",
++        "c7f900000000",
++        "0f01d5",
++        "0f01d6",
++        "f390",
++        "4190",
++        "6691",
++        "0f1e00",
++        "0f1f08",
++        "f00f1f00",
++        "9090",
++        "c6",
++        "c6f8",
++        "c7",
++        "0f",
++        "f3",
++        "66",
++        "48",
++        "0f1f",
++        "0f1f40",
++        "0f1f400000",
++    ),
++)
++def test_empty_raw_contract_rejects_every_unproved_form(data: str) -> None:
++    """Empty MOV and XOR evidence is an explicit capability restriction."""
++    binary, document = control(bytes.fromhex(data), None)
++    assert isinstance(guard(compile_scope(binary, document)), Reject)
++
++
++@pytest.mark.parametrize(
++    "data",
++    (
++        "90",
++        "6690",
++        "0f1f00",
++        "0f1f4000",
++        "0f1f440000",
++        "660f1f440000",
++        "0f1f8000000000",
++        "0f1f840000000000",
++        "660f1f840000000000",
++    ),
++)
++@pytest.mark.parametrize("with_identity_copy", (False, True))
++def test_exact_neutral_bytes_supply_bounded_ordinary_evidence(
++    data: str,
++    with_identity_copy: bool,
++) -> None:
++    binary, document = control(bytes.fromhex(data), None)
++    if with_identity_copy:
++        register = operand(0, "register")
++        document["functions"][0]["instructions"][1]["pcode"] = [
++            op(0x100105, "COPY", [register], register)
++        ]
++    assert guard(compile_scope(binary, document)) == Ordinary(
++        ElfVA(0x105 + len(bytes.fromhex(data)))
++    )
++
++
++@pytest.mark.parametrize("data", ("90", "6690", "0f1f00"))
++@pytest.mark.parametrize("opcode", ("COPY", "INT_ADD", "STORE", "CALLOTHER", "CBRANCH"))
++def test_neutral_bytes_do_not_hide_conflicting_raw_operations(
++    data: str,
++    opcode: str,
++) -> None:
++    binary, document = control(bytes.fromhex(data), None)
++    register = operand(0, "register")
++    arguments = [operand(1, "const")]
++    if opcode == "INT_ADD":
++        arguments.append(register)
++    if opcode == "STORE":
++        arguments = [operand(0, "const"), register, register]
++    document["functions"][0]["instructions"][1]["pcode"] = [
++        op(0x100105, opcode, arguments, None if opcode == "STORE" else register)
++    ]
++    assert isinstance(guard(compile_scope(binary, document)), Reject)
++
++
++@pytest.mark.parametrize("at_entry", (False, True))
++def test_empty_endbr64_needs_the_proved_owner_entry(at_entry: bool) -> None:
++    binary, document = control(bytes.fromhex("f30f1efa"), None)
++    address = 0x105
++    if at_entry:
++        image = bytearray(binary)
++        image[0x100:0x105] = bytes.fromhex("f30f1efac3")
++        function = document["functions"][0]
++        instruction = deepcopy(function["instructions"][1])
++        instruction["address"] = loc(0x100100)
++        terminal = deepcopy(function["instructions"][-1])
++        terminal.update(
++            address=loc(0x100104),
++            pcode=[op(0x100104, "RETURN", [operand(0, "register")])],
++        )
++        function["instructions"] = [instruction, terminal]
++        function["ranges"][0]["end"] = loc(0x100104)
++        document["call_edges"] = []
++        binary = bytes(image)
++        address = 0x100
++    result = guard(compile_scope(binary, document), address)
++    if at_entry:
++        assert result == Ordinary(ElfVA(0x104))
++    else:
++        assert result == Reject("missing_ordinary_evidence")
++
++
++def ordinary_data_control(data: str) -> tuple[bytes, dict[str, Any]]:
++    """Supply explicit raw operations for the revised ordinary controls."""
++    binary, document = control(bytes.fromhex(data), None)
++    register = operand(0, "register")
++    byte_register = dict(register, size=1)
++    zero = dict(operand(0, "const"), size=1)
++    if data == "4889c0":
++        operations = [op(0x100105, "COPY", [register], register)]
++    elif data == "c6c000":
++        operations = [op(0x100105, "COPY", [zero], byte_register)]
++    elif data == "31c0":
++        low = dict(register, size=4)
++        operations = [
++            op(0x100105, "INT_XOR", [low, low], low),
++            op(0x100105, "INT_ZEXT", [low], register, 1),
++        ]
++        for index, (flag, value) in enumerate(
++            ((0x200, 0), (0x20B, 0), (0x207, 0), (0x206, 1), (0x202, 1)), 2
++        ):
++            operations.append(
++                op(
++                    0x100105,
++                    "COPY",
++                    [dict(zero, address=loc(value, "const"))],
++                    dict(byte_register, address=loc(flag, "register")),
++                    index,
++                )
++            )
++    elif data == "488b03":
++        operations = [
++            op(
++                0x100105,
++                "LOAD",
++                [operand(0, "const"), operand(0x18, "register")],
++                register,
++            )
++        ]
++    else:
++        assert data == "488903"
++        operations = [
++            op(
++                0x100105,
++                "STORE",
++                [operand(0, "const"), operand(0x18, "register"), register],
++            )
++        ]
++    document["functions"][0]["instructions"][1]["pcode"] = operations
++    return binary, document
++
++
++@pytest.mark.parametrize("data", ("4889c0", "31c0", "c6c000", "488b03", "488903"))
++def test_revised_ordinary_positive_has_explicit_raw_data_evidence(data: str) -> None:
++    binary, document = ordinary_data_control(data)
++    assert guard(compile_scope(binary, document)) == Ordinary(
++        ElfVA(0x105 + len(bytes.fromhex(data)))
++    )
++
++
++@pytest.mark.parametrize(
++    "opcode",
++    (
++        "UNKNOWN",
++        "UNIMPLEMENTED",
++        "MULTIEQUAL",
++        "INDIRECT",
++        "CALLOTHER",
++        "CPOOLREF",
++        "NEW",
++    ),
++)
++def test_nonempty_unknown_or_pseudo_pcode_cannot_prove_ordinary_flow(
++    opcode: str,
++) -> None:
++    binary, document = ordinary_data_control("c6c000")
++    document["functions"][0]["instructions"][1]["pcode"][0]["opcode"] = opcode
++    assert isinstance(guard(compile_scope(binary, document)), Reject)
++
++
++@pytest.mark.parametrize(
++    "fault", ("no_output", "no_inputs", "extra_input", "raw_transfer")
++)
++def test_incomplete_or_conflicting_ordinary_raw_evidence_rejects(fault: str) -> None:
++    binary, document = ordinary_data_control("c6c000")
++    operations = document["functions"][0]["instructions"][1]["pcode"]
++    if fault == "no_output":
++        operations[0]["output"] = None
++    elif fault == "no_inputs":
++        operations[0]["inputs"] = []
++    elif fault == "extra_input":
++        operations[0]["inputs"].append(operand(0, "register"))
++    else:
++        operations.append(op(0x100105, "CALLOTHER", [operand(0, "const")], index=1))
++    assert isinstance(guard(compile_scope(binary, document)), Reject)
++
++
++@pytest.mark.parametrize("data", ("e83b000000", "ffd0", "c3", "7503", "eb03"))
++def test_valid_data_operation_cannot_hide_physical_control(data: str) -> None:
++    binary, document = control(bytes.fromhex(data), None)
++    register = operand(0, "register")
++    document["functions"][0]["instructions"][1]["pcode"] = [
++        op(0x100105, "COPY", [register], register)
++    ]
++    assert isinstance(guard(compile_scope(binary, document)), Reject)
++
++
++@given(st.binary(min_size=1, max_size=15))
++@settings(max_examples=150, deadline=None)
++def test_empty_raw_pcode_never_proves_an_unlisted_ordinary_form(data: bytes) -> None:
++    binary, document = control(data, None)
++    result = guard(compile_scope(binary, document))
++    if isinstance(result, Ordinary):
++        assert data.hex() in {
++            "90",
++            "6690",
++            "0f1f00",
++            "0f1f4000",
++            "0f1f440000",
++            "660f1f440000",
++            "0f1f8000000000",
++            "0f1f840000000000",
++            "660f1f840000000000",
++        }
++        assert result.successor == 0x105 + len(data)
++    else:
++        assert isinstance(result, Reject)
+diff --git a/docs/adr/0030-requested-observation-scope.md b/docs/adr/0030-requested-observation-scope.md
+new file mode 100644
+index 0000000..e13fe86
+--- /dev/null
++++ b/docs/adr/0030-requested-observation-scope.md
+@@ -0,0 +1,80 @@
++# Requested observation scope
++
++The frame collector needs a bounded activation window. Full-program startup
++includes callbacks and loader activity that the first frame profile cannot
++admit. Keep the full static trace plan unchanged. Compile a separate scope
++certificate for one requested main activation.
++
++The certificate records every site disposition and original gap. It binds
++exact user instruction bytes, same-owner local branch destinations, and
++proved import transit routes. Unsupported active paths have rejecting guards.
++An omitted path stays unsupported during active capture. Selection does not
++prove that a complete execution can satisfy the certificate.
++
++The first policy is `main-window-six-v1`. It captures RAX, RDI, RSI, RDX,
++RCX, and RSP. These are six registers, including four argument registers.
++Its import transit profile supports eager resolution only. Lazy resolution
++and all nonreturn contracts remain unsupported. Do not change an invocation
++to make a saved public fixture satisfy this profile.
++
++Rebuild the certificate from the binary and checked lift at capture admission.
++A supplied dataclass or digest cannot authenticate runtime capture. The
++collector must check instruction guards, root entry, closure, limits, and
++full outcome equality. Frame admission and live calibration are separate gates.
++
++The supplied Astra design defines the algorithm. Static scope tests and all
++16 saved public E1 comparisons pass. No target ran. Independent source review
++and live capture remain required. The agent-sealed corpus is unchanged.
++
++The first independent review held the implementation at `2cfce37`.
++The correction requires exact proof field types and uses reconstructed proof
++values for certificate output. It also rejects XBEGIN encodings and reported
++incoming indirect callers from other proved owners. A reported target is
++conservative selection evidence. It does not prove an executed destination.
++The original HOLD and failing controls remain in the audit record.
++
++The second independent review held `b42a7a2`. Four XABORT controls still
++received Ordinary with empty raw p-code. Both fixes assumed that no match
++in a finite control blacklist proved ordinary flow. That premise is false.
++The direct control probe also found acceptance of unknown raw operation names.
++
++Ordinary now needs positive evidence. Empty raw p-code is accepted only for
++the nine exact NOP forms in the existing import proof, or exact ENDBR64 at
++the proved owner entry. The compiler reuses the shared byte constants.
++It does not change the shared proof or strip prefixes to find a match.
++Nonempty raw p-code needs known core data operations with the documented
++input count and output presence. Neutral bytes permit only identity COPY
++operations. Unknown operation names, wrong input counts, and wrong output
++presence reject. Analysis-only, pseudo, and conflicting neutral operations
++also reject. Every ordinary guard still needs an exact same-owner
++successor. All earlier transfer, branch, gap, and ownership checks remain.
++
++The byte blacklist is an additional rejection rule. It includes XABORT and
++XBEGIN, but is not a complete ISA classifier. Ordinary flow through core
++raw operations remains conditional on a complete, faithful raw translation.
++The compiler cannot prove that translation from nonempty p-code alone.
++It does not repair missing operations or independently decode ordinary bytes.
++The pinned lift, instruction-size checks, next-PC checks, and live gates
++remain necessary. A static certificate does not authenticate a capture.
++
++This contract explicitly removes empty-evidence support for other forms.
++The original empty MOV and XOR positives now reject. Separate positive
++controls supply valid raw data operations. The unchanged reviewer controls
++and their exact mismatches remain in the audit record. This is a deliberate
++capability restriction. No transaction-state precondition exists at root
++entry. XABORT can transfer to an earlier transaction's fallback address.
++Rejecting XBEGIN inside the window does not establish an inactive transaction.
++
++The primary definitions are in the
++[Intel instruction manual](https://cdrdv2-public.intel.com/671110/325383-sdm-vol-2abcd.pdf),
++NOP page 4-169, ENDBR64 page 3-345, XABORT page 6-17, and XBEGIN page 6-25.
++The [raw p-code reference](https://ghidra.re/ghidra_docs/languages/html/pcoderef.html)
++and [core operations](https://ghidra.re/ghidra_docs/languages/html/pcodedescription.html)
++define the bounded data-operation path.
++[Pseudo operations](https://ghidra.re/ghidra_docs/languages/html/pseudo-ops.html)
++do not supply that evidence.
++
++The parent's revised frame rule also remains required. Every rejected
++capture exports no local facts. Successful trees retain raw observations.
++This static correction changes no frame or boundary API. Independent review,
++production live gates, and recovery integration remain open.

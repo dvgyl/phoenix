@@ -1,5 +1,11 @@
 # Phoenix continuation handoff
 
+## Paused at the owner's request
+
+The goal is paused. All Phoenix workers and queues are stopped. The Linux
+VM is stopped. Read the pause update at the end of this file before any
+earlier active-work snapshot. Resume only after a new user instruction.
+
 Prepared on 2026-11-11 at the owner's request. The goal remains completion
 through `SPEC.md` section 9. M0 and M1 are accepted. M2 through M4,
 publication, and the final headline replays remain open. This handoff does
@@ -467,3 +473,55 @@ The next action is the exact reviewed scope dependency port into the
 frame and capture checkpoints, followed by combined checks. Then continue
 the ordered collector, public runtime, M2, M3, M4, publication, and replay
 work above. The goal remains active. SPEC section 9 remains incomplete.
+
+## User-requested pause on 2026-11-11
+
+The owner requested a safe pause after the last active continuation.
+The goal status is `paused`. All recorded public and private worker PIDs
+and queue PIDs are absent. Colima shut down cleanly at 06:08:04 UTC.
+No container work continues. The VM disk and private corpus files remain.
+The private T2 status file is a stale progress snapshot after interruption.
+It does not establish an active process or a completed corpus batch.
+
+Main remains clean at `3939fbc`. The last complete public handoff was
+`26be701`. The following two source worktrees retain pending changes.
+
+| Worktree | Base | Pending state |
+| --- | --- | --- |
+| `m1-preflight-review` | `b85feba` | Five changed or new files. Full commit gate interrupted. No new source commit or push. |
+| `m1-development-evidence-fix` | `9672a0f` | Five changed or new files. Full commit gate not completed. No new source commit or push. |
+
+Both ports use exact scope source, tests, and ADR from `09e984b`.
+The focused frame suite passed 1,093 tests. The focused capture suite passed
+924 tests. These are unit-test results. The new dependency-port review
+was queued but never started. It was cancelled for the pause.
+
+The scope ADR is new and untracked in both source worktrees. The earlier
+verifier inspected only tracked differences. It incorrectly described the
+ADR as already present. The pause checkpoint includes that file and all
+other pending files. The original staged and unstaged files remain in place.
+
+`docs/checkpoints/2026-11-11-pause` contains two inert patches, their exact
+file manifest, and the interrupted public collector task files. The parent
+reconstructed all ten pending files at their recorded bases and checked
+exact bytes and executable modes. The patches are backups, not accepted
+production changes. The collector Astra task ended after interruption
+with exit 1 and no approved design or verdict.
+
+A pause marker exists at `audit/continue-v1/PAUSED`. The dispatch helper
+rejects new workers while that marker exists. No source commit loop,
+queued review, or private Author process must restart automatically.
+
+After the owner explicitly resumes, read this checkpoint and inspect
+actual process and Git state. Remove the pause marker only after that
+instruction. Add the scope ADR when staging the two source ports. Repeat
+the full quality gates, commit and push each verified port, and obtain a
+fresh independent Sol dependency-port review. The wider capture review
+remains open. Restart collector design as a fresh Astra task with the
+saved inputs and interruption record. A separate private Corpus Author
+must inspect its own saved checkpoint before corpus validation resumes.
+The main agent must not read private sources, inputs, logs, or history.
+
+Do not restart the Linux VM until a new owner-approved continuation needs
+it. Preserve all old M1 image identities. M2 through M4, publication, and
+the headline replays remain incomplete. No milestone tag changed.

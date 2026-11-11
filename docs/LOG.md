@@ -873,3 +873,17 @@
   review. No new observation implementation or milestone was promoted.
 - Updated the handoff resume point. The private T2 Author remains active
   and owns the VM. The original goal through SPEC section 9 remains active.
+
+## 2026-11-11. Pause all work at the owner's request
+
+- Cancelled the queued dependency review. Interrupted the public collector
+  design worker, private Corpus Author, and unfinished source commit gate.
+  Verified that all recorded worker and queue PIDs are absent.
+- Stopped Colima cleanly. The VM disk and private corpus files remain.
+  No private source, held-out input, or Author output was read.
+- Preserved both pending source ports as inert patches. The copied ADR
+  was untracked. Corrected the earlier tracked-only verifier claim and
+  included every pending file. All ten files reconstruct exactly.
+- Preserved the interrupted public collector inputs and output files.
+  No design approval or new source commit was completed. Added a dispatch
+  pause marker. The original goal is paused and remains incomplete.

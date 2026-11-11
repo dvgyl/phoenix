@@ -1,5 +1,8 @@
 # Phoenix status
 
+The owner requested a safe pause. The goal, workers, queues, and Linux VM
+are stopped. Read the pause update in `docs/HANDOFF.md` before resuming.
+
 M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
 M1 passed at `6897e4753d8acedfae57af63e6426faf116bed2e`.
 M2 work is in progress. No M2 result or later milestone is accepted.
