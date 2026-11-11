@@ -80,6 +80,45 @@ def test_lift_rejects_binary_as_output(tmp_path: Path) -> None:
     assert binary.read_bytes() == b"public fixture"
 
 
+def test_lift_isolates_settings_and_bounds_java(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    binary, installation, java_home = fake_install(
+        tmp_path,
+        """
+        test "$GHIDRA_HEADLESS_MAXMEM" = "384M"
+        test -z "$GHIDRA_JAVA_OPTIONS$GHIDRA_HEADLESS_JAVA_OPTIONS"
+        test -z "$JAVA_TOOL_OPTIONS$_JAVA_OPTIONS"
+        test "$JDK_JAVA_OPTIONS" = "@java.args"
+        test "$XDG_CONFIG_HOME" = "$PWD"
+        for output do :; done
+        cat java.args > "$output"
+        """,
+    )
+    for key in (
+        "GHIDRA_HEADLESS_MAXMEM",
+        "GHIDRA_JAVA_OPTIONS",
+        "GHIDRA_HEADLESS_JAVA_OPTIONS",
+        "JAVA_TOOL_OPTIONS",
+        "_JAVA_OPTIONS",
+        "JDK_JAVA_OPTIONS",
+    ):
+        monkeypatch.setenv(key, "must not reach the launcher")
+    outputs = []
+    for index in range(2):
+        output = tmp_path / f"export-{index}"
+        lift_binary(binary, output, installation, java_home, max_heap_mib=384)
+        arguments = output.read_text()
+        assert arguments.startswith("-Xmx384m\n")
+        paths = [
+            line.split("=", 1)[1].strip('"') for line in arguments.splitlines()[1:]
+        ]
+        assert len(paths) == 5 and len(set(paths)) == 1
+        assert not Path(paths[0]).exists()
+        outputs.append(paths[0])
+    assert outputs[0] != outputs[1]
+
+
 def test_headless_bitstats(tmp_path: Path) -> None:
     fixture = os.environ.get("PHOENIX_LIFT_FIXTURE")
     if fixture is None:
@@ -170,3 +209,12 @@ def test_headless_bitstats(tmp_path: Path) -> None:
         edge["site"] == call["site"] and edge["indirect"] and edge["target"] is None
         for edge in modified["call_edges"]
     )
+
+
+@pytest.mark.parametrize("limit", [0, -1, 513, True])
+def test_lift_rejects_invalid_heap_limits(tmp_path: Path, limit: int) -> None:
+    binary, installation, java_home = fake_install(tmp_path, "exit 1")
+    with pytest.raises(ValueError, match="heap limit"):
+        lift_binary(
+            binary, tmp_path / "output", installation, java_home, max_heap_mib=limit
+        )

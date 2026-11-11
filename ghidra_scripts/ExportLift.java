@@ -8,6 +8,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
@@ -27,6 +30,19 @@ import ghidra.program.model.block.CodeBlockIterator;
 import ghidra.program.model.block.CodeBlockReference;
 import ghidra.program.model.block.CodeBlockReferenceIterator;
 import ghidra.program.model.data.StringDataInstance;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Pointer;
+import ghidra.program.model.data.Array;
+import ghidra.program.model.data.TypeDef;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.Union;
+import ghidra.program.model.data.FunctionDefinition;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.VariableStorage;
+import ghidra.program.model.pcode.HighFunction;
+import ghidra.program.model.pcode.FunctionPrototype;
+import ghidra.program.model.pcode.HighSymbol;
+import ghidra.program.model.pcode.JumpTable;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionManager;
@@ -64,7 +80,8 @@ public class ExportLift extends GhidraScript {
             boolean indirect) {}
     private record LiftedFunction(Location entry, String name, Signature signature,
             Location thunkTarget, List<Range> ranges, Decompilation decompilation,
-            List<DecodedInstruction> instructions, List<Block> blocks, List<FlowEdge> flowEdges) {}
+            List<DecodedInstruction> instructions, List<Block> blocks, List<FlowEdge> flowEdges,
+            StaticEvidence staticEvidence) {}
     private record Import(Location address, String library, String name, Location libraryAddress) {}
     private record DefinedString(Location address, String value, String type, int size) {}
     private record DataReference(Location from, Location to, String kind, int operandIndex) {}
@@ -73,6 +90,23 @@ public class ExportLift extends GhidraScript {
             List<LiftedFunction> functions,
             List<Import> imports, List<DefinedString> strings, List<DataReference> dataReferences,
             List<CallEdge> callEdges) {}
+
+    private record TypeEvidence(String id, String path, String name, String kind,
+            int size, String target, Integer count) {}
+    private record RegisterEvidence(String name, Location address, int bits,
+            String base, int leastBit) {}
+    private record StoragePiece(Location address, int size, String register, Long stackOffset) {}
+    private record StorageEvidence(String state, int size, boolean forcedIndirect,
+            String autoParameter, List<StoragePiece> pieces) {}
+    private record Slot(String name, String type, StorageEvidence storage) {}
+    private record PrototypeEvidence(String source, String callingConvention,
+            Boolean customStorage, boolean variadic, boolean noReturn,
+            List<Slot> parameters, Slot result) {}
+    private record JumpEvidence(Location site, List<Location> targets, List<Integer> labels) {}
+    private record StaticEvidence(int schemaVersion, String status, PrototypeEvidence listing,
+            PrototypeEvidence decompiler, List<TypeEvidence> types,
+            List<RegisterEvidence> registers, List<JumpEvidence> jumpTables) {}
+    private record Decompiled(Decompilation code, HighFunction high) {}
 
     @Override
     public void run() throws Exception {
@@ -221,12 +255,13 @@ public class ExportLift extends GhidraScript {
         Signature signature = new Signature(function.getCallingConventionName(),
                 function.getReturnType().getPathName(), parameters, function.hasVarArgs());
         Function thunk = function.getThunkedFunction(true);
+        Decompiled decoded = decompile(function, decompiler);
         return new LiftedFunction(location(function.getEntryPoint()), function.getName(), signature,
                 thunk == null ? null : location(thunk.getEntryPoint()), ranges(body),
-                decompile(function, decompiler), instructions, blocks, edges);
+                decoded.code(), instructions, blocks, edges, staticEvidence(function, decoded.high()));
     }
 
-    private Decompilation decompile(Function function, DecompInterface decompiler) {
+    private Decompiled decompile(Function function, DecompInterface decompiler) {
         DecompileResults result = decompiler.decompileFunction(function, 60, monitor);
         var code = result.getDecompiledFunction();
         var high = result.getHighFunction();
@@ -240,8 +275,182 @@ public class ExportLift extends GhidraScript {
         }
         String status = result.isTimedOut() ? "timeout"
                 : code != null && high != null ? "ok" : "incomplete";
-        return new Decompilation(code == null ? null : code.getC(), status,
-                result.getErrorMessage(), analyzed, statements);
+        return new Decompiled(new Decompilation(code == null ? null : code.getC(), status,
+                result.getErrorMessage(), analyzed, statements), high);
+    }
+
+    private static int bounded(int value, int min, int max, String field) {
+        if (value < min || value > max) {
+            throw new IllegalArgumentException("Static evidence exceeds the limit for " + field);
+        }
+        return value;
+    }
+
+    private static String boundedText(String value) {
+        if (value != null) {
+            bounded(value.length(), 0, 1024, "text");
+        }
+        return value;
+    }
+
+    private final class EvidenceBuilder {
+        private final Map<DataType, String> typeIds = new IdentityHashMap<>();
+        private final List<TypeEvidence> types = new ArrayList<>();
+        private final Map<String, RegisterEvidence> registers = new LinkedHashMap<>();
+
+        private String typeId(DataType data, int depth) {
+            if (data == null) {
+                return null;
+            }
+            String known = typeIds.get(data);
+            if (known != null) {
+                return known;
+            }
+            bounded(depth, 0, 31, "type depth");
+            bounded(types.size(), 0, 255, "types");
+            int index = types.size();
+            String id = "t" + index;
+            typeIds.put(data, id);
+            types.add(null);
+            String kind = "opaque";
+            DataType target = null;
+            Integer count = null;
+            if (data instanceof Pointer pointer) {
+                kind = "pointer";
+                target = pointer.getDataType();
+            } else if (data instanceof TypeDef alias) {
+                kind = "typedef";
+                target = alias.getDataType();
+            } else if (data instanceof Array array) {
+                kind = "array";
+                target = array.getDataType();
+                count = bounded(array.getNumElements(), 0, Integer.MAX_VALUE, "array count");
+            } else if (data instanceof Structure) {
+                kind = "structure";
+            } else if (data instanceof Union) {
+                kind = "union";
+            } else if (data instanceof FunctionDefinition) {
+                kind = "function";
+            }
+            types.set(index, new TypeEvidence(id, boundedText(data.getPathName()),
+                    boundedText(data.getName()), kind,
+                    bounded(data.getLength(), -1, Integer.MAX_VALUE, "type size"),
+                    typeId(target, depth + 1), count));
+            return id;
+        }
+
+        private String register(Register register) {
+            if (register == null) {
+                return null;
+            }
+            String name = boundedText(register.getName());
+            if (!registers.containsKey(name)) {
+                bounded(registers.size(), 0, 511, "registers");
+                Register base = register.getBaseRegister();
+                registers.put(name, new RegisterEvidence(name, location(register.getAddress()),
+                        bounded(register.getBitLength(), 1, 65536, "register width"),
+                        boundedText(base.getName()), register.getLeastSignificantBitInBaseRegister()));
+                if (!base.equals(register)) {
+                    register(base);
+                }
+            }
+            return name;
+        }
+
+        private StorageEvidence storage(VariableStorage storage) {
+            if (storage == null) {
+                return new StorageEvidence("unknown", 0, false, null, List.of());
+            }
+            String state = storage.isBadStorage() ? "bad"
+                    : storage.isUnassignedStorage() ? "unassigned"
+                    : storage.isVoidStorage() ? "void" : "assigned";
+            List<StoragePiece> pieces = new ArrayList<>();
+            bounded(storage.getVarnodeCount(), 0, 32, "storage pieces");
+            for (Varnode node : storage.getVarnodes()) {
+                int size = bounded(node.getSize(), 1, 8192, "storage width");
+                Register reg = currentProgram.getRegister(node.getAddress(), size);
+                pieces.add(new StoragePiece(location(node.getAddress()), size, register(reg),
+                        node.getAddress().isStackAddress() ? node.getAddress().getOffset() : null));
+            }
+            return new StorageEvidence(state, bounded(storage.size(), 0, 8192, "storage size"),
+                    storage.isForcedIndirect(), storage.getAutoParameterType() == null ? null
+                            : boundedText(storage.getAutoParameterType().name()), pieces);
+        }
+
+        private Slot slot(String name, DataType data, VariableStorage storage) {
+            return new Slot(boundedText(name), typeId(data, 0), storage(storage));
+        }
+
+        private void validateTypes() {
+            for (TypeEvidence first : types) {
+                List<TypeEvidence> path = new ArrayList<>();
+                TypeEvidence current = first;
+                while (!path.contains(current)) {
+                    path.add(current);
+                    bounded(path.size(), 1, 32, "type reference depth");
+                    if (current.target() == null) {
+                        break;
+                    }
+                    current = types.get(Integer.parseInt(current.target().substring(1)));
+                }
+                if (current.target() != null) {
+                    boolean pointer = path.subList(path.indexOf(current), path.size()).stream()
+                            .anyMatch(item -> item.kind().equals("pointer"));
+                    if (!pointer) {
+                        throw new IllegalArgumentException("A recursive type needs a pointer.");
+                    }
+                }
+            }
+        }
+    }
+
+    private StaticEvidence staticEvidence(Function function, HighFunction high) {
+        EvidenceBuilder builder = new EvidenceBuilder();
+        List<Slot> parameters = new ArrayList<>();
+        bounded(function.getParameterCount(), 0, 128, "listing parameters");
+        for (var parameter : function.getParameters()) {
+            parameters.add(builder.slot(parameter.getName(), parameter.getDataType(),
+                    parameter.getVariableStorage()));
+        }
+        PrototypeEvidence listing = new PrototypeEvidence("listing",
+                boundedText(function.getCallingConventionName()), function.hasCustomVariableStorage(),
+                function.hasVarArgs(), function.hasNoReturn(), parameters,
+                builder.slot(null, function.getReturnType(), function.getReturn().getVariableStorage()));
+        PrototypeEvidence decompiler = null;
+        List<JumpEvidence> jumps = new ArrayList<>();
+        if (high != null) {
+            FunctionPrototype prototype = high.getFunctionPrototype();
+            List<Slot> highParameters = new ArrayList<>();
+            bounded(prototype.getNumParams(), 0, 128, "decompiler parameters");
+            for (int index = 0; index < prototype.getNumParams(); index++) {
+                HighSymbol parameter = prototype.getParam(index);
+                highParameters.add(builder.slot(parameter.getName(), parameter.getDataType(),
+                        parameter.getStorage()));
+            }
+            decompiler = new PrototypeEvidence("decompiler", boundedText(prototype.getModelName()),
+                    null, prototype.isVarArg(), prototype.hasNoReturn(), highParameters,
+                    builder.slot(null, prototype.getReturnType(), prototype.getReturnStorage()));
+            JumpTable[] tables = high.getJumpTables();
+            bounded(tables.length, 0, 256, "jump tables");
+            int jumpItems = 0;
+            for (JumpTable table : tables) {
+                Address[] cases = table.getCases();
+                Integer[] labels = table.getLabelValues();
+                bounded(cases == null ? 0 : cases.length, 0, 4096, "jump targets");
+                bounded(labels == null ? 0 : labels.length, 0, 4096, "jump labels");
+                jumpItems += (cases == null ? 0 : cases.length)
+                        + (labels == null ? 0 : labels.length);
+                bounded(jumpItems, 0, 16384, "total jump items");
+                // Ghidra can omit labels. Keep both API arrays without inventing pairs.
+                jumps.add(new JumpEvidence(location(table.getSwitchAddress()),
+                        cases == null ? List.of()
+                                : Arrays.stream(cases).map(ExportLift::location).toList(),
+                        labels == null ? List.of() : Arrays.asList(labels)));
+            }
+        }
+        builder.validateTypes();
+        return new StaticEvidence(1, "proposal", listing, decompiler, builder.types,
+                new ArrayList<>(builder.registers.values()), jumps);
     }
 
     private static void collectStatements(ClangNode node, List<Statement> statements) {

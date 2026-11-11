@@ -41,10 +41,11 @@ commitments are on the isolated evaluation branch. T2 private validation
 has started. T3 has five source-screened selections and no runtime-qualified
 batch. All source and held-out inputs stay sealed.
 
-The public U1 evidence gate passed all 16 configurations at `49202a7`.
-Fresh Sol and Astra source reviews passed. The separate public observer controls
-passed. The first two checked switch prototypes are prepared for four-way
-Linux tests. These are public controls and do not count as M2 results.
+The reviewed U1 lift evidence and opt-in recovery plan are on main.
+Public static checks passed 16 configurations at `49202a7`. Sol and Astra
+passed the exact source review. The public observer controls passed.
+The switch proof and graph export remain on separate branches.
+Their public target checks and fresh reviews are open.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the
 external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
@@ -54,8 +55,7 @@ review after each major block and Astra review where required.
 ## Next actions
 
 1. Finish the combined M2 evaluator reviews before a new sealed run.
-2. Integrate reviewed U1 evidence. Finish U2 proof, generation, and public
-   behavior checks.
+2. Finish U2 proof, generation, and public behavior checks.
 3. Continue production observation, indirect calls, byte idioms, and repair
    fault localization. Keep the two oracle engines independent.
 4. Finish private T2 validation. Validate T3 in a separate Linux window.

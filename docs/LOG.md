@@ -582,3 +582,21 @@
   files. The isolated parent gate passed 533 tests, 25 opt-in skips,
   and 90.59% evaluator line coverage. Preserve all earlier failed
   evidence. No new sealed result is claimed.
+
+## 2026-11-11. Integrate reviewed static lift evidence
+
+- Integrated the exact U1 source, tests, schema, and ADRs from
+  `49202a7`. Independent Sol and Astra reviews passed. The local
+  publication check for the shared evaluator had one test deadline
+  failure under concurrent load. The serial retry passed without a
+  code change. Keep the first failure in the session record.
+- The mapping companion checks Ghidra instruction addresses against
+  original ELF file spans. The opt-in plan binds supported import
+  transfers to their original instruction and relocation evidence.
+  Unproved transfers remain gaps.
+- The public static gate used GCC and Clang for 16 PIE, fixed-entry,
+  PLT, GOT, standard, and split-layout combinations. It retained
+  1,404 original instruction witnesses. The exact controls and prior
+  transport failures are recorded in `audit/m2-production-u1-e1/`.
+- This integration does not enable switch recovery or production
+  traces. No target execution or new benchmark result is claimed.
