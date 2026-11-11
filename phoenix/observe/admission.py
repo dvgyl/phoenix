@@ -35,7 +35,10 @@ from phoenix.observe.mapping import (
     map_observation,
 )
 from phoenix.observe.plan import build_trace_plan
-from phoenix.observe.runtime import parse_runtime_manifest
+from phoenix.observe.runtime import (
+    admission_implementation_sha256,
+    parse_runtime_manifest,
+)
 from phoenix.observe.scope import (
     CaptureLimits,
     RequestedScope,
@@ -214,6 +217,10 @@ def admit_observation(
         runtime = parse_runtime_manifest(
             artifacts.runtime_manifest, expected_runtime_sha256
         )
+        if runtime.admission_implementation_sha256 != admission_implementation_sha256():
+            raise MappingError(
+                "The runtime manifest has a different admission implementation."
+            )
         if (
             runtime.full_plan_sha256 != plan.sha256
             or runtime.scope_sha256 != scope_digest

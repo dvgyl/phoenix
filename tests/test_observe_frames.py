@@ -25,13 +25,26 @@ from phoenix.observe.frames import (
     admit_frames,
     local_registers,
 )
-from phoenix.observe.mapping import ExternalTarget, InternalTarget, MappedObservation
-from phoenix.observe.plan import Call, Jump, Return, TracePlan, TraceSite
+from phoenix.observe.mapping import (
+    ExternalTarget,
+    InternalTarget,
+    MappedObservation,
+    map_observation,
+)
+from phoenix.observe.plan import (
+    Call,
+    Jump,
+    Return,
+    TracePlan,
+    TraceSite,
+    build_trace_plan,
+)
 from phoenix.observe.scope import (
     CaptureLimits,
     ExplicitEntry,
     GuardInstruction,
     GuardRule,
+    LiftMain,
     LocalDirect,
     Ordinary,
     PlannedRoles,
@@ -42,6 +55,7 @@ from phoenix.observe.scope import (
     TransitInstruction,
     TransitRoute,
     User,
+    select_scope,
 )
 from phoenix.observe.wire import (
     CallAttempt,
@@ -343,6 +357,7 @@ def rejected(value: _CheckedCapture, code: str | None = None) -> Rejected:
     if code:
         assert result.rejection.code == code
     assert len(result.rejection.detail) <= 512
+    assert result.local == local_registers(value) == ()
     return result
 
 
@@ -523,7 +538,7 @@ def test_shared_site_roles(shared: str) -> None:
             s.resume(c, 0x114, rsp)
         s.ret(0x112 if shared == "continuation-return" else 0x120, _EXT, 0x1000)
     value = checked(s, sites)
-    admitted(value)
+    assert_local_values(value)
     if shared == "entry-call":
         index = 1
     elif shared == "entry-return":
@@ -536,9 +551,7 @@ def test_shared_site_roles(shared: str) -> None:
     else:
         assert isinstance(event, ReturnAttempt)
         s.events[index] = changed(event, rax=999)
-    failure = rejected(checked(s, sites), "entry_registers")
-    prior = 0 if shared.startswith("entry") else 6
-    assert all(x.event.sequence not in (prior, index) for x in failure.local)
+    rejected(checked(s, sites), "entry_registers")
 
 
 def test_continuation_entry_call_uses_one_snapshot() -> None:
@@ -565,14 +578,11 @@ def test_continuation_entry_call_uses_one_snapshot() -> None:
     leaf(0x100, 0x102, changed(_REG, rax=42))
     s.ret(0x120, _EXT, 0x1000)
     assert len(admitted(checked(s, sites)).tree.frames) == 4
+    assert_local_values(checked(s, sites))
     entry = s.events[shared_entry]
     assert isinstance(entry, Entry)
     s.events[shared_entry] = changed(entry, registers=changed(entry.registers, rdi=999))
-    result = rejected(checked(s, sites), "entry_registers")
-    assert all(
-        o.event.sequence not in (shared_entry - 1, shared_entry, shared_entry + 1)
-        for o in result.local
-    )
+    rejected(checked(s, sites), "entry_registers")
 
 
 def external_stream(target: int = _EXT + 100) -> Stream:
@@ -898,17 +908,13 @@ def test_targets_use_transfer_sequence_not_attempt_index() -> None:
     ).local
 
 
-def test_frame_failure_preserves_only_local_raw_values() -> None:
+def test_frame_failure_has_no_local_values_under_revised_contract() -> None:
     s = standard_stream()
     s.events[4] = changed(s.events[4], rsp=0x1000)
     value = checked(s)
     failure = rejected(value, "return_rsp")
-    assert failure.local == local_registers(value)
-    assert {x.event.sequence for x in failure.local} == {0, 1, 3, 6}
+    assert failure.local == local_registers(value) == ()
     assert not hasattr(failure, "tree")
-    assert all(
-        not hasattr(x, "parent") and not hasattr(x, "argument") for x in failure.local
-    )
 
 
 def test_missing_return_cannot_be_repaired_by_continuation() -> None:
@@ -945,9 +951,9 @@ def test_continuation_entry_return_shared_snapshot() -> None:
     s.add(Entry(0, 0x112, "unknown", changed(_REG, rax=42)))
     s.ret(0x112, _EXT, 0x1000)
     assert len(admitted(checked(s, sites)).tree.frames) == 2
+    assert_local_values(checked(s, sites))
     s.events[8] = changed(s.events[8], rax=999)
-    failure = rejected(checked(s, sites), "entry_registers")
-    assert all(o.event.sequence not in (6, 7) for o in failure.local)
+    rejected(checked(s, sites), "entry_registers")
 
 
 def reindexed(events: list[Event]) -> Stream:
@@ -1155,8 +1161,7 @@ def test_exact_lower_limits_accept_at_boundary() -> None:
 def test_wrong_active_owner_rejects() -> None:
     s = standard_stream()
     s.events[4] = changed(s.events[4], site=0x120)
-    failure = rejected(checked(s), "owner")
-    assert failure.local
+    rejected(checked(s), "owner")
 
 
 def test_gap_and_noncomplete_footer_disable_local_values() -> None:
@@ -1188,3 +1193,273 @@ def test_entry_call_shared_roles_cannot_be_omitted(missing: int) -> None:
     except TraceWireError:
         return
     rejected(value)
+
+
+def assert_local_values(value: _CheckedCapture) -> None:
+    admitted(value)
+    observations = local_registers(value)
+    assert [(o.event.sequence, o.site, o.register, o.bits) for o in observations] == [
+        (event.sequence, event.site, register, getattr(event.registers, register))
+        for event in value.mapped.trace.events
+        if isinstance(event, (Entry, CallAttempt, Continuation))
+        for register, _ in value.mapped.plan.registers
+    ]
+    assert observations
+    for observation in observations:
+        assert observation.trace_sha256 == value.mapped.trace.sha256
+        assert observation.event.trace_sha256 == value.mapped.trace.sha256
+        assert observation.identity == value.mapped.trace.identity
+        assert observation.scope_sha256 == value.selection.sha256
+        assert observation.width == 64
+        assert observation.meaning == "raw-pre-instruction-bits"
+        assert not hasattr(observation, "parent")
+        assert not hasattr(observation, "argument")
+
+
+def canonical_stream(*, transit: bool) -> Stream:
+    s = Stream()
+    s.entry(0x100, 0x8000, external=True)
+    c = s.call(0x100, 0x140, 0x8000)
+    s.entry(0x140, 0x7FF8)
+    if transit:
+        s.jump(0x140, _EXT + 100)
+    else:
+        s.ret(0x140, 0x105, 0x7FF8, _REG.rax)
+    rax = 42 if transit else _REG.rax
+    s.resume(c, 0x105, 0x8000, rax)
+    s.ret(0x105, _EXT, 0x8000, rax)
+    return s
+
+
+def canonical_capture(s: Stream, *, transit: bool) -> _CheckedCapture:
+    from test_observe_mapping import _CASE, _identity
+    from test_recovery_u1 import evidence, fixture, op, operand
+
+    original, document = fixture()
+    binary = bytearray(original)
+    if not transit:
+        binary[0x140] = 0xC3
+        callee = document["functions"][1]
+        callee["thunk_target"] = None
+        callee["ranges"][0]["end"] = callee["entry"]
+        instruction = callee["instructions"][0]
+        instruction["size"] = 1
+        instruction["pcode"] = [op(0x100140, "RETURN", [operand(0, "register")])]
+    image = bytes(binary)
+    lift, _, proof = evidence(image, document)
+    plan = build_trace_plan(image, lift, proof)
+    users = (ElfVA(0x100),) if transit else (ElfVA(0x100), ElfVA(0x140))
+    request = RequestedScope(
+        ElfVA(0x100), users, LiftMain(plan.lift_sha256, ElfVA(0x100))
+    )
+    selection = select_scope(image, lift, proof, plan, request)
+    assert isinstance(selection, ScopeSelection), selection
+    identity = _identity(image, plan.sha256)
+    rows = wire(tuple(s.events), identity).splitlines()
+    fields = rows[0].split(b"\t")
+    fields[-2:] = [b"0000000000000000", b"0000000000000400"]
+    rows[0] = b"\t".join(fields)
+    body = b"\n".join(rows[:-1]) + b"\n"
+    raw = (
+        body + f"END\t{len(s.events)}\t{sha256(body).hexdigest()}\tcomplete\n".encode()
+    )
+    mapped = map_observation(
+        raw, image, lift, proof, plan, _CASE, _CASE.expected, identity.runtime_sha256
+    )
+    last = next((e for e in reversed(s.events) if isinstance(e, ReturnAttempt)), None)
+    receipt = CaptureReceipt(
+        identity,
+        mapped.trace.sha256,
+        selection.sha256,
+        identity.runtime_sha256,
+        RootAnchor(0, ElfVA(0x100), _EXT + 1, 0x8000, _EXT),
+        ReturnExit(
+            last.sequence if last else 0, last.sequence + 1 if last else 1, 0x8008
+        ),
+        _D,
+        True,
+        len(s.events),
+        100,
+        100,
+        70,
+        20,
+        10,
+        0,
+        "complete",
+    )
+    return _CheckedCapture(
+        mapped,
+        selection,
+        receipt,
+        _D,
+        _D,
+        ExternalTarget(_EXT + 1),
+        ExternalTarget(_EXT),
+        len(raw),
+        1000,
+        _CASE.expected.termination,
+        mapped.outcome_sha256,
+    )
+
+
+@pytest.mark.parametrize("transit", [False, True], ids=["user", "transit"])
+@pytest.mark.parametrize("prefix", ["correct", "shared-error", "near-call-error"])
+@pytest.mark.parametrize(
+    "mutation",
+    ["none", "duplicate-entry", "missing-entry", "missing-terminal", "order", "open"],
+)
+def test_canonical_local_retention(transit: bool, prefix: str, mutation: str) -> None:
+    s = canonical_stream(transit=transit)
+    if prefix != "correct":
+        index = 1 if prefix == "shared-error" else 3
+        event = s.events[index]
+        assert isinstance(event, (Entry, CallAttempt))
+        s.events[index] = replace(event, registers=replace(event.registers, rdi=999))
+    if mutation == "duplicate-entry":
+        s.events.insert(4, changed(s.events[3], sequence=9000))
+    elif mutation == "missing-entry":
+        del s.events[3]
+    elif mutation == "missing-terminal":
+        del s.events[4:6]
+    elif mutation == "order":
+        s.events = s.events[:4] + [s.events[6]] + s.events[4:6] + s.events[7:]
+    elif mutation == "open":
+        s.events = s.events[:4]
+    value = canonical_capture(reindexed(s.events), transit=transit)
+    if mutation == "none" and prefix == "correct":
+        assert_local_values(value)
+        root, leaf = admitted(value).tree.frames
+        assert root.children == (1,) and leaf.parent == 0
+        if transit:
+            assert isinstance(leaf.kind, ExternalExcursion)
+            assert leaf.entry is None
+        else:
+            assert leaf.kind == UserFunction(ElfVA(0x140))
+        return
+    if prefix == "shared-error" or (
+        prefix == "near-call-error" and mutation != "missing-entry"
+    ):
+        code = "entry_registers"
+    elif mutation == "open":
+        code = "open_frame" if transit else "missing_event"
+    else:
+        code = "transit" if transit else "missing_event"
+    result = rejected(value, code)
+    assert admit_frames(value) == result
+    if prefix == "shared-error":
+        assert result.rejection.event is not None
+        assert result.rejection.event.sequence == 1
+        assert [e.sequence for e in result.rejection.related] == [0, 1]
+
+
+@pytest.mark.parametrize("early", [False, True], ids=["correct-prefix", "early-error"])
+@pytest.mark.parametrize(
+    "mutation", ["duplicate-entry", "missing-return", "order", "open"]
+)
+def test_later_structure_never_authorizes_local_values(
+    early: bool, mutation: str
+) -> None:
+    s = standard_stream()
+    if early:
+        entry = s.events[3]
+        assert isinstance(entry, Entry)
+        s.events[3] = replace(entry, registers=replace(entry.registers, rdi=999))
+    if mutation == "duplicate-entry":
+        s.events.insert(4, changed(s.events[3], sequence=9000))
+    elif mutation == "missing-return":
+        del s.events[4:6]
+    elif mutation == "order":
+        s.events = s.events[:4] + [s.events[6]] + s.events[4:6] + s.events[7:]
+    else:
+        s.events = s.events[:4]
+    code = {
+        "duplicate-entry": "duplicate_event",
+        "missing-return": "event_order",
+        "order": "event_order",
+        "open": "open_frame",
+    }[mutation]
+    rejected(checked(reindexed(s.events)), "entry_registers" if early else code)
+
+
+@pytest.mark.parametrize("early", [False, True], ids=["correct-prefix", "early-error"])
+@pytest.mark.parametrize(
+    "mutation", ["duplicate-entry", "missing-entry", "missing-terminal"]
+)
+def test_transit_structure_never_authorizes_local_values(
+    early: bool, mutation: str
+) -> None:
+    s, sites, route = route_fixture()
+    assert_local_values(checked(s, sites, routes=(route,)))
+    if early:
+        entry = s.events[3]
+        assert isinstance(entry, Entry)
+        s.events[3] = replace(entry, registers=replace(entry.registers, rdi=999))
+    if mutation == "duplicate-entry":
+        s.events.insert(4, changed(s.events[3], sequence=9000))
+    elif mutation == "missing-entry":
+        del s.events[4]
+    else:
+        del s.events[5:7]
+    rejected(
+        checked(reindexed(s.events), sites, routes=(route,)),
+        "entry_registers" if early else "transit",
+    )
+
+
+def test_root_recursion_preserves_distinct_local_bits() -> None:
+    s = Stream()
+    s.entry(0x100, 0x1000, external=True)
+    calls = []
+    for rsp, bits in [(0x900, 71), (0x700, 81), (0x500, 91)]:
+        registers = Registers(bits, bits + 1, bits + 2, bits + 3, bits + 4, rsp)
+        calls.append(s.call(0x110, 0x100, rsp, registers))
+        s.entry(0x100, rsp - 8, registers=registers)
+    for c, rsp, bits in reversed(
+        list(zip(calls, [0x900, 0x700, 0x500], [101, 102, 103]))
+    ):
+        s.ret(0x120, 0x112, rsp - 8, bits)
+        s.resume(c, 0x112, rsp, bits)
+    s.ret(0x120, _EXT, 0x1000, 104)
+    value = checked(s)
+    assert_local_values(value)
+    assert [f.parent for f in admitted(value).tree.frames] == [None, 0, 1, 2]
+    first, second = [e for e in s.events if isinstance(e, Continuation)][:2]
+    s.events[first.sequence] = replace(first, call=second.call)
+    s.events[second.sequence] = replace(second, call=first.call)
+    rejected(checked(s), "continuation")
+
+
+def test_boolean_counter_rejects_without_local_values() -> None:
+    value = checked()
+    receipt = replace(
+        value.receipt,
+        execution_callbacks=True,
+        selected_instruction_callbacks=0,
+        outside_window_callbacks=1,
+        opaque_external_callbacks=0,
+    )
+    rejected(replace(value, receipt=receipt), "limit")
+
+
+@pytest.mark.parametrize("early", [False, True])
+def test_later_shared_error_has_no_local_values(early: bool) -> None:
+    s = Stream()
+    s.entry(0x100, 0x1000, external=True)
+    c = s.call(0x110, _EXT + 100, 0x800)
+    s.resume(c, 0x112, 0x800, 57)
+    c2 = s.call(0x112, 0x200, 0x800, replace(_REG, rax=57))
+    s.entry(0x200, 0x7F8, registers=replace(_REG, rax=57))
+    s.ret(0x210, 0x114, 0x7F8, 72)
+    s.resume(c2, 0x114, 0x800, 72)
+    s.ret(0x120, _EXT, 0x1000)
+    sites = tuple(x for x in standard_sites() if x.address != 0x112) + (
+        site(0x112, 0x100, call(0x114), calls=(0x110,)),
+        site(0x114, 0x100, calls=(0x112,)),
+    )
+    assert_local_values(checked(s, sites))
+    event = s.events[4]
+    assert isinstance(event, CallAttempt)
+    s.events[4] = replace(event, registers=replace(event.registers, rcx=888))
+    if early:
+        s.events[0] = changed(s.events[0], origin="unknown")
+    rejected(checked(s, sites), "origin" if early else "entry_registers")

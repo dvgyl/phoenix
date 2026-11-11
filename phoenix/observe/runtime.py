@@ -4,6 +4,7 @@ import json
 import re
 from dataclasses import asdict, dataclass
 from hashlib import sha256
+from pathlib import Path
 
 from phoenix.lift.mapping import (
     MappingError,
@@ -59,6 +60,29 @@ def guard_profile_sha256(collector: str, plugin: str) -> str:
     ).hexdigest()
 
 
+def admission_implementation_sha256() -> str:
+    root = Path(__file__).resolve().parents[2]
+    names = (
+        "phoenix/observe/admission.py",
+        "phoenix/observe/runtime.py",
+        "phoenix/observe/capture.py",
+        "phoenix/observe/frames.py",
+        "phoenix/observe/mapping.py",
+        "phoenix/observe/wire.py",
+        "phoenix_eval/case.py",
+        "phoenix_eval/outcome.py",
+        "phoenix_eval/trace.py",
+        "phoenix_eval/wire.py",
+    )
+    sources = []
+    for name in names:
+        path = root / name
+        if path.resolve() != path or not path.is_file():
+            raise MappingError("The capture admission source must be a regular file.")
+        sources.append((name, sha256(path.read_bytes()).hexdigest()))
+    return sha256(canonical(sources)).hexdigest()
+
+
 @dataclass(frozen=True, slots=True)
 class RuntimeManifest:
     schema: str
@@ -66,6 +90,7 @@ class RuntimeManifest:
     full_plan_sha256: str
     scope_sha256: str
     policy_implementation_sha256: str
+    admission_implementation_sha256: str
     guard_profile_sha256: str
     registers: tuple[tuple[str, int], ...]
     collector_source_sha256: str
@@ -89,7 +114,8 @@ def parse_runtime_manifest(raw: bytes, expected_sha256: str) -> RuntimeManifest:
     record = object_fields(
         load_json(raw),
         "schema receipt_schema full_plan_sha256 scope_sha256 "
-        "policy_implementation_sha256 guard_profile_sha256 registers "
+        "policy_implementation_sha256 admission_implementation_sha256 "
+        "guard_profile_sha256 registers "
         "collector_source_sha256 plugin_sha256 qemu_sha256 qemu_version "
         "qemu_commit image_id accepted_worker_image_id guest_runtime_sha256",
     )
@@ -114,6 +140,7 @@ def parse_runtime_manifest(raw: bytes, expected_sha256: str) -> RuntimeManifest:
         digest(record["full_plan_sha256"]),
         digest(record["scope_sha256"]),
         digest(record["policy_implementation_sha256"]),
+        digest(record["admission_implementation_sha256"]),
         digest(record["guard_profile_sha256"]),
         tuple(registers),
         digest(record["collector_source_sha256"]),

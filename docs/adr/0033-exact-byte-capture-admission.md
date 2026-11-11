@@ -28,3 +28,16 @@ Nonreturn contracts and lazy resolver evidence remain unsupported. Synthetic
 controls do not close actual collector calibration or mutation gates.
 Keep recovery consumers disabled until those gates and source reviews pass.
 The agent-sealed corpus is unchanged.
+
+The runtime manifest also binds the installed admission implementation.
+This source manifest includes the frame reducer, raw parsers, mapper,
+wire reader, and outcome protocol dependencies. It uses relative names
+and exact file hashes. A changed reader requires a new runtime identity.
+The raw boundary rejects an old implementation identity before reduction.
+This identifies installed source files. The future runner must still bind
+them to the actual capture process.
+
+The corrected Astra reducer requires successful complete frame admission
+before any local output. Every rejection exports no local facts. This
+stricter rule also applies through the raw byte boundary. It replaces the
+earlier frame-only retention capability. The original HOLD is preserved.

@@ -3,6 +3,7 @@
 import json
 from dataclasses import asdict, dataclass, replace
 from hashlib import sha256
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -19,6 +20,7 @@ from phoenix.observe.frames import AdmissionResult, Admitted, Rejected
 from phoenix.observe.plan import build_trace_plan
 from phoenix.observe.runtime import (
     RuntimeManifest,
+    admission_implementation_sha256,
     canonical,
     guard_profile_sha256,
     parse_runtime_manifest,
@@ -81,6 +83,7 @@ def sample() -> Sample:
         plan.sha256,
         scope.sha256,
         scope.policy_implementation_sha256,
+        admission_implementation_sha256(),
         guard_profile_sha256(_D, _D),
         scope.registers,
         _D,
@@ -400,3 +403,44 @@ def test_receipt_schema_round_trip_preserves_full_stack_word(value: int) -> None
     parsed = parse_receipt(raw)
     assert parsed.root.stack_target == value
     assert canonical(asdict(parsed)) == raw
+
+
+def test_capture_cannot_reuse_a_different_admission_implementation() -> None:
+    run = sample()
+    record = json.loads(run.artifacts.runtime_manifest)
+    record["admission_implementation_sha256"] = "e" * 64
+    raw = canonical(record)
+    changed = replace(run, runtime_sha256=sha256(raw).hexdigest())
+    result = reject(changed.admit(replace(run.artifacts, runtime_manifest=raw)))
+    assert result.rejection.detail == (
+        "The runtime manifest has a different admission implementation."
+    )
+
+
+@pytest.mark.parametrize(
+    "name",
+    (
+        "phoenix/observe/admission.py",
+        "phoenix/observe/runtime.py",
+        "phoenix/observe/capture.py",
+        "phoenix/observe/frames.py",
+        "phoenix/observe/mapping.py",
+        "phoenix/observe/wire.py",
+        "phoenix_eval/case.py",
+        "phoenix_eval/outcome.py",
+        "phoenix_eval/trace.py",
+        "phoenix_eval/wire.py",
+    ),
+)
+def test_each_admission_dependency_changes_implementation_identity(
+    name: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original = admission_implementation_sha256()
+    read = Path.read_bytes
+
+    def changed(path: Path) -> bytes:
+        raw = read(path)
+        return raw + b" " if str(path).endswith("/" + name) else raw
+
+    monkeypatch.setattr(Path, "read_bytes", changed)
+    assert admission_implementation_sha256() != original

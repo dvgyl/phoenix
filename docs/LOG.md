@@ -751,3 +751,37 @@
 - The first raw tests had 49 passes and 3 failures. The corrected test keeps
   equivalent mapping formatting valid. The new range check rejects the
   original-image gap. All original logs remain in the local audit record.
+
+## 2026-11-11. Bind capture admission source identity
+
+- Extended the runtime manifest with the installed admission implementation
+  identity. It binds the reducer, raw boundary, mapper, wire reader, and
+  outcome protocol dependencies. All source names remain relative.
+- The raw boundary rejects a runtime pin for different admission code.
+  This closes a provenance gap found during the parent source review.
+  It does not authenticate a collector or prove interpreter execution.
+- The first combined check passed 368 tests. Added a source-change control
+  for each of the ten bound dependencies. Scope and frame review gates
+  remain separate. No target or private corpus material was used.
+
+## 2026-11-11. Use the corrected frame retention contract
+
+- Ported the exact Astra frame correction and its permanent tests into
+  the raw admission checkpoint. Every rejected capture exports no local
+  facts. Successful captures keep their raw values and provenance.
+- The manifest binds these installed reducer bytes through its admission
+  implementation identity. A dependency change needs a new runtime pin.
+  Independent review and all live capture gates remain open.
+
+## 2026-11-11. Verify the corrected capture dependencies
+
+- The complete raw admission, frame, scope, mapping, plan, and wire suite
+  passed 432 tests. Repository-wide strict typing passed 128 source files.
+  The exact dependency bytes match the parent-reviewed Astra correction
+  and the b42a7a2 scope checkpoint.
+- The raw manifest now binds all ten installed admission source inputs.
+  Each separate source-change control changes its implementation identity.
+  The raw boundary rejects a different implementation before reduction.
+- The frame and raw admission blocks still require fresh independent
+  Sol review. Live capture, actual runtime association, and downstream
+  recovery remain open. No target or private corpus material was used.
