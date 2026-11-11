@@ -47,6 +47,7 @@ class Relocation:
     gap: str | None
     file_offset: int
     symbol_index: int
+    write_size: int | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -359,6 +360,7 @@ class _DynamicReader:
                         gap,
                         file_offset + index * _RELA.size,
                         symbol_index,
+                        width,
                     )
                 )
         ranges.sort()

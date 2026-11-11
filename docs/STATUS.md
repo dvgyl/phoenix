@@ -45,11 +45,11 @@ The public U1 evidence gate passed all 16 configurations at `49202a7`.
 Sol and Astra passed the exact U1 source review. The separate observer
 controls also passed.
 
-Sol held the first switch proof at `3835b40`. The correction binds the
-normalized table expression and selector to exact machine instructions.
-It rejects known entries that bypass the guard. All 21 independent
-controls now pass. Both public plans remain byte-identical. Fresh
-independent review, checked C generation, and Linux behavior are open.
+Sol held both earlier switch proof checkpoints. The latest correction
+checks original relative branches and all known indirect proposals for
+entries into the guarded region. It checks code and table immutability.
+All 13 new controls pass. The two public switch maps stay unchanged.
+Fresh review, source binding, and Linux behavior remain open.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the
 external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and

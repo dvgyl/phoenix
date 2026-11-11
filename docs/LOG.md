@@ -542,3 +542,25 @@
 - Keep the original HOLD and failures. Evidence is in
   `audit/m2-production-u2/`. No Linux target ran and no M2 result
   is claimed. Fresh independent review remains required.
+
+## 2026-11-11. Check raw switch entries and immutable code
+
+- Sol held `c2ced49` after reproducing an original branch omitted by
+  the listing, a target proposal from another function, and a
+  relocation over the guard. Astra design also required an explicit
+  instruction immutability check and kept unknown entries outside
+  this profile.
+- Check relative branch targets from admitted original instructions
+  and all known jump table proposals. Reject interior entries, writable
+  dispatch code, text relocation declarations, and relocation writes
+  that can overlap the dispatch. The shared relocation reader retains
+  the write size it already checks. The table keeps its prior policy.
+- The first focused run reported the new proposed-entry error before
+  the expected instruction-interior diagnostic. The final check
+  preserves the original diagnostic. A positive fixture with a table
+  below executable code also exposed a check that was too broad.
+  The code now uses the relocation's checked write size.
+- All 13 new controls and the earlier 21 controls agree. Both public
+  plans are byte-identical. The focused U1 and U2 suites passed 106
+  tests. Preserve earlier failures in `audit/m2-production-u2/`.
+  No target ran. Fresh independent review remains open.

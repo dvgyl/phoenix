@@ -115,7 +115,12 @@ def switch_fixture(
         pack_into("<ii", binary, 0x408, 0x119 - 0x1008, 0x118 - 0x1008)
     if layout == "relocated":
         pack_into("<Q", binary, 0xC00, 0x1000)
-    bypass = layout in ("reentry", "raw-reentry")
+    if layout == "textrel":
+        pack_into("<QQ", binary, program_headers + 2 * 56 + 32, 14 * 16, 14 * 16)
+        pack_into("<qQ", binary, 0x800 + 12 * 16, 22, 0)
+    if layout == "writable-code":
+        pack_into("<I", binary, program_headers + 4, 7)
+    bypass = layout in ("reentry", "raw-reentry", "unreported-reentry")
     instructions = []
     for offset, text, branch in (
         (0x100, "83e703", None),
@@ -139,12 +144,13 @@ def switch_fixture(
                 "pcode": [] if branch is None else [op(BASE + offset, branch, [])],
             }
         )
-    if layout == "raw-reentry":
+    if layout in ("raw-reentry", "unreported-reentry"):
+        reported = 0x108 if layout == "raw-reentry" else 0x118
         instructions[-1]["pcode"] = [
             op(
                 BASE + 0x120,
                 "BRANCH",
-                [{"address": location(0x108), "size": 8, "definition": None}],
+                [{"address": location(reported), "size": 8, "definition": None}],
             )
         ]
     function = document["functions"][0]
@@ -190,6 +196,19 @@ def switch_fixture(
             ),
         )
     )
+    if layout == "external-proposal":
+        document["functions"][1]["static_evidence"] = wire(
+            replace(
+                proposal(),
+                jump_tables=(
+                    JumpEvidence(
+                        Address("ram", hex(BASE + 0x140)),
+                        (Address("ram", hex(BASE + 0x108)),),
+                        (0,),
+                    ),
+                ),
+            )
+        )
     document["call_edges"] = []
     data = bytes(binary)
     raw = raw_json(document)
@@ -304,6 +323,25 @@ def test_switch_refuses_a_graph_that_disagrees_with_raw_dispatch(
             0x120
         )
     with pytest.raises(MappingError):
+        recover_switch(
+            parse_switch_graph(raw_json(document), lift), binary, lift, proof
+        )
+
+
+@pytest.mark.parametrize(
+    ("layout", "message"),
+    [
+        ("unreported-reentry", "original relative transfer"),
+        ("external-proposal", "proposed indirect transfer"),
+        ("textrel", "relocation could change"),
+        ("writable-code", "in writable memory"),
+    ],
+)
+def test_switch_checks_admitted_entries_and_instruction_immutability(
+    layout: str, message: str
+) -> None:
+    binary, lift, proof, document = switch_fixture(layout)
+    with pytest.raises(MappingError, match=message):
         recover_switch(
             parse_switch_graph(raw_json(document), lift), binary, lift, proof
         )

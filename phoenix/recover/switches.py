@@ -5,11 +5,17 @@ from struct import unpack
 from phoenix.lift.index import LiftIndex, Operand, Operation, Sequence
 from phoenix.lift.mapping import GhidraVA, MappingError, hex_address
 from phoenix.lift.switch_graph import SwitchGraph
-from phoenix.recover.addresses import AddressProof, ElfVA
+from phoenix.recover.addresses import AddressProof, ElfVA, InstructionWitness
 from phoenix.recover.imports import read_dynamic_imports
 
 MAX_SELECTORS = 4096
 _GPR_OFFSETS = (0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38)
+_LEGACY_PREFIXES = frozenset(
+    (0x26, 0x2E, 0x36, 0x3E, 0x64, 0x65, 0x66, 0x67, 0xF0, 0xF2, 0xF3)
+)
+_DT_TEXTREL = 22
+_DT_FLAGS = 30
+_DF_TEXTREL = 4
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,8 +114,37 @@ def _decode_table_transfer(
     return _TableTransfer(base, load, add, jump, GhidraVA(jump + len(transfer)), target)
 
 
+def _relative_target(witness: InstructionWitness) -> GhidraVA | None:
+    data = witness.data
+    index = 0
+    while index < len(data) and (
+        data[index] in _LEGACY_PREFIXES or 0x40 <= data[index] <= 0x4F
+    ):
+        index += 1
+    data = data[index:]
+    if not data:
+        return None
+    opcode = data[0]
+    if len(data) == 2 and (
+        opcode == 0xEB or 0x70 <= opcode <= 0x7F or 0xE0 <= opcode <= 0xE3
+    ):
+        displacement = data[1:]
+    elif len(data) == 5 and opcode in (0xE8, 0xE9):
+        displacement = data[1:]
+    elif len(data) == 6 and opcode == 0x0F and 0x80 <= data[1] <= 0x8F:
+        displacement = data[2:]
+    else:
+        return None
+    return GhidraVA(
+        witness.ghidra
+        + len(witness.data)
+        + int.from_bytes(displacement, "little", signed=True)
+    )
+
+
 def _check_dispatch_entries(
     lift: LiftIndex,
+    proof: AddressProof,
     entry: GhidraVA,
     end: GhidraVA,
     instruction_sites: tuple[GhidraVA, ...],
@@ -137,6 +172,21 @@ def _check_dispatch_entries(
         and op.inputs[0].address.space == "ram"
     ):
         raise MappingError("A raw transfer can bypass part of the switch guard.")
+    if any(
+        entry < target < end
+        for witness in proof.witnesses
+        if (target := _relative_target(witness)) is not None
+    ):
+        raise MappingError("An original relative transfer can bypass the switch guard.")
+    if any(
+        entry < hex_address(target.offset) < end
+        for function in lift.functions.values()
+        if function.static_evidence is not None
+        for table in function.static_evidence.jump_tables
+        for target in table.targets
+        if target is not None and target.space == "ram"
+    ):
+        raise MappingError("A proposed indirect transfer can bypass the switch guard.")
 
 
 def recover_switch(
@@ -295,20 +345,6 @@ def recover_switch(
     transfer = _decode_table_transfer(proof, entry, dispatch.start, raw_register)
     if transfer.jump != site or entry <= default < transfer.end:
         raise MappingError("The dispatch or default disagrees with the raw sequence.")
-    _check_dispatch_entries(
-        lift,
-        entry,
-        transfer.end,
-        (
-            entry,
-            compare_site,
-            guard_site,
-            dispatch.start,
-            transfer.load,
-            transfer.add,
-            site,
-        ),
-    )
     final_add = definition(branch, branch.inputs[0], "INT_ADD", 8, 2)
     sign = definition(final_add, final_add.inputs[0], "INT_SEXT", 8, 1)
     load = definition(sign, sign.inputs[0], "LOAD", 4, 2)
@@ -342,11 +378,30 @@ def recover_switch(
         raise MappingError(
             "The switch table is not in a read-only file-backed segment."
         )
+    dispatch_size = transfer.end - entry
+    dispatch_start = proof.to_elf(entry, dispatch_size)
+    dispatch_segment = proof.image.segment(
+        dispatch_start, dispatch_size, executable=True
+    )
+    if dispatch_segment.flags & 2:
+        raise MappingError("The original switch dispatch is in writable memory.")
+    dispatch_end = dispatch_start + dispatch_size
     if any(
-        relocation.kind != 0 and relocation.slot < table + table_size
+        tag == _DT_TEXTREL or tag == _DT_FLAGS and value & _DF_TEXTREL
+        for tag, value in proof.image.dynamic
+    ) or any(
+        relocation.kind != 0
+        and (
+            relocation.slot < table + table_size
+            or relocation.slot < dispatch_end
+            and (
+                relocation.write_size is None
+                or relocation.slot + relocation.write_size > dispatch_start
+            )
+        )
         for relocation in read_dynamic_imports(binary, proof.image)
     ):
-        raise MappingError("A relocation could change the switch table.")
+        raise MappingError("A relocation could change the switch table or dispatch.")
     offset = proof.image.offset(table, table_size)
     contents = binary[offset : offset + table_size]
     cases = tuple(
@@ -382,6 +437,21 @@ def recover_switch(
         raise MappingError(
             "The decoded switch destinations disagree with lift evidence."
         )
+    _check_dispatch_entries(
+        lift,
+        proof,
+        entry,
+        transfer.end,
+        (
+            entry,
+            compare_site,
+            guard_site,
+            dispatch.start,
+            transfer.load,
+            transfer.add,
+            site,
+        ),
+    )
     return SwitchDispatch(
         graph.sha256,
         proof.sha256,

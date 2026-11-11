@@ -44,3 +44,11 @@ sequence unless the listing edge is an adjacent fall-through. Reject
 a table destination or default inside the sequence. This check covers
 the admitted listing and raw transfer evidence. It does not prove
 completeness for unknown indirect transfers elsewhere in the binary.
+
+Decode relative transfers from admitted original instruction witnesses.
+Reject known indirect target proposals into the guarded interval.
+Reject writable dispatch code and text relocation declarations.
+Require exclusion of every relocation from the dispatch bytes. An
+unknown write size cannot establish exclusion for an earlier slot.
+This result still assumes ordinary function entry and return behavior.
+An unknown indirect target is outside the checked result.
