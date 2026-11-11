@@ -59,8 +59,9 @@ It records the setting for exact resume and replay. The option remains
 off by default. Public Linux behavior and unvisited-case checks remain open.
 The structural schema 2 wire reader passed fresh Sol review and 596
 additional controls. The static observation plan and shared physical
-transfer checks also passed fresh Sol review. Runtime mapping, frame
-admission, and live capture remain open. The wire has no production caller.
+transfer checks also passed fresh Sol review. The exact outcome and
+runtime mapping gate passed fresh Sol review. Its mapped result does not
+authorize recovery. Frame admission and live capture remain open.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the
 external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and

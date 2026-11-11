@@ -718,3 +718,20 @@
 - The earlier combined main transfer plans also matched all 16 reviewed
   public plans byte for byte. Their proof and relocation-width metadata
   stayed consistent. No target ran or sealed result changed.
+
+## 2026-11-11. Integrate the reviewed observation mapping gate
+
+- Fresh Sol passed the exact mapped-observation gate at `d5e1870`.
+  It passed 42 existing observation tests and 113 fresh controls.
+  Integrated the exact source, tests, and ADR 0029.
+- The gate binds raw wire, source, plan, invocation, and runtime identity.
+  It requires the full supplied observer outcome to match the accepted
+  development outcome. It checks runtime bias, executable ranges,
+  opaque external targets, event roles, and transfer confirmations.
+- An internal target identifies executable bytes. It does not establish
+  an instruction start or function entry. The mapped result does not
+  admit frames, target closure, runtime calibration, or inference.
+  A later collector and receipt must bind actual capture evidence.
+- No target ran. The separate Corpus Author health check reported a
+  healthy bounded validation batch, progress, and no owner action.
+  The Linux VM remains private. Source and held-out inputs stay sealed.
