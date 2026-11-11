@@ -680,3 +680,22 @@
   prompts and project bytes stayed identical in direct comparisons.
 - The runtime pipeline caller remains isolated. No Linux behavior or
   new evaluation result is claimed. M2 acceptance remains open.
+
+## 2026-11-11. Integrate reviewed physical transfer admission
+
+- Fresh Sol passed `4697be6`. It reproduced the corrected false-call,
+  skipped-thunk, replaced-proof, and continuation controls. The prior
+  HOLDs stay unchanged. Integrated the reviewed plan, classifier, and
+  tests. No target ran.
+- The shared import file also needs the switch proof's relocation
+  write-size metadata. A direct patch failed because main had a
+  different earlier binder. A three-way application exposed three
+  binder conflicts. Selected the reviewed binder in those conflicts.
+- Compared the combined import file with `4697be6`. Its only two
+  additions are the existing relocation write-size field and the
+  existing width value returned by the relocation reader. The
+  combined focused suite passed all 277 tests.
+- Shared proof revalidation and physical byte classification now gate
+  import and observation plans. Static imports still identify symbol
+  requests only. Live capture, runtime mapping, and frame admission
+  remain open. No M2 result or new milestone tag is claimed.

@@ -3,10 +3,11 @@
 import json
 from dataclasses import asdict, dataclass
 
-from phoenix.lift.index import LiftIndex, call_transfer_kind
+from phoenix.lift.index import LiftIndex
 from phoenix.lift.mapping import GhidraVA, MappingError
 from phoenix.recover.addresses import AddressProof, ElfVA, synthetic_external_target
-from phoenix.recover.imports import ImportBinding
+from phoenix.recover.imports import ImportBinding, _bind_checked_imports
+from phoenix.recover.transfers import check_transfers
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,20 +40,11 @@ class PlanCandidate:
 
 
 def make_candidate(
-    lift: LiftIndex, proof: AddressProof, imports: tuple[ImportBinding, ...]
+    binary: bytes, lift: LiftIndex, proof: AddressProof
 ) -> PlanCandidate:
-    if (
-        lift.binary_sha256 != proof.binary_sha256
-        or lift.lift_sha256 != proof.lift_sha256
-    ):
-        raise MappingError("Plan evidence identities disagree.")
-    if any(
-        binding.binary_sha256 != proof.binary_sha256
-        or binding.lift_sha256 != proof.lift_sha256
-        or binding.address_proof_sha256 != proof.sha256
-        for binding in imports
-    ):
-        raise MappingError("Plan import bindings use different evidence.")
+    checked = check_transfers(binary, lift, proof)
+    proof = checked.proof
+    imports = _bind_checked_imports(binary, lift, checked)
     roles: dict[GhidraVA, set[str]] = {}
     continuations: dict[GhidraVA, ElfVA] = {}
     gaps = [*lift.gaps, *proof.gaps]
@@ -71,45 +63,50 @@ def make_candidate(
             roles.setdefault(function.entry, set()).add("entry")
         elif function.entry not in synthetic:
             gaps.append((function.entry, "unavailable_function_entry"))
-    for instruction in lift.instructions.values():
-        opcodes = {op.opcode for op in instruction.pcode}
-        site_roles = set()
-        if "CALL" in opcodes:
-            site_roles.add("direct_call")
-        if "CALLIND" in opcodes:
-            site_roles.add("indirect_call")
-        if "BRANCHIND" in opcodes:
-            site_roles.add("indirect_jump")
-        if "RETURN" in opcodes:
-            site_roles.add("return")
-        if not site_roles:
+    for address, transfer_fact in checked.sites.items():
+        if transfer_fact.gap is not None:
+            gaps.append((address, transfer_fact.gap))
             continue
-        if instruction.address not in witnesses:
-            gaps.append((instruction.address, "unavailable_site"))
+        physical = transfer_fact.physical
+        if physical is None or physical.kind == "direct_jump":
             continue
-        roles.setdefault(instruction.address, set()).update(site_roles)
-        if opcodes & {"CALL", "CALLIND"}:
-            next_address = GhidraVA(instruction.address + instruction.size)
-            if (
-                next_address in witnesses
-                and witnesses[next_address].owner
-                == witnesses[instruction.address].owner
-            ):
-                continuations[instruction.address] = witnesses[next_address].elf
-                roles.setdefault(next_address, set()).add("continuation")
-            else:
-                gaps.append((instruction.address, "unavailable_continuation"))
+        roles.setdefault(address, set()).add(physical.kind)
+        if transfer_fact.continuation is not None:
+            continuations[address] = transfer_fact.continuation.elf
+            roles.setdefault(transfer_fact.continuation.ghidra, set()).add(
+                "continuation"
+            )
+        elif physical.kind in ("direct_call", "indirect_call"):
+            gaps.append((address, "unavailable_continuation"))
     edges: dict[GhidraVA, set[StaticTarget]] = {}
     for edge in lift.edges:
         if edge.site not in witnesses or edge.caller != witnesses[edge.site].owner:
             gaps.append((edge.site, "unavailable_or_conflicting_edge_owner"))
             continue
         if edge.kind == "call":
-            call_instruction = lift.instructions.get(edge.site)
-            if (
-                call_instruction is None
-                or call_transfer_kind(call_instruction, edge.target) is None
-            ):
+            fact = checked.sites.get(edge.site)
+            if fact is None:
+                gaps.append((edge.site, "conflicting_call_target"))
+                continue
+            if fact.gap is not None:
+                continue
+            physical, operation = fact.physical, fact.operation
+            if physical is None or operation is None:
+                continue
+            if physical.kind == "direct_call":
+                if (
+                    len(operation.inputs) != 1
+                    or operation.inputs[0].address != edge.target
+                ):
+                    gaps.append((edge.site, "conflicting_call_target"))
+                    continue
+                if (
+                    edge.target is None
+                    or edge.target.ram is None
+                    or physical.destination != edge.target.ram - proof.ghidra_delta
+                ):
+                    continue
+            elif physical.kind not in ("indirect_call", "indirect_jump"):
                 gaps.append((edge.site, "conflicting_call_target"))
                 continue
         target = edge.target

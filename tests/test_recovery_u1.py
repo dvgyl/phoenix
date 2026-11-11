@@ -293,7 +293,7 @@ def test_actual_bytes_import_identity_and_candidate(base: int) -> None:
     assert bindings[0].identity.symbol == "fwrite"
     assert bindings[0].identity.version == "GLIBC_2.2.5"
     assert bindings[0].identity.needed_library is None
-    candidate = make_candidate(lift, proof, bindings)
+    candidate = make_candidate(binary, lift, proof)
     assert candidate.status == "static_candidate_requires_live_gates"
     call = next(site for site in candidate.sites if "direct_call" in site.roles)
     assert call.elf == base + 0x100
@@ -309,13 +309,11 @@ def test_actual_bytes_import_identity_and_candidate(base: int) -> None:
 def test_labels_do_not_select_semantics() -> None:
     binary, document = fixture()
     lift, _, proof = evidence(binary, document)
-    first = make_candidate(lift, proof, bind_imports(binary, lift, proof))
+    first = make_candidate(binary, lift, proof)
     document["functions"][0]["name"] = "fwrite"
     document["functions"][0]["instructions"][0]["text"] = "not a call"
     other, _, other_proof = evidence(binary, document)
-    second = make_candidate(
-        other, other_proof, bind_imports(binary, other, other_proof)
-    )
+    second = make_candidate(binary, other, other_proof)
     assert first.sites == second.sites
     assert [(i.site, i.identity, i.relocation_slot, i.gap) for i in first.imports] == [
         (i.site, i.identity, i.relocation_slot, i.gap) for i in second.imports
@@ -452,7 +450,7 @@ def test_unknown_or_conflicting_import_stays_unnamed() -> None:
         op(0x100100, "CALLIND", [operand(0x20, "register")])
     ]
     lift, _, proof = evidence(binary, document)
-    assert bind_imports(binary, lift, proof)[0].gap == "unknown_import"
+    assert bind_imports(binary, lift, proof)[0].gap == "conflicting_transfer_bytes"
 
 
 @pytest.mark.parametrize(
@@ -525,7 +523,7 @@ def test_physical_thunk_target_requires_exact_owned_witness(fault: str) -> None:
     lift, _, proof = evidence(binary, document)
     bindings = bind_imports(binary, lift, proof)
     assert bindings[0].identity is None
-    candidate = make_candidate(lift, proof, bindings)
+    candidate = make_candidate(binary, lift, proof)
     site = next(site for site in candidate.sites if "direct_call" in site.roles)
     assert [(target.kind, target.elf) for target in site.static_targets] == [
         (
@@ -548,7 +546,7 @@ def test_local_target_requires_exact_instruction_start() -> None:
     lift, _, proof = evidence(bytes(changed), document)
     site = next(
         site
-        for site in make_candidate(lift, proof, ()).sites
+        for site in make_candidate(bytes(changed), lift, proof).sites
         if "direct_call" in site.roles
     )
     assert [(item.kind, item.elf) for item in site.static_targets] == [
@@ -558,6 +556,7 @@ def test_local_target_requires_exact_instruction_start() -> None:
 
 def test_synthetic_external_target_requires_indirect_slot_evidence() -> None:
     binary, document = fixture()
+    binary = indirect_got_call(binary, document)
     call, thunk = document["functions"]
     address = 0x105000
     thunk["entry"] = loc(address)
@@ -572,7 +571,7 @@ def test_synthetic_external_target_requires_indirect_slot_evidence() -> None:
     assert not bindings[0].thunk_path
     site = next(
         site
-        for site in make_candidate(lift, proof, bindings).sites
+        for site in make_candidate(binary, lift, proof).sites
         if "indirect_call" in site.roles
     )
     assert [(target.kind, target.elf) for target in site.static_targets] == [
@@ -587,21 +586,23 @@ def test_synthetic_external_target_requires_indirect_slot_evidence() -> None:
 
 
 def test_disconnected_thunk_transfer_cannot_supply_the_slot() -> None:
-    binary, document = fixture()
+    original, document = fixture()
+    binary = bytearray(original)
+    binary[0x140:0x14A] = bytes.fromhex("66909090ff25b6230000")
     thunk = document["functions"][1]
+    thunk["ranges"][0]["end"] = loc(0x100149)
     branch = thunk["instructions"][0]
     branch["address"] = loc(0x100144)
-    branch["size"] = 2
     branch["pcode"][0]["sequence"]["address"] = branch["address"]
     thunk["instructions"].insert(
         0, {"address": loc(0x100140), "size": 2, "text": "", "pcode": []}
     )
-    lift, _, proof = evidence(binary, document)
+    lift, _, proof = evidence(bytes(binary), document)
     assert (
         proof.witness(GhidraVA(0x100140)).owner
         == proof.witness(GhidraVA(0x100144)).owner
     )
-    binding = bind_imports(binary, lift, proof)[0]
+    binding = bind_imports(bytes(binary), lift, proof)[0]
     assert binding.identity is None
     assert binding.gap == "unsupported_thunk_transfer"
 
@@ -722,6 +723,7 @@ def test_inconsistent_rebase_and_overlapping_segments_reject() -> None:
 
 def test_raw_copy_chain_establishes_got_call() -> None:
     binary, document = fixture()
+    binary = indirect_got_call(binary, document)
     call = document["functions"][0]["instructions"][0]
     call["pcode"] = [
         op(0x100100, "COPY", [operand(0x102500)], operand(0x99, "unique")),
@@ -734,6 +736,19 @@ def test_raw_copy_chain_establishes_got_call() -> None:
     call["pcode"][0]["opcode"] = "INT_ADD"
     lift, _, proof = evidence(binary, document)
     assert bind_imports(binary, lift, proof)[0].identity is None
+
+
+def indirect_got_call(binary: bytes, document: dict[str, Any]) -> bytes:
+    changed = bytearray(binary)
+    changed[0x100:0x107] = b"\xff\x15\xfa\x23\x00\x00\xc3"
+    pack_into("<Q", changed, 0xC08, (1 << 32) | 6)
+    function = document["functions"][0]
+    first, resume = function["instructions"]
+    first["size"] = 6
+    resume["address"] = loc(0x100106)
+    resume["pcode"][0]["sequence"]["address"] = resume["address"]
+    function["ranges"][0]["end"] = resume["address"]
+    return bytes(changed)
 
 
 def test_call_edge_cannot_override_the_raw_target() -> None:
@@ -756,15 +771,16 @@ def test_unrelated_reference_is_not_an_import_witness() -> None:
     assert binding.identity is None and binding.gap == "missing_or_ambiguous_got_slot"
 
 
-def test_version_identity_and_binding_inputs_stay_distinct() -> None:
+def test_candidate_derives_version_identity_and_checks_proof() -> None:
     original, document = fixture()
     binary = bytearray(original)
     pack_into("<H", binary, 0xAC2, 0x8002)
     lift, _, proof = evidence(bytes(binary), document)
     bindings = bind_imports(bytes(binary), lift, proof)
     assert bindings[0].identity is not None and bindings[0].identity.version_hidden
-    with pytest.raises(MappingError, match="different evidence"):
-        make_candidate(lift, proof, (replace(bindings[0], binary_sha256="0" * 64),))
+    assert make_candidate(bytes(binary), lift, proof).imports == bindings
+    with pytest.raises(MappingError, match="address proof differs"):
+        make_candidate(bytes(binary), lift, replace(proof, sha256="0" * 64))
 
 
 def test_gnu_hash_bounds_and_malformed_chain() -> None:
@@ -1077,7 +1093,7 @@ def test_unmapped_analyzed_proposal_has_explicit_gap() -> None:
     lift, _, proof = evidence(binary, document)
     assert (0x100100, "analyzed_site_has_no_instruction") in lift.gaps
     assert (0x100100, "analyzed_site_has_no_instruction") in make_candidate(
-        lift, proof, ()
+        binary, lift, proof
     ).gaps
 
 
@@ -1108,7 +1124,7 @@ def test_nonexecuting_bss_and_gap_instructions_are_unavailable(address: int) -> 
         proof.witness(GhidraVA(address))
     assert any(site == address for site, _ in proof.gaps)
     assert (address, "unavailable_function_entry") in make_candidate(
-        lift, proof, ()
+        binary, lift, proof
     ).gaps
 
 
@@ -1120,7 +1136,7 @@ def test_conflicting_call_edge_does_not_supply_a_static_target() -> None:
     assert proof.witness(GhidraVA(0x100105)).elf == 0x105
     bindings = bind_imports(binary, lift, proof)
     assert bindings[0].gap == "conflicting_call_target"
-    candidate = make_candidate(lift, proof, bindings)
+    candidate = make_candidate(binary, lift, proof)
     call = next(record for record in candidate.sites if record.ghidra == site)
     assert call.static_targets == ()
     assert (site, "conflicting_call_target") in candidate.gaps
@@ -1130,7 +1146,7 @@ def test_conflicting_edge_owner_does_not_supply_a_static_target() -> None:
     binary, document = fixture()
     document["call_edges"][0]["caller"] = loc(0x100140)
     lift, _, proof = evidence(binary, document)
-    candidate = make_candidate(lift, proof, ())
+    candidate = make_candidate(binary, lift, proof)
     call = next(site for site in candidate.sites if "direct_call" in site.roles)
     assert not call.static_targets
     assert (0x100100, "unavailable_or_conflicting_edge_owner") in candidate.gaps

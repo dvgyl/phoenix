@@ -56,8 +56,9 @@ binding, checked emitter, and protected writer passed fresh Sol review.
 Both public fragments retain all cases and defaults. Host syntax checks
 pass. The runtime caller and Linux behavior checks remain open.
 The structural schema 2 wire reader passed fresh Sol review and 596
-additional controls. Runtime mapping, frame admission, and live capture
-remain open. The reader has no production caller.
+additional controls. The static observation plan and shared physical
+transfer checks also passed fresh Sol review. Runtime mapping, frame
+admission, and live capture remain open. The wire has no production caller.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the
 external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
