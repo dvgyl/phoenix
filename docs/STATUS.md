@@ -51,11 +51,13 @@ Public static checks passed 16 configurations at `49202a7`. Sol and Astra
 passed the exact source review. The public observer controls passed.
 The reviewed conditional switch proof and optional graph publication
 are on main. They retain the ordinary lift and keep generation unchanged.
-The separate bounded C source parser passed on both public fixtures.
+The ordinary source observations, schema 3 publication, bounded C
+binding, checked emitter, and protected writer passed fresh Sol review.
+Both public fragments retain all cases and defaults. Host syntax checks
+pass. The runtime caller and Linux behavior checks remain open.
 The structural schema 2 wire reader passed fresh Sol review and 596
 additional controls. Runtime mapping, frame admission, and live capture
 remain open. The reader has no production caller.
-Production token binding and public target checks remain open.
 
 The internal free-space baseline is 14,432,616 KiB. The workspace is the
 external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and

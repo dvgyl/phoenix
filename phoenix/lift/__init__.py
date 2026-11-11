@@ -25,10 +25,13 @@ def lift_binary(
     max_heap_mib: int | None = None,
     mapping_companion: bool = False,
     switch_graphs: bool = False,
+    switch_source: bool = False,
 ) -> LiftResult:
     """Return the absolute path of the exported lift."""
     if switch_graphs and not mapping_companion:
         raise ValueError("Switch graphs require a mapping companion.")
+    if switch_source and not switch_graphs:
+        raise ValueError("Switch source evidence requires switch graphs.")
     if mapping_companion and max_heap_mib is None:
         max_heap_mib = 512
     if max_heap_mib is not None and (
@@ -115,6 +118,11 @@ def lift_binary(
                 "ExportLift.java",
                 str(staged),
                 *(
+                    [str(Path(staging) / "ordinary-switches.json")]
+                    if switch_source
+                    else []
+                ),
+                *(
                     [
                         "-postScript",
                         "ExportMapping.java",
@@ -163,6 +171,7 @@ def lift_binary(
                     original,
                     process.stdout,
                     switch_graphs=switch_graphs,
+                    switch_source=switch_source,
                 )
             except MappingError as error:
                 raise MappingError(f"{error}\n{process.stdout[-12000:]}") from error

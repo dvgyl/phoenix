@@ -660,3 +660,23 @@
   different evaluator revisions and worker sources. Do not count this
   as a same-revision Mac check. That check still needs refreshed images
   after the private author releases the Linux VM.
+
+## 2026-11-11. Integrate reviewed checked switch generation
+
+- Fresh Sol passed source observations at `1a5df5b`, schema 3
+  publication at `5ede39e`, and bounded binding, emission, and the
+  protected writer at `328b4f0`. Earlier HOLDs remain in the audit.
+  Integrated the exact reviewed source, tests, and two ADRs.
+- The reader proves exact identified UTF-8 source slices. The bounded
+  parser proves complete C syntax and exact marker correspondence.
+  Schema 3 binds ordinary and normalized artifacts to one generation.
+- The emitter retains every proved label and the unchanged arm, break,
+  and return bytes. Protected definitions and typed data precede model
+  declarations. The model cannot replace those definitions in cleanup
+  or repair. Both saved public fragments and writers passed the review.
+- Fresh controls rejected stale source, conflicting markers, wrong
+  selectors and data widths, aliasing, relocation overlaps, changed
+  protected bytes, and model replacements. Legacy initial and repair
+  prompts and project bytes stayed identical in direct comparisons.
+- The runtime pipeline caller remains isolated. No Linux behavior or
+  new evaluation result is claimed. M2 acceptance remains open.

@@ -13,6 +13,7 @@ from uuid import uuid4
 if TYPE_CHECKING:
     from phoenix.lift.index import LiftIndex
     from phoenix.lift.switch_artifacts import SwitchBundle
+    from phoenix.lift.switch_source import OrdinarySourceObservations
 
 GhidraVA = NewType("GhidraVA", int)
 FileOffset = NewType("FileOffset", int)
@@ -202,6 +203,32 @@ class LiftGeneration:
     lift: bytes
     mapping: LiftMapping
     switches: "SwitchBundle | None"
+    ordinary_switches: "OrdinarySourceObservations | None"
+
+
+def _read_ordinary_switches(
+    path: Path, index: "LiftIndex", bundle: "SwitchBundle"
+) -> "OrdinarySourceObservations":
+    from phoenix.lift.switch_source import parse_ordinary_source
+
+    remaining = 16 * 1024 * 1024 - bundle.artifact_bytes
+    if remaining <= 0:
+        raise MappingError("Combined switch evidence exceeds 16 MiB.")
+    try:
+        source = parse_ordinary_source(
+            bounded_read(path, limit=remaining, private=True), index
+        )
+    except OSError as error:
+        raise MappingError("Cannot read the ordinary switch evidence.") from error
+    graph_entries = {graph.function for graph in bundle.graphs} | {
+        entry for entry, _ in bundle.gaps
+    }
+    source_entries = {body.function for body in source.bodies} | {
+        entry for entry, _ in source.gaps
+    }
+    if graph_entries != source_entries:
+        raise MappingError("The ordinary and normalized switch scopes differ.")
+    return source
 
 
 def check_publication_paths(directory: Path, binary: Path) -> None:
@@ -229,8 +256,11 @@ def publish_generation(
     log: str,
     *,
     switch_graphs: bool = False,
+    switch_source: bool = False,
 ) -> Path:
     """Publish a complete generation from a private staging directory."""
+    if switch_source and not switch_graphs:
+        raise MappingError("Switch source evidence requires switch graphs.")
     staging = lift.parent
     for artifact in (lift, staging / "mapping.json"):
         if (
@@ -253,6 +283,12 @@ def publish_generation(
         bundle = read_switch_bundle(staging / "switches", index)
         record["schema_version"] = 2
         record["switch_manifest_sha256"] = bundle.manifest_sha256
+        if switch_source:
+            source = _read_ordinary_switches(
+                staging / "ordinary-switches.json", index, bundle
+            )
+            record["schema_version"] = 3
+            record["ordinary_switch_sha256"] = source.sha256
     with (staging / "ghidra.log").open("x", encoding="utf-8") as stream:
         stream.write(log)
     with (staging / "evidence-commit.json").open("x", encoding="utf-8") as stream:
@@ -269,6 +305,10 @@ def publish_generation(
         (staging / filename).rename(artifacts / filename)
     if switch_graphs:
         (staging / "switches").rename(artifacts / "switches")
+    if switch_source:
+        (staging / "ordinary-switches.json").rename(
+            artifacts / "ordinary-switches.json"
+        )
     check_publication_paths(directory, binary)
     if bounded_read(binary) != original:
         raise MappingError("The input binary changed during the lift.")
@@ -310,11 +350,12 @@ def read_generation(generation: Path, binary: bytes) -> LiftGeneration:
     except OSError as error:
         raise MappingError("The evidence publication is incomplete.") from error
     version = record.get("schema_version")
-    if type(version) is not int or version not in (1, 2):
+    if type(version) is not int or version not in (1, 2, 3):
         raise MappingError("Invalid evidence commit schema.")
     fields = "schema_version lift_sha256 mapping_sha256"
     switches = generation / "switches"
-    if version == 2:
+    ordinary = generation / "ordinary-switches.json"
+    if version >= 2:
         fields += " switch_manifest_sha256"
     else:
         try:
@@ -323,6 +364,17 @@ def read_generation(generation: Path, binary: bytes) -> LiftGeneration:
             pass
         else:
             raise MappingError("A schema 1 generation cannot contain switch evidence.")
+    if version == 3:
+        fields += " ordinary_switch_sha256"
+    else:
+        try:
+            ordinary.lstat()
+        except FileNotFoundError:
+            pass
+        else:
+            raise MappingError(
+                "The generation schema does not admit switch source evidence."
+            )
     object_fields(record, fields)
     if (
         digest(record["lift_sha256"]) != sha256(lift).hexdigest()
@@ -331,10 +383,17 @@ def read_generation(generation: Path, binary: bytes) -> LiftGeneration:
         raise MappingError("The evidence commit does not match its artifacts.")
     parsed, index = _validate_pair(lift, mapping, binary)
     bundle = None
-    if version == 2:
+    source = None
+    if version >= 2:
         from phoenix.lift.switch_artifacts import read_switch_bundle
 
         bundle = read_switch_bundle(switches, index)
         if bundle.manifest_sha256 != digest(record["switch_manifest_sha256"]):
             raise MappingError("The switch manifest differs from the evidence commit.")
-    return LiftGeneration(lift, parsed, bundle)
+        if version == 3:
+            source = _read_ordinary_switches(ordinary, index, bundle)
+            if source.sha256 != digest(record["ordinary_switch_sha256"]):
+                raise MappingError(
+                    "The ordinary switch artifact differs from the evidence commit."
+                )
+    return LiftGeneration(lift, parsed, bundle, source)
