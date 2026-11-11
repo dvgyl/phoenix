@@ -12,6 +12,8 @@ from phoenix.lift.mapping import GhidraVA, MappingError
 from phoenix.observe.plan import Call, TracePlan, TraceSite, build_trace_plan
 from phoenix.recover.addresses import AddressProof, ElfVA, InstructionWitness
 from phoenix.recover.imports import (
+    _ENDBR64,
+    _NOPS,
     ImportBinding,
     ImportId,
     _bind_checked_imports,
@@ -32,6 +34,30 @@ type RejectCode = Literal[
     "scope_guard",
     "nonreturn_contract",
 ]
+
+_ORDINARY_INPUTS = {
+    **dict.fromkeys(
+        (
+            "COPY INT_ZEXT INT_SEXT INT_2COMP INT_NEGATE BOOL_NEGATE "
+            "FLOAT_NAN FLOAT_NEG FLOAT_ABS FLOAT_SQRT FLOAT_INT2FLOAT "
+            "FLOAT_FLOAT2FLOAT FLOAT_TRUNC FLOAT_CEIL FLOAT_FLOOR FLOAT_ROUND "
+            "POPCOUNT LZCOUNT"
+        ).split(),
+        1,
+    ),
+    **dict.fromkeys(
+        (
+            "LOAD PIECE SUBPIECE INT_EQUAL INT_NOTEQUAL INT_SLESS INT_SLESSEQUAL "
+            "INT_LESS INT_LESSEQUAL INT_ADD INT_SUB INT_CARRY INT_SCARRY "
+            "INT_SBORROW INT_XOR INT_AND INT_OR INT_LEFT INT_RIGHT INT_SRIGHT "
+            "INT_MULT INT_DIV INT_SDIV INT_REM INT_SREM BOOL_XOR BOOL_AND "
+            "BOOL_OR FLOAT_EQUAL FLOAT_NOTEQUAL FLOAT_LESS FLOAT_LESSEQUAL "
+            "FLOAT_ADD FLOAT_SUB FLOAT_MULT FLOAT_DIV"
+        ).split(),
+        2,
+    ),
+    "STORE": 3,
+}
 
 
 def _canonical(record: object, limit: int) -> bytes:
@@ -611,9 +637,8 @@ def _user_rule(
     sites: dict[ElfVA, TraceSite],
     witnesses: dict[ElfVA, InstructionWitness],
 ) -> GuardRule:
-    branch = _branch(
-        witness, lift.instructions[witness.ghidra], witnesses, checked.proof
-    )
+    instruction = lift.instructions[witness.ghidra]
+    branch = _branch(witness, instruction, witnesses, checked.proof)
     if branch is not None:
         return branch
     fact = checked.sites.get(witness.ghidra)
@@ -653,6 +678,23 @@ def _user_rule(
         return PlannedRoles(transfer.kind, None, None)
     if _control_bytes(witness.data):
         return Reject("unsupported_transfer_encoding")
+    neutral = witness.data in _NOPS or (
+        witness.data == _ENDBR64 and witness.ghidra == witness.owner
+    )
+    if not instruction.pcode and not neutral:
+        return Reject("missing_ordinary_evidence")
+    for operation in instruction.pcode:
+        if _ORDINARY_INPUTS.get(operation.opcode) != len(operation.inputs) or (
+            operation.output is None
+        ) != (operation.opcode == "STORE"):
+            return Reject("unsupported_ordinary_pcode")
+        if neutral and (
+            operation.opcode != "COPY"
+            or operation.output is None
+            or operation.output.address.space != "register"
+            or operation.inputs != (operation.output,)
+        ):
+            return Reject("conflicting_neutral_pcode")
     adjacent = witnesses.get(ElfVA(witness.elf + len(witness.data)))
     if adjacent is None or adjacent.owner != witness.owner:
         return Reject("unavailable_same_owner_fallthrough")
@@ -660,7 +702,7 @@ def _user_rule(
 
 
 def _control_bytes(data: bytes) -> bool:
-    # Missing raw p-code cannot turn a known control encoding into fallthrough.
+    # These vetoes do not prove that other bytes have ordinary flow.
     cursor = 0
     while cursor < len(data) and (
         data[cursor]
@@ -671,7 +713,7 @@ def _control_bytes(data: bytes) -> bool:
     if cursor == len(data):
         return True
     opcode = data[cursor]
-    if opcode == 0xC7 and data[cursor + 1 : cursor + 2] == b"\xf8":
+    if opcode in (0xC6, 0xC7) and data[cursor + 1 : cursor + 2] == b"\xf8":
         return True
     if opcode in (
         0x9A,

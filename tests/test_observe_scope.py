@@ -941,3 +941,294 @@ def test_unmapped_omitted_owner_keeps_its_gaps_dormant() -> None:
     gaps = [g for g in selected.gap_dispositions if g.address in (0x100170, 0x100180)]
     assert gaps and all(isinstance(g.disposition, DormantOutsideWindow) for g in gaps)
     assert selected.active_unlisted == "reject"
+
+
+@pytest.mark.parametrize("immediate", range(256))
+def test_xabort_requires_rejection_without_a_transaction_entry_precondition(
+    immediate: int,
+) -> None:
+    binary, document = control(bytes((0xC6, 0xF8, immediate)), None)
+    assert isinstance(guard(compile_scope(binary, document)), Reject)
+
+
+@pytest.mark.parametrize(
+    "prefix",
+    (
+        "",
+        "66",
+        "67",
+        "f0",
+        "f2",
+        "f3",
+        "2e",
+        "36",
+        "3e",
+        "26",
+        "64",
+        "65",
+        "40",
+        "48",
+        "4f",
+        "666748",
+        "f26648",
+    ),
+)
+@pytest.mark.parametrize("data", ("c6f800", "c7f800000000", "c7f80000"))
+@pytest.mark.parametrize("raw_evidence", ("empty", "copy", "callother"))
+def test_transaction_bytes_reject_with_missing_or_conflicting_raw_evidence(
+    prefix: str,
+    data: str,
+    raw_evidence: str,
+) -> None:
+    binary, document = control(bytes.fromhex(prefix + data), None)
+    register = operand(0, "register")
+    if raw_evidence != "empty":
+        document["functions"][0]["instructions"][1]["pcode"] = [
+            op(
+                0x100105,
+                "COPY" if raw_evidence == "copy" else "CALLOTHER",
+                [register],
+                register if raw_evidence == "copy" else None,
+            )
+        ]
+    assert isinstance(guard(compile_scope(binary, document)), Reject)
+
+
+@pytest.mark.parametrize(
+    "data",
+    (
+        "4889c0",
+        "31c0",
+        "c6c000",
+        "c7c000000000",
+        "c6f000",
+        "c6f900",
+        "c7f900000000",
+        "0f01d5",
+        "0f01d6",
+        "f390",
+        "4190",
+        "6691",
+        "0f1e00",
+        "0f1f08",
+        "f00f1f00",
+        "9090",
+        "c6",
+        "c6f8",
+        "c7",
+        "0f",
+        "f3",
+        "66",
+        "48",
+        "0f1f",
+        "0f1f40",
+        "0f1f400000",
+    ),
+)
+def test_empty_raw_contract_rejects_every_unproved_form(data: str) -> None:
+    """Empty MOV and XOR evidence is an explicit capability restriction."""
+    binary, document = control(bytes.fromhex(data), None)
+    assert isinstance(guard(compile_scope(binary, document)), Reject)
+
+
+@pytest.mark.parametrize(
+    "data",
+    (
+        "90",
+        "6690",
+        "0f1f00",
+        "0f1f4000",
+        "0f1f440000",
+        "660f1f440000",
+        "0f1f8000000000",
+        "0f1f840000000000",
+        "660f1f840000000000",
+    ),
+)
+@pytest.mark.parametrize("with_identity_copy", (False, True))
+def test_exact_neutral_bytes_supply_bounded_ordinary_evidence(
+    data: str,
+    with_identity_copy: bool,
+) -> None:
+    binary, document = control(bytes.fromhex(data), None)
+    if with_identity_copy:
+        register = operand(0, "register")
+        document["functions"][0]["instructions"][1]["pcode"] = [
+            op(0x100105, "COPY", [register], register)
+        ]
+    assert guard(compile_scope(binary, document)) == Ordinary(
+        ElfVA(0x105 + len(bytes.fromhex(data)))
+    )
+
+
+@pytest.mark.parametrize("data", ("90", "6690", "0f1f00"))
+@pytest.mark.parametrize("opcode", ("COPY", "INT_ADD", "STORE", "CALLOTHER", "CBRANCH"))
+def test_neutral_bytes_do_not_hide_conflicting_raw_operations(
+    data: str,
+    opcode: str,
+) -> None:
+    binary, document = control(bytes.fromhex(data), None)
+    register = operand(0, "register")
+    arguments = [operand(1, "const")]
+    if opcode == "INT_ADD":
+        arguments.append(register)
+    if opcode == "STORE":
+        arguments = [operand(0, "const"), register, register]
+    document["functions"][0]["instructions"][1]["pcode"] = [
+        op(0x100105, opcode, arguments, None if opcode == "STORE" else register)
+    ]
+    assert isinstance(guard(compile_scope(binary, document)), Reject)
+
+
+@pytest.mark.parametrize("at_entry", (False, True))
+def test_empty_endbr64_needs_the_proved_owner_entry(at_entry: bool) -> None:
+    binary, document = control(bytes.fromhex("f30f1efa"), None)
+    address = 0x105
+    if at_entry:
+        image = bytearray(binary)
+        image[0x100:0x105] = bytes.fromhex("f30f1efac3")
+        function = document["functions"][0]
+        instruction = deepcopy(function["instructions"][1])
+        instruction["address"] = loc(0x100100)
+        terminal = deepcopy(function["instructions"][-1])
+        terminal.update(
+            address=loc(0x100104),
+            pcode=[op(0x100104, "RETURN", [operand(0, "register")])],
+        )
+        function["instructions"] = [instruction, terminal]
+        function["ranges"][0]["end"] = loc(0x100104)
+        document["call_edges"] = []
+        binary = bytes(image)
+        address = 0x100
+    result = guard(compile_scope(binary, document), address)
+    if at_entry:
+        assert result == Ordinary(ElfVA(0x104))
+    else:
+        assert result == Reject("missing_ordinary_evidence")
+
+
+def ordinary_data_control(data: str) -> tuple[bytes, dict[str, Any]]:
+    """Supply explicit raw operations for the revised ordinary controls."""
+    binary, document = control(bytes.fromhex(data), None)
+    register = operand(0, "register")
+    byte_register = dict(register, size=1)
+    zero = dict(operand(0, "const"), size=1)
+    if data == "4889c0":
+        operations = [op(0x100105, "COPY", [register], register)]
+    elif data == "c6c000":
+        operations = [op(0x100105, "COPY", [zero], byte_register)]
+    elif data == "31c0":
+        low = dict(register, size=4)
+        operations = [
+            op(0x100105, "INT_XOR", [low, low], low),
+            op(0x100105, "INT_ZEXT", [low], register, 1),
+        ]
+        for index, (flag, value) in enumerate(
+            ((0x200, 0), (0x20B, 0), (0x207, 0), (0x206, 1), (0x202, 1)), 2
+        ):
+            operations.append(
+                op(
+                    0x100105,
+                    "COPY",
+                    [dict(zero, address=loc(value, "const"))],
+                    dict(byte_register, address=loc(flag, "register")),
+                    index,
+                )
+            )
+    elif data == "488b03":
+        operations = [
+            op(
+                0x100105,
+                "LOAD",
+                [operand(0, "const"), operand(0x18, "register")],
+                register,
+            )
+        ]
+    else:
+        assert data == "488903"
+        operations = [
+            op(
+                0x100105,
+                "STORE",
+                [operand(0, "const"), operand(0x18, "register"), register],
+            )
+        ]
+    document["functions"][0]["instructions"][1]["pcode"] = operations
+    return binary, document
+
+
+@pytest.mark.parametrize("data", ("4889c0", "31c0", "c6c000", "488b03", "488903"))
+def test_revised_ordinary_positive_has_explicit_raw_data_evidence(data: str) -> None:
+    binary, document = ordinary_data_control(data)
+    assert guard(compile_scope(binary, document)) == Ordinary(
+        ElfVA(0x105 + len(bytes.fromhex(data)))
+    )
+
+
+@pytest.mark.parametrize(
+    "opcode",
+    (
+        "UNKNOWN",
+        "UNIMPLEMENTED",
+        "MULTIEQUAL",
+        "INDIRECT",
+        "CALLOTHER",
+        "CPOOLREF",
+        "NEW",
+    ),
+)
+def test_nonempty_unknown_or_pseudo_pcode_cannot_prove_ordinary_flow(
+    opcode: str,
+) -> None:
+    binary, document = ordinary_data_control("c6c000")
+    document["functions"][0]["instructions"][1]["pcode"][0]["opcode"] = opcode
+    assert isinstance(guard(compile_scope(binary, document)), Reject)
+
+
+@pytest.mark.parametrize(
+    "fault", ("no_output", "no_inputs", "extra_input", "raw_transfer")
+)
+def test_incomplete_or_conflicting_ordinary_raw_evidence_rejects(fault: str) -> None:
+    binary, document = ordinary_data_control("c6c000")
+    operations = document["functions"][0]["instructions"][1]["pcode"]
+    if fault == "no_output":
+        operations[0]["output"] = None
+    elif fault == "no_inputs":
+        operations[0]["inputs"] = []
+    elif fault == "extra_input":
+        operations[0]["inputs"].append(operand(0, "register"))
+    else:
+        operations.append(op(0x100105, "CALLOTHER", [operand(0, "const")], index=1))
+    assert isinstance(guard(compile_scope(binary, document)), Reject)
+
+
+@pytest.mark.parametrize("data", ("e83b000000", "ffd0", "c3", "7503", "eb03"))
+def test_valid_data_operation_cannot_hide_physical_control(data: str) -> None:
+    binary, document = control(bytes.fromhex(data), None)
+    register = operand(0, "register")
+    document["functions"][0]["instructions"][1]["pcode"] = [
+        op(0x100105, "COPY", [register], register)
+    ]
+    assert isinstance(guard(compile_scope(binary, document)), Reject)
+
+
+@given(st.binary(min_size=1, max_size=15))
+@settings(max_examples=150, deadline=None)
+def test_empty_raw_pcode_never_proves_an_unlisted_ordinary_form(data: bytes) -> None:
+    binary, document = control(data, None)
+    result = guard(compile_scope(binary, document))
+    if isinstance(result, Ordinary):
+        assert data.hex() in {
+            "90",
+            "6690",
+            "0f1f00",
+            "0f1f4000",
+            "0f1f440000",
+            "660f1f440000",
+            "0f1f8000000000",
+            "0f1f840000000000",
+            "660f1f840000000000",
+        }
+        assert result.successor == 0x105 + len(data)
+    else:
+        assert isinstance(result, Reject)

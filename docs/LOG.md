@@ -725,3 +725,21 @@
   Added permanent controls for all three defect groups. The supplied-object
   scope boundary changed. The shared transfer checker remains unchanged.
   Fresh review remains required. No target ran or sealed data changed.
+
+## 2026-11-11. Require positive ordinary-instruction evidence
+
+- A second independent scope review held b42a7a2 because XABORT still
+  received an ordinary guard with missing raw evidence. A fresh Astra
+  worker tested the shared premise and corrected that decision.
+- Empty raw p-code now requires an exact neutral-byte proof. Other
+  instructions require supported core data operations with valid shapes.
+  A same-owner successor remains required. This is conditional on a
+  complete, faithful lift. It is not independent ISA semantics proof.
+- All 16 public E1 plans remain byte-identical. Their scope records differ
+  only in policy source identity. No new public rejection appeared.
+  The expanded existing suite passed 898 tests. Supported original and
+  fresh reviewer subsets passed. Three old empty-evidence expectations
+  remain explicit contract mismatches in their unchanged full runs.
+- The parent read the complete correction and repeated the supported
+  controls, public comparison, premise check, types, lint, and artifacts.
+  Fresh independent review remains required. No target ran.

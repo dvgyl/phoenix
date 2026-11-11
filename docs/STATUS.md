@@ -66,7 +66,9 @@ external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
 review after each major block and Astra review where required.
 
 The requested observation scope is implemented on this isolated branch.
-Its static tests pass. Independent source review and live capture remain open.
+Astra corrected its missing-evidence rule after two review holds. Static
+checks pass under the declared stricter contract. Fresh review and live
+capture remain open.
 
 ## Next actions
 
