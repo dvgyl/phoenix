@@ -68,6 +68,10 @@ external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
 2 GiB of memory. Use Standard service. Obtain a fresh independent Sol
 review after each major block and Astra review where required.
 
+This isolated branch adds exact-byte capture admission. Its synthetic checks
+pass. Scope correction, frame review, collector calibration, and this block
+require independent closure before recovery use.
+
 ## Next actions
 
 1. Refresh worker images and pass public evaluator gates before a new

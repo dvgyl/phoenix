@@ -735,3 +735,19 @@
 - No target ran. The separate Corpus Author health check reported a
   healthy bounded validation batch, progress, and no owner action.
   The Linux VM remains private. Source and held-out inputs stay sealed.
+
+## 2026-11-11. Check exact saved capture bytes
+
+- Added an outer byte boundary for the required Astra frame design.
+  It rebuilds source proof, plan, and scope, checks raw receipt and runtime
+  identity, and requires the complete accepted outcome before reduction.
+- Added a conservative complete-image range check for opaque transfers
+  and both root addresses. This includes gaps between load segments.
+  The reviewed lower mapper source stays unchanged.
+- The four-module synthetic suite passed 100 tests. The two new modules
+  have 95 percent line coverage. No collector, target, or provider ran.
+  Exact scope correction and frame dependencies are included for checks.
+  Their reviews and this block's fresh review remain required.
+- The first raw tests had 49 passes and 3 failures. The corrected test keeps
+  equivalent mapping formatting valid. The new range check rejects the
+  original-image gap. All original logs remain in the local audit record.
