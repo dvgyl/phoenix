@@ -66,6 +66,18 @@
       "source": "/Volumes/PhoenixWork/audit/m2-collector-header-review-astra-20261112/report.md",
       "sha256": "bad51036c1516c0c545a51e4cee07fbccbf1898ca17c0f96aec7ac6372bf3621",
       "bytes": 22151
+    },
+    {
+      "file": "project-profile-reader-sol.md",
+      "source": "/Volumes/PhoenixWork/audit/m3-project-profile-reader-review-sol-20261112/report.md",
+      "sha256": "9bf76473833f009288f734677a5570a8dd6fd42ab223fb918f6d4b8be8aa9da0",
+      "bytes": 19610
+    },
+    {
+      "file": "project-profile-reader-astra.md",
+      "source": "/Volumes/PhoenixWork/audit/m3-project-profile-reader-review-astra-20261112/report.md",
+      "sha256": "cf62555f959616180ec77a4c92033cbf9cf9657375c3b5fcf027c1a8f4244bd0",
+      "bytes": 25273
     }
   ]
 }

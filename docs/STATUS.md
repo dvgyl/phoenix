@@ -119,6 +119,20 @@ syntax and field-layout checks passed. Four altered declarations failed
 as required. Main contains the exact five reviewed files. These checks
 do not prove compiled retention or authorize runtime capture.
 
+The pure project-profile reader passed fresh independent Sol and Astra
+reviews at `6d00328`. The parent repeated all 1,508 Sol and 1,185 Astra
+controls. Main contains the exact reviewed source, tests, and ADR0039.
+The worker's dispatcher-log read error remains documented. Both reviews
+accept the code only. Actual source bytes, compiler evidence, origin facts,
+shared declarations, and production v2 remain open. Later adapters must
+carry evaluator-owned reduced limits separately. Current worker images
+need the new source identity before the next Linux validation.
+
+The user requested a timed pause and handoff. Stop new dispatch at
+00:56:47 UTC on 13 November. Pause all workers, queues, and the Phoenix VM
+by 01:11:47 UTC. Preserve pending files and publish the resume checkpoint.
+Do not resume without a new user instruction.
+
 ## Next actions
 
 1. Implement compiled-table inspection and trusted build issuance under

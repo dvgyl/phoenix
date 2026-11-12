@@ -921,3 +921,28 @@
 - The separate private T2 Author retains the VM. The public byte producer
   and pure multi-file project reader are isolated work units. No new
   reconstruction score, corpus disclosure, or milestone tag is supplied.
+
+## 2026-11-12. Integrate the reviewed pure project-profile reader
+
+- Fresh independent Sol and Astra passed exact `6d00328`. The parent read
+  both complete reports and final source. The parent repeated all 1,508
+  Sol controls and all 1,185 Astra controls under their unchanged guards.
+  All passed. Earlier worker and review failures remain preserved.
+- Copied the exact source, tests, and ADR0039. All earlier main source
+  remains unchanged. Every source dependency shared with the reviewed
+  branch matches. Published both exact reports and their hash entries.
+- P1 retains complete immutable metadata and fixed supplied CMake bytes.
+  It grants no source, origin, compiler, type, integrity, or process
+  authority. P2 must carry evaluator-owned limits and policy separately.
+  P4/P5 must discover complete declarations and users independently.
+- Both reviews retain the worker's prohibited public event-file checksum
+  reads as a separate process finding. No worker process-assurance claim
+  is made. The v5 guard blocks future dispatcher-data reads. Public
+  positive and negative controls passed. Active older guards were unchanged.
+- No v1 schema, pin, caller, or old CMake constant changed. Production v2
+  remains on HOLD. Current images must bind the changed complete worker
+  source identity before Linux checks. The private Author retains the VM.
+- The user requested a three-hour pause and handoff. The native one-time
+  automation and local dispatch-marker timer are set. Drain at 00:56:47 UTC
+  on 13 November. Stop all workers, queues and the VM by 01:11:47 UTC.
+  Preserve private sealing, pending public files and every open gate.
