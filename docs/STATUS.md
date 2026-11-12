@@ -65,9 +65,10 @@ external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
 2 GiB of memory. Use Standard service. Obtain a fresh independent Sol
 review after each major block and Astra review where required.
 
-A pure frame reducer is implemented on this isolated branch. Astra corrected
-its local retention errors. Every rejection now exports no local facts.
-Fresh review, the exact-byte capture boundary, and live collector remain open.
+The revised pure frame contract passed fresh Sol review at `b85feba`.
+This checkpoint now uses the exact reviewed `09e984b` scope files.
+The combined host suite passed 1,093 tests. Exact dependency-port review
+and live collector checks remain open. No runtime admission is claimed.
 
 ## Next actions
 
@@ -79,3 +80,16 @@ Fresh review, the exact-byte capture boundary, and live collector remain open.
 4. Finish private T2 validation. Validate T3 in a separate Linux window.
 5. Complete M2 through M4, publish the required artifacts, and replay every
    headline result.
+
+## Resume on 2026-11-12
+
+The owner resumed work through SPEC section 9. All ten paused files match
+the saved manifest. Scope source, tests, and ADR match `09e984b` exactly.
+The ADR is staged. Full quality checks and fresh independent Sol
+dependency-port review remain required. The full capture review is open.
+The corpus remains agent-sealed. No new milestone result is claimed.
+
+The resumed full quality gate passed. Lint, format, and strict type
+checks passed. The test summary is `2040 passed, 26 skipped in 428.35s (0:07:08)`.
+Fresh independent dependency review remains required. The full capture
+review and all live gates remain open.
