@@ -105,7 +105,7 @@ Complete static collector data passed fresh Sol review at `63dd985`. The
 parent repeated all 1,130 affected tests and all 47 new independent controls.
 Main contains the exact reviewed source. The data-byte cap limits the
 artifact size. It does not claim a total Python memory bound. The typed
-header renderer is a separate work unit.
+header renderer is a separate reviewed work unit.
 The byte-graph reader passed fresh Sol review at `fbcdab5`. Main contains
 the exact reviewed source. All 525 parent host tests and all 651 independent
 controls passed. The source-token reader passed fresh Sol review at `f783c35` after F1.
@@ -113,10 +113,16 @@ The parent repeated all 724 independent controls. Main contains the exact
 reviewed source. The original HOLD and correction PASS are both preserved. These pure units
 do not authorize production capture or byte-idiom emission.
 
+The typed header unit passed fresh independent Sol and Astra reviews at
+`501c937`. The parent repeated all 146 Sol and 276 Astra controls. Native
+syntax and field-layout checks passed. Four altered declarations failed
+as required. Main contains the exact five reviewed files. These checks
+do not prove compiled retention or authorize runtime capture.
+
 ## Next actions
 
-1. Implement and review complete collector data, typed headers, and build
-   issuance under the corrected Astra design. Keep full capture review open.
+1. Implement compiled-table inspection and trusted build issuance under
+   the corrected Astra design. Keep the full capture review open.
 2. After the private Author releases the VM, preserve M1 image identities,
    refresh current images, and pass the public switch and collector gates.
 3. Complete indirect-call recovery, byte idioms, exact fault localization,

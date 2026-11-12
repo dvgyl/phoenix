@@ -900,3 +900,24 @@
   ADR0003 records that placement. Its package coverage gate remains at
   85 percent. Missing duplicate directory names are not separate measured
   packages. A no-data query was not counted as a coverage pass.
+
+## 2026-11-12. Integrate the reviewed typed collector header
+
+- Fresh independent Sol and Astra passed exact `501c937`. The parent read
+  both complete reports and the full implementation. The parent repeated
+  all 1,396 affected host tests, all 146 Sol controls, and all 276 Astra
+  controls. All passed. A failed first Sol setup remains preserved. Its
+  temporary directory was corrected without changing the guard or tests.
+- Native syntax checks passed 3,278 Sol field assertions and 1,306 Astra
+  field assertions for each Darwin architecture. Four deliberate native
+  declaration mutations were detected. No target was linked or executed.
+- Copied the exact five source, test, and ADR files. All earlier main
+  implementation remains unchanged. Published both exact review reports
+  and their hashes. The fixed directory represents all 47 typed tables.
+- Independent source decoding does not inspect compiled constants. The
+  actual plugin reader, compiled retention, trusted issuance, calibration,
+  full capture review, and production binding remain open. The source
+  and logical-data caps do not claim a total Python memory bound.
+- The separate private T2 Author retains the VM. The public byte producer
+  and pure multi-file project reader are isolated work units. No new
+  reconstruction score, corpus disclosure, or milestone tag is supplied.
