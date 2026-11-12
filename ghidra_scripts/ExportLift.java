@@ -111,7 +111,8 @@ public class ExportLift extends GhidraScript {
     @Override
     public void run() throws Exception {
         String[] args = getScriptArgs();
-        if (args.length < 1 || args.length > 2) {
+        boolean byteDiagnostic = args.length == 4 && args[1].equals("--byte-diagnostic");
+        if (!byteDiagnostic && (args.length < 1 || args.length > 2)) {
             throw new IllegalArgumentException(
                     "Supply the lift path and an optional ordinary switch evidence path.");
         }
@@ -120,7 +121,9 @@ public class ExportLift extends GhidraScript {
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .serializeNulls().disableHtmlEscaping().create();
         OrdinarySwitchEvidence switches = args.length == 2 ? new OrdinarySwitchEvidence(gson) : null;
-        LiftExport export = collectEvidence(switches);
+        OrdinaryByteEvidence bytes = byteDiagnostic ? new OrdinaryByteEvidence(currentProgram,
+                getSourceFile().getFile(false).toPath().getParent(), Path.of(args[3])) : null;
+        LiftExport export = collectEvidence(switches, bytes);
         Path partial = Files.createTempFile(output.getParent(), ".lift-", ".json");
         try {
             try (BufferedWriter writer = Files.newBufferedWriter(partial)) {
@@ -131,17 +134,21 @@ public class ExportLift extends GhidraScript {
         } finally {
             Files.deleteIfExists(partial);
         }
+        if (bytes != null) {
+            bytes.write(Path.of(args[2]));
+        }
         if (switches != null) {
             switches.write(Path.of(args[1]), output, currentProgram.getExecutableSHA256());
         }
     }
 
-    private LiftExport collectEvidence(OrdinarySwitchEvidence switches) throws Exception {
+    private LiftExport collectEvidence(OrdinarySwitchEvidence switches, OrdinaryByteEvidence bytes) throws Exception {
         Listing listing = currentProgram.getListing();
         FunctionManager functions = currentProgram.getFunctionManager();
         BasicBlockModel blockModel = new BasicBlockModel(currentProgram);
         List<LiftedFunction> lifted = new ArrayList<>();
         MainEvidence main = recoverGlibcMain(listing, functions);
+        if (bytes != null) { bytes.checkRoster(functions); }
         DecompInterface decompiler = new DecompInterface();
         try {
             if (!decompiler.openProgram(currentProgram)) {
@@ -149,7 +156,7 @@ public class ExportLift extends GhidraScript {
             }
             for (Function function : functions.getFunctions(true)) {
                 monitor.checkCancelled();
-                lifted.add(liftFunction(function, listing, blockModel, decompiler, switches));
+                lifted.add(liftFunction(function, listing, blockModel, decompiler, switches, bytes));
             }
         } finally {
             decompiler.dispose();
@@ -226,7 +233,7 @@ public class ExportLift extends GhidraScript {
     }
 
     private LiftedFunction liftFunction(Function function, Listing listing, BasicBlockModel model,
-            DecompInterface decompiler, OrdinarySwitchEvidence switches) throws Exception {
+            DecompInterface decompiler, OrdinarySwitchEvidence switches, OrdinaryByteEvidence bytes) throws Exception {
         AddressSetView body = function.getBody();
         List<DecodedInstruction> instructions = new ArrayList<>();
         boolean switchCandidate = false;
@@ -268,14 +275,14 @@ public class ExportLift extends GhidraScript {
                 function.getReturnType().getPathName(), parameters, function.hasVarArgs());
         Function thunk = function.getThunkedFunction(true);
         Decompiled decoded = decompile(function, decompiler,
-                switchCandidate && !function.isThunk() ? switches : null);
+                switchCandidate && !function.isThunk() ? switches : null, bytes);
         return new LiftedFunction(location(function.getEntryPoint()), function.getName(), signature,
                 thunk == null ? null : location(thunk.getEntryPoint()), ranges(body),
                 decoded.code(), instructions, blocks, edges, staticEvidence(function, decoded.high()));
     }
 
     private Decompiled decompile(Function function, DecompInterface decompiler,
-            OrdinarySwitchEvidence switches) throws Exception {
+            OrdinarySwitchEvidence switches, OrdinaryByteEvidence bytes) throws Exception {
         DecompileResults result = decompiler.decompileFunction(function, 60, monitor);
         var code = result.getDecompiledFunction();
         var high = result.getHighFunction();
@@ -291,6 +298,9 @@ public class ExportLift extends GhidraScript {
                 : code != null && high != null ? "ok" : "incomplete";
         if (switches != null) {
             switches.capture(function, result);
+        }
+        if (bytes != null) {
+            bytes.capture(function, result, decompiler);
         }
         return new Decompiled(new Decompilation(code == null ? null : code.getC(), status,
                 result.getErrorMessage(), analyzed, statements), high);

@@ -124,3 +124,26 @@ do not authorize production capture or byte-idiom emission.
 4. Finish private T2 and T3 qualification. Complete and replay M2 and M3.
 5. Freeze M4 with every baseline and ablation. Publish required artifacts
    and reproduce every headline result. Meet every SPEC section 9 condition.
+
+## 2026-11-12. Unpublished byte producer subunit
+
+The diagnostic exporter and converter are implemented in the isolated
+`agent/m2-byte-export-producer` worktree. They have no production caller.
+The host gate passed 775 tests with two live tests excluded. Ruff, strict
+mypy, and pinned Java compilation passed. A public static export retains
+all 19 functions. Ten have structural graphs and unavailable source
+observations. Nine have entry representation gaps. Zero complete printer
+observations were obtained. These are software checks, not evaluation scores.
+Ordinary lift and mapping bytes equal the base exporter and current default.
+Complete producer admission remains HOLD for dead-flag, entry-block, and
+zero-length printer-token API/profile issues. A separate adapter review is
+required. Independent review, publication version 4, recognition, source and
+interface proof, emission, live gates, and U5 remain open. The separate full
+capture review remains open after provider screening. No commit or push was
+made. Evidence is in `audit/m2-byte-export-producer-writer-astra-20261112`.
+
+The final producer host gate passed 781 tests with two live tests excluded.
+Final inspection found and corrected an error-handler defect in tool hashing.
+Two regression failures are preserved. Unexpected hash failures now keep their
+original exception. The final static export has the same 19 gap dispositions.
+Complete producer admission and every later gate remain open.

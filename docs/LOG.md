@@ -900,3 +900,65 @@
   ADR0003 records that placement. Its package coverage gate remains at
   85 percent. Missing duplicate directory names are not separate measured
   packages. A no-data query was not counted as a coverage pass.
+
+## 2026-11-12. Implement the unpublished ordinary byte producer subunit
+
+- Added an explicit optional diagnostic export argument to `ExportLift.java`.
+  The new helper receives the same ordinary `DecompileResults` object as raw C.
+  Existing readers, schema, launcher, publication, and generation stay unchanged.
+- Added closed conversion records, actual source/tool manifests, retained pass
+  configuration, complete function dispositions, and frozen unpublished results.
+  The converter inserts the exact completed lift digest and uses both strict
+  readers. It issues no generation and writes no current selector.
+- Pinned Java compilation and 775 combined host tests passed. Two live tests
+  were excluded. Ruff and strict mypy passed. Failed lint/type checks and two
+  test attempts remain in the assigned audit directory. The test failures
+  came from a retained fixture gap and wrong expected block IDs.
+- Ran static Ghidra analysis on the documented public E1 binary. No target
+  executed. The final result retains 19 functions. Ten complete structural
+  graphs contain 13 block-owned operations. Their actual Java dead flags remain
+  true and have explicit conflict gaps. Their printer observations are
+  unavailable because the printer contains zero-length tokens. Nine other
+  functions have analyzed entry starts outside the current entry profile.
+- The pinned decoder sets block parents without clearing the operation bank's
+  dead flag. The exporter retains both facts. It never discards block-owned
+  effects to satisfy a dead partition. It never changes observed block starts
+  or removes empty printer tokens to obtain a complete-source claim.
+- Compared base, current default, and diagnostic ordinary output. Lift and
+  mapping bytes agree exactly. Complete producer admission remains HOLD.
+  A separate adapter must resolve the observed API/profile issues.
+- No compiled byte-loop positive, interface proof, emitted function, live
+  behavior, new evaluation result, or milestone completion is claimed.
+  Version 4 publication, ByteLiftGeneration, recognition, source grammar,
+  interface checking, emission, and live gates remain separate. The full
+  capture review remains open after provider screening. No model, nested
+  agent, Docker action, VM action, commit, push, tag, or Git metadata write ran.
+
+- Final producer inspection found that the tool identity handler converted
+  unexpected ValueError and UnicodeError failures. Two focused controls
+  reproduced the defect. The handler now converts only expected I/O errors.
+  A separate native-decompiler presence check retains the finite tool error.
+  The failed source and log remain in the audit directory. All six exception
+  controls and the full 781-test host group passed after correction. Two live
+  tests remained excluded. Ruff, strict mypy, and Java compilation passed.
+  A fresh static export binds the final exact source manifest. It retains the
+  same 19 explicit gaps and the same ordinary lift and mapping bytes.
+
+## 2026-11-12. Check the ordinary byte diagnostic candidate
+
+- The parent read all 805 converter lines, all 631 Java helper lines, the
+  existing exporter diff, ADR, report, and selected test controls. Exact
+  allowed scope and all 222 unchanged older files passed verification.
+- The parent repeated 781 host tests with two live tests excluded. Pinned
+  Java compilation passed. A new static Ghidra job used the approved
+  public E1 binary. No target, Docker, or VM operation ran.
+- All six saved ordinary and diagnostic artifacts match the worker bytes.
+  The actual result has nine entry gaps and ten empty-printer-token gaps.
+  It has zero complete printer observations. Actual Java dead flags remain
+  retained conflict evidence. They do not prove native liveness.
+- Complete producer admission stays on HOLD. A separate Astra adapter
+  design must address all three pinned API/profile obstacles. No existing
+  graph or source reader, old publication, or production caller changed.
+- The mandatory full commit gate must pass before this diagnostic commits.
+  Fresh independent source review remains required. Full capture review
+  stays open after provider screening. No milestone result is supplied.
