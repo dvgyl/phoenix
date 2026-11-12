@@ -887,3 +887,198 @@
 - Preserved the interrupted public collector inputs and output files.
   No design approval or new source commit was completed. Added a dispatch
   pause marker. The original goal is paused and remains incomplete.
+
+## 2026-11-12. Prepare scope and pure-frame integration
+
+- The owner resumed the complete SPEC section 9 goal. The parent checked
+  the canonical checkpoint, all ten pending files, branch tips, workers,
+  VM state, and storage before it removed the pause marker.
+- Both exact scope dependency ports passed full checks and commit hooks.
+  Frame `94caeb4` and capture `a2af90c` are pushed and clean. The ADR is
+  tracked in both. Fresh independent Sol dependency review is running.
+- This isolated candidate copies exact scope, pure-frame records, reducer,
+  tests, and ADR bytes from `94caeb4`. Six shared files match main exactly.
+  The shared mapping reader differs only by an extracted selector helper.
+  Abstract syntax tree checks confirm unchanged selector validation and
+  all other module definitions. Current main mapping code is retained.
+- The policy digest must use the installed source. No old certificate is
+  copied or accepted by this integration. No frame algorithm changed.
+- The raw capture boundary remains on its isolated branch. Its full
+  review is open after provider screening. The parser-only PASS does
+  not close that review. All live collector gates remain open.
+- The corpus remains agent-sealed on an honor system. Separate private
+  Authors resume T2 validation and T3 source qualification. The parent
+  reads only approved aggregate status and handoffs.
+- Internal free space crossed the required threshold. The parent moved
+  the inactive Homebrew download cache to external storage. All 3,785
+  file and link records matched. The original path resolves through a
+  link. Internal free space recovered above the required threshold.
+
+- The combined scope, frame, mapping, plan, wire, and transfer suite
+  passed all 1,009 tests. The earlier preflight refusal changed no source.
+  A test command on the unchanged old branch collected no tests because
+  the new files were absent. The corrected command tested this candidate.
+
+## 2026-11-12. Integrate reviewed scope and pure-frame source
+
+- Fresh Sol passed exact dependency ports `94caeb4` and `a2af90c`.
+  The parent repeated all 27 frame and 32 capture dependency controls.
+  The full capture review remains open after provider screening.
+- Fresh Sol passed exact integration `e7c9450`. The parent repeated all
+  72 new integration controls. All seven source, test, and ADR files
+  match the reviewed source. Every earlier implementation file matches
+  main `3939fbc`. The shared mapping helper is retained unchanged.
+- Integrated the exact reviewed commit. The new modules have no pipeline
+  caller. Their canonical private checked-input contract remains explicit.
+- Correction. The earlier entry overstated certificate admission. Scope
+  compilation derives the installed policy. The pure reducer can accept
+  a coherent synthetic older selection and receipt. A future trusted
+  boundary must rebuild current scope before it calls the reducer.
+- The first collector design task returned HOLD without the required
+  Astra verdict after an unnecessary nested process failed file access.
+  A fresh direct Astra review approved the corrected design for implementation.
+  It requires trusted issuance, per-trial calibration, retained compiled
+  tables, exact launch records, and a complete new source manifest.
+- Pinned QEMU source supports completed-prior-store visibility for the
+  restricted synchronous eight-byte read contract. This is source evidence.
+  Actual collector calibration, implementation review, full capture review,
+  and production acceptance remain required. Accepted oracles stay fixed.
+- Published five exact public review records and their hash manifest.
+  No private source, held-out input, Author output, or large binary is included.
+- The separate private T3 Author qualified five source selections after
+  checking seven candidates and replacing two uncertain publication dates.
+  All five Linux runtime qualifications remain pending. T2 is incomplete.
+- M2 through M4, publication, every baseline and ablation, and every
+  required headline replay remain open. No milestone tag changed.
+
+## 2026-11-12. Verify the replacement native run
+
+- GitHub run `43289210443` passed at exact main `20402bc`. Both native
+  architectures and the native outcome comparison passed. The parent
+  downloaded both report archives and verified their GitHub SHA-256 values.
+- The evaluator revision, actual worker source digest, seed, case counts,
+  and complete public outcome digests agree. Each native report records
+  three self-trials, passing sandbox probes, and all public mutants killed.
+  Evidence remains in `audit/m2-ci-20402bc` outside the repository.
+- The current Mac comparison remains open. The separate private T2 Author
+  retains the VM. No parent Docker command or image change was made.
+- Static collector data is pushed at `63dd985` after the full quality gate.
+  The parent repeated all 1,130 affected host tests. Fresh Sol review is
+  independent of implementation. Typed headers are a separate work unit.
+- Astra finished the structural byte-graph reader. The parent read its
+  complete source and repeated 525 affected host tests. Its full gate and
+  fresh Sol review remain required. No byte emission is authorized.
+- The full capture review remains open after provider screening. Neither
+  pure data nor native toy checks replace it. No held-out score changed.
+
+## 2026-11-12. Integrate complete static collector data
+
+- Fresh independent Sol passed exact data commit `63dd985`. The parent
+  read the complete report and repeated all 47 new controls. All passed
+  under the unchanged private-data guard. The source remained unchanged.
+- Copied the exact three reviewed source, test, and ADR files. Every
+  implementation, test, pin, and configuration file now matches the
+  reviewed branch. Current main differs only in progress and review docs.
+- Published the exact review and its hash. The artifact-size limit does
+  not claim a total Python memory bound. Each retained import string
+  remains bounded by the existing 4,096-byte source reader limit.
+- Typed C rendering, compiled-table inspection, trusted build issuance,
+  calibration, and the full capture review remain open. This pure data
+  unit has no pipeline caller and grants no runtime authority.
+
+## 2026-11-12. Integrate the reviewed byte-graph reader
+
+- Fresh Sol passed exact graph commit `fbcdab5`. The parent read the full
+  report and repeated all 651 independent controls. All passed. The test
+  with 7,632 JSON replacements is one of those controls, not extra cases.
+- Copied the exact source, tests, and ADR0036. Every older main source
+  file remains unchanged. All source shared with the reviewed graph branch
+  matches it. Only the reviewed collector-data unit is additional on main.
+- Published the exact review and its hash. The graph remains structural
+  evidence. Pass identity, dead status, flags, actual block ownership and
+  a complete volatile inventory still require the future producer gate.
+- The source-token reader is a separate isolated candidate. It passed
+  617 affected host tests with two live tests excluded. Its full gate and
+  fresh Sol review remain required. Production U5 remains open.
+- The full capture review remains open after provider screening. No new
+  evaluation result, corpus disclosure, or milestone tag is supplied.
+
+## 2026-11-12. Integrate reviewed source observations
+
+- Fresh Sol held `8d167b1` for F1. Six controls reproduced broad error
+  conversion at the hash calls. The focused correction passed the full
+  quality gate and was pushed at `f783c35`. Fresh Sol passed that exact
+  unit and closed F1. Both reports are published with exact hashes.
+- The parent repeated all 639 unchanged independent controls and all
+  85 fresh controls under the unchanged private-data guard. All 724 passed.
+  All 628 affected host tests passed. Two live tests were excluded.
+- Copied the exact source, permanent tests, and ADR0038. Every earlier
+  main implementation remains unchanged. All files shared with the
+  reviewed source branch match. Only reviewed collector data is additional.
+- Parsing retains structural proposals. It does not authenticate complete
+  printer tokens, token associations, callable interfaces, or source
+  semantics. No generation or pipeline caller is added. Production U5
+  and the full capture review remain open.
+- Native workflow `43299149838` passed at exact `c806aa7`. Parent checks
+  verified both artifact hashes, worker source, native run identities,
+  seed, case counts, and full public outcomes. The native comparison
+  passed. Current Mac comparison still needs the private VM release.
+- Actual outcome and isolation code belongs to the independent evaluator.
+  ADR0003 records that placement. Its package coverage gate remains at
+  85 percent. Missing duplicate directory names are not separate measured
+  packages. A no-data query was not counted as a coverage pass.
+
+## 2026-11-12. Integrate the reviewed typed collector header
+
+- Fresh independent Sol and Astra passed exact `501c937`. The parent read
+  both complete reports and the full implementation. The parent repeated
+  all 1,396 affected host tests, all 146 Sol controls, and all 276 Astra
+  controls. All passed. A failed first Sol setup remains preserved. Its
+  temporary directory was corrected without changing the guard or tests.
+- Native syntax checks passed 3,278 Sol field assertions and 1,306 Astra
+  field assertions for each Darwin architecture. Four deliberate native
+  declaration mutations were detected. No target was linked or executed.
+- Copied the exact five source, test, and ADR files. All earlier main
+  implementation remains unchanged. Published both exact review reports
+  and their hashes. The fixed directory represents all 47 typed tables.
+- Independent source decoding does not inspect compiled constants. The
+  actual plugin reader, compiled retention, trusted issuance, calibration,
+  full capture review, and production binding remain open. The source
+  and logical-data caps do not claim a total Python memory bound.
+- The separate private T2 Author retains the VM. The public byte producer
+  and pure multi-file project reader are isolated work units. No new
+  reconstruction score, corpus disclosure, or milestone tag is supplied.
+
+## 2026-11-12. Integrate the reviewed pure project-profile reader
+
+- Fresh independent Sol and Astra passed exact `6d00328`. The parent read
+  both complete reports and final source. The parent repeated all 1,508
+  Sol controls and all 1,185 Astra controls under their unchanged guards.
+  All passed. Earlier worker and review failures remain preserved.
+- Copied the exact source, tests, and ADR0039. All earlier main source
+  remains unchanged. Every source dependency shared with the reviewed
+  branch matches. Published both exact reports and their hash entries.
+- P1 retains complete immutable metadata and fixed supplied CMake bytes.
+  It grants no source, origin, compiler, type, integrity, or process
+  authority. P2 must carry evaluator-owned limits and policy separately.
+  P4/P5 must discover complete declarations and users independently.
+- Both reviews retain the worker's prohibited public event-file checksum
+  reads as a separate process finding. No worker process-assurance claim
+  is made. The v5 guard blocks future dispatcher-data reads. Public
+  positive and negative controls passed. Active older guards were unchanged.
+- No v1 schema, pin, caller, or old CMake constant changed. Production v2
+  remains on HOLD. Current images must bind the changed complete worker
+  source identity before Linux checks. The private Author retains the VM.
+- The user requested a three-hour pause and handoff. The native one-time
+  automation and local dispatch-marker timer are set. Drain at 00:56:47 UTC
+  on 13 November. Stop all workers, queues and the VM by 01:11:47 UTC.
+  Preserve private sealing, pending public files and every open gate.
+
+## 2026-11-12. Prepare the timed continuation handoff
+
+- Merge main `2c9934a` into the existing handoff branch. Keep the old
+  handoff log as an exact prefix and preserve the complete main sequence.
+- Replace stale active snapshots with current units, review limits and
+  the user deadline. Final shutdown facts remain pending.
+- Preserve old archival patches and pending public work. Keep corpus
+  sources, held-out inputs and private Author output sealed.

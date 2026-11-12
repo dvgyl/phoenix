@@ -1,8 +1,5 @@
 # Phoenix status
 
-The owner requested a safe pause. The goal, workers, queues, and Linux VM
-are stopped. Read the pause update in `docs/HANDOFF.md` before resuming.
-
 M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
 M1 passed at `6897e4753d8acedfae57af63e6426faf116bed2e`.
 M2 work is in progress. No M2 result or later milestone is accepted.
@@ -44,15 +41,17 @@ and full outcome digests match the historical Mac run. The same-revision
 Mac check still needs refreshed images and the Linux VM. The later
 `3c11d94` native arm64 job passed. Its amd64 job reached the 30-minute
 limit during pinned integrity package downloads. The native job limit
-is now 60 minutes. Replacement run 42959082671 passed. Native run
-42959931595 at `3939fbc` also passed both architectures and their
-comparison. Its archive and report identities were verified. The current
-same-revision Mac check remains open.
+is now 60 minutes. The replacement native run at `20402bc` passed both
+architectures and the outcome comparison. The downloaded artifact hashes,
+worker source identity, and report bindings passed the parent check.
+Native `c806aa7` also passed both architectures and the outcome comparison.
+The parent verified its complete report bindings and archive hashes.
+The same-revision Mac comparison remains open until the private VM is free.
 [Capture issue](https://github.com/dvgyl/phoenix/issues/6).
 [Replay issue](https://github.com/dvgyl/phoenix/issues/5).
 
 T1 is sealed with 15 programs and 90 variants. Its source and input
-commitments are in the repository. T2 private validation is active. T3 has five source-screened selections and no runtime-qualified
+commitments are in the repository. T2 private validation is incomplete. A separate Corpus Author resumes it. T3 has five source-screened selections and no runtime-qualified
 batch. All source and held-out inputs stay sealed.
 
 The reviewed U1 lift evidence and opt-in recovery plan are on main.
@@ -80,34 +79,68 @@ external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
 2 GiB of memory. Use Standard service. Obtain a fresh independent Sol
 review after each major block and Astra review where required.
 
+## Current recovery work
+
+The exact scope and pure-frame files from `e7c9450` passed fresh Sol review.
+All 1,009 combined host tests passed. The parent repeated all 72 new
+integration controls. Existing pipeline and generation code remain unchanged.
+The reducer requires canonical private checked input. It does not authenticate
+a supplied selection or receipt. Every rejection returns no local values.
+
+The raw capture boundary remains isolated. Its full independent review is
+open after provider screening. The parser-only PASS does not replace it.
+Astra approved the corrected typed-header collector design for implementation.
+The corrections cover trusted build issuance, per-trial calibration,
+compiled-data retention, and exact launch and source identities.
+Production capture and all live collector gates remain open.
+
+T2 validation remains private and incomplete. Its separate Author retains
+the Linux VM. T3 has five source-qualified selections. All five runtime
+qualifications remain pending. No new evaluation result is claimed.
+
+The independent review records are in `docs/reviews/2026-11-12`.
+Their manifest binds exact report bytes. Historical HOLDs remain preserved.
+
+Complete static collector data passed fresh Sol review at `63dd985`. The
+parent repeated all 1,130 affected tests and all 47 new independent controls.
+Main contains the exact reviewed source. The data-byte cap limits the
+artifact size. It does not claim a total Python memory bound. The typed
+header renderer is a separate reviewed work unit.
+The byte-graph reader passed fresh Sol review at `fbcdab5`. Main contains
+the exact reviewed source. All 525 parent host tests and all 651 independent
+controls passed. The source-token reader passed fresh Sol review at `f783c35` after F1.
+The parent repeated all 724 independent controls. Main contains the exact
+reviewed source. The original HOLD and correction PASS are both preserved. These pure units
+do not authorize production capture or byte-idiom emission.
+
+The typed header unit passed fresh independent Sol and Astra reviews at
+`501c937`. The parent repeated all 146 Sol and 276 Astra controls. Native
+syntax and field-layout checks passed. Four altered declarations failed
+as required. Main contains the exact five reviewed files. These checks
+do not prove compiled retention or authorize runtime capture.
+
+The pure project-profile reader passed fresh independent Sol and Astra
+reviews at `6d00328`. The parent repeated all 1,508 Sol and 1,185 Astra
+controls. Main contains the exact reviewed source, tests, and ADR0039.
+The worker's dispatcher-log read error remains documented. Both reviews
+accept the code only. Actual source bytes, compiler evidence, origin facts,
+shared declarations, and production v2 remain open. Later adapters must
+carry evaluator-owned reduced limits separately. Current worker images
+need the new source identity before the next Linux validation.
+
+The user requested a timed pause and handoff. Stop new dispatch at
+00:56:47 UTC on 13 November. Pause all workers, queues, and the Phoenix VM
+by 01:11:47 UTC. Preserve pending files and publish the resume checkpoint.
+Do not resume without a new user instruction.
+
 ## Next actions
 
-1. Refresh worker images and pass public evaluator gates before a new
-   sealed M2 run. Wait for the private author to release the Linux VM.
-2. Finish U2 proof, generation, and public behavior checks.
-3. Continue production observation, indirect calls, byte idioms, and repair
-   fault localization. Keep the two oracle engines independent.
-4. Finish private T2 validation. Validate T3 in a separate Linux window.
-5. Complete M2 through M4, publish the required artifacts, and replay every
-   headline result.
-
-## Continuation handoff
-
-Read `docs/HANDOFF.md` for exact worktrees, reviews, and process state.
-Scope checkpoint `09e984b` passed local checks and fresh Sol review
-for its stricter static contract.
-Frame checkpoint `b85feba` passed its pure contract review. Its scope
-dependency still needs replacement. Capture checkpoint `9672a0f` passed
-a parser-only review. The provider blocked its full review for possible
-cybersecurity risk. That full review remains open. Public fixture
-checkpoint `cf066d6` passed fresh Sol after its README correction. No new observation code
-from those checkpoints is accepted on main.
-
-The handoff preserves 29 old public draft files in eight archival patches.
-Each patch reproduced the original bytes and executable modes. Private
-corpus material, held-out inputs, binaries, and scratch output stay outside Git.
-
-The handoff and all archival patches passed independent Sol review at
-`972f43a`. Exact report copies are in `docs/reviews/2026-11-11`.
-The next step is the reviewed scope dependency port and combined checks.
-The private T2 Author still owns the Linux VM. The section 9 goal is active.
+1. Implement compiled-table inspection and trusted build issuance under
+   the corrected Astra design. Keep the full capture review open.
+2. After the private Author releases the VM, preserve M1 image identities,
+   refresh current images, and pass the public switch and collector gates.
+3. Complete indirect-call recovery, byte idioms, exact fault localization,
+   whole-program types, modules, and bounded function cleanup.
+4. Finish private T2 and T3 qualification. Complete and replay M2 and M3.
+5. Freeze M4 with every baseline and ablation. Publish required artifacts
+   and reproduce every headline result. Meet every SPEC section 9 condition.
