@@ -822,3 +822,58 @@
   the exact allowed diff, and confirmed unchanged earlier implementation
   files. The parent repeated all 1,130 affected tests successfully.
   The full commit gate and fresh independent Sol review remain required.
+
+## 2026-11-12. Render and decode complete typed collector headers
+
+- This delegated unit adds fixed declarations, the bounded pure renderer,
+  an independent reader, synthetic host controls, and ADR0037. Every
+  complete logical table has a fixed directory entry. No runtime code
+  or production integration is added.
+- The source reader decodes complete immutable records. It validates
+  tags, slices, byte lengths, table references, and the complete directory.
+  Tests compare the result with the original complete logical record.
+  Shared call routes retain distinct route identities and path positions.
+- Geometry retains an exclusive end of `2**64` through a start/size pair.
+  A size of `2**64` explicitly refuses. Signed tag/magnitude fields retain
+  `INT64_MIN`. Caller limits remain binding before table materialization.
+- The first header suite had 13 test failures and 432 passes. The failures
+  came from tuple/list comparisons, invalid fixture construction, and an
+  equal gap limit. Corrected controls passed all 445 tests. The expanded
+  suite had one diagnostic-message assertion failure and 467 passes.
+  The affected suite then passed all 1,389 tests. Early lint and strict
+  type-check failures were corrected. The external report retains them.
+- Four headers passed C11 syntax-only checks with warnings treated as
+  errors. All fixed structure sizes matched their logical storage sizes.
+  No link, target execution, VM access, Docker, Ghidra, model call, nested
+  agent, commit, push, tag, or branch change occurred.
+- Full capture review remains OPEN after provider screening. Independent
+  review, compiled-data inspection, trusted build issuance, native
+  collection, calibration, and production admission remain required.
+  These host checks are not Phoenix evaluation results.
+- Final affected checks passed all 1,391 tests after the fixed-source read
+  failure controls. Ruff check, Ruff format check, and strict mypy passed
+  with exit 0. The exact allowed diff and unchanged documentation prefixes
+  were checked before return. The external report records final hashes.
+- Final source review found missing internal reference checks. The renderer
+  now compares continuation users, disposition route IDs, omission metadata,
+  and guard roles with the complete retained records. Five new rejection
+  controls passed. The affected suite passed all 1,396 tests with exit 0.
+  These checks establish internal consistency and grant no runtime authority.
+
+## 2026-11-12. Parent check of the typed collector header
+
+- The parent read the full worker report, renderer, independent reader,
+  fixed C declarations, and ADR. The source hashes match the report.
+  Every previous implementation file remains unchanged.
+- The parent inspected the complete record and table contract and selected
+  controls. All 1,396 affected host tests passed again. Four separate C11
+  syntax-only checks passed. No original or reconstructed target ran.
+- The data dependency passed fresh Sol review at exact `63dd985`. The
+  worker report retained its earlier open-review statement. Its source
+  stayed unchanged after that independent data review.
+- The directory references all 47 typed tables. Complete source decoding
+  and syntax checks do not prove compiled retention. Actual plugin data
+  inspection, trusted issuance, launch identity, calibration, full capture
+  review, and production gates remain open.
+- Full commit checks, fresh independent Sol review, and mandatory Astra
+  critical review remain required before reliance on this unit.

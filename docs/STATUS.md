@@ -114,3 +114,20 @@ and the supervisor's complete quality gate remain required.
 The parent repeated the complete 1,130-test affected suite. All passed.
 The exact five-file scope and original documentation prefixes were verified.
 The full quality hook and independent implementation review remain open.
+
+Delegated collector-header progress on 2026-11-12. The pure typed renderer,
+independent source reader, fixed native declarations, and ADR0037 are ready
+for supervisor review. The affected host suite passed 1,389 tests before
+final source-read failure controls. Four generated headers passed C11
+syntax-only checks, including every fixed structure size. No code was
+linked or executed. Compiled retention and runtime authority remain open.
+Full capture review remains OPEN after provider screening. Production
+remains HOLD. The supervisor owns independent review and all Git writes.
+Final affected checks passed all 1,391 tests. Ruff check, Ruff format check,
+and strict mypy passed. Fixed-source read failures now return bounded
+refusals. Final file identities and exact checks are in the external
+collector-header report. These checks do not establish linker retention.
+The final source review added complete internal reference checks for
+continuation users, disposition route IDs, omission metadata, and guard
+roles. All 1,396 affected host tests passed after that change. Five new
+rejection controls cover these references. Independent review remains open.
