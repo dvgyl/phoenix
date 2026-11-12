@@ -875,3 +875,28 @@
   fresh Sol review remain required. Production U5 remains open.
 - The full capture review remains open after provider screening. No new
   evaluation result, corpus disclosure, or milestone tag is supplied.
+
+## 2026-11-12. Integrate reviewed source observations
+
+- Fresh Sol held `8d167b1` for F1. Six controls reproduced broad error
+  conversion at the hash calls. The focused correction passed the full
+  quality gate and was pushed at `f783c35`. Fresh Sol passed that exact
+  unit and closed F1. Both reports are published with exact hashes.
+- The parent repeated all 639 unchanged independent controls and all
+  85 fresh controls under the unchanged private-data guard. All 724 passed.
+  All 628 affected host tests passed. Two live tests were excluded.
+- Copied the exact source, permanent tests, and ADR0038. Every earlier
+  main implementation remains unchanged. All files shared with the
+  reviewed source branch match. Only reviewed collector data is additional.
+- Parsing retains structural proposals. It does not authenticate complete
+  printer tokens, token associations, callable interfaces, or source
+  semantics. No generation or pipeline caller is added. Production U5
+  and the full capture review remain open.
+- Native workflow `43299149838` passed at exact `c806aa7`. Parent checks
+  verified both artifact hashes, worker source, native run identities,
+  seed, case counts, and full public outcomes. The native comparison
+  passed. Current Mac comparison still needs the private VM release.
+- Actual outcome and isolation code belongs to the independent evaluator.
+  ADR0003 records that placement. Its package coverage gate remains at
+  85 percent. Missing duplicate directory names are not separate measured
+  packages. A no-data query was not counted as a coverage pass.

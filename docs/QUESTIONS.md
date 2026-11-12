@@ -21,3 +21,13 @@
 - The managed worktree tool has no per-call location. Create Phoenix
   agent worktrees with Git at the required external-drive path. Keep
   the desktop app's global worktree location for other projects.
+
+## 2026-11-12. Coverage package names
+
+The planned `phoenix/diff/` and `phoenix/sandbox/` directories do not exist.
+Actual outcome comparison and isolation code belongs to `phoenix_eval/`.
+ADR0003 records this shared independent evaluator design. Keep one code
+owner and the existing complete evaluator coverage gate at 85 percent.
+Do not add duplicate packages to satisfy directory names. Package coverage
+is separate from per-file coverage. A query for nonexistent modules gives
+no data and supplies no passing coverage evidence.

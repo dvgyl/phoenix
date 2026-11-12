@@ -44,6 +44,8 @@ limit during pinned integrity package downloads. The native job limit
 is now 60 minutes. The replacement native run at `20402bc` passed both
 architectures and the outcome comparison. The downloaded artifact hashes,
 worker source identity, and report bindings passed the parent check.
+Native `c806aa7` also passed both architectures and the outcome comparison.
+The parent verified its complete report bindings and archive hashes.
 The same-revision Mac comparison remains open until the private VM is free.
 [Capture issue](https://github.com/dvgyl/phoenix/issues/6).
 [Replay issue](https://github.com/dvgyl/phoenix/issues/5).
@@ -106,7 +108,9 @@ artifact size. It does not claim a total Python memory bound. The typed
 header renderer is a separate work unit.
 The byte-graph reader passed fresh Sol review at `fbcdab5`. Main contains
 the exact reviewed source. All 525 parent host tests and all 651 independent
-controls passed. The source-token reader is a separate isolated candidate. These pure units
+controls passed. The source-token reader passed fresh Sol review at `f783c35` after F1.
+The parent repeated all 724 independent controls. Main contains the exact
+reviewed source. The original HOLD and correction PASS are both preserved. These pure units
 do not authorize production capture or byte-idiom emission.
 
 ## Next actions
