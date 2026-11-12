@@ -878,3 +878,21 @@
 - No exporter, existing reader, pipeline, default, pin, or generated C changed.
   The full quality gate and fresh independent Sol review remain required.
   Production U5 and the separate full capture review remain open.
+
+## 2026-11-12. Correct source-reader error classification
+
+- Fresh Sol returned HOLD at `8d167b1` for F1. The outer parser handler
+  classified unexpected UnicodeError, RecursionError, and OverflowError
+  from either hash operation as malformed input. No false acceptance was
+  shown. The promised programming-error classification was incorrect.
+- The parent repeated all 639 independent controls before the correction.
+  Six failed and 633 passed. The failed log and original HOLD remain intact.
+- Restricted Unicode conversion to text encoding and token decoding.
+  Canonical JSON conversion stays inside its encoder. The outer parser
+  converts only MappingError. Unexpected hashing errors remain unchanged.
+- Permanent tests now cover six exception types at both hash operations.
+  All 628 affected tests passed with two live tests excluded. All 639
+  unchanged independent controls passed. Ruff and strict mypy passed.
+- The wire, valid records, graph dependency and all other implementation
+  files remain unchanged. Full quality checks and fresh Sol review remain
+  required. Production U5 and full capture review remain open.

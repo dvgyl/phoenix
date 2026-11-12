@@ -204,6 +204,13 @@ def _choice[T: str](value: object, choices: tuple[T, ...]) -> T:
     raise ByteSourceError("Unknown source discriminator.")
 
 
+def _utf8(value: str) -> bytes:
+    try:
+        return value.encode("utf-8")
+    except UnicodeError as error:
+        raise ByteSourceError("Invalid UTF-8 text.") from error
+
+
 @dataclass(frozen=True, slots=True)
 class _Reader:
     graph: ByteGraph
@@ -260,11 +267,11 @@ class _Reader:
 def _storage_piece(value: object) -> StoragePiece:
     item = object_fields(value, "address size register stack_offset")
     address = location(item["address"])
-    address.space.encode("utf-8")
+    _utf8(address.space)
     size = uint(item["size"], 8192)
     register = None if item["register"] is None else text(item["register"])
     if register is not None:
-        register.encode("utf-8")
+        _utf8(register)
         if not register:
             raise ByteSourceError("The register name is empty.")
     offset = item["stack_offset"]
@@ -332,7 +339,7 @@ def parse_byte_source(
         # UTF-8 uses at least one byte per character. Check this lower bound first.
         if len(function.raw_c) > limits.max_source_bytes:
             raise ByteSourceError("The source exceeds its byte limit.")
-        source = function.raw_c.encode("utf-8")
+        source = _utf8(function.raw_c)
         if len(source) > limits.max_source_bytes:
             raise ByteSourceError("The source exceeds its byte limit.")
         source_hash = sha256(source).hexdigest()
@@ -374,9 +381,12 @@ def parse_byte_source(
             ):
                 raise ByteSourceError("Token ordinals or source spans are invalid.")
             fragment = source[start:end]
-            fragment.decode("utf-8")
+            try:
+                fragment.decode("utf-8")
+            except UnicodeError as error:
+                raise ByteSourceError("A token span divides UTF-8 text.") from error
             kind = text(token["kind"])
-            if not kind or len(kind.encode("utf-8")) > 128:
+            if not kind or len(_utf8(kind)) > 128:
                 raise ByteSourceError("The token kind is empty or too long.")
             token_hash = digest(token["text_sha256"])
             if token_hash != sha256(fragment).hexdigest():
@@ -466,5 +476,5 @@ def parse_byte_source(
             status,
             tuple(gaps),
         )
-    except (MappingError, UnicodeError, RecursionError, OverflowError) as error:
+    except MappingError as error:
         raise ByteSourceError("Invalid source observation data.") from error

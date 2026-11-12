@@ -59,6 +59,12 @@ Wire size is checked before JSON parsing. Source character count is checked
 before UTF-8 allocation. Encoded source size is checked before hashing.
 The bounded JSON tree is created before token and gap count checks.
 
+JSON encoding errors are converted inside the canonical encoder. Unicode
+errors are converted at each text encoding or token decoding operation.
+The outer reader converts only the existing mapping input error. Unexpected
+hashing or structural programming errors retain their original type. They
+cannot be classified as malformed proposals by this reader.
+
 `exact_printer_bytes` is the producer's claim. The reader can check exact
 bytes and references, but the old evidence cannot authenticate a complete
 token inventory or its printer origin. A coherent empty token list can

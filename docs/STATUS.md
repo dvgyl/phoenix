@@ -126,3 +126,11 @@ The structural source reader has 92 new host controls. The combined suite
 passed 617 tests with two live tests excluded. It preserves source-token
 proposals. It grants no emission authority. Full quality checks and fresh
 independent Sol review remain required. Production U5 remains open.
+
+## Source-reader error-boundary correction
+
+Fresh Sol held the first source-reader commit for error classification.
+The parent reproduced six failures and made the correction. All 628 affected
+host tests and all 639 unchanged independent controls now pass. The full
+quality gate and a fresh independent Sol review remain required. The reader
+remains isolated from main and grants no emission authority.

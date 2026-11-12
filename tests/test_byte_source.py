@@ -357,20 +357,33 @@ def test_utf8_source_limit_precedes_hashing(monkeypatch: pytest.MonkeyPatch) -> 
         )
 
 
+@pytest.mark.parametrize(
+    "error_type",
+    [ValueError, RuntimeError, TypeError, OverflowError, RecursionError, UnicodeError],
+)
+@pytest.mark.parametrize("site", ["source", "token"])
 def test_hashing_coding_error_is_not_a_wire_rejection(
     monkeypatch: pytest.MonkeyPatch,
+    error_type: type[Exception],
+    site: str,
 ) -> None:
     import phoenix.lift.byte_source as source_module
 
     raw, lift, graph = source_sample()
 
-    def fail(_: object) -> None:
-        raise ValueError("Coding-error sentinel.")
+    calls = 0
+
+    def fail(data: bytes) -> Any:
+        nonlocal calls
+        calls += 1
+        if calls == (1 if site == "source" else 2):
+            raise error_type("Coding-error sentinel.")
+        return sha256(data)
 
     monkeypatch.setattr(source_module, "sha256", fail)
-    with pytest.raises(ValueError, match="Coding-error sentinel") as error:
+    with pytest.raises(error_type, match="Coding-error sentinel") as error:
         parse_byte_source(wire(raw), lift, graph)
-    assert type(error.value) is ValueError
+    assert type(error.value) is error_type
 
 
 @pytest.mark.parametrize("number", [float("nan"), float("inf"), float("-inf")])
