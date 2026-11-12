@@ -921,3 +921,32 @@
 - The separate private T2 Author retains the VM. The public byte producer
   and pure multi-file project reader are isolated work units. No new
   reconstruction score, corpus disclosure, or milestone tag is supplied.
+
+## 2026-11-12. U1 passive collector ELF implementation
+
+- Added a standard-library byte reader, independent literal ELF controls, and
+  ADR0041. The reader checks the complete structural inventory, fixed symbols,
+  all 47 table pointers, dynamic RELA ranges, SysV hashing, versions, and bounds.
+- Synthetic tests cover both machines, RELRO prefixes, exact limits, arbitrary
+  bytes, and visible programming faults. Initial lint and type failures were
+  corrected. One alias fixture first overlapped exact load ranges. Its correction
+  isolates the intended page-rounding conflict. Failure records remain in the
+  assigned U1 audit directory.
+- No Linux compiler or runtime test ran. Candidate page granules are test-only.
+  Native compatibility, full source review, the full quality gate, compiled
+  readback, trusted issuance, and complete capture review remain open.
+
+## 2026-11-12. Verify the passive ELF reader candidate
+
+- The Astra writer ended at 23:17:47 UTC. The parent read the complete
+  reader, ADR0041, report and selected independent fixture controls.
+- All five allowed files match the worker hashes. All older tracked
+  files and both progress prefixes remain unchanged. The parent repeated
+  all 2,434 affected host tests with seed 20261112. All passed.
+- The full quality gate and fresh independent Sol review are required.
+  No compiler, target, VM or plugin was used. Page-granule compatibility
+  remains on HOLD. Synthetic parsing does not prove compiled retention.
+- Preserve the writer's process exceptions. Early ignored caches were
+  not confined to its task directory. An attempted dispatcher event
+  read was blocked before content access. No strict process-write
+  attestation is made. No private source or Author output was read.

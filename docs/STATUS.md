@@ -130,3 +130,12 @@ do not prove compiled retention or authorize runtime capture.
 4. Finish private T2 and T3 qualification. Complete and replay M2 and M3.
 5. Freeze M4 with every baseline and ablation. Publish required artifacts
    and reproduce every headline result. Meet every SPEC section 9 condition.
+
+## U1 passive collector ELF implementation
+
+The bounded ELF reader is implemented on the isolated U1 branch. Synthetic
+parser checks pass for machines 62 and 183. These are not compiler trials or
+Phoenix evaluation results. Both Linux profiles remain test-only. The candidate
+page-granule contract and actual Linux compatibility remain on HOLD. ADR0041
+records the assumptions. Fresh independent review and the principal's full
+quality gate remain open. Full capture review remains OPEN.
