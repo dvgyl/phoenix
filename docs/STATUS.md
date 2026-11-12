@@ -119,3 +119,10 @@ Fresh independent Sol review and the supervisor's full quality gate remain open.
 Production U5 remains HOLD. The producer, recognizer, source and interface
 checks, protected emission, and public runtime gates remain open.
 The private Author retains the VM. SPEC section 9 remains incomplete.
+
+## Byte-source reader candidate
+
+The structural source reader has 92 new host controls. The combined suite
+passed 617 tests with two live tests excluded. It preserves source-token
+proposals. It grants no emission authority. Full quality checks and fresh
+independent Sol review remain required. Production U5 remains open.

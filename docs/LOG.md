@@ -860,3 +860,21 @@
   The full quality gate and fresh independent Sol review remain required.
 - This reader checks structural consistency. It does not authenticate
   producer flags or prove a byte idiom. Production U5 remains open.
+
+## 2026-11-12. Add structural byte-source observations
+
+- Implemented the pure source reader from the approved Astra U5 contract.
+  Frozen records retain exact source spans, token digests, graph references,
+  formal ordinals, complete static storage pieces, and explicit gaps.
+- The reader checks exact ordinary source identity and UTF-8 boundaries.
+  It cannot authenticate printer origin or a complete token inventory.
+  An empty coherent token list is an explicit tested limitation.
+- The initial 73 source tests passed. Initial lint and mypy failures were
+  corrected. The expanded combined suite passed 613 tests. After limiting
+  error conversion to the input boundary, the final suite passed 617 tests.
+  Two live tests were excluded. Ruff and strict mypy passed.
+- A dirty old ingest worktree was refused before any mutation. Its pending
+  files remain unchanged. This clean former review worktree was reused.
+- No exporter, existing reader, pipeline, default, pin, or generated C changed.
+  The full quality gate and fresh independent Sol review remain required.
+  Production U5 and the separate full capture review remain open.
