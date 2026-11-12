@@ -124,3 +124,30 @@ do not authorize production capture or byte-idiom emission.
 4. Finish private T2 and T3 qualification. Complete and replay M2 and M3.
 5. Freeze M4 with every baseline and ablation. Publish required artifacts
    and reproduce every headline result. Meet every SPEC section 9 condition.
+
+
+## 2026-11-12. P1 project profile candidate
+
+The isolated P1 reader retains complete immutable profile records and derives
+exact canonical CMake. All 1,161 pure P1 host tests pass. Its module line
+coverage is 99.40 percent. All 154 selected unchanged legacy host tests pass.
+Repository-wide Ruff and strict mypy pass. These are software checks, not
+phoenix-eval measurements. Failed development checks remain in the assigned
+`audit/m3-project-profile-reader-writer-sol-20261112` directory.
+
+ADR0039 records bounds, reference counts, authority limits, and the accepted
+design output-scope exception. No production caller can select v2. The
+supervisor owns the full mandatory gate, commits, publication, and fresh
+Sol and Astra reviews. P2-P9, all live gates, later milestones, and SPEC
+section 9 remain open. No compiler, VM, target, or real provider ran.
+
+The P1 direct-object correction adds two controls. All 1,163 P1 cases pass.
+Missing limit fields now fail before parsing. Missing optional record fields
+are distinguished from explicit null values. Ruff and strict mypy pass.
+The initial two failures and earlier source remain in the assigned audit.
+
+The final artifact collector violated the event-file read limit. Its broad
+scan read an unowned events.jsonl file to compute a hash. Event contents
+were not printed or used for implementation. The correction uses an
+explicit list of worker-created artifacts. ADR0039 and the report preserve
+the error. No supervisor acceptance of this process error is claimed.

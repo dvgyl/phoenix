@@ -900,3 +900,85 @@
   ADR0003 records that placement. Its package coverage gate remains at
   85 percent. Missing duplicate directory names are not separate measured
   packages. A no-data query was not counted as a coverage pass.
+
+
+## 2026-11-12. Implement bounded project profile P1
+
+- Added only the independent profile reader, public pure host tests, and
+  ADR0039 in the assigned implementation worktree. Complete frozen slotted
+  records retain every manifest and correspondence field. Canonical bytes
+  remain the exact inputs. No production caller or legacy contract changes.
+- Both raw inputs receive bounded token scans before JSON tree allocation.
+  Limits count serialized span occurrences and all documented reference
+  fields. Declared size sums precede hashing and CMake rendering. IDs use
+  the exact domain and one actual NUL byte. The supplied CMake must equal
+  the independently frozen template output.
+- All 1,161 P1 host tests pass. New-module line coverage is 99.40 percent.
+  All 154 selected unchanged legacy host tests pass. Repository-wide Ruff
+  check and format check pass. Strict mypy passes for all 138 source files.
+  These counts are software checks. They are not evaluation results.
+- The initial Ruff checks failed on formatting, imports, and one long
+  comment. The initial focused run had 19 fixture failures. Its helper
+  overwrote deliberately malformed bindings and compared a generated list
+  with a tuple. Corrected only those fixture operations. The next focused
+  run passed all 1,076 then-current cases. Initial mypy checks reported 19,
+  then three, type errors. Corrected narrowing and union annotations. All
+  failed logs and the initial files remain in the assigned audit directory.
+- Added explicit controls for early string reductions, full record and
+  optional-span retention, literal and span failure phases, same-field
+  nominal types, multi-global ordering, and visible hash programming errors.
+  Tests use public owned bytes and fake legacy boundaries. No actual source
+  semantics, original inventory authority, or native layout is claimed.
+- Preserved the supervisor-approved design process exception in ADR0039.
+  The design reports were copied from their original out-of-scope location
+  after verification. This worker used only the authorized dated copies.
+  No duplicate comparison or sandbox package was added.
+- No model launch, delegation, Git metadata write, commit, push, tag,
+  compiler, Ghidra, Docker, VM action, target, network command, or real
+  provider call ran. The private Author retains the VM. The supervisor
+  owns the full mandatory gate and fresh independent Sol and Astra reviews.
+  P2-P9, live controls, M2-M4, publication, baselines, ablations, and exact
+  headline replay remain required for SPEC section 9.
+- The initial final-audit script had one assertion failure. It expected
+  exit zero from `git diff --no-index --check` for new files. Git returned
+  one with no whitespace diagnostics. Preserved the failed script and log.
+  Corrected only the expected no-index status and repeated the full scope,
+  prefix, design-copy, fixture, import, diff, and hash verification.
+- Two later direct-object controls exposed source defects. An uninitialized
+  ProfileLimits record raised AttributeError. A deleted optional field was
+  treated as an explicit null during full-record comparison. The initial
+  control run had two failures and 1,161 deselected cases. Both failures and
+  the earlier source are preserved. The correction rejects missing limits
+  before parsing and requires each record field to exist before comparison.
+  All 1,163 focused cases, full Ruff, and strict mypy pass after correction.
+  Hash programming-error behavior remains unchanged.
+- The final checksum collector made a process error. Its audit-directory
+  scan included an events.jsonl file that this worker did not create. The
+  collector read those bytes to compute a hash. A subsequent checksum
+  verification failed because that file had changed. This violated the
+  event-file read limit. No event contents were printed or used for
+  implementation. The failed check and earlier evidence are retained.
+  The correction uses an explicit list of worker-created artifacts and
+  excludes the event file from every further read. This error has no
+  claimed supervisor approval. Production code and tests did not change.
+- The event-file error occurred in two checksum-generation passes and
+  the failed checksum-verification pass. All three reads computed digests.
+  No further read of that file is permitted or needed.
+
+## 2026-11-12. Check the final P1 reader candidate
+
+- The parent read the complete final source, ADR, and worker report. The
+  final correction handles missing direct-object fields. All 225 base
+  files were checked. Only the two progress files append to their base.
+- The parent repeated all 1,317 selected host tests under the unchanged
+  private-data guard. All passed. A new absent bytecode prefix excluded
+  pre-existing bytecode at that prefix. No compiler or target ran.
+- The worker hashed its public dispatcher event file against its task
+  rule. The original report, failed checksum check, and earlier source
+  remain preserved. This candidate proceeds to independent code review
+  with that process error disclosed. No process assurance is inferred.
+- Future audit guards now deny dispatch-output data reads. Public positive
+  and negative controls passed. Existing active guards remain unchanged.
+- The mandatory full commit gate must pass before this candidate commits.
+  Fresh independent Sol and Astra review remain required. Production v2,
+  source-byte admission, compiler evidence, and semantic integrity stay open.
