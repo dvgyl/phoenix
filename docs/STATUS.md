@@ -69,8 +69,9 @@ external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
 review after each major block and Astra review where required.
 
 This isolated branch adds exact-byte capture admission. Its synthetic checks
-pass. Scope correction, frame review, collector calibration, and this block
-require independent closure before recovery use.
+pass. Fresh Sol passed the stricter scope and revised pure-frame contracts.
+The full capture review and live collector checks remain open. Recovery
+use is not approved.
 
 ## Next actions
 
@@ -82,3 +83,22 @@ require independent closure before recovery use.
 4. Finish private T2 validation. Validate T3 in a separate Linux window.
 5. Complete M2 through M4, publish the required artifacts, and replay every
    headline result.
+
+The exact reviewed `09e984b` scope dependency is now installed. The
+combined host suite passed 924 tests. Fresh Sol passed the revised pure
+frame contract and the separate data-format contract. The full capture
+review remains open after provider screening. Dependency review and all
+live capture gates remain open. This checkpoint is not production approval.
+
+## Resume on 2026-11-12
+
+The owner resumed work through SPEC section 9. All ten paused files match
+the saved manifest. Scope source, tests, and ADR match `09e984b` exactly.
+The ADR is staged. Full quality checks and fresh independent Sol
+dependency-port review remain required. The full capture review is open.
+The corpus remains agent-sealed. No new milestone result is claimed.
+
+The resumed full quality gate passed. Lint, format, and strict type
+checks passed. The test summary is `2114 passed, 26 skipped in 465.19s (0:07:45)`.
+Fresh independent dependency review remains required. The full capture
+review and all live gates remain open.

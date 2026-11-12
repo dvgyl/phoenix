@@ -785,3 +785,48 @@
 - The frame and raw admission blocks still require fresh independent
   Sol review. Live capture, actual runtime association, and downstream
   recovery remain open. No target or private corpus material was used.
+
+## 2026-11-11. Port the reviewed positive-evidence scope
+
+- Copied exact scope source, tests, and ADR from `09e984b`. The ADR is
+  new to this branch and must be added. The source and tests changed. All other observation
+  source files remain byte-identical to the previous checkpoint.
+- Fresh Sol passed that exact stricter scope contract. Its 713 new
+  independent controls passed. The three withdrawn empty-translation
+  positives remain explicit failures under the older broad contract.
+- The combined capture host suite passed 924 tests after the port.
+  These are unit checks, not evaluation results. The first identity
+  verifier wrongly required all copied files to differ. Corrected the
+  verifier to check exact bytes and the permitted changed-path set.
+- The pure-frame and parser-only PASS verdicts retain their own limits.
+  The full capture review and all runtime, deployment, and recovery
+  gates remain open. No target or private corpus material was used.
+
+## 2026-11-11. Pause the dependency port
+
+- The owner requested a safe pause. Stopped the full quality gate before
+  completion. No new source commit or push was made.
+- The copied ADR is untracked. The earlier changed-path check inspected
+  tracked differences only. It incorrectly described that ADR as already
+  present. The pause snapshot includes the ADR and all pending changes.
+- Exact source and test bytes still match the reviewed scope checkpoint.
+  The focused tests passed before the pause. Full quality and independent
+  dependency-port review remain required.
+
+## 2026-11-12. Resume the scope dependency port
+
+- The owner explicitly resumed the original SPEC section 9 goal.
+- The parent checked all ten pending files against the pause manifest.
+  Exact source, test, and ADR bytes match reviewed scope `09e984b`.
+- Added the previously untracked scope ADR to this port. The full quality
+  gate is running. Fresh independent Sol dependency review remains required.
+- The full capture component review remains open after provider screening.
+  The parser-only PASS does not replace that review. No target execution
+  or new evaluation result is claimed by this dependency port.
+- The corpus remains agent-sealed on an honor system. Only a separate
+  private Corpus Author resumes private validation.
+
+The resumed full quality gate passed. Lint, format, and strict type
+checks passed. The test summary is `2114 passed, 26 skipped in 465.19s (0:07:45)`.
+Fresh independent dependency review remains required. The full capture
+review and all live gates remain open.
