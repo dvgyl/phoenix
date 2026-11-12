@@ -6,6 +6,8 @@ import signal
 import subprocess
 import time
 import tomllib
+from collections.abc import Callable
+from contextlib import ExitStack
 from dataclasses import asdict, dataclass, fields
 from hashlib import sha256
 from pathlib import Path
@@ -121,6 +123,15 @@ class ByteExportError(ValueError):
     def __init__(self, code: ErrorCode, message: str) -> None:
         self.code = code
         super().__init__(message)
+
+
+def _io[T](operation: Callable[[], T]) -> T:
+    try:
+        return operation()
+    except OSError as error:
+        raise ByteExportError(
+            "io", "Cannot complete a diagnostic file operation."
+        ) from error
 
 
 @dataclass(frozen=True, slots=True)
@@ -623,14 +634,18 @@ def convert_byte_export(
     """
     _limits(limits)
     _size(binary, limits.max_program_bytes)
-    context = _context(binary, installation.resolve(), java_home.resolve(), limits)
+    context = _context(
+        binary, _io(installation.resolve), _io(java_home.resolve), limits
+    )
     return _convert(binary, lift, mapping, draft, context, limits)
 
 
 def _headless(command: list[str], work: Path, env: dict[str, str]) -> None:
     deadline = time.monotonic() + 300
     log = work / "headless.log"
-    with log.open("xb") as stream:
+    with ExitStack() as cleanup:
+        stream = _io(lambda: log.open("xb"))
+        cleanup.callback(_io, stream.close)
         try:
             process = subprocess.Popen(
                 command,
@@ -646,7 +661,7 @@ def _headless(command: list[str], work: Path, env: dict[str, str]) -> None:
             ) from error
         try:
             while True:
-                if log.stat().st_size > 8 * 1024 * 1024:
+                if _io(lambda: log.stat().st_size) > 8 * 1024 * 1024:
                     raise ByteExportError(
                         "limit", "The headless diagnostic log exceeds 8 MiB."
                     )
@@ -659,7 +674,7 @@ def _headless(command: list[str], work: Path, env: dict[str, str]) -> None:
                     break
                 except subprocess.TimeoutExpired:
                     continue
-            if log.stat().st_size > 8 * 1024 * 1024:
+            if _io(lambda: log.stat().st_size) > 8 * 1024 * 1024:
                 raise ByteExportError(
                     "limit", "The headless diagnostic log exceeds 8 MiB."
                 )
@@ -685,43 +700,44 @@ def export_byte_diagnostic(
 ) -> UnpublishedByteExport:
     """Run one static job in owned external staging. Never publish or select it."""
     _limits(limits)
-    workspace = Path(os.environ["PHOENIX_ROOT"]).resolve()
-    staging_root = staging_root.resolve(strict=True)
+    workspace = _io(lambda: Path(os.environ["PHOENIX_ROOT"]).resolve())
+    staging_root = _io(lambda: staging_root.resolve(strict=True))
     if staging_root == workspace or workspace not in staging_root.parents:
         raise ByteExportError(
             "io", "Use an owned staging directory under PHOENIX_ROOT."
         )
     original = _read(binary, limits.max_program_bytes)
-    installation, java_home = installation.resolve(), java_home.resolve()
+    installation, java_home = _io(installation.resolve), _io(java_home.resolve)
     context = _context(original, installation, java_home, limits)
-    with TemporaryDirectory(prefix="byte-diagnostic-", dir=staging_root) as directory:
-        work = Path(directory)
-        scripts, output = work / "scripts", work / "output"
-        scripts.mkdir()
-        output.mkdir()
-        for name in _SCRIPTS:
-            (scripts / name).write_bytes(
-                _read(_ROOT / "ghidra_scripts" / name, 1024 * 1024)
-            )
-        source = work / "input.elf"
-        source.write_bytes(original)
-        context_path = work / "context.json"
-        context_path.write_bytes(canonical(context))
-        java_path = str(work).replace("\\", "\\\\").replace('"', '\\"')
-        (work / "java.args").write_text(
-            "-Xmx512m\n"
-            + "".join(
-                f'-D{name}="{java_path}"\n'
-                for name in (
-                    "user.home",
-                    "java.io.tmpdir",
-                    "application.settingsdir",
-                    "application.cachedir",
-                    "application.tempdir",
-                )
-            ),
-            encoding="utf-8",
+    with ExitStack() as cleanup:
+        owned = _io(
+            lambda: TemporaryDirectory(prefix="byte-diagnostic-", dir=staging_root)
         )
+        cleanup.callback(_io, owned.cleanup)
+        work = Path(owned.name)
+        scripts, output = work / "scripts", work / "output"
+        _io(scripts.mkdir)
+        _io(output.mkdir)
+        for name in _SCRIPTS:
+            raw_script = _read(_ROOT / "ghidra_scripts" / name, 1024 * 1024)
+            _io(lambda: (scripts / name).write_bytes(raw_script))
+        source = work / "input.elf"
+        _io(lambda: source.write_bytes(original))
+        context_path = work / "context.json"
+        context_raw = canonical(context)
+        _io(lambda: context_path.write_bytes(context_raw))
+        java_path = str(work).replace("\\", "\\\\").replace('"', '\\"')
+        java_args = "-Xmx512m\n" + "".join(
+            f'-D{name}="{java_path}"\n'
+            for name in (
+                "user.home",
+                "java.io.tmpdir",
+                "application.settingsdir",
+                "application.cachedir",
+                "application.tempdir",
+            )
+        )
+        _io(lambda: (work / "java.args").write_text(java_args, encoding="utf-8"))
         env = {
             **os.environ,
             "JAVA_HOME": str(java_home),
@@ -766,7 +782,7 @@ def export_byte_diagnostic(
             str(output / "lift.json"),
         ]
         _headless(command, work, env)
-        if {path.name for path in output.iterdir()} != {
+        if _io(lambda: {path.name for path in output.iterdir()}) != {
             "lift.json",
             "mapping.json",
             "byte-draft.json",

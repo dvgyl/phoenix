@@ -789,3 +789,57 @@ def test_unexpected_tool_hash_failures_remain_visible(
     with pytest.raises(error_type) as caught:
         exporter._context(b"synthetic", ghidra, java, ByteExportLimits())
     assert caught.value is failure
+
+
+@pytest.mark.parametrize("failure", ["missing", "file", "create", "write"])
+def test_expected_staging_filesystem_errors_are_diagnostic(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str
+) -> None:
+    import errno
+
+    binary, _, _, _, context = diagnostic_sample()
+    binary_path = tmp_path / "program.elf"
+    binary_path.write_bytes(binary)
+    stage = tmp_path / "stage"
+    stage.mkdir()
+    selected = stage
+    monkeypatch.setattr(exporter, "_context", lambda *args: context)
+
+    def must_not_start(*args: object) -> None:
+        raise AssertionError("A staging failure must precede the job.")
+
+    monkeypatch.setattr(exporter, "_headless", must_not_start)
+    if failure == "missing":
+        selected = stage / "missing"
+    elif failure == "file":
+        selected = binary_path
+    elif failure == "create":
+
+        def denied(*args: object, **kwargs: object) -> None:
+            raise PermissionError(errno.EACCES, "Staging creation refused.")
+
+        monkeypatch.setattr(exporter, "TemporaryDirectory", denied)
+    else:
+        original_write = Path.write_bytes
+
+        def full_disk(path: Path, raw: bytes) -> int:
+            if path.name == "input.elf" and path.parent.name.startswith(
+                "byte-diagnostic-"
+            ):
+                raise OSError(errno.ENOSPC, "The staging disk is full.")
+            return original_write(path, raw)
+
+        monkeypatch.setattr(Path, "write_bytes", full_disk)
+    with pytest.raises(ByteExportError) as caught:
+        export_byte_diagnostic(
+            binary_path, selected, installation=tmp_path, java_home=tmp_path
+        )
+    assert caught.value.code == "io"
+    assert not list(stage.iterdir())
+
+
+def test_existing_headless_log_is_diagnostic(tmp_path: Path) -> None:
+    (tmp_path / "headless.log").write_bytes(b"Existing owned log.")
+    with pytest.raises(ByteExportError) as caught:
+        exporter._headless(["/not-started"], tmp_path, {})
+    assert caught.value.code == "io"

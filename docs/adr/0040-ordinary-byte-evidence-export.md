@@ -172,3 +172,18 @@ interface and pointer proof, emission, protected generation, replay, and all
 public compiled/live controls remain open. The separate full capture review
 remains open after provider screening. M2 through M4 and every SPEC section 9
 condition remain open. No commit, push, tag, or Git metadata write occurs.
+
+## F1. Diagnostic filesystem errors
+
+The first independent Sol review held this unit at `d1a1779`. Five routine
+filesystem failures escaped as `OSError` subclasses. The corrected boundary
+converts errors from explicit staging and log operations to
+`ByteExportError` with code `io`. Hash and context calculations stay outside
+that conversion. Process launch errors retain the `headless` category.
+
+Five permanent controls failed before the correction and passed after it.
+All 110 unchanged independent controls and 786 affected host tests passed.
+Two optional live tests were skipped. A repeated public static job retained
+the exact ordinary lift, mapping and inspection bytes. Its context identity
+changed because the installed exporter source changed. The original HOLD
+and failed logs remain. Fresh independent Sol review is required.

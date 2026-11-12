@@ -147,3 +147,9 @@ Final inspection found and corrected an error-handler defect in tool hashing.
 Two regression failures are preserved. Unexpected hash failures now keep their
 original exception. The final static export has the same 19 gap dispositions.
 Complete producer admission and every later gate remain open.
+
+The byte diagnostic F1 correction passed all 110 unchanged independent
+controls and 786 affected host tests. Two optional live tests were skipped.
+The public static job retained the exact ordinary lift and mapping bytes.
+The full quality gate and fresh independent Sol review remain required.
+The three producer API gaps and all production gates remain open.

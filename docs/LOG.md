@@ -962,3 +962,20 @@
 - The mandatory full commit gate must pass before this diagnostic commits.
   Fresh independent source review remains required. Full capture review
   stays open after provider screening. No milestone result is supplied.
+
+## 2026-11-12. Correct diagnostic filesystem errors
+
+- Independent Sol held `d1a1779` for F1. Five permanent controls reproduced
+  raw staging and log filesystem errors before the correction.
+- Convert only explicit filesystem operations to the finite `io` error
+  category. Hash, context, parser and unexpected failures remain visible.
+  Process launch errors keep their existing category.
+- All five new controls, 110 unchanged independent controls, and 786
+  affected host tests passed. Two optional live tests were skipped.
+  Ruff and strict mypy passed. The actual public E1 static job passed.
+- Ordinary lift, mapping and inspection bytes match the prior job exactly.
+  Context identities now bind the changed exporter source. The original
+  HOLD and failed logs remain. Fresh independent Sol review is required.
+- The complete producer remains on HOLD for entry association, native
+  liveness evidence and zero-length printer trivia. No target ran and
+  no VM action occurred. The user pause deadline remains 01:11:47 UTC.
