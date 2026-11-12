@@ -187,3 +187,32 @@ Two optional live tests were skipped. A repeated public static job retained
 the exact ordinary lift, mapping and inspection bytes. Its context identity
 changed because the installed exporter source changed. The original HOLD
 and failed logs remain. Fresh independent Sol review is required.
+
+## F2. Python 3.12 path loops
+
+Fresh Sol held `b252452` after the F1 correction. The six real loop
+controls expose the Python 3.12 `Path.resolve` compatibility behavior.
+It raises plain `RuntimeError` with an immediate `OSError(ELOOP)` context.
+The original six failing controls and both independent HOLDs remain.
+
+Required Astra advice selected a dedicated resolver at the six
+caller-controlled sites. It retains `Path.resolve` and its strict mode.
+The conversion requires the exact implicit legacy exception shape.
+Explicit causes, suppressed context, subclasses and deeper chains remain
+visible. `_io`, process cleanup, hash and context calculations stay
+unchanged. No exception message is used to classify the error.
+
+All 37 focused controls, 174 unchanged independent controls and 823
+affected host tests passed. Two optional live tests were skipped.
+Ruff and strict mypy passed. The public static job retained exact
+ordinary lift, mapping and inspection bytes. Its new context binds the
+changed source digest. An initial parent setup lacked the review label;
+its failure remains. The final repeat verified a fresh bytecode path.
+
+The advice itself ran no new runtime test. Its nested sandbox setup
+failed before Python. Root validation supplies the measured controls.
+The compatibility claim covers the inspected CPython 3.12.13 POSIX
+behavior. It does not authenticate exception origin or prevent filesystem
+races. Recheck behavior when Python changes. The full quality gate and
+fresh independent Sol review remain required. Producer admission stays
+on HOLD for its separate API and semantic gaps.

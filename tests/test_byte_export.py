@@ -1,5 +1,6 @@
 """Synthetic transaction controls do not prove printer origin or live behavior."""
 
+import errno
 import json
 import os
 from copy import deepcopy
@@ -843,3 +844,228 @@ def test_existing_headless_log_is_diagnostic(tmp_path: Path) -> None:
     with pytest.raises(ByteExportError) as caught:
         exporter._headless(["/not-started"], tmp_path, {})
     assert caught.value.code == "io"
+
+
+@pytest.mark.parametrize(
+    "entry,site",
+    [
+        ("export", "staging"),
+        ("export", "workspace"),
+        ("export", "installation"),
+        ("export", "java"),
+        ("convert", "installation"),
+        ("convert", "java"),
+    ],
+)
+def test_real_path_loops_are_diagnostic(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, entry: str, site: str
+) -> None:
+    binary, lift, mapping, _, context = diagnostic_sample()
+    binary_path = tmp_path / "program.elf"
+    binary_path.write_bytes(binary)
+    stage = tmp_path / "stage"
+    stage.mkdir()
+    marker = stage / "evidence-current"
+    marker.write_bytes(b"Previous selected generation.\n")
+    cycle = tmp_path / "cycle"
+    cycle.symlink_to("cycle")
+    installation = cycle if site == "installation" else tmp_path
+    java_home = cycle if site == "java" else tmp_path
+    selected_stage = cycle if site == "staging" else stage
+    if site == "workspace":
+        monkeypatch.setenv("PHOENIX_ROOT", str(cycle))
+
+    def must_not_run(*args: object) -> None:
+        raise AssertionError("A path loop must precede the job and conversion.")
+
+    monkeypatch.setattr(exporter, "_headless", must_not_run)
+    monkeypatch.setattr(exporter, "_convert", must_not_run)
+    monkeypatch.setattr(exporter, "_context", lambda *args: context)
+    with pytest.raises(ByteExportError) as caught:
+        if entry == "export":
+            export_byte_diagnostic(
+                binary_path,
+                selected_stage,
+                installation=installation,
+                java_home=java_home,
+            )
+        else:
+            exporter.convert_byte_export(
+                binary,
+                lift,
+                mapping,
+                b"",
+                installation=installation,
+                java_home=java_home,
+            )
+    assert caught.value.code == "io"
+    cause = caught.value.__cause__
+    assert type(cause) is RuntimeError
+    assert isinstance(cause.__context__, OSError)
+    assert cause.__context__.errno == errno.ELOOP
+    assert marker.read_bytes() == b"Previous selected generation.\n"
+    assert set(stage.iterdir()) == {marker}
+
+
+@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize("kind", ["two_links", "parent"])
+def test_resolver_rejects_real_cycles(tmp_path: Path, strict: bool, kind: str) -> None:
+    if kind == "two_links":
+        selected = tmp_path / "first"
+        selected.symlink_to("second")
+        (tmp_path / "second").symlink_to("first")
+    else:
+        (tmp_path / "parent").symlink_to("parent")
+        selected = tmp_path / "parent" / "child"
+    with pytest.raises(ByteExportError) as caught:
+        exporter._resolve(selected, strict=strict)
+    assert caught.value.code == "io"
+    assert type(caught.value.__cause__) is RuntimeError
+
+
+@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize(
+    "kind", ["absolute", "relative", "symlink", "symlink_parent", "missing", "dangling"]
+)
+def test_resolver_preserves_path_behavior(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, strict: bool, kind: str
+) -> None:
+    (tmp_path / "real" / "nested").mkdir(parents=True)
+    (tmp_path / "real" / "data").write_bytes(b"Public path control.")
+    (tmp_path / "link").symlink_to("real/nested")
+    (tmp_path / "file_link").symlink_to("real/data")
+    (tmp_path / "dangling").symlink_to("absent")
+    monkeypatch.chdir(tmp_path)
+    selected = {
+        "absolute": tmp_path / "real" / "data",
+        "relative": Path("real/data"),
+        "symlink": Path("file_link"),
+        "symlink_parent": Path("link") / ".." / "data",
+        "missing": Path("absent"),
+        "dangling": Path("dangling"),
+    }[kind]
+    if strict and kind in {"missing", "dangling"}:
+        with pytest.raises(ByteExportError) as caught:
+            exporter._resolve(selected, strict=strict)
+        assert caught.value.code == "io"
+        assert isinstance(caught.value.__cause__, FileNotFoundError)
+    else:
+        assert exporter._resolve(selected, strict=strict) == selected.resolve(
+            strict=strict
+        )
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "plain",
+        "permission",
+        "deep",
+        "explicit",
+        "suppressed",
+        "recursion",
+        "subclass",
+        "type",
+        "value",
+        "legacy",
+    ],
+)
+def test_resolver_converts_only_the_implicit_legacy_loop(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    class OtherRuntimeError(RuntimeError):
+        pass
+
+    failure: Exception = RuntimeError("This text does not identify a path loop.")
+    if kind == "recursion":
+        failure = RecursionError("Keep the recursion failure.")
+    elif kind == "subclass":
+        failure = OtherRuntimeError("Keep the runtime subclass.")
+    elif kind == "type":
+        failure = TypeError("Keep the type failure.")
+    elif kind == "value":
+        failure = ValueError("Keep the value failure.")
+    failure.__context__ = OSError(errno.ELOOP, "Underlying loop.")
+    if kind == "plain":
+        failure.__context__ = None
+    elif kind == "permission":
+        failure.__context__ = PermissionError(
+            errno.EACCES, "Underlying permission failure."
+        )
+    elif kind == "deep":
+        middle = ValueError("Intermediate failure.")
+        middle.__context__ = failure.__context__
+        failure.__context__ = middle
+    elif kind == "explicit":
+        failure.__cause__ = ValueError("Explicit cause.")
+        failure.__suppress_context__ = False
+    elif kind == "suppressed":
+        failure.__suppress_context__ = True
+
+    def broken(*args: object, **kwargs: object) -> Path:
+        raise failure
+
+    monkeypatch.setattr(Path, "resolve", broken)
+    if kind == "legacy":
+        with pytest.raises(ByteExportError) as caught:
+            exporter._resolve(tmp_path)
+        assert caught.value.code == "io"
+        assert caught.value.__cause__ is failure
+    else:
+        with pytest.raises(type(failure)) as original:
+            exporter._resolve(tmp_path)
+        assert original.value is failure
+
+
+@pytest.mark.parametrize("kind", ["loop", "permission"])
+def test_resolver_keeps_native_oserror_conversion(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    failure = OSError(
+        errno.ELOOP if kind == "loop" else errno.EACCES, "File operation failed."
+    )
+
+    def broken(*args: object, **kwargs: object) -> Path:
+        raise failure
+
+    monkeypatch.setattr(Path, "resolve", broken)
+    with pytest.raises(ByteExportError) as caught:
+        exporter._resolve(tmp_path)
+    assert caught.value.code == "io"
+    assert caught.value.__cause__ is failure
+
+
+@pytest.mark.parametrize("site", ["temporary_directory", "context", "tool_hash"])
+def test_legacy_loop_shape_outside_resolution_stays_visible(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
+) -> None:
+    binary, lift, mapping, _, context = diagnostic_sample()
+    failure = RuntimeError("A programming failure outside path resolution.")
+    failure.__context__ = OSError(errno.ELOOP, "Underlying loop.")
+
+    def broken(*args: object, **kwargs: object) -> object:
+        raise failure
+
+    if site == "tool_hash":
+        ghidra, java = installed_fixture(tmp_path)
+        monkeypatch.setattr(exporter, "lifting_tool_identity", broken)
+        with pytest.raises(RuntimeError) as caught:
+            exporter._context(binary, ghidra, java, ByteExportLimits())
+    elif site == "context":
+        monkeypatch.setattr(exporter, "_context", broken)
+        with pytest.raises(RuntimeError) as caught:
+            exporter.convert_byte_export(
+                binary, lift, mapping, b"", installation=tmp_path, java_home=tmp_path
+            )
+    else:
+        binary_path = tmp_path / "program.elf"
+        binary_path.write_bytes(binary)
+        stage = tmp_path / "stage"
+        stage.mkdir()
+        monkeypatch.setattr(exporter, "_context", lambda *args: context)
+        monkeypatch.setattr(exporter, "TemporaryDirectory", broken)
+        with pytest.raises(RuntimeError) as caught:
+            export_byte_diagnostic(
+                binary_path, stage, installation=tmp_path, java_home=tmp_path
+            )
+    assert caught.value is failure

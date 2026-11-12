@@ -153,3 +153,9 @@ controls and 786 affected host tests. Two optional live tests were skipped.
 The public static job retained the exact ordinary lift and mapping bytes.
 The full quality gate and fresh independent Sol review remain required.
 The three producer API gaps and all production gates remain open.
+
+The F2 path-loop correction follows required Astra advice. All 37
+focused controls, 174 unchanged independent controls and 823 affected
+host tests passed. Two optional live tests were skipped. Ordinary public
+static bytes remain exact. Full checks and fresh independent Sol review
+are still required. Both prior HOLDs and all producer gaps remain open.

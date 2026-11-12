@@ -979,3 +979,24 @@
 - The complete producer remains on HOLD for entry association, native
   liveness evidence and zero-length printer trivia. No target ran and
   no VM action occurred. The user pause deadline remains 01:11:47 UTC.
+
+## 2026-11-12. Correct the Python 3.12 path-loop boundary
+
+- Fresh Sol held `b252452` for F2. Six permanent real-loop controls
+  reproduced the raw RuntimeError. Preserve both earlier HOLD reports.
+- Required Astra inspected the pinned library behavior and recommended
+  a dedicated resolver. Root applied it only at the six controlled path
+  sites. Keep generic I/O, process cleanup, hash and context logic exact.
+- All 37 focused controls, 174 unchanged independent controls and 823
+  affected host tests passed. Two optional live tests were skipped.
+  Ruff and strict mypy passed. A new actual public static job passed.
+- The ordinary lift, mapping and inspection bytes remain unchanged.
+  The context measures the new exporter source. No tool pin changed.
+- Preserve the root's first read-only zsh-variable error and missing
+  review-label setup failure. The final independent repeat used the
+  unchanged guard, exact imports and an absent bytecode prefix.
+- Astra ran no new runtime test after its sandbox setup failed. Its
+  report is advice. Root controls verify the implemented correction.
+  The full gate and fresh independent Sol review remain required.
+- Complete producer admission and full capture review remain open.
+  No target ran and no VM action occurred. The timed pause still applies.

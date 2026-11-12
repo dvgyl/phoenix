@@ -1,5 +1,6 @@
 """Collect unpublished ordinary byte evidence. No result grants emission authority."""
 
+import errno
 import json
 import os
 import signal
@@ -129,6 +130,24 @@ def _io[T](operation: Callable[[], T]) -> T:
     try:
         return operation()
     except OSError as error:
+        raise ByteExportError(
+            "io", "Cannot complete a diagnostic file operation."
+        ) from error
+
+
+def _resolve(path: Path, *, strict: bool = False) -> Path:
+    try:
+        return _io(lambda: path.resolve(strict=strict))
+    except RuntimeError as error:
+        context = error.__context__
+        if (
+            type(error) is not RuntimeError
+            or not isinstance(context, OSError)
+            or context.errno != errno.ELOOP
+            or error.__cause__ is not None
+            or error.__suppress_context__
+        ):
+            raise
         raise ByteExportError(
             "io", "Cannot complete a diagnostic file operation."
         ) from error
@@ -634,9 +653,7 @@ def convert_byte_export(
     """
     _limits(limits)
     _size(binary, limits.max_program_bytes)
-    context = _context(
-        binary, _io(installation.resolve), _io(java_home.resolve), limits
-    )
+    context = _context(binary, _resolve(installation), _resolve(java_home), limits)
     return _convert(binary, lift, mapping, draft, context, limits)
 
 
@@ -700,14 +717,14 @@ def export_byte_diagnostic(
 ) -> UnpublishedByteExport:
     """Run one static job in owned external staging. Never publish or select it."""
     _limits(limits)
-    workspace = _io(lambda: Path(os.environ["PHOENIX_ROOT"]).resolve())
-    staging_root = _io(lambda: staging_root.resolve(strict=True))
+    workspace = _resolve(Path(os.environ["PHOENIX_ROOT"]))
+    staging_root = _resolve(staging_root, strict=True)
     if staging_root == workspace or workspace not in staging_root.parents:
         raise ByteExportError(
             "io", "Use an owned staging directory under PHOENIX_ROOT."
         )
     original = _read(binary, limits.max_program_bytes)
-    installation, java_home = _io(installation.resolve), _io(java_home.resolve)
+    installation, java_home = _resolve(installation), _resolve(java_home)
     context = _context(original, installation, java_home, limits)
     with ExitStack() as cleanup:
         owned = _io(
