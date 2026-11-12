@@ -97,3 +97,20 @@ The corpus remains agent-sealed. No new evaluation result is claimed.
 
 The combined scope, frame, mapping, plan, wire, and transfer suite passed
 1,009 tests. These are host tests. They do not establish live capture.
+
+Delegated collector-data progress on 2026-11-12. The pure raw reconstruction
+unit and ADR0035 are ready for supervisor review. The complete static data
+retains all plan and scope fields, checked geometry, and exact lower limits.
+The collector-only suite passed 121 tests. The earlier affected suite passed
+1,128 tests. Final command results are in the external implementation report.
+These are host software checks, not Phoenix evaluation results. Full capture
+review remains OPEN after provider screening. Production remains HOLD.
+No runtime authority or tree admission is added. No commit or push was made.
+The final affected suite passed all 1,130 tests. Ruff, its format check,
+strict mypy, and the whitespace diff check passed. The implementation
+report retains earlier lint and annotation failures. Independent review
+and the supervisor's complete quality gate remain required.
+
+The parent repeated the complete 1,130-test affected suite. All passed.
+The exact five-file scope and original documentation prefixes were verified.
+The full quality hook and independent implementation review remain open.

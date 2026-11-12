@@ -791,3 +791,34 @@
   passed all 1,009 tests. The earlier preflight refusal changed no source.
   A test command on the unchanged old branch collected no tests because
   the new files were absent. The corrected command tested this candidate.
+
+## 2026-11-12. Reconstruct complete static collector data
+
+- This delegated unit adds only `collector_data.py`, its synthetic host
+  controls, and ADR0035. The raw boundary rebuilds complete plan and scope
+  records with installed policy bytes. It preserves all nested fields.
+- Frozen data includes checked ELF geometry, exact transport limits, and
+  every source record. Canonical output has an incremental 16 MiB bound.
+  Caller-supplied lower limits remain binding. Snapshot width is eight.
+- The initial collector suite passed 88 tests. Expanded controls passed
+  119 tests. The combined affected suite passed 1,128 tests. Two later
+  metadata controls passed in the final 121-test collector suite. Final
+  affected checks are recorded in the external implementation report.
+- Initial lint found 42 issues before formatting and import cleanup.
+  Strict mypy found two dynamic replacement annotation errors. A later
+  mypy run found two intentional invalid-address fixture annotations.
+  All were corrected. No product test failed in those runs.
+- Full capture review remains OPEN after provider screening. The pure
+  data unit issues no runtime authority or tree admission. Renderer,
+  independent decoder, build issuance, native collection, calibration,
+  and production gates remain separate work. The supervisor owns review,
+  the full gate, commits, and integration. No Git write was performed.
+- Final affected checks passed all 1,130 tests. Ruff check, Ruff format
+  check, strict mypy, and the whitespace diff check passed with exit 0.
+  Only the five allowed worktree paths changed. Independent review and
+  the supervisor's complete quality gate remain required.
+
+- The parent read the complete module and implementation report, checked
+  the exact allowed diff, and confirmed unchanged earlier implementation
+  files. The parent repeated all 1,130 affected tests successfully.
+  The full commit gate and fresh independent Sol review remain required.
