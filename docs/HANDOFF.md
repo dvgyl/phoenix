@@ -87,9 +87,9 @@ Verify the final pause record and actual Git state before editing.
 
 | Unit | Worktree | Branch or checkpoint | Current draft state |
 | --- | --- | --- | --- |
-| P1 project metadata | `m1-public-profile` | `agent/m3-project-profile-reader`, `6d00328` | Sol and Astra PASS. Exact files integrated on main. Read-only input to adapter design. |
-| Byte diagnostic | `m1-follow-up-review-e07ec17` | `agent/m2-byte-export-producer`, base `d1a1779` | Fresh Sol HOLD F1. Root correction has passed focused, independent and static checks. Full gate and fresh review are pending. |
-| Passive ELF U1 | `m1-ci-reliable` | `agent/m2-passive-collector-elf`, base `d736ef8` | Astra writer owns the tree. Review and full parent checks remain pending. |
+| P1 project metadata | `m1-public-profile` | `agent/m3-project-profile-reader`, `6d00328` | Sol and Astra PASS. Exact files integrated on main. Adapter design has ended. Verify ownership before reuse. |
+| Byte diagnostic | `m1-follow-up-review-e07ec17` | `agent/m2-byte-export-producer`, `b252452` | Full gate passed. Fresh Sol HOLD F2. Six new path-loop tests are pending. Required Astra advice is active. |
+| Passive ELF U1 | `m1-ci-reliable` | `agent/m2-passive-collector-elf`, `75b42cf` | Clean, pushed, and fully checked. Fresh Sol review is active. Keep the source frozen. |
 | Raw capture | `m1-development-evidence-fix` | `a2af90c` | Dependency port only. Full capture review remains open. |
 | Public calibration | `m1-submission-recovery` | `cf066d6` | Source review PASS. Actual compiled caller frames and live cases remain open. |
 | Handoff | `m1-preflight-review-2` | `agent/thread-handoff` | Documentation merge in progress. |
@@ -122,15 +122,20 @@ correction and passed after it. All 110 unchanged independent controls and
 786 affected host tests passed. Two optional live tests were skipped.
 A repeated public static job retained exact ordinary lift, mapping and
 inspection bytes. Context identities now bind the changed exporter source.
-Full checks, a pushed correction, and fresh independent Sol are required
-before main integration. The complete producer remains on HOLD.
+The correction passed the full gate and was pushed at `b252452`. Fresh
+Sol then held F2: Python 3.12 converts a real path loop to `RuntimeError`
+with an `OSError(ELOOP)` context. Six permanent controls reproduce it.
+Required Astra compatibility advice is active. The general filesystem
+contract and complete producer remain on HOLD. Main integration is closed.
 
 Astra adapter design uses immutable Git copies from `d1a1779` in
 `audit/m2-byte-adapter-design-astra-20261112/inputs`. It must resolve actual
 entry association, Java dead-bank bookkeeping versus native liveness,
-and zero-length printer trivia through a new versioned adapter. Read all
-four final design documents and verify source identities. Exit 0 alone
-is not design approval. No compiler, Ghidra job, VM, target or production
+and zero-length printer trivia through a new versioned adapter. The Astra task ended at 23:26:23 UTC. The parent read all four final
+documents and verified 13 frozen inputs and 36 primary source hashes.
+The selected plan uses separate graph and source schema 2 readers first.
+Keep complete Java banks and post-printer inventories with explicit gaps.
+ADR0041 is taken by U1. Use ADR0042 for the later adapter work. No compiler, Ghidra job, VM, target or production
 caller is authorized by that design task.
 
 Compiled-data architecture is in `audit/m2-compiled-data-design-astra-20261112`.
@@ -214,18 +219,19 @@ system. State this in reports.
 
 T1 is sealed with 15 programs and 90 variants. Its source sizes are only
 304 to 316 C LOC. Disclose that narrow range. Commitments are on main.
-T2 remains incomplete. Its approved 23:04 UTC progress snapshot has 7/10
+T2 remains incomplete. Its approved 23:32 UTC progress snapshot has 7/10
 validated programs and 42/60 variants, 43,276 fixed inputs and 20/20
 passing generator replays. These are source adequacy counts, not Phoenix
-scores. Ten partial coverage reports pass. Final T2 commitment and full
-validation remain open. T3 has five source-screened selections and all
+scores. Ten partial coverage reports pass. An earlier snapshot had 8/10 validated
+programs. The later count is lower. No cause is inferred from aggregate
+status. Final T2 commitment and full validation remain open. T3 has five source-screened selections and all
 five Linux runtime qualifications remain pending. The official model
 knowledge cutoff is recorded as 2026-04-30. It is not an independently
 verified model training completion date.
 
-At this draft checkpoint, the private T2 Astra retains the VM. Public
-Astra writer and adapter design also remain active. Verify actual end
-markers. At most four model processes include root. Native explicit-model
+At the refreshed draft checkpoint, the private T2 Astra retains the VM.
+The U1 Sol review and focused F2 Astra advice are active. The writer and
+adapter design have ended. Verify actual processes and end markers. At most four model processes include root. Native explicit-model
 collaboration advertises Priority only. Guarded CLI roles request Standard
 with Fast and nested models disabled. That is a launch setting, not an
 independent routing attestation.
@@ -263,7 +269,20 @@ only after the handoff, checkpoint and actual shutdown checks are complete.
    limitations and required benchmark artifacts. Verify commitments and
    reproduce every headline through evaluator replay.
 
+## Preserved public records
+
+`docs/checkpoints/2026-11-13-pause` retains exact final adapter and
+compiled-data design documents. It also retains the historical six-test
+F2 regression checkpoint. The parent reconstructed that test file at its
+recorded base and checked exact bytes and mode without changing the
+original index. These are records, not accepted implementation changes.
+
 ## Final pause record
+
+Fresh independent Sol passed exact draft `8579da3` and its archival
+records. The parent repeated all 39 archived source files, 18 review
+copies and five interrupted-task records under the unchanged guard.
+All passed. This draft review does not certify the later shutdown.
 
 Pending. This section must be replaced with observed shutdown, Git,
 backup, independent review and canonical checkpoint facts before the

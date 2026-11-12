@@ -78,6 +78,24 @@
       "source": "/Volumes/PhoenixWork/audit/m3-project-profile-reader-review-astra-20261112/report.md",
       "sha256": "cf62555f959616180ec77a4c92033cbf9cf9657375c3b5fcf027c1a8f4244bd0",
       "bytes": 25273
+    },
+    {
+      "file": "handoff-draft-sol.md",
+      "source": "/Volumes/PhoenixWork/audit/timed-handoff-draft-review-sol-20261112/report.md",
+      "bytes": 14153,
+      "sha256": "e9e00d2172a633d03485941cfd32e459a7a9082c3509cd8394443be34b703f45"
+    },
+    {
+      "file": "byte-export-original-hold-sol.md",
+      "source": "/Volumes/PhoenixWork/audit/m2-byte-export-producer-review-sol-20261112/report.md",
+      "bytes": 20107,
+      "sha256": "5fb6d41fd224ca6a0697505f8e7c56c74a6119e1f04e2419517f2084428ebdf0"
+    },
+    {
+      "file": "byte-export-f2-hold-sol.md",
+      "source": "/Volumes/PhoenixWork/audit/m2-byte-export-f1-review-sol-20261112/report.md",
+      "bytes": 17280,
+      "sha256": "4c09955cc1453e54eadaf76aa5c149722087267fb714454a4c34e29a29ef9828"
     }
   ]
 }

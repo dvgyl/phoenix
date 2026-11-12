@@ -1,0 +1,54 @@
+{
+  "schema": "phoenix-public-design-archive-1",
+  "purpose": "Preserve exact public design documents. No implementation or production approval follows.",
+  "files": [
+    {
+      "file": "byte-adapter-design/design.md",
+      "original": "/Volumes/PhoenixWork/audit/m2-byte-adapter-design-astra-20261112/design.md",
+      "bytes": 17702,
+      "sha256": "827d3fb6966d9e73ea6866ebd232908026d02131ae3a7dc33069da7050b1a97b"
+    },
+    {
+      "file": "byte-adapter-design/api.md",
+      "original": "/Volumes/PhoenixWork/audit/m2-byte-adapter-design-astra-20261112/api.md",
+      "bytes": 30549,
+      "sha256": "56eb3d0a9af1ad850d677d3bb5a3100fd696df6264c6c730a8842376ff2ea511"
+    },
+    {
+      "file": "byte-adapter-design/implementation-plan.md",
+      "original": "/Volumes/PhoenixWork/audit/m2-byte-adapter-design-astra-20261112/implementation-plan.md",
+      "bytes": 16872,
+      "sha256": "e6e244ac7144c0bb42e872312c91fd3d26ae8b7404395c28ee39a59911959d5a"
+    },
+    {
+      "file": "byte-adapter-design/report.md",
+      "original": "/Volumes/PhoenixWork/audit/m2-byte-adapter-design-astra-20261112/report.md",
+      "bytes": 18258,
+      "sha256": "89bb0179ace0eb573bfb9842858cdb5e9980d251fa51f04ec8c930d28fa6ebb1"
+    },
+    {
+      "file": "compiled-data-design/design.md",
+      "original": "/Volumes/PhoenixWork/audit/m2-compiled-data-design-astra-20261112/design.md",
+      "bytes": 26804,
+      "sha256": "08ce7356c8a54a45b5979db7ced54e08738990fcb00475cdecf8fb87a2cb9bb1"
+    },
+    {
+      "file": "compiled-data-design/api.md",
+      "original": "/Volumes/PhoenixWork/audit/m2-compiled-data-design-astra-20261112/api.md",
+      "bytes": 19775,
+      "sha256": "9b5bad121821fcadd51de2c39035e1a7c0734ee82edd19382389c60aada3571b"
+    },
+    {
+      "file": "compiled-data-design/implementation-plan.md",
+      "original": "/Volumes/PhoenixWork/audit/m2-compiled-data-design-astra-20261112/implementation-plan.md",
+      "bytes": 18627,
+      "sha256": "53a3b9e08cd394785d072a602dee676b18ef1b4ccf61956b9cce4d43389833b4"
+    },
+    {
+      "file": "compiled-data-design/report.md",
+      "original": "/Volumes/PhoenixWork/audit/m2-compiled-data-design-astra-20261112/report.md",
+      "bytes": 17065,
+      "sha256": "2c1fac897c206f4894c24ef29039075cc95b523aa7c76bfd70c254d0c414af5a"
+    }
+  ]
+}

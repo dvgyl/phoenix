@@ -1,0 +1,93 @@
+Phoenix needs complete compiled-table evidence under corrected F3. Implement these units in order. Each unit needs a separate implementation review before the next unit relies on it. This architecture review does not supply that later review.
+
+U1 is the recommended next action. It is a pure ELF reader with synthetic controls. It can be implemented and tested before Linux access. Its success must be labelled `synthetic parser validation`. It is not compiled retention proof.
+
+| Unit | Verdict | Exact source and test scope | Acceptance boundary |
+| --- | --- | --- | --- |
+| U1. Bounded passive ELF view | PASS-to-implement now | Add `phoenix/observe/collector_elf.py`, `tests/test_observe_collector_elf.py`, and `docs/adr/0038-passive-collector-elf.md`. Put the shared `InspectionLimits`, `InspectionRejected`, and ELF result shapes in `collector_elf.py` for this unit. | Pass pure malformed-input, mapping, symbol, SysV lookup, and relocation controls. Obtain an independent diff review. No compiler or plugin execution is needed. |
+| U2. Independent logical readback | PASS-to-implement after U1 review | Add `phoenix/observe/collector_layout.py`, `phoenix/observe/collector_compiled.py`, `tests/test_observe_collector_layout.py`, `tests/test_observe_collector_compiled.py`, and `docs/adr/0039-compiled-collector-readback.md`. Reuse U1's limits and refusal types. | Pass complete synthetic decoding, field mutations, witness comparison, canonical record tests, and independence controls. Both layout profiles remain test-only. Obtain independent review. |
+| U3. Fixed witness and compiler test inputs | PASS-to-implement after U2 review | Add `phoenix/observe/native/collector_layout_v1.c`, `phoenix/observe/native/collector_layout_checks_v1.h`, `tests/fixtures/collector_inspection/representative.c`, `tests/collector_compiled_gate.py`, `tests/test_observe_collector_compiled_linux.py`, `containers/observe/Dockerfile.collector-inspection`, and `containers/observe/Dockerfile.collector-inspection.dockerignore`. | Freeze the exact source, build-context, fixture, and mutation manifests. Review the C assertions and test driver independently. Linux compilation remains HOLD until the separate VM lease ends. |
+| U4. Actual Linux profile validation | HOLD pending VM release and U3 review | No production source change. Use U3's fixed driver. If tests find a defect, return it to U1, U2, or U3 with a reviewed patch. Keep outputs under a new controller-assigned public artifact root. | Pass actual compiled representatives for GCC and Clang, O0 and O2, on native AArch64 and native x86-64. Save every output identity and mutation result. Complete an independent evidence review. |
+| U5. Trusted build and collector integration | HOLD pending U4 and separately reviewed build and native units | Target only `phoenix/observe/collector_build.py`, `phoenix/observe/worker.py`, `phoenix/observe/runner.py`, `phoenix/observe/collector_binding.py`, `phoenix/observe/native/collector.c`, `containers/observe/Dockerfile`, `containers/observe/Dockerfile.dockerignore`, `tests/test_observe_collector_build.py`, `tests/test_observe_collector_binding.py`, and `tests/test_observe_collector_compiled_linux.py`. These paths may be new later. | Issue receipts only after fresh complete inspection and trusted completion. Prove actual native installer traversal and use of the retained tables. Review the full source and launch closure before production integration. |
+
+Each implementation unit may append its own bounded entry to `docs/STATUS.md` and `docs/LOG.md`. No unit may edit the old policy or admission hash algorithms. U1 through U4 may not change the existing renderer, source reader, native data declarations, accepted worker recipe, accepted oracles, raw admission APIs, or archived experiment. If an implementation needs another file, revise and review its exact scope before using that file. Do not silently widen a unit.
+
+Keep `pyproject.toml` and `tools.lock` unchanged in U1 and U2. No external parser dependency is needed. U3 has a dedicated observer test recipe. Pin its complete compiler and linker inputs in the controller's build context. The recipe must not retag or modify accepted oracle images. Freeze literal source allowlists before invoking a build. Do not use a whole-checkout COPY.
+
+U3 uses the fixed flags `-std=c11 -Wall -Wextra -Werror -fPIC -fvisibility=hidden -fno-merge-all-constants -shared`. Add `-Wl,--hash-style=sysv,-z,relro,-z,now,-Bsymbolic`. Forbid LTO, packing switches, ICF, symbol stripping, and packed dynamic relocations in this initial profile. Keep local table symbols. The data declarations already give the public directory its default visibility. The witness uses the fixed export attribute. Test both supported optimization levels through separately fixed complete argument vectors. These proposed flags are not a claim that a Linux build has passed.
+
+The recipe uses the existing pinned observer compiler family as its first AArch64 context. It needs a separately pinned Clang context and separately pinned x86-64 contexts. A version string is insufficient. Record driver, compiler, linker, startup objects, headers, sysroot, dependencies, and actual commands. Do not invent their identities before the authorized worker reads them. A missing native x86-64 runner leaves that profile on HOLD.
+
+The representative C file includes the real generated header and the fixed witness. It has fixed inert QEMU export definitions for data-inspection fixtures. It contains no generated control flow. Never call those exports during passive inspection. An inert representative is not the actual production collector. U5 must inspect the actual collector output again.
+
+U1 controls establish the byte parser contract.
+
+| Area | Positive controls | Negative controls |
+| --- | --- | --- |
+| ELF envelope | Synthetic ELF64 ET_DYN for both machines. Ordinary sections and symbols. Several load segments. Nonzero virtual addresses. | Truncation at every fixed header boundary, wrong class or endian, wrong machine, unsupported ABI, ET_REL or ET_EXEC, PT_INTERP, nonzero entry, overflow, extended numbering, excessive counts. |
+| File-backed mapping | Exact beginning and last-byte spans. Read-only tables and a RELRO directory. | BSS-only bytes, zero fill, file holes, cross-segment objects, section-to-segment disagreement, compressed or TLS data, executable table storage, overlapping virtual or file aliases. |
+| Symbols | Matching dynsym and symtab export mirrors. Distinct local table symbols. SysV hash collisions with valid chains. | Missing exports, duplicate definitions, conflicting mirrors, hidden or weak required exports, IFUNC, wrong symbol type or size, symbol version aliases, missing local names, unreachable hash entries, invalid buckets, cycles, unterminated names. |
+| Relocations | All 47 relative cells for each machine. Valid unrelated import relocations. Distinct physical placement with the same decoded meaning. | Missing, duplicate, shifted, overlapping, wrong-width, wrong-machine, symbol-based, negative-addend, external, overflow, and one-past-end table pointers. REL, RELR, packed encodings, COPY, TLS, IFUNC, and text relocations refuse. |
+| Runtime metadata | Consistent DT_RELA and section ranges, PLT ranges, valid RELACOUNT, exact linked dynsym. | Unlisted allocated relocation sections, hidden overlapping relocation ranges, duplicate singleton tags, malformed DT_NULL tail, wrong entry sizes, wrong table links, RPATH, RUNPATH, and a forged dynamic hash. |
+| Bounds and fault handling | Each exact cap and each allowed lower cap. | One above and one below the required capacity. Huge p_memsz causes no allocation. Inject internal exceptions and require visible faults. |
+
+Construct U1 fixtures with an independent test builder that uses literal ELF fields and fixed offsets. Do not ask the reader to serialize its own expected input. Hypothesis tests must include bounded arbitrary bytes and structure-preserving metadata changes. No case may trigger process creation, network access, filesystem reads, or native loading.
+
+U2 controls establish complete semantic readback.
+
+- Build synthetic ELF images with separately specified logical records and field bytes. Do not use production writer sizes, schema, projections, or native-memory packing to create expected offsets.
+- Compare the whole decoded canonical record with `CollectorData.to_bytes()` from public raw reconstruction. In additional tests, compare the complete plan and scope subrecords with their original canonical input bytes. No expected value comes from a second selected-site projection.
+- Disable all writer entry points and source-reader functions before compiled decoding. Compiled decoding must still work. An import guard must reject attempts to import either writer or source reader from the compiled modules.
+- Exercise both root-evidence forms, all supported active variants, every optional import field, null versus present zero, null versus empty text, Unicode, NUL, high bytes, both signed extremes, and exclusive ends equal to `2**64`.
+- Include shared role sites, several continuation users, shared route suffixes with different positions, all omission metadata, both address domains, every gap index, and every limit field.
+- Check all 47 directory entries. Mutate each of their six scalar fields and each pointer relocation independently. Mutate D, R, and N independently.
+- For every active semantic field, change its bytes while preserving the object and file sizes. Require a semantic refusal or a complete-record mismatch. Include swapped geometry fields, swapped directory lengths, wrong equal-sized slice types, changed variant tags, changed route membership, and reordered array values.
+- Change an omitted metadata field or unused operational table while preserving selected sites. Complete comparison must detect the change. Recompute submitted D after a coherent data change. Independently reconstructed expected bytes must still reject it.
+- Corrupt each zero-row physical table. A nonzero semantic cell must reject. Delete or alias empty storage and require rejection. Verify that a zero-row table still needs its symbol, physical element, pointer, and relocation.
+- Test duplicate and reused slices, empty slices at wrong cursors, out-of-range references, missing and extra rows, inactive payloads, bad UTF-8, bad literals, invalid Booleans, negative zero, and canonical-output limits.
+- Change witness offsets and payload types without changing sizes. Require layout rejection before table traversal. Change both witness and data coherently. The installed expected vector must still reject.
+- Change only a RELA-overwritten pointer-cell word. Pure semantic decoding may still agree. Q and the directory-byte hash must change. This is a positive semantic control and a negative stale-receipt control later.
+- Change alignment gaps outside consumed objects. Logical D must stay unchanged. Q must change. Do not hash padding into D.
+- Synthetic private field tests can cover dormant termination-type layouts. The public main-window record must still have empty contracts. Do not make a nonempty termination contract a production-positive case.
+
+Property tests must bound output work and test canonical round trips without importing the writer. Include exact lower limits before allocations and scans. Test every rejection path for the absence of partial logical results. A coherent fabricated ELF is a useful positive pure test. Explicitly require it to fail F1 issuance later.
+
+U4 establishes actual compiler behavior after the VM lease ends.
+
+Freeze the fixture manifest before compiling. The minimum named public fixture families are `default`, `shared-roles`, `shared-route-suffix`, `omitted-users`, `explicit-root`, `branch-guards`, `reject-guards`, `neutral-thunks`, `optional-imports`, `unicode`, `signed-min`, `signed-max`, `endpoint`, and `lower-limits`. Preserve their exact raw inputs and canonical logical records. Some edge fixtures use direct synthetic metadata. Label those cases. They prove representation only and do not claim an original ELF fact.
+
+Compile every applicable family with GCC and Clang at O0 and O2 for each native host profile. Use exact toolchain contexts. Record the actual ELF machine from each output. Build representative data with the exact witness and assertion header in the same compilation context. Read the actual linked output with the independent byte reader. Compare complete logical bytes, not only a directory checksum. Retain compiler diagnostics and distinguish warnings, build failures, inspection failures, and expected mutation rejections.
+
+For each output, save at least the following evidence.
+
+- The complete request, source allowlist, source bytes, generated header, assertion source, witness source, expected data, profile manifest, and exact command and environment.
+- Compiler and linker executable identities, sysroot and input identities, immutable image identity, architecture and native host evidence, and resource-limit results.
+- The exact `.so` bytes, byte length, SHA-256, directory and witness ranges, table inventory, export inventory, complete relocation evidence, and complete logical readback.
+- The inspection bytes and its SHA-256. A failed inspection has a rejection record and the exact failed input bytes.
+- Each mutation's baseline Q, exact changed byte offsets and replacement bytes, mutated Q, expected result, actual result, and retained diagnostics.
+
+Mutate actual linked bytes after each baseline inspection. Required controls include at least one mutation in every active table, every directory field class, each pointer relocation, every required export, and the witness. Add size-preserving semantic swaps, missing and extra relocations, moved addends, wrong symbols, nonzero zero-row storage, aliased arrays, and file truncation. Recompute checksums on coherent changes and require comparison with independently prepared data to fail.
+
+Compile declaration mutations too. Swap two same-width fields. Substitute another same-sized slice type. Swap directory lengths. Change a table tag. Each mutation must fail the corresponding fixed assertion. A total-size assertion alone does not meet this gate.
+
+Repeat each unmodified build in a clean root with the same complete K. Compare exact Q values. If they differ, record `build_nondeterministic` and prohibit cache reuse for that key. Do not average away the difference. Measure peak memory, time, physical size, and diagnostic sizes against the fixed limits. Refuse oversized outputs even when decoding would otherwise succeed.
+
+A native x86-64 compile gate is not satisfied by an AArch64 cross-compile or an emulated run. These can supply additional evidence with distinct labels. They cannot close the required native profile gate. No target execution is needed to prove retained bytes. Later live collector calibration is still required.
+
+U5 binds inspection to issued artifacts and actual collector use.
+
+The worker must perform complete inspection inside the trusted build transaction. The controller records K, Q, I, B, and the installed build-context identity only after worker completion and output checks. A cache hit requires the trusted issued pin, fresh bounded file reads, fresh hashes, and fresh inspection. Missing registry state requires a rebuild. A caller-supplied pin, inspection, constructor token, or matching source hash cannot create authority.
+
+Use private fixed build roots, exclusive creation, and no links. The controller must reject replaced files, wrong file types, output races, duplicate or late responses, and inconsistent repeated builds. Save actual output bytes before parsing. Use immutable byte snapshots through comparison and receipt issuance. Never hash one file and inspect a later replacement.
+
+The fixed native installer must traverse the directory and validate every table before registering callbacks. Its operational indexes must refer to these exact arrays. Independent source review and native mutation controls must reject an alternate selected-site copy, skipped metadata validation, wrong route-position lookup, and altered table use. A valid passive readback cannot prove that arbitrary code uses those tables.
+
+Freeze the complete source and import closure at U5. Include every new reader and witness file, existing policy and admission file sets, package initializers, reconstruction, case, wire, outcome, tree, runner, worker, launcher, recipes, and transitive local imports. Bind interpreter and dependencies through an immutable image. Eliminate unrecorded bytecode and uncontrolled import paths. Preserve the old digest algorithms and record the new closure separately.
+
+Bind the fixed launch profile, actual expanded arguments and environment, accepted case, complete outcome, and trusted execution transaction. Preserve the accepted QEMU 8.2.2 and Rosetta oracles. No new `LD_BIND_NOW`, `QEMU_*`, or other target overlay is permitted. The plugin linker's immediate binding flag does not change the target invocation.
+
+F2 retains each trial's actual binary, plan, scope, K, B, Q, T, launch specification, and output artifacts. Apply the installed common-context rule. A mutation approval is not an ordinary production approval. Distinguish implementation calibration from exact-artifact calibration.
+
+Full capture review remains OPEN after provider screening. U5 may not use this task as a replacement. Native collection, the full public matrix, freshness calibration, repeated complete outcome comparisons, deployment, recovery, and localization remain gated separately. SPEC section 9 still requires M4, T0 through T3 results with every baseline, costs and failures, publication, and replay of every headline result.
+
+The U4 driver has fixed work limits. Four compiler and optimization combinations on two native machines produce 112 baseline fixture builds. Two clean builds per baseline produce 224 compilations. Four declaration mutations in each of the eight contexts add 32 negative compilations. The maximum is 256 compiler invocations. Byte-mutation trials have a separate maximum of 65536. The frozen manifest gives the exact trial count before the first build. Total retained artifacts have an 8 GiB limit. Each compiler invocation retains the candidate CPU 120-second, wall 180-second, memory 1 GiB, scratch 256 MiB, file 64 MiB, and per-stream diagnostic 1 MiB limits. Any limit failure leaves the gate open. It cannot remove required controls or supply a partial approval. U5's actual collector and live matrix need their own separately bounded manifests.

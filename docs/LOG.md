@@ -1082,3 +1082,23 @@
   the user deadline. Final shutdown facts remain pending.
 - Preserve old archival patches and pending public work. Keep corpus
   sources, held-out inputs and private Author output sealed.
+
+## 2026-11-12. Preserve the reviewed handoff draft and open defects
+
+- Fresh Sol passed exact draft `8579da3` and its archival records. The
+  parent repeated all 39 archived source files, 18 prior review copies
+  and five interrupted-task records under the unchanged guard. All passed.
+  The draft review does not certify final process or VM shutdown.
+- Preserve exact copies of the original byte diagnostic HOLD and the
+  later F2 HOLD. The five F1 cases pass, but six real symlink-loop cases
+  remain red. Python 3.12 raises RuntimeError with ELOOP context. Required
+  Astra advice is active. No byte diagnostic code is integrated on main.
+- Preserve the four final public byte-adapter design documents and four
+  compiled-data design documents with exact hashes. Observation parsing
+  is permitted for implementation. Semantic and production gates remain
+  on HOLD. The full capture review remains open after provider screening.
+- U1 is fully checked and pushed at `75b42cf`. Its fresh Sol review is
+  active. Page-granule compatibility and compiled retention remain open.
+- The private Author retains the VM. Its latest approved count is 7/10
+  programs, lower than the earlier 8/10 snapshot. No cause is inferred.
+  This is incomplete source adequacy, not a reconstruction result.

@@ -1,0 +1,65 @@
+diff --git a/tests/test_byte_export.py b/tests/test_byte_export.py
+index 6e85eca8cd711d387c09c703127bea66742b8892..3bc27c74769e6d5cb849a41e4a4bf6eb1107546f 100644
+--- a/tests/test_byte_export.py
++++ b/tests/test_byte_export.py
+@@ -843,3 +843,60 @@ def test_existing_headless_log_is_diagnostic(tmp_path: Path) -> None:
+     with pytest.raises(ByteExportError) as caught:
+         exporter._headless(["/not-started"], tmp_path, {})
+     assert caught.value.code == "io"
++
++
++@pytest.mark.parametrize(
++    "entry,site",
++    [
++        ("export", "staging"),
++        ("export", "workspace"),
++        ("export", "installation"),
++        ("export", "java"),
++        ("convert", "installation"),
++        ("convert", "java"),
++    ],
++)
++def test_real_path_loops_are_diagnostic(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, entry: str, site: str
++) -> None:
++    binary, lift, mapping, _, context = diagnostic_sample()
++    binary_path = tmp_path / "program.elf"
++    binary_path.write_bytes(binary)
++    stage = tmp_path / "stage"
++    stage.mkdir()
++    marker = stage / "evidence-current"
++    marker.write_bytes(b"Previous selected generation.\n")
++    cycle = tmp_path / "cycle"
++    cycle.symlink_to("cycle")
++    installation = cycle if site == "installation" else tmp_path
++    java_home = cycle if site == "java" else tmp_path
++    selected_stage = cycle if site == "staging" else stage
++    if site == "workspace":
++        monkeypatch.setenv("PHOENIX_ROOT", str(cycle))
++
++    def must_not_run(*args: object) -> None:
++        raise AssertionError("A path loop must precede the job and conversion.")
++
++    monkeypatch.setattr(exporter, "_headless", must_not_run)
++    monkeypatch.setattr(exporter, "_convert", must_not_run)
++    monkeypatch.setattr(exporter, "_context", lambda *args: context)
++    with pytest.raises(ByteExportError) as caught:
++        if entry == "export":
++            export_byte_diagnostic(
++                binary_path,
++                selected_stage,
++                installation=installation,
++                java_home=java_home,
++            )
++        else:
++            exporter.convert_byte_export(
++                binary,
++                lift,
++                mapping,
++                b"",
++                installation=installation,
++                java_home=java_home,
++            )
++    assert caught.value.code == "io"
++    assert marker.read_bytes() == b"Previous selected generation.\n"
++    assert set(stage.iterdir()) == {marker}

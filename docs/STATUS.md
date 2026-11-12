@@ -144,3 +144,11 @@ Do not resume without a new user instruction.
 4. Finish private T2 and T3 qualification. Complete and replay M2 and M3.
 5. Freeze M4 with every baseline and ablation. Publish required artifacts
    and reproduce every headline result. Meet every SPEC section 9 condition.
+
+The public handoff draft passed fresh Sol review at `8579da3`. The parent
+repeated all 39 archived source files, 18 prior review copies and five
+interrupted-task records. All passed. Final shutdown remains pending.
+The byte diagnostic is fully checked and pushed at `b252452`, but fresh
+Sol holds F2 for Python 3.12 path loops. Six new permanent controls are
+red. Required Astra advice is active. U1 is fully checked and pushed at
+`75b42cf`; fresh Sol review remains active. No new code is on main.

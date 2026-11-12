@@ -1,0 +1,20 @@
+{
+  "schema": "phoenix-public-pending-backup-1",
+  "worktree": "/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17",
+  "branch": "agent/m2-byte-export-producer",
+  "base_commit": "b252452d4bc2dbae1474a3b266ca5a5b767f5892",
+  "patch": "pending.patch",
+  "patch_sha256": "15e54737002b19898833453924a9e07982d46e3858d79dbf7c8849ea2716ee7c",
+  "files": [
+    {
+      "path": "tests/test_byte_export.py",
+      "bytes": 31217,
+      "sha256": "771769a1148880230ed8cea34c52b71a682503fab41eb4d7ea740730d8deadf7",
+      "executable": false
+    }
+  ],
+  "reconstruction_verified": true,
+  "original_index_unchanged": true,
+  "original_files_unchanged": true,
+  "accepted_code": false
+}
