@@ -791,3 +791,35 @@
   passed all 1,009 tests. The earlier preflight refusal changed no source.
   A test command on the unchanged old branch collected no tests because
   the new files were absent. The corrected command tested this candidate.
+
+## 2026-11-12. Integrate reviewed scope and pure-frame source
+
+- Fresh Sol passed exact dependency ports `94caeb4` and `a2af90c`.
+  The parent repeated all 27 frame and 32 capture dependency controls.
+  The full capture review remains open after provider screening.
+- Fresh Sol passed exact integration `e7c9450`. The parent repeated all
+  72 new integration controls. All seven source, test, and ADR files
+  match the reviewed source. Every earlier implementation file matches
+  main `3939fbc`. The shared mapping helper is retained unchanged.
+- Integrated the exact reviewed commit. The new modules have no pipeline
+  caller. Their canonical private checked-input contract remains explicit.
+- Correction. The earlier entry overstated certificate admission. Scope
+  compilation derives the installed policy. The pure reducer can accept
+  a coherent synthetic older selection and receipt. A future trusted
+  boundary must rebuild current scope before it calls the reducer.
+- The first collector design task returned HOLD without the required
+  Astra verdict after an unnecessary nested process failed file access.
+  A fresh direct Astra review approved the corrected design for implementation.
+  It requires trusted issuance, per-trial calibration, retained compiled
+  tables, exact launch records, and a complete new source manifest.
+- Pinned QEMU source supports completed-prior-store visibility for the
+  restricted synchronous eight-byte read contract. This is source evidence.
+  Actual collector calibration, implementation review, full capture review,
+  and production acceptance remain required. Accepted oracles stay fixed.
+- Published five exact public review records and their hash manifest.
+  No private source, held-out input, Author output, or large binary is included.
+- The separate private T3 Author qualified five source selections after
+  checking seven candidates and replacing two uncertain publication dates.
+  All five Linux runtime qualifications remain pending. T2 is incomplete.
+- M2 through M4, publication, every baseline and ablation, and every
+  required headline replay remain open. No milestone tag changed.

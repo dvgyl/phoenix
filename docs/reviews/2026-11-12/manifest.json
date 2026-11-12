@@ -1,0 +1,35 @@
+{
+  "schema": "phoenix-review-copies-1",
+  "files": [
+    {
+      "file": "dependency-ports-sol.md",
+      "source": "/Volumes/PhoenixWork/audit/m2-dependency-ports-sol-resume-20261112/report.md",
+      "sha256": "afcb84b1e986c13940c696fe77c3a568651d0505bdc0184dabeb2f20c2a76172",
+      "bytes": 19610
+    },
+    {
+      "file": "scope-frames-integration-sol.md",
+      "source": "/Volumes/PhoenixWork/audit/m2-frame-integration-sol-20261112/report.md",
+      "sha256": "4886fcdf7a8af905b2f483a57551d9034ebc3e3b9df3abfda2eb825ea33260c2",
+      "bytes": 19492
+    },
+    {
+      "file": "collector-candidate-hold.md",
+      "source": "/Volumes/PhoenixWork/audit/m2-collector-transport-design-astra-resume-20261112/report.md",
+      "sha256": "54d9f5763e43e1b4dd068f056a500c3ede380dc767d2c7c40ced877a50a6f70a",
+      "bytes": 24402
+    },
+    {
+      "file": "collector-architecture-astra.md",
+      "source": "/Volumes/PhoenixWork/audit/m2-collector-architecture-direct-astra-20261112/design-verdict.md",
+      "sha256": "68e92c3ec9a785cba28363e435a46877f0232b86d7785a0734b82a9c43f63036",
+      "bytes": 27212
+    },
+    {
+      "file": "collector-architecture-astra-report.md",
+      "source": "/Volumes/PhoenixWork/audit/m2-collector-architecture-direct-astra-20261112/report.md",
+      "sha256": "5866d3f8665471829fc9e0109828cccb5f8d403dc03b9ceacbc6bf640037ef32",
+      "bytes": 17364
+    }
+  ]
+}

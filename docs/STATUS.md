@@ -74,26 +74,36 @@ external APFS mount at `/Volumes/PhoenixWork`. The VM has four CPUs and
 2 GiB of memory. Use Standard service. Obtain a fresh independent Sol
 review after each major block and Astra review where required.
 
+## Current recovery work
+
+The exact scope and pure-frame files from `e7c9450` passed fresh Sol review.
+All 1,009 combined host tests passed. The parent repeated all 72 new
+integration controls. Existing pipeline and generation code remain unchanged.
+The reducer requires canonical private checked input. It does not authenticate
+a supplied selection or receipt. Every rejection returns no local values.
+
+The raw capture boundary remains isolated. Its full independent review is
+open after provider screening. The parser-only PASS does not replace it.
+Astra approved the corrected typed-header collector design for implementation.
+The corrections cover trusted build issuance, per-trial calibration,
+compiled-data retention, and exact launch and source identities.
+Production capture and all live collector gates remain open.
+
+T2 validation remains private and incomplete. Its separate Author retains
+the Linux VM. T3 has five source-qualified selections. All five runtime
+qualifications remain pending. No new evaluation result is claimed.
+
+The independent review records are in `docs/reviews/2026-11-12`.
+Their manifest binds exact report bytes. Historical HOLDs remain preserved.
+
 ## Next actions
 
-1. Refresh worker images and pass public evaluator gates before a new
-   sealed M2 run. Wait for the private author to release the Linux VM.
-2. Finish U2 proof, generation, and public behavior checks.
-3. Continue production observation, indirect calls, byte idioms, and repair
-   fault localization. Keep the two oracle engines independent.
-4. Finish private T2 validation. Validate T3 in a separate Linux window.
-5. Complete M2 through M4, publish the required artifacts, and replay every
-   headline result.
-
-## Isolated scope and pure-frame integration candidate
-
-This branch contains the exact scope and pure-frame files from `94caeb4`.
-Both dependency ports passed full quality checks and are pushed. Fresh
-Sol dependency review and integration review remain required. Every
-rejection returns no local values. The raw capture boundary remains on
-its isolated branch. Its full review remains open after provider screening.
-All collector, runtime, recovery, and later milestone gates remain open.
-The corpus remains agent-sealed. No new evaluation result is claimed.
-
-The combined scope, frame, mapping, plan, wire, and transfer suite passed
-1,009 tests. These are host tests. They do not establish live capture.
+1. Implement and review complete collector data, typed headers, and build
+   issuance under the corrected Astra design. Keep full capture review open.
+2. After the private Author releases the VM, preserve M1 image identities,
+   refresh current images, and pass the public switch and collector gates.
+3. Complete indirect-call recovery, byte idioms, exact fault localization,
+   whole-program types, modules, and bounded function cleanup.
+4. Finish private T2 and T3 qualification. Complete and replay M2 and M3.
+5. Freeze M4 with every baseline and ablation. Publish required artifacts
+   and reproduce every headline result. Meet every SPEC section 9 condition.
