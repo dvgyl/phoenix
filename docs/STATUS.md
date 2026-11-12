@@ -41,7 +41,10 @@ and full outcome digests match the historical Mac run. The same-revision
 Mac check still needs refreshed images and the Linux VM. The later
 `3c11d94` native arm64 job passed. Its amd64 job reached the 30-minute
 limit during pinned integrity package downloads. The native job limit
-is now 60 minutes. Its replacement run remains required.
+is now 60 minutes. The replacement native run at `20402bc` passed both
+architectures and the outcome comparison. The downloaded artifact hashes,
+worker source identity, and report bindings passed the parent check.
+The same-revision Mac comparison remains open until the private VM is free.
 [Capture issue](https://github.com/dvgyl/phoenix/issues/6).
 [Replay issue](https://github.com/dvgyl/phoenix/issues/5).
 
@@ -95,6 +98,13 @@ qualifications remain pending. No new evaluation result is claimed.
 
 The independent review records are in `docs/reviews/2026-11-12`.
 Their manifest binds exact report bytes. Historical HOLDs remain preserved.
+
+Complete static collector data is pushed at `63dd985`. Its full quality gate
+passed. Fresh independent Sol review remains open. The parent repeated all
+1,130 affected tests. The typed header renderer is a separate work unit.
+The new byte-graph reader passed 525 affected host tests. Its full quality
+gate, commit, and independent review remain in progress. These pure units
+do not authorize production capture or byte-idiom emission.
 
 ## Next actions
 

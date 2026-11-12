@@ -823,3 +823,23 @@
   All five Linux runtime qualifications remain pending. T2 is incomplete.
 - M2 through M4, publication, every baseline and ablation, and every
   required headline replay remain open. No milestone tag changed.
+
+## 2026-11-12. Verify the replacement native run
+
+- GitHub run `43289210443` passed at exact main `20402bc`. Both native
+  architectures and the native outcome comparison passed. The parent
+  downloaded both report archives and verified their GitHub SHA-256 values.
+- The evaluator revision, actual worker source digest, seed, case counts,
+  and complete public outcome digests agree. Each native report records
+  three self-trials, passing sandbox probes, and all public mutants killed.
+  Evidence remains in `audit/m2-ci-20402bc` outside the repository.
+- The current Mac comparison remains open. The separate private T2 Author
+  retains the VM. No parent Docker command or image change was made.
+- Static collector data is pushed at `63dd985` after the full quality gate.
+  The parent repeated all 1,130 affected host tests. Fresh Sol review is
+  independent of implementation. Typed headers are a separate work unit.
+- Astra finished the structural byte-graph reader. The parent read its
+  complete source and repeated 525 affected host tests. Its full gate and
+  fresh Sol review remain required. No byte emission is authorized.
+- The full capture review remains open after provider screening. Neither
+  pure data nor native toy checks replace it. No held-out score changed.
