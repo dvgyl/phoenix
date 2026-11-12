@@ -30,6 +30,12 @@
       "source": "/Volumes/PhoenixWork/audit/m2-collector-architecture-direct-astra-20261112/report.md",
       "sha256": "5866d3f8665471829fc9e0109828cccb5f8d403dc03b9ceacbc6bf640037ef32",
       "bytes": 17364
+    },
+    {
+      "file": "collector-data-sol.md",
+      "source": "/Volumes/PhoenixWork/audit/m2-collector-data-review-sol-20261112/report.md",
+      "sha256": "24159412f449c458d8b20f0a4c941f31bcd4d7fd74dc6da89c34bf184e58cbee",
+      "bytes": 20776
     }
   ]
 }

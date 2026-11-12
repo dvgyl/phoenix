@@ -99,11 +99,13 @@ qualifications remain pending. No new evaluation result is claimed.
 The independent review records are in `docs/reviews/2026-11-12`.
 Their manifest binds exact report bytes. Historical HOLDs remain preserved.
 
-Complete static collector data is pushed at `63dd985`. Its full quality gate
-passed. Fresh independent Sol review remains open. The parent repeated all
-1,130 affected tests. The typed header renderer is a separate work unit.
-The new byte-graph reader passed 525 affected host tests. Its full quality
-gate, commit, and independent review remain in progress. These pure units
+Complete static collector data passed fresh Sol review at `63dd985`. The
+parent repeated all 1,130 affected tests and all 47 new independent controls.
+Main contains the exact reviewed source. The data-byte cap limits the
+artifact size. It does not claim a total Python memory bound. The typed
+header renderer is a separate work unit.
+The new byte-graph reader is pushed at `fbcdab5` after full quality checks.
+All 525 affected host tests passed. Fresh independent review remains open. These pure units
 do not authorize production capture or byte-idiom emission.
 
 ## Next actions

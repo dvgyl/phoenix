@@ -843,3 +843,18 @@
   fresh Sol review remain required. No byte emission is authorized.
 - The full capture review remains open after provider screening. Neither
   pure data nor native toy checks replace it. No held-out score changed.
+
+## 2026-11-12. Integrate complete static collector data
+
+- Fresh independent Sol passed exact data commit `63dd985`. The parent
+  read the complete report and repeated all 47 new controls. All passed
+  under the unchanged private-data guard. The source remained unchanged.
+- Copied the exact three reviewed source, test, and ADR files. Every
+  implementation, test, pin, and configuration file now matches the
+  reviewed branch. Current main differs only in progress and review docs.
+- Published the exact review and its hash. The artifact-size limit does
+  not claim a total Python memory bound. Each retained import string
+  remains bounded by the existing 4,096-byte source reader limit.
+- Typed C rendering, compiled-table inspection, trusted build issuance,
+  calibration, and the full capture review remain open. This pure data
+  unit has no pipeline caller and grants no runtime authority.
