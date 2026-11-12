@@ -107,3 +107,15 @@ Their manifest binds exact report bytes. Historical HOLDs remain preserved.
 4. Finish private T2 and T3 qualification. Complete and replay M2 and M3.
 5. Freeze M4 with every baseline and ablation. Publish required artifacts
    and reproduce every headline result. Meet every SPEC section 9 condition.
+
+## U5 graph reader proposal, 2026-11-12
+
+The first U5 unit adds immutable graph records and a strict structural reader.
+The affected host tests passed 525 cases. Two live Ghidra tests were excluded.
+Ruff and strict mypy passed. These are synthetic and host software checks.
+They do not establish a live graph, a supported idiom, or a Phoenix result.
+The existing readers, exporters, schemas, pipeline, and pins remain unchanged.
+Fresh independent Sol review and the supervisor's full quality gate remain open.
+Production U5 remains HOLD. The producer, recognizer, source and interface
+checks, protected emission, and public runtime gates remain open.
+The private Author retains the VM. SPEC section 9 remains incomplete.

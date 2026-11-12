@@ -823,3 +823,40 @@
   All five Linux runtime qualifications remain pending. T2 is incomplete.
 - M2 through M4, publication, every baseline and ablation, and every
   required headline replay remain open. No milestone tag changed.
+
+## 2026-11-12. Add the first U5 structural graph reader proposal
+
+- Added `phoenix/lift/byte_graph.py` and independent synthetic controls in
+  `tests/test_byte_graph.py`. ADR 0036 defines the canonical wire, finite
+  limits, exact source comparisons, and remaining evidence limitations.
+- The graph binds the binary, lift, function entry, and exact raw C bytes.
+  Its active and excluded operations partition the complete analyzed bank.
+  It checks exact ordered operand references and reciprocal edge slots.
+  Raw and analyzed operation identities remain distinct at equal sequences.
+- The reader retains free values, unexplained values, unreachable blocks,
+  export gaps, and explicit volatile evidence. It does not authenticate
+  producer liveness flags, pass records, or supported byte-loop semantics.
+- Initial local checks found one long line and two type-check errors.
+  Those errors were corrected before the behavior checks. The first 277
+  reader tests passed. Expanded controls found an escaped Unicode surrogate
+  that the reader accepted. The reader now rejects invalid Unicode text.
+- Final affected host checks passed 525 tests. Two live Ghidra tests were
+  excluded by name. The graph reader has 99 percent line coverage in that
+  run. Ruff check, Ruff format check, and strict mypy passed.
+- No compiler, Ghidra process, Docker command, target, other model, or agent
+  ran. Existing launcher tests used host test doubles only. No sealed source,
+  held-out input, private run, Author output, or session history was read.
+- No existing implementation, test, schema, exporter, or pin changed.
+  No commit, push, tag, branch change, or independent review was performed.
+  The supervisor owns full quality, fresh Sol review, and integration.
+  Production U5 and all later milestone and SPEC section 9 gates remain open.
+
+## 2026-11-12. Parent check of the byte-graph reader
+
+- The parent read the complete implementation and the worker report.
+  The three new source, test, and ADR files match the reported hashes.
+  Every previous implementation file remains unchanged.
+- All 525 affected host tests passed again. Two live tests were excluded.
+  The full quality gate and fresh independent Sol review remain required.
+- This reader checks structural consistency. It does not authenticate
+  producer flags or prove a byte idiom. Production U5 remains open.
