@@ -46,7 +46,7 @@ is now 60 minutes. Its replacement run remains required.
 [Replay issue](https://github.com/dvgyl/phoenix/issues/5).
 
 T1 is sealed with 15 programs and 90 variants. Its source and input
-commitments are in the repository. T2 private validation is active. T3 has five source-screened selections and no runtime-qualified
+commitments are in the repository. T2 private validation is incomplete. A separate Corpus Author resumes it. T3 has five source-screened selections and no runtime-qualified
 batch. All source and held-out inputs stay sealed.
 
 The reviewed U1 lift evidence and opt-in recovery plan are on main.
@@ -84,3 +84,16 @@ review after each major block and Astra review where required.
 4. Finish private T2 validation. Validate T3 in a separate Linux window.
 5. Complete M2 through M4, publish the required artifacts, and replay every
    headline result.
+
+## Isolated scope and pure-frame integration candidate
+
+This branch contains the exact scope and pure-frame files from `94caeb4`.
+Both dependency ports passed full quality checks and are pushed. Fresh
+Sol dependency review and integration review remain required. Every
+rejection returns no local values. The raw capture boundary remains on
+its isolated branch. Its full review remains open after provider screening.
+All collector, runtime, recovery, and later milestone gates remain open.
+The corpus remains agent-sealed. No new evaluation result is claimed.
+
+The combined scope, frame, mapping, plan, wire, and transfer suite passed
+1,009 tests. These are host tests. They do not establish live capture.

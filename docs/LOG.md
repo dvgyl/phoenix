@@ -760,3 +760,34 @@
   exact replay, and the compiled negative control remain required.
 - The Linux VM stays with the private T2 Author. The option remains off
   by default. No new sealed measurement or later milestone is accepted.
+
+## 2026-11-12. Prepare scope and pure-frame integration
+
+- The owner resumed the complete SPEC section 9 goal. The parent checked
+  the canonical checkpoint, all ten pending files, branch tips, workers,
+  VM state, and storage before it removed the pause marker.
+- Both exact scope dependency ports passed full checks and commit hooks.
+  Frame `94caeb4` and capture `a2af90c` are pushed and clean. The ADR is
+  tracked in both. Fresh independent Sol dependency review is running.
+- This isolated candidate copies exact scope, pure-frame records, reducer,
+  tests, and ADR bytes from `94caeb4`. Six shared files match main exactly.
+  The shared mapping reader differs only by an extracted selector helper.
+  Abstract syntax tree checks confirm unchanged selector validation and
+  all other module definitions. Current main mapping code is retained.
+- The policy digest must use the installed source. No old certificate is
+  copied or accepted by this integration. No frame algorithm changed.
+- The raw capture boundary remains on its isolated branch. Its full
+  review is open after provider screening. The parser-only PASS does
+  not close that review. All live collector gates remain open.
+- The corpus remains agent-sealed on an honor system. Separate private
+  Authors resume T2 validation and T3 source qualification. The parent
+  reads only approved aggregate status and handoffs.
+- Internal free space crossed the required threshold. The parent moved
+  the inactive Homebrew download cache to external storage. All 3,785
+  file and link records matched. The original path resolves through a
+  link. Internal free space recovered above the required threshold.
+
+- The combined scope, frame, mapping, plan, wire, and transfer suite
+  passed all 1,009 tests. The earlier preflight refusal changed no source.
+  A test command on the unchanged old branch collected no tests because
+  the new files were absent. The corrected command tested this candidate.
