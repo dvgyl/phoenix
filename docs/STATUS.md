@@ -104,8 +104,9 @@ parent repeated all 1,130 affected tests and all 47 new independent controls.
 Main contains the exact reviewed source. The data-byte cap limits the
 artifact size. It does not claim a total Python memory bound. The typed
 header renderer is a separate work unit.
-The new byte-graph reader is pushed at `fbcdab5` after full quality checks.
-All 525 affected host tests passed. Fresh independent review remains open. These pure units
+The byte-graph reader passed fresh Sol review at `fbcdab5`. Main contains
+the exact reviewed source. All 525 parent host tests and all 651 independent
+controls passed. The source-token reader is a separate isolated candidate. These pure units
 do not authorize production capture or byte-idiom emission.
 
 ## Next actions

@@ -858,3 +858,20 @@
 - Typed C rendering, compiled-table inspection, trusted build issuance,
   calibration, and the full capture review remain open. This pure data
   unit has no pipeline caller and grants no runtime authority.
+
+## 2026-11-12. Integrate the reviewed byte-graph reader
+
+- Fresh Sol passed exact graph commit `fbcdab5`. The parent read the full
+  report and repeated all 651 independent controls. All passed. The test
+  with 7,632 JSON replacements is one of those controls, not extra cases.
+- Copied the exact source, tests, and ADR0036. Every older main source
+  file remains unchanged. All source shared with the reviewed graph branch
+  matches it. Only the reviewed collector-data unit is additional on main.
+- Published the exact review and its hash. The graph remains structural
+  evidence. Pass identity, dead status, flags, actual block ownership and
+  a complete volatile inventory still require the future producer gate.
+- The source-token reader is a separate isolated candidate. It passed
+  617 affected host tests with two live tests excluded. Its full gate and
+  fresh Sol review remain required. Production U5 remains open.
+- The full capture review remains open after provider screening. No new
+  evaluation result, corpus disclosure, or milestone tag is supplied.

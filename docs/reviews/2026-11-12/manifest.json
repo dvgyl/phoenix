@@ -36,6 +36,12 @@
       "source": "/Volumes/PhoenixWork/audit/m2-collector-data-review-sol-20261112/report.md",
       "sha256": "24159412f449c458d8b20f0a4c941f31bcd4d7fd74dc6da89c34bf184e58cbee",
       "bytes": 20776
+    },
+    {
+      "file": "byte-graph-sol.md",
+      "source": "/Volumes/PhoenixWork/audit/m2-byte-graph-review-sol-20261112/report.md",
+      "sha256": "d5acb2d8635bb50ed68d66abfd87640521d73e6c8d9a779798bd672571bf92f0",
+      "bytes": 16672
     }
   ]
 }
