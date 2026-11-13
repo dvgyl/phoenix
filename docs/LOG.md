@@ -1211,3 +1211,29 @@
   by this standard-library ELF parser. No plugin is loaded.
 - No new corpus evaluation, runtime capture or target execution follows
   this integration. Full capture review stays OPEN after screening.
+
+
+## 2026-11-13. Make diagnostic fixtures independent of host setup
+
+- Fresh Sol passed exact byte integration `fc008b8`. Root read the full
+  report. The imported bytes, later main additions and old contracts match.
+  The report retains a denied dispatcher-event read attempt. No bytes
+  returned. Code acceptance does not supply strict process assurance.
+- Native CI `43427596909` failed both CPU jobs during scripts/check.
+  The amd64 log has eight KeyError failures for PHOENIX_ROOT. No binary
+  gate ran. Artifact upload then failed because no M0 report was produced.
+- Root removed PHOENIX_ROOT from the test process environment. The same
+  eight failures and five passing controls reproduce locally. Set the
+  required temporary workspace in only the three affected test functions.
+  Keep the real workspace-loop override and every behavioral assertion.
+- All 223 diagnostic tests pass with the parent variable absent. Replace
+  one deliberately invalid frozen-field assignment with setattr. It still
+  requires FrozenInstanceError and removes a test typing suppression.
+  No product code, workflow, global environment default or quality setting
+  changes. The other comment-only recommendations remain nonblocking.
+- Preserve the CI log and failed local repeat. The corrected source needs
+  the full hook, fresh Sol review and both native CI jobs. Do not treat
+  the inherited local environment as native evidence.
+- Required Astra advises structural separation of operational dispatcher
+  outputs from reviewer artifacts. Existing guards remain immutable.
+  This addresses a repeated manifest failure without a screening change.

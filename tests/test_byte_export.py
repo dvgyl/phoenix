@@ -147,7 +147,7 @@ def test_full_records_and_ordinary_bytes_survive_conversion() -> None:
         assert final == draft
     assert result.to_bytes() == wire(json.loads(result.to_bytes()))
     with pytest.raises(FrozenInstanceError):
-        result.status = "published"  # type: ignore[misc,assignment]
+        setattr(result, "status", "published")
     data[3]["functions"][0]["facts"]["value_flags"].clear()
     assert result.functions[0].facts is not None
     assert json.loads(result.functions[0].facts)["value_flags"]
@@ -800,6 +800,7 @@ def test_unexpected_tool_hash_failures_remain_visible(
 def test_expected_staging_filesystem_errors_are_diagnostic(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str
 ) -> None:
+    monkeypatch.setenv("PHOENIX_ROOT", str(tmp_path))
     import errno
 
     binary, _, _, _, context = diagnostic_sample()
@@ -864,6 +865,7 @@ def test_existing_headless_log_is_diagnostic(tmp_path: Path) -> None:
 def test_real_path_loops_are_diagnostic(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, entry: str, site: str
 ) -> None:
+    monkeypatch.setenv("PHOENIX_ROOT", str(tmp_path))
     binary, lift, mapping, _, context = diagnostic_sample()
     binary_path = tmp_path / "program.elf"
     binary_path.write_bytes(binary)
@@ -1043,6 +1045,7 @@ def test_resolver_keeps_native_oserror_conversion(
 def test_legacy_loop_shape_outside_resolution_stays_visible(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
 ) -> None:
+    monkeypatch.setenv("PHOENIX_ROOT", str(tmp_path))
     binary, lift, mapping, _, context = diagnostic_sample()
     failure = RuntimeError("A programming failure outside path resolution.")
     failure.__context__ = OSError(errno.ELOOP, "Underlying loop.")

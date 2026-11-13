@@ -26,12 +26,19 @@ source reader, typed collector header and project-profile reader are on
 main. Their PASS results grant no runtime or semantic authority.
 
 The exact byte diagnostic files from `7562edb` are integrated at `fc008b8`.
-The full main hook passed. Fresh Sol integration review is active.
+The full main hook passed. Fresh Sol integration review passed exact
+`fc008b8`. Native CI then exposed eight non-hermetic test fixtures.
+They read an ambient PHOENIX_ROOT before reaching their intended checks.
+The local repeat with that variable removed reproduces all eight failures.
+The three affected fixtures now set their own temporary workspace.
+All 223 diagnostic tests pass with the parent variable absent.
+A separate full hook and fresh review are required for this test fix.
 The source branch passed its full hook and fresh independent Sol review.
 Prior F1, F2 and F3 HOLDs remain preserved. Complete producer admission
 is on HOLD for entry association, native liveness and printer inventory.
 The exact passive ELF files at `11cb51b` are being integrated. Their
-source branch passed its full hook and fresh Sol review. Candidate page granules and actual
+source branch passed its full hook and fresh Sol review. Main integration
+`53e8987` passed its full hook. Fresh Sol integration review is queued. Candidate page granules and actual
 compiled retention remain unapproved.
 
 Astra is implementing only the approved graph schema 2 reader in an
