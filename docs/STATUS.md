@@ -139,3 +139,9 @@ Phoenix evaluation results. Both Linux profiles remain test-only. The candidate
 page-granule contract and actual Linux compatibility remain on HOLD. ADR0041
 records the assumptions. Fresh independent review and the principal's full
 quality gate remain open. Full capture review remains OPEN.
+
+The U1 F1 correction and explicit O1 rule follow required Astra advice.
+All 1,063 unit tests, 2,472 affected host tests and 2,169 independent
+controls passed. One old source-hash assertion is historical. Module
+origin and the new digest were checked separately. Full checks and
+fresh Sol review remain required. Native profiles remain on HOLD.

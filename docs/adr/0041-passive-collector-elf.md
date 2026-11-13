@@ -178,3 +178,37 @@ that the native collector uses these exact arrays.
 
 Full capture review, calibration, deployment, recovery, localization, milestone
 acceptance, M4 publication, and replay remain separate gates.
+
+## F1 correction and O1 contract decision
+
+Fresh Sol held `75b42cf` for a missing rounded mapping check on
+unsectioned runtime writes. Eight permanent rejection cases failed
+before correction. Two coherent controls passed. The complete write now
+passes the existing page mapper before it enters the relocation index.
+Exact-load, alignment, metadata and protected-object checks remain.
+
+Required Astra advice selected a separate conservative O1 rule. Each
+accepted relocation writes eight bytes. It must fit one readable,
+writable, non-executable, file-backed load. It must pass the page mapper
+for all three existing test granules. Section coverage gives no exemption.
+
+The test profile also refuses any write that intersects a nonempty
+allocated executable section. Both SHF_ALLOC and SHF_EXECINSTR are
+required for this rule. It includes NOBITS declarations. It ignores
+nonallocated and zero-size sections. Exact endpoint adjacency passes
+this intersection rule. One sorted interval index serves all relocation
+queries. Each query checks all eight bytes, independently of sh_info.
+
+O1 was not a second confirmed defect. This explicit conservative rule
+can reject a file whose load permissions would permit another profile.
+It does not require global section-to-load flag agreement. It does not
+claim observed Linux behavior. Unsectioned writes remain permitted when
+all checks pass. Both native profiles and production remain on HOLD.
+
+Twelve new O1 rejection controls failed before the rule. Sixteen boundary
+and compatibility controls passed. After implementation, all 1,063 unit
+tests, 2,472 affected host tests and 2,169 independent controls passed.
+The old source-hash assertion was excluded because it pins `75b42cf`.
+Its original file remains unchanged. Root checked the new module origin
+and digest separately. The remaining behavioral controls are unchanged.
+Ruff and strict mypy passed. Full checks and fresh Sol remain required.

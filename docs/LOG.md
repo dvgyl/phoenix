@@ -950,3 +950,22 @@
   not confined to its task directory. An attempted dispatcher event
   read was blocked before content access. No strict process-write
   attestation is made. No private source or Author output was read.
+
+## 2026-11-13. Correct complete ELF relocation-write checks
+
+- Fresh Sol held `75b42cf` for missing rounded checks on unsectioned
+  destinations. Root reproduced eight failures and two coherent passes.
+  The full eight-byte write now uses the existing page mapper.
+- Required Astra selected a separate conservative O1 rule for allocated
+  executable sections. Twelve new refusal controls were red before the
+  rule. Sixteen boundary and compatibility controls passed.
+- Build one sorted section interval index outside the relocation loops.
+  Use a distinct query index to preserve the relocation row index.
+  Keep all original permission, metadata and protected-object checks.
+- All 1,063 unit tests, 2,472 affected host tests and 2,169 independent
+  controls passed. One original source-hash assertion was excluded as
+  historical. The new module origin and digest were checked separately.
+  All remaining independent behavioral controls are unchanged.
+- Ruff and strict mypy passed. Full checks and fresh independent Sol
+  review remain required. The old HOLD and every failed record remain.
+  No compiler, target, VM, native profile or production approval follows.

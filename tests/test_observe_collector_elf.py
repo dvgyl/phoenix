@@ -1421,3 +1421,147 @@ def test_zero_fill_cannot_replace_other_file_backed_bytes() -> None:
     f.program(0, 40, 0xBFF8)
     error = rejected(f, "ambiguous_mapping")
     assert "zero" in error.detail
+
+
+def unsectioned_destination_fixture(machine: Machine, kind: str) -> Fixture:
+    f = fixture(machine)
+    f.data.extend(bytes(0x70000 - len(f.data)))
+    f.put(56, "H", 7)
+    if kind == "installer_page":
+        f.program(1, 32, 64)
+        f.program(1, 40, 64)
+        pack_into(
+            "<IIQQQQQQ",
+            f.data,
+            64 + 6 * 56,
+            1,
+            6,
+            0x10800,
+            BASE + 0x10800,
+            0,
+            0x800,
+            0x800,
+            0x1000,
+        )
+        f.put(0x1000 + 47 * 24, "Q", BASE + 0x10800)
+        return f
+    f.data[0x50000:0x50010] = f.data[0x30000:0x30010]
+    f.program(3, 8, 0x50000)
+    f.program(3, 16, BASE + 0x90000)
+    f.section(".data", 16, "Q", BASE + 0x90000)
+    f.section(".data", 24, "Q", 0x50000)
+    for symbols in (f.dynamic_symbols, f.static_symbols):
+        f.put(symbols["qemu_plugin_version"] + 8, "Q", BASE + 0x90000)
+    f.program(2, 32, 0x28000)
+    f.program(2, 40, 0x28000)
+    offset = 0x58800 if kind == "file" else 0x48800
+    flags = 5 if kind == "execute" else 4
+    filesz = 0 if kind == "zero" else 0x800
+    pack_into(
+        "<IIQQQQQQ",
+        f.data,
+        64 + 6 * 56,
+        1,
+        flags,
+        offset,
+        BASE + 0x48800,
+        0,
+        filesz,
+        0x800,
+        0x1000,
+    )
+    f.put(0x1000 + 47 * 24, "Q", BASE + 0x41000)
+    return f
+
+
+@pytest.mark.parametrize("machine", [62, 183])
+@pytest.mark.parametrize("kind", ["file", "execute", "zero", "installer_page"])
+def test_unsectioned_runtime_write_checks_rounded_mapping(
+    machine: Machine, kind: str
+) -> None:
+    rejected(unsectioned_destination_fixture(machine, kind), "ambiguous_mapping")
+
+
+@pytest.mark.parametrize("machine", [62, 183])
+def test_unsectioned_coherent_runtime_write_remains_supported(machine: Machine) -> None:
+    view = accepted(unsectioned_destination_fixture(machine, "coherent"))
+    assert view.relocations[47].place_va == BASE + 0x41000
+
+
+def executable_section_fixture(
+    machine: Machine, offset: int, size: int, flags: int, section_type: int
+) -> Fixture:
+    f = fixture(machine)
+    f.section(".rela.plt", 44, "I", 0)
+    f.put(0x1500, "Q", BASE + 0x20E80)
+    f.section(".got", 4, "I", section_type)
+    f.section(".got", 8, "Q", flags)
+    f.section(".got", 16, "Q", BASE + 0x20E00 + offset)
+    f.section(".got", 24, "Q", 0x20E00 + offset)
+    f.section(".got", 32, "Q", size)
+    f.section(".got", 48, "Q", 1)
+    return f
+
+
+@pytest.mark.parametrize("machine", [62, 183])
+@pytest.mark.parametrize(
+    "offset,size,flags,section_type,refuses",
+    [
+        (-1, 2, 6, 1, True),
+        (7, 2, 6, 1, True),
+        (2, 2, 6, 1, True),
+        (-8, 24, 6, 1, True),
+        (-8, 8, 6, 1, False),
+        (8, 8, 6, 1, False),
+        (0, 0, 6, 1, False),
+        (4, 0, 6, 1, False),
+        (0, 8, 4, 1, False),
+        (0, 8, 3, 1, False),
+        (32, 8, 6, 1, False),
+        (0, 8, 6, 8, True),
+    ],
+)
+def test_runtime_write_executable_section_contract(
+    machine: Machine,
+    offset: int,
+    size: int,
+    flags: int,
+    section_type: int,
+    refuses: bool,
+) -> None:
+    f = executable_section_fixture(machine, offset, size, flags, section_type)
+    if refuses:
+        rejected(f, "relocation_contract")
+    else:
+        accepted(f)
+
+
+@pytest.mark.parametrize("machine", [62, 183])
+@pytest.mark.parametrize("executable", [False, True])
+def test_executable_section_query_at_unsigned_address_end(
+    machine: Machine, executable: bool
+) -> None:
+    f = fixture(machine)
+    start = (1 << 64) - 0x10000
+    f.program(2, 16, start)
+    f.program(4, 16, start + 0xB00)
+    f.program(5, 16, start)
+    f.section(".data.rel.ro", 16, "Q", start)
+    f.section(".dynamic", 16, "Q", start + 0xB00)
+    for symbols in (f.dynamic_symbols, f.static_symbols):
+        f.put(symbols["phoenix_collector_data_v1"] + 8, "Q", start)
+    for i in range(47):
+        f.put(0x1000 + i * 24, "Q", start + 144 + 56 * i)
+    f.put(0x1000 + 47 * 24, "Q", (1 << 64) - 8)
+    f.section(".rela.plt", 44, "I", 0)
+    f.put(0x1500, "Q", start + 0xE80)
+    f.section(".got", 4, "I", 8)
+    f.section(".got", 8, "Q", 6 if executable else 3)
+    f.section(".got", 16, "Q", (1 << 64) - 8)
+    f.section(".got", 32, "Q", 8)
+    f.section(".got", 48, "Q", 1)
+    if executable:
+        rejected(f, "relocation_contract")
+    else:
+        view = accepted(f)
+        assert view.relocations[47].place_va + 8 == 1 << 64

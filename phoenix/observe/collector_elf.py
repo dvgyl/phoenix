@@ -1169,6 +1169,14 @@ class _Reader:
         return objects
 
     def runtime_relocations(self, dynsym: Section) -> None:
+        executable_sections = tuple(
+            sorted(
+                (s.va, s.va + s.size)
+                for s in self.sections
+                if s.size and s.flags & 2 and s.flags & 4
+            )
+        )
+        executable_starts = tuple(start for start, _ in executable_sections)
         sections = [s for s in self.sections if s.type == 4]
         _require(
             not any(
@@ -1268,11 +1276,19 @@ class _Reader:
                     "relocation_contract",
                     "A PLT relocation is not JUMP_SLOT.",
                 )
-                _, load = self.file_span(where, 8)
+                offset, load = self.file_span(where, 8)
                 _require(
                     where % 8 == 0 and not load.flags & 1 and bool(load.flags & 2),
                     "relocation_contract",
                     "Invalid relocation destination.",
+                )
+                self.page_mapping(where, offset, 8, False)
+                executable_index = bisect_left(executable_starts, where + 8) - 1
+                _require(
+                    executable_index < 0
+                    or executable_sections[executable_index][1] <= where,
+                    "relocation_contract",
+                    "A relocation touches allocated executable section bytes.",
                 )
                 if section.info:
                     target = self.sections[section.info]
