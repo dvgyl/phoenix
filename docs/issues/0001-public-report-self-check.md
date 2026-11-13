@@ -1,6 +1,7 @@
 # Require self-check evidence in public report comparison
 
-Status: OPEN. Owner: principal agent. Found on 2026-11-13.
+Status: CLOSED for the exact self-match repair. Owner: principal agent.
+Found on 2026-11-13. Closed on 2026-11-13.
 
 `compare_public_reports` compares evaluator identity, seed, program counts
 and outcome hashes. It does not inspect a program's `self_match` field.
@@ -38,3 +39,18 @@ This issue stays OPEN pending full source checks, independent Sol correctness
 review, Astra harness review and main integration. This small correction does
 not certify every report field. The complete public evidence assertions remain
 required. No new target execution or evaluation score follows from these checks.
+
+
+## Main integration closure, 13 November
+
+Main d43f604 imports the three exact files from source 7ee3a1d. The full local
+hook and push pass. Fresh full Sol main integration review returns PASS with no
+new repair defect and a separate PASS for this issue closure. Root reads the
+complete report and verifies all 88 listed artifacts. The independent source
+Sol and Astra reviews also pass the exact repair. Close this issue only for
+required self_match evidence. Issue 0003 remains OPEN for broader validation.
+
+Read [the complete integration review](../checkpoints/2026-11-13-evening-comparator/integration-review-pass.md.txt).
+The earlier OPEN statements above describe the historical sequence. They do not
+reopen this completed repair. No new execution, corpus score, capture authority
+or milestone acceptance follows. Preserve every broader defect and process limit.

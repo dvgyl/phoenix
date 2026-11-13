@@ -1,0 +1,586 @@
+{
+  "verdict": "PASS",
+  "review_kind": "Full main integration correctness and adversarial evaluation-harness review",
+  "head": "d43f604bfdb6ef63b2b9086352c440be3559b1d5",
+  "base": "b656c46e1c74d279554f9ab710b62a29d3300dcf",
+  "source_repair": "7ee3a1d23ddf5ff0d46df1b133373d78bab31fea",
+  "branch": "agent/m2-comparator-evening-integration-review-20261113",
+  "report": {
+    "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/report.md",
+    "bytes": 22156,
+    "sha256": "a06557ac4fb2b6f0225cc93d29c654033c599e255fb00133814d9cb8310588b5"
+  },
+  "new_repair_defects": [],
+  "issue_0001_closure_verdict": "PASS. Root can close after reading the complete report. No tracked file was edited.",
+  "issue_0003_status": "OPEN. All five broader validator limits remain.",
+  "existing_harness_findings": [
+    {
+      "rank": 1,
+      "severity": "High for standalone certification",
+      "scope": "Existing required-fact validation gap",
+      "path": "phoenix_eval/reports.py",
+      "line": 16,
+      "issue": "0003"
+    },
+    {
+      "rank": 2,
+      "severity": "Medium",
+      "scope": "Existing public workload and expected-outcome gap",
+      "path": "phoenix_eval/reports.py",
+      "line": 24,
+      "issue": "0003"
+    },
+    {
+      "rank": 3,
+      "severity": "Medium",
+      "scope": "Existing exact type and execution provenance gaps",
+      "path": "phoenix_eval/reports.py",
+      "line": 25,
+      "issue": "0003"
+    },
+    {
+      "rank": 4,
+      "severity": "Medium",
+      "scope": "Existing duplicate-member and nonfinite JSON gaps",
+      "path": "phoenix_eval/reports.py",
+      "line": 15,
+      "issue": "0003"
+    },
+    {
+      "rank": 5,
+      "severity": "Medium for untrusted paths",
+      "scope": "Existing finite-failure and unstructured error gaps",
+      "path": "phoenix_eval/reports.py",
+      "line": 10,
+      "issue": "0003"
+    }
+  ],
+  "comment_findings": [],
+  "comment_deletions": 0,
+  "checks": {
+    "pytest_passed": 47,
+    "report_tests_included": 28,
+    "producer_and_provenance_tests_included": 19,
+    "valid_comparisons": 16,
+    "invalid_self_match_refusals": 150,
+    "parent_accepts_same_invalid_flags": 150,
+    "boundary_refusals": 39,
+    "global_exact_bool_refusals": 24,
+    "literal_true_acceptances": 6,
+    "literal_nontrue_refusals": 54,
+    "cli_controls": 28,
+    "quality_commands": 4,
+    "gap_acceptances_parent_and_current": 15,
+    "additional_nonfinite_gap_acceptances": 3,
+    "pipe_timeouts_current_and_parent": 2,
+    "actual_public_reports": 3,
+    "pure_expected_fingerprints": 2,
+    "counts_overlap": true,
+    "unexpected_test_or_assertion_failures": 0,
+    "all_child_command_results_match_expected": true
+  },
+  "source_identity": {
+    "tracked_files": 371,
+    "tracked_bytes_match_head_after_checks": true,
+    "other_tracked_files_match_parent": 365,
+    "exact_three_file_source_import": true,
+    "old_log_bytes_preserved": 87543,
+    "old_log_sha256": "4831fea6674aeaa38e68b91b76039cc72021bace95cebaf490229a9b0a3292bb",
+    "log_append_bytes": 1178,
+    "worker_source_digest": "a52b1803bb430af420705f5ffd4cd3521aacce06f607eabd92d53f2739d08f06",
+    "historical_worker_source_digest": "f2ae5cdece588e795c60c3c45f630027cc3f4d954738b6801a842b1cc2f391a1",
+    "historical_controls_run": false,
+    "historical_controls_unchanged": true,
+    "accepted_tags_peeled_exact": true
+  },
+  "full_hook": "Root retained evidence passed. Not independently rerun.",
+  "remote_push": "Root retained evidence reports d43f604. No network confirmation.",
+  "process_exceptions": [
+    "The first read batch did not source task-env.sh or check pause markers.",
+    "Prescribed task-env.sh emitted a denied mkdir for /Volumes/PhoenixWork/vm.",
+    "Large initial read outputs required bounded rereads.",
+    "Two deliberate pipe timeouts are existing finite-failure defects."
+  ],
+  "process_limits": {
+    "source_or_comment_edits": false,
+    "git_mutations": false,
+    "network": false,
+    "credentials": false,
+    "upload": false,
+    "target_execution": false,
+    "compiler_or_linker": false,
+    "native_plugin": false,
+    "ghidra_execution": false,
+    "vm_execution": false,
+    "private_or_author_material_read": false,
+    "dispatcher_content_read": false,
+    "guard_inspected_or_changed": false,
+    "broad_audit_walk_or_process_scan": false,
+    "nested_dispatch": false,
+    "all_owned_children_ended": true,
+    "minimal_child_environments": true,
+    "bytecode_prefix_absent": true,
+    "standard_requested": true,
+    "fast_enabled": false,
+    "independent_provider_routing_attestation": false,
+    "automatic_continuation": false
+  },
+  "remaining_gates": [
+    "Issue 0003 complete validator design and review",
+    "Separate Core source and integration reviews",
+    "Full capture OPEN after provider screening",
+    "T3 publication labels and dedicated private validation",
+    "T2/T3 admission",
+    "Native and compiled retention authority",
+    "M2, M3, M4",
+    "Baselines and ablations",
+    "Costs and failure taxonomy",
+    "Publication",
+    "Every headline replay",
+    "SPEC section 9"
+  ],
+  "artifacts": [
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/todo.md",
+      "bytes": 742,
+      "sha256": "98f2aa1f2fb33f7bed665473ac5590281ff5e67af3ab1e937d51afcc5017d039"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/run-review.py",
+      "bytes": 15843,
+      "sha256": "c2f13429e999c757d9c51885e05a130571420565717338aac3d3f34ecb2ce7bc"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/review.stdout",
+      "bytes": 173,
+      "sha256": "309843f581b83820d7aeb6a83ee0b0b8172c70a8167c84572559dfb2f84d3b19"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/review.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/supplement.py",
+      "bytes": 4467,
+      "sha256": "c5a2a353213e405b634d00fa01e0799bc95e9aaf277de570dddb2710c46666e2"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/supplement.stdout",
+      "bytes": 423,
+      "sha256": "2cc473f9d98a40dc0a7dbd9048310393bf7780d2a74f247c8b50d11aa4d6a1e3"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/supplement.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/supplement-result.json",
+      "bytes": 8716,
+      "sha256": "74c9471b29f6712464b873dfd811a5bdfc5bd0af7e59955c2ceca104262e8d31"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/final-controls.py",
+      "bytes": 4932,
+      "sha256": "046db2ff91667b81555d4ba9310059df04b613d5f619bb82ffc328e0a2187bb0"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/final-controls.stdout",
+      "bytes": 381,
+      "sha256": "f4e47ecab4618c3fd8a11204e7e282f205ca14cd620d83d4815f061b94b95782"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/final-controls.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/final-controls-result.json",
+      "bytes": 403,
+      "sha256": "ac3095c41f9b21e29870e17bb90f488f0dc90783416c1c8f23ceaf0a226bfa68"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/commands.json",
+      "bytes": 18964,
+      "sha256": "573dcb4186c044cbf3a6c751d72fd03ab6d5144896152841e20d99b74b980db1"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/controls.json",
+      "bytes": 12547,
+      "sha256": "7621419de8b142fe2ef0bfed4ddaae276465d7bcb01e7d61ad63001908041ea2"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/exact.diff",
+      "bytes": 18469,
+      "sha256": "c117571c8a4a5e12a799a89418cbbfef4a530df50a6ca4059b86c227bb28d830"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/identities.json",
+      "bytes": 19350,
+      "sha256": "bd5e3e2b1e3e054a019885d3343445a0e78e8a6a466e927b5b16320514dd584b"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/historical-script.diff",
+      "bytes": 576,
+      "sha256": "6e40421ae946b5c0aff60c483f404310b92c55c80c387b97b37822f0046ec6f8"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/parent-reports.py.txt",
+      "bytes": 1959,
+      "sha256": "ac7b74ae1b60bda87aa6e6c88147dddc3e2b649362d7045941adf00fa71c70b4"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/finite-failure.json",
+      "bytes": 92,
+      "sha256": "4709c9a50379305cb41c4e685ef285075872d72986e4bd9a1cea1997ee51e8b2"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/public-report-identities.json",
+      "bytes": 711,
+      "sha256": "90b689dbcff70aa8b5808bc17f44a26f4569de2166fb24ad67c8bbde829849e4"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/input-identities.json",
+      "bytes": 7823,
+      "sha256": "feea128770b220bf8949792670f7e7f6d81ef12ea2516fdcec5fc373ec76c39c"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/process-exceptions.json",
+      "bytes": 765,
+      "sha256": "d2bd28e867e1e37692f43ad8688811b8247a5cb43846b2c36b6ead0e5fadb971"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/report.md",
+      "bytes": 22156,
+      "sha256": "a06557ac4fb2b6f0225cc93d29c654033c599e255fb00133814d9cb8310588b5"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/finalize.py",
+      "bytes": 7617,
+      "sha256": "01ed807acf921ce1eacd0639ed99398c0e7924630af73ae621cf9a3611451b86"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/pytest.stdout",
+      "bytes": 99,
+      "sha256": "bda1631309fa6fc203d38d7ce04e912de5c9f3a8c48d0cdbd7351ba0cc9c1a73"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/pytest.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/ruff.stdout",
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/ruff.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/format.stdout",
+      "bytes": 26,
+      "sha256": "3bc53bf3e981a98a34a852e175bf9b77af841edea74fca595d9aedcbaf9a4938"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/format.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/mypy.stdout",
+      "bytes": 43,
+      "sha256": "f9b031e5c45aa702cd4fef028d465551cb20a2c4698e0913c7b00766b20ac4d8"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/mypy.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-positive-2.stdout",
+      "bytes": 577,
+      "sha256": "c18f0fcdfe6ef058bfb06544de386ccb0414815c1fbd3640e8348e17ab65a235"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-positive-2.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-positive-3.stdout",
+      "bytes": 637,
+      "sha256": "11a4b38233e68846b804baf23c2edb1b30536551bd032a5c042800f97d37a2f7"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-positive-3.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-0-0-false.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-0-0-false.stderr",
+      "bytes": 880,
+      "sha256": "d63215f8ecfb5269c894380af1728291f6be89aeb2805c2debab316bf70de801"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-0-0-float.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-0-0-float.stderr",
+      "bytes": 880,
+      "sha256": "d63215f8ecfb5269c894380af1728291f6be89aeb2805c2debab316bf70de801"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-0-0-missing.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-0-0-missing.stderr",
+      "bytes": 880,
+      "sha256": "d63215f8ecfb5269c894380af1728291f6be89aeb2805c2debab316bf70de801"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-0-1-false.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-0-1-false.stderr",
+      "bytes": 880,
+      "sha256": "d63215f8ecfb5269c894380af1728291f6be89aeb2805c2debab316bf70de801"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-0-1-float.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-0-1-float.stderr",
+      "bytes": 880,
+      "sha256": "d63215f8ecfb5269c894380af1728291f6be89aeb2805c2debab316bf70de801"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-0-1-missing.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-0-1-missing.stderr",
+      "bytes": 880,
+      "sha256": "d63215f8ecfb5269c894380af1728291f6be89aeb2805c2debab316bf70de801"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-1-0-false.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-1-0-false.stderr",
+      "bytes": 880,
+      "sha256": "c184645fafea2c46e6adc8fad52d67249f107ba5c9edad6621e27b05f01ed6c7"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-1-0-float.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-1-0-float.stderr",
+      "bytes": 880,
+      "sha256": "c184645fafea2c46e6adc8fad52d67249f107ba5c9edad6621e27b05f01ed6c7"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-1-0-missing.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-1-0-missing.stderr",
+      "bytes": 880,
+      "sha256": "c184645fafea2c46e6adc8fad52d67249f107ba5c9edad6621e27b05f01ed6c7"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-1-1-false.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-1-1-false.stderr",
+      "bytes": 880,
+      "sha256": "c184645fafea2c46e6adc8fad52d67249f107ba5c9edad6621e27b05f01ed6c7"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-1-1-float.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-1-1-float.stderr",
+      "bytes": 880,
+      "sha256": "c184645fafea2c46e6adc8fad52d67249f107ba5c9edad6621e27b05f01ed6c7"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-1-1-missing.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-1-1-missing.stderr",
+      "bytes": 880,
+      "sha256": "c184645fafea2c46e6adc8fad52d67249f107ba5c9edad6621e27b05f01ed6c7"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-2-0-false.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-2-0-false.stderr",
+      "bytes": 871,
+      "sha256": "bb06b1229e136183c87676381c073e704e6cb2a221047c4bb63590665aaf9070"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-2-0-float.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-2-0-float.stderr",
+      "bytes": 871,
+      "sha256": "bb06b1229e136183c87676381c073e704e6cb2a221047c4bb63590665aaf9070"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-2-0-missing.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-2-0-missing.stderr",
+      "bytes": 871,
+      "sha256": "bb06b1229e136183c87676381c073e704e6cb2a221047c4bb63590665aaf9070"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-2-1-false.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-2-1-false.stderr",
+      "bytes": 871,
+      "sha256": "bb06b1229e136183c87676381c073e704e6cb2a221047c4bb63590665aaf9070"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-2-1-float.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-2-1-float.stderr",
+      "bytes": 871,
+      "sha256": "bb06b1229e136183c87676381c073e704e6cb2a221047c4bb63590665aaf9070"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-2-1-missing.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-refuse-2-1-missing.stderr",
+      "bytes": 871,
+      "sha256": "bb06b1229e136183c87676381c073e704e6cb2a221047c4bb63590665aaf9070"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-empty.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-empty.stderr",
+      "bytes": 110,
+      "sha256": "110e3093c93314918751b9397267c8242f7916147459b744973ccf97ed01a403"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-malformed-0.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-malformed-0.stderr",
+      "bytes": 862,
+      "sha256": "ba07be5e63fa73620ffe2818bf12ac302bbba2766ac112c4890856e6750970cf"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-malformed-1.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-malformed-1.stderr",
+      "bytes": 1569,
+      "sha256": "5c93dab40e6e5c6e116c7b04e2d5d412eae7c5d944f8946cbc532862ab643c8d"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-malformed-2.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-malformed-2.stderr",
+      "bytes": 847,
+      "sha256": "99d3766d76690539ccdb18d4956d011ac38ce2f465daba5a5383daf8f5ce3045"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-malformed-3.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-malformed-3.stderr",
+      "bytes": 872,
+      "sha256": "8d0d25c23830a2b28229ed2cc5480daaca988c0d48e79370acb9c4f69d201da8"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-directory-0.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-directory-0.stderr",
+      "bytes": 890,
+      "sha256": "8d1bdf0b889c03b505e12f372823d7917b7478de49c1fcaff02c97f726dbeea0"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-directory-1.stdout",
+      "bytes": 577,
+      "sha256": "c18f0fcdfe6ef058bfb06544de386ccb0414815c1fbd3640e8348e17ab65a235"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-directory-1.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-directory-2.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/cli-directory-2.stderr",
+      "bytes": 890,
+      "sha256": "4820ae78cc35072dbe6bdf048fb0c927bed8d0e39c25bb0539f81d0a720de213"
+    }
+  ],
+  "excluded_artifacts": "Dispatch data, installed guard, and pre-existing task environment. No self-hash for final-check.json.",
+  "finished_utc": "2026-11-13T21:13:59.521432+00:00"
+}

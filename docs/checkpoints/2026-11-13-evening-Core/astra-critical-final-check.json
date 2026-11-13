@@ -1,0 +1,460 @@
+{
+  "verdict": "HOLD",
+  "verdict_scope": "Complete private U2 against the current before-allocation requirement. No native or production approval.",
+  "head": "14c41daba86903d4cd27ab68c00ada9df14003b5",
+  "base": "e7218853a0f47f5470bea597e1d57f98231cc66c",
+  "branch": "agent/m2-private-compiled-readback-20261113",
+  "exact_scope": {
+    "docs/STATUS.md": {
+      "bytes": 6658,
+      "sha256": "4ad2576d3da69a32d75238e5dfc3d44119b0ffa8113fc9f0ca04c18e5a7fcd9c"
+    },
+    "docs/LOG.md": {
+      "bytes": 81029,
+      "sha256": "fc74b3c08deb53b2b1dc7d83fe18ec32f9321e3982d63ad12c901d6f53657ee5"
+    },
+    "docs/adr/0043-independent-compiled-readback.md": {
+      "bytes": 14451,
+      "sha256": "bf69e52acf7ac237f7a7816e0395f6e2bcd7f09b197b55e03d4b550d9dc23789"
+    },
+    "phoenix/observe/collector_compiled.py": {
+      "bytes": 35790,
+      "sha256": "0854643fed620f23034173ec56b5dfd23dc90de44678a707ccdb3d2bcd4dbdf9"
+    },
+    "phoenix/observe/collector_layout.py": {
+      "bytes": 47893,
+      "sha256": "a8fddcc0ac13b5edccfca2d6ec42413893782fe2460825926bbe5d114ed321f2"
+    },
+    "tests/test_observe_collector_compiled.py": {
+      "bytes": 61235,
+      "sha256": "7e659873a77badf41679885797bac42991e7e4cf236000b2a30e26beeff20c1b"
+    },
+    "tests/test_observe_collector_layout.py": {
+      "bytes": 68335,
+      "sha256": "7a67c5289de48ca31b68298626a5d31b4c61fccb56af700199fd64a3c033f589"
+    },
+    "tests/test_byte_export.py": {
+      "bytes": 46955,
+      "sha256": "f33e4c3dd7174df32ddcf890c847370ba3c327d71902580b5ea3684b5a29f81b"
+    }
+  },
+  "source_preservation": {
+    "head": "14c41daba86903d4cd27ab68c00ada9df14003b5",
+    "base": "e7218853a0f47f5470bea597e1d57f98231cc66c",
+    "files": {
+      "docs/STATUS.md": {
+        "bytes": 6658,
+        "sha256": "4ad2576d3da69a32d75238e5dfc3d44119b0ffa8113fc9f0ca04c18e5a7fcd9c"
+      },
+      "docs/LOG.md": {
+        "bytes": 81029,
+        "sha256": "fc74b3c08deb53b2b1dc7d83fe18ec32f9321e3982d63ad12c901d6f53657ee5"
+      },
+      "docs/adr/0043-independent-compiled-readback.md": {
+        "bytes": 14451,
+        "sha256": "bf69e52acf7ac237f7a7816e0395f6e2bcd7f09b197b55e03d4b550d9dc23789"
+      },
+      "phoenix/observe/collector_compiled.py": {
+        "bytes": 35790,
+        "sha256": "0854643fed620f23034173ec56b5dfd23dc90de44678a707ccdb3d2bcd4dbdf9"
+      },
+      "phoenix/observe/collector_layout.py": {
+        "bytes": 47893,
+        "sha256": "a8fddcc0ac13b5edccfca2d6ec42413893782fe2460825926bbe5d114ed321f2"
+      },
+      "tests/test_observe_collector_compiled.py": {
+        "bytes": 61235,
+        "sha256": "7e659873a77badf41679885797bac42991e7e4cf236000b2a30e26beeff20c1b"
+      },
+      "tests/test_observe_collector_layout.py": {
+        "bytes": 68335,
+        "sha256": "7a67c5289de48ca31b68298626a5d31b4c61fccb56af700199fd64a3c033f589"
+      },
+      "tests/test_byte_export.py": {
+        "bytes": 46955,
+        "sha256": "f33e4c3dd7174df32ddcf890c847370ba3c327d71902580b5ea3684b5a29f81b"
+      }
+    },
+    "protected_old_files": 302,
+    "all_protected_blob_modes_equal": true,
+    "prefixes": {
+      "docs/STATUS.md": {
+        "old_bytes": 5553,
+        "appended_bytes": 1105
+      },
+      "docs/LOG.md": {
+        "old_bytes": 78536,
+        "appended_bytes": 2493
+      },
+      "phoenix/observe/collector_layout.py": {
+        "old_bytes": 46854,
+        "appended_bytes": 1039
+      },
+      "tests/test_observe_collector_layout.py": {
+        "old_bytes": 67028,
+        "appended_bytes": 1307
+      }
+    },
+    "byte_fixture_matches_main_8f1c394": true,
+    "backups": {
+      "private-u2-core-pending-backup": {
+        "patch_sha256": "08c9f4ea3e5e9d84c089340f2619344dbfabf980070c8bbceec2e6942d17d5e5",
+        "files": 5,
+        "exact_reconstruction": true
+      },
+      "Core-before-fixture-port": {
+        "patch_sha256": "1c15fb22f8b24bc8021e827a02850f6aab9858a0e0909140f09435907a128dda",
+        "files": 7,
+        "exact_reconstruction": true
+      },
+      "Core-eight-file-pending": {
+        "patch_sha256": "402ae6519478839718dd86600d378c454c89cacd2f91a320b87927d97fe561b6",
+        "files": 8,
+        "exact_reconstruction": true
+      }
+    },
+    "comments": {
+      "phoenix/observe/collector_compiled.py": [],
+      "phoenix/observe/collector_layout.py": [],
+      "tests/test_observe_collector_compiled.py": [],
+      "tests/test_observe_collector_layout.py": []
+    },
+    "clean": true
+  },
+  "protected_sources": {
+    "phoenix/observe/collector_data.py": {
+      "path": "/Volumes/PhoenixWork/worktrees/m1-ledger-identity/phoenix/observe/collector_data.py",
+      "bytes": 12488,
+      "sha256": "d5005ac55660660be160181ff89f985e6b02e754bc16a8b9a9c286a5e8cef309"
+    },
+    "phoenix/observe/collector_elf.py": {
+      "path": "/Volumes/PhoenixWork/worktrees/m1-ledger-identity/phoenix/observe/collector_elf.py",
+      "bytes": 53828,
+      "sha256": "dae95a30f96c556a1731a59edada95e4622991889ffcfdfa576bf773a17929eb"
+    },
+    "phoenix/observe/collector_header.py": {
+      "path": "/Volumes/PhoenixWork/worktrees/m1-ledger-identity/phoenix/observe/collector_header.py",
+      "bytes": 29131,
+      "sha256": "fa5d25fb5c910796127bb29a17f5f111b6555beb9dc02a82ad75611747578684"
+    },
+    "phoenix/observe/collector_header_read.py": {
+      "path": "/Volumes/PhoenixWork/worktrees/m1-ledger-identity/phoenix/observe/collector_header_read.py",
+      "bytes": 28134,
+      "sha256": "087c9e62fa56ffbca7757c50577368fa0370eed744dd4aa47325e3ed7164d669"
+    },
+    "phoenix/observe/native/collector_data_v1.h": {
+      "path": "/Volumes/PhoenixWork/worktrees/m1-ledger-identity/phoenix/observe/native/collector_data_v1.h",
+      "bytes": 18853,
+      "sha256": "2e278603d75d6cd436aedc72af3f1903334dadc37d6d8847dfd3dd825018acb3"
+    }
+  },
+  "report": {
+    "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/report.md",
+    "bytes": 17194,
+    "sha256": "cf35203cdbe0cdfac1faee7d928e9a6d495b64b443eedaff1a3c3013904f5041"
+  },
+  "ranked_findings": [
+    {
+      "id": "F1",
+      "severity": "medium",
+      "path": "phoenix/observe/collector_compiled.py",
+      "line": 644,
+      "title": "A text allocation exceeds a preflighted retained byte cap.",
+      "actual_copy_bytes": 10000,
+      "retained_data_bytes": 8192,
+      "eventual_refusal": "record_limit",
+      "contract_conflict": "Current task requires caps before allocation. The stored design applies logical byte caps during emission.",
+      "required_action": "Reject impossible encoded string sizes before copy and decode, or obtain a separate explicit contract resolution.",
+      "evidence": "independent-v2.json"
+    }
+  ],
+  "comment_verdict": "PASS",
+  "comment_findings": [],
+  "checks": {
+    "affected_passed": 14451,
+    "dependency_fixture_passed": 223,
+    "independent_inactive_variant_refusals": 116,
+    "normative_fields": 214,
+    "metadata_budget_cases": 6,
+    "allocation_requirement_gate": "FAIL",
+    "ruff": "PASS",
+    "format": "PASS",
+    "mypy_strict": "PASS",
+    "backup_reconstruction": "PASS",
+    "seed": 20261113,
+    "full_hook": "Root retry transcript passed. Not repeated by reviewer."
+  },
+  "failures": [
+    {
+      "kind": "review_setup",
+      "log": "affected.log",
+      "exit": 4,
+      "reason": "Hypothesis seed option lacked explicit plugin loading."
+    },
+    {
+      "kind": "review_setup",
+      "log": "affected-v2.log",
+      "exit": 4,
+      "reason": "Pytest attempted a denied sibling directory stat. No Author contents were read."
+    },
+    {
+      "kind": "requirement",
+      "log": "allocation-gate.log",
+      "exit": 1,
+      "reason": "Observed 10000-byte text copy under retained 8192-byte cap."
+    },
+    {
+      "kind": "environment",
+      "reason": "Required task environment attempted denied /Volumes/PhoenixWork/vm creation."
+    },
+    {
+      "kind": "root_historical",
+      "reason": "Duplicate identity 9 was correctly refused. Exact test fixture port preserves product behavior."
+    },
+    {
+      "kind": "root_evening",
+      "reason": "Hypothesis timing failure at 317.56 ms, followed by 63.25 ms. Deadline and expectations were preserved for full retry."
+    }
+  ],
+  "budget_formula_counterexample_found": false,
+  "total_cpu_or_memory_bound_claimed": false,
+  "input_identities": "input-identities.json",
+  "artifacts": [
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/report.md",
+      "bytes": 17194,
+      "sha256": "cf35203cdbe0cdfac1faee7d928e9a6d495b64b443eedaff1a3c3013904f5041"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/source-check.json",
+      "bytes": 2682,
+      "sha256": "608642ca504d01b0e6a98d24c80de7e39461c2e49cd3b7a317a1157b164a5118"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/input-identities.json",
+      "bytes": 9576,
+      "sha256": "66d50173c7e26bb60e077c094bdcd71e1ce48f74eed246f57ab4375f12aedc0a"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/root-assertion-delta.patch",
+      "bytes": 493,
+      "sha256": "f651210e91f2f378611a50db986b71c81f88d6009130ba371e432f7d50b8e461"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/root-log-identities.json",
+      "bytes": 1161,
+      "sha256": "99211a14497b055a4701d10e888f678017cd7c9a615f5733ff59a5a06077b61b"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/private-u2-core-source-full-hook-commit-push-readback.txt",
+      "bytes": 24607,
+      "sha256": "5df66f3d7c277c3a991b8890cf1e485bcb82463c1ea55324f2ec018ce872dbd3"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/Core-source-full-hook-commit-push-readback.txt",
+      "bytes": 5315,
+      "sha256": "81854408765caf8b5308edcf8f4bd954e30b5c4dddb0a3ee719c4d06aa4a24b0"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/Core-source-retry-full-hook-commit-push-readback.txt",
+      "bytes": 1550,
+      "sha256": "11e8188bca6f9f8f2e488a7c6ead5fe2aa6d1f34f962894886903140a436eafc"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/affected.log",
+      "bytes": 311,
+      "sha256": "4ce7569712af50352093da5872108defae5948be029786d6284a7d5ed562a607"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/affected-command.json",
+      "bytes": 2376,
+      "sha256": "905eba729c88fe2daffb014c9d117cc132c6a95f902c62da0977c193f14bfc3d"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/affected-v2.log",
+      "bytes": 1885,
+      "sha256": "735be4fb5e2814906b7bacc59c2ba1a19c9251a0d26f2a576f3cafad15661223"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/affected-v2-command.json",
+      "bytes": 2460,
+      "sha256": "cf23d9f412fc2ad777bba9afb8d0918fa6b4490b6ac497bbcc3a54f9104658e2"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/affected-v3.log",
+      "bytes": 16113,
+      "sha256": "3283356e7b62563168c9d3296fb54f742b805725b76e756e472fb79e27bd05be"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/affected-v3-command.json",
+      "bytes": 2724,
+      "sha256": "d1bdcb3fa3938ca893833f680b463ca990c45f328bec6467e2462adfd4aa425b"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/independent.json",
+      "bytes": 944,
+      "sha256": "e828638d01c73c24d41f7a2b3f0dc2ae72b424bd5d258ee9e20cedb0c011f26d"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/independent-v2.json",
+      "bytes": 946,
+      "sha256": "e44f1919395f209e525e686aaaf52981b6855df485f8fb39d7ef7d36ea0f54e8"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/adversarial.json",
+      "bytes": 1695,
+      "sha256": "e2e3c613d144938a1b125ab6716cbd4b40d7fe3315b2250d9ca83070f47029a3"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/allocation-gate.log",
+      "bytes": 471,
+      "sha256": "cfc4130f5d06b64369850488abe31e0ace715760948417711040a0caba7cba10"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/ruff.log",
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/format.log",
+      "bytes": 26,
+      "sha256": "177f260a5645724013185e4b140c7045cc39e56c0c97b120f5cb23599f85f0de"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/mypy.log",
+      "bytes": 43,
+      "sha256": "71144743c83babea384888a735db0c4daba3d4d7b7942b6839984bd5c21b52bb"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/fixture.log",
+      "bytes": 340,
+      "sha256": "ef879eee7d77342a1d83d8313a57016b148f14106be14261e6536467e14600cc"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/quality-commands.json",
+      "bytes": 3044,
+      "sha256": "0c750aff2411cc60a7b61aa1fd7520e6235311f76654d3d9c10634ac03bd9f2a"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/task-env.sh",
+      "bytes": 824,
+      "sha256": "341ccc40995b991d13dde580d3790a25f83f59fd41decf95fae8f8218985be12"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/run_checks.py",
+      "bytes": 1766,
+      "sha256": "de4f34bd1b3ee7bb8bb267728f4580da8eaed55037348f72435e1c7295daf1c5"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/run_checks_v2.py",
+      "bytes": 1840,
+      "sha256": "bff0721041d7d140e9b27919eb0154f8e13637873cb91fa150f3b3a8812cc738"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/run_checks_v3.py",
+      "bytes": 1888,
+      "sha256": "c4a05c9402e587b0e4518c056a5bc4102fa20059de943f0dc25b15a7841d8e87"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/independent.py",
+      "bytes": 2597,
+      "sha256": "2c10e17fdca826e9bc9f571a5a1bdf5f2db3d0728124e1e842deba536fffc3da"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/independent_v2.py",
+      "bytes": 2604,
+      "sha256": "478c633572da15ef9fb7b8792bd4526fbe77a8525ca4bca62d32773518debb9b"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/adversarial.py",
+      "bytes": 3674,
+      "sha256": "584ba9b5ef29338638076b1c53646c739fa18a90963b5748040b882b2fdde222"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/allocation_gate.py",
+      "bytes": 329,
+      "sha256": "2103f1a5a340f2b78cc21a6c2190b822224259625b2da140a2ce8b8f17ec0575"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/verify.py",
+      "bytes": 4441,
+      "sha256": "1e38196f8ba316bb3e8f87dd542795defcf8180b6051d02883dbabaec8f90a8a"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/quality.py",
+      "bytes": 1795,
+      "sha256": "25fb423b393dae2d052bde4dfd522553080362f1e6e7698d4e7cfa4c172a6729"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/finalize.py",
+      "bytes": 7872,
+      "sha256": "cd0b032cb3c10750ac2332450c12aaf44ec37db1c6ac869c32173da4c4475802"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/todo.md",
+      "bytes": 914,
+      "sha256": "b61e16169fa4ac81276d5040a5452683d22fcec82eeedddf1b9b3ee86a8ba7a8"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/suite/pytest.ini",
+      "bytes": 9,
+      "sha256": "8250d20f42b419af40706490ead78aabab9feba93eab09a3f626e3de5256e1f4"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-Core-final-critical-review-astra-evening-20261113/final-check.json",
+      "self_hash_omitted_to_avoid_cycle": true
+    }
+  ],
+  "artifact_exclusions": [
+    "Dispatcher data",
+    "Private corpus material",
+    "Forbidden layout-writer initial log"
+  ],
+  "process": {
+    "requested_model": "GPT-6 Astra",
+    "requested_service": "Standard",
+    "routing_independently_attested": false,
+    "nested_dispatch": false,
+    "source_or_comment_edits": false,
+    "git_mutation": false,
+    "network": false,
+    "target_or_compiler_execution": false,
+    "guard_inspected_or_changed": false,
+    "author_content_read": false,
+    "denied_author_directory_stat": true,
+    "owned_children_remaining": 0,
+    "automatic_continuation": false,
+    "absent_bytecode_prefixes": [
+      "absent-bytecode",
+      "absent-bytecode-tests",
+      "absent-bytecode-independent",
+      "absent-bytecode-independent-v2",
+      "absent-bytecode-adversarial",
+      "absent-bytecode-identities",
+      "absent-bytecode-quality",
+      "absent-bytecode-allocation-gate",
+      "absent-bytecode-final"
+    ],
+    "pause_sentinels": {
+      "PAUSED": false,
+      "DRAINING": false
+    }
+  },
+  "remaining_gates": [
+    "F1 allocation requirement resolution",
+    "Separate complete Sol implementation review",
+    "Root integration preserving later main additions",
+    "Final identity_inputs and immutable inspection/evidence transaction",
+    "Final profile and source-manifest parsers and inspection encoding",
+    "U3 source identities",
+    "Actual compiler retention",
+    "Both native profiles",
+    "Trusted issuance and operational use",
+    "Complete source/import closure",
+    "Calibration",
+    "Full capture OPEN after provider screening",
+    "Production",
+    "SPEC section 9"
+  ],
+  "completed_utc": "2026-11-13T21:29:30.924907+00:00"
+}

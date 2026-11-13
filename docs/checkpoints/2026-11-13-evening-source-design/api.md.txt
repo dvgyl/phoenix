@@ -1,0 +1,263 @@
+The goal is to support Phoenix through every SPEC section 9 condition. This document resolves only the source schema 2 validation boundary at revision `d43f604bfdb6ef63b2b9086352c440be3559b1d5`.
+
+**PASS-to-implement for Unit B with this contract.** Producer admission, capture, semantics, emission, and production remain HOLD. The old source, graph, export, mapping, index, evidence, and Java files remain exact. This document corrects the incomplete signatures in the four final adapter design documents. Their other requirements remain in force.
+
+The selected interface uses graph bytes and explicit validation inputs. Every public operation parses those graph bytes again. A `ByteGraphV2` object is not accepted as `graph_bytes`. A valid object can supply its canonical bytes, but those bytes still pass the complete existing graph parser. The API makes no claim to reject an earlier malformed object after a caller has already converted it into valid bytes. That conversion destroys type information. The source and candidate view are different. Their public typed inputs receive exact type checks before serialization or comparison.
+
+**Module and dependency ownership.**
+
+Add `phoenix/lift/byte_source_v2.py` and `tests/test_byte_source_v2.py`. Root owns any later ADR and integration. No public shared-validation module, wrapper class, cache, registry, or producer framework is needed.
+
+The new module imports the public graph v2 key classes, `PassRecord`, `ByteGraphV2Limits`, the graph error classes, and `parse_byte_graph_v2`. It imports `Location`, `Sequence`, `LiftIndex`, and the consumed lift record classes from `index.py`. It imports `GhidraVA` as a type and `Address` and `StoragePiece` from `evidence.py`. `Address.offset` is canonical hex text. `Location.offset` and `FunctionKey.ghidra_entry` are exact integers at runtime. Do not confuse these representations.
+
+Reuse the public graph parser as the graph validation boundary. Do not import `_Reader`, `_wire`, `_pass`, `_check_graph`, or other private graph helpers. Do not use the old source reader, old source token classes, or old source serializer. The new module owns its small strict JSON decoder, source wire conversion, and source field checks. Mapping helpers such as `text` and `load_json` have different length and decoding contracts. They are not substitutes for the new source checks. Some local duplication is smaller and clearer than changing the old readers.
+
+**Exact public signatures.**
+
+All context arguments are required keyword arguments. No context or limit is recovered from an object, global variable, environment, or default cache.
+
+```python
+def parse_byte_source_v2(
+    raw_bytes: bytes,
+    *,
+    graph_bytes: bytes,
+    lift: LiftIndex,
+    raw_c_bytes: bytes,
+    pass_record: PassRecord,
+    limits: ByteSourceV2Limits,
+    graph_limits: ByteGraphV2Limits,
+) -> ByteSourceV2: ...
+
+def project_positive_spans(
+    source: ByteSourceV2,
+    *,
+    graph_bytes: bytes,
+    lift: LiftIndex,
+    raw_c_bytes: bytes,
+    pass_record: PassRecord,
+    limits: ByteSourceV2Limits,
+    graph_limits: ByteGraphV2Limits,
+) -> PositiveSpanView: ...
+
+def check_positive_span_view(
+    candidate: PositiveSpanView,
+    *,
+    source: ByteSourceV2,
+    graph_bytes: bytes,
+    lift: LiftIndex,
+    raw_c_bytes: bytes,
+    pass_record: PassRecord,
+    limits: ByteSourceV2Limits,
+    graph_limits: ByteGraphV2Limits,
+) -> None: ...
+```
+
+The computation function has no candidate argument. It returns a new view. The checker accepts a candidate and returns `None` only after exact comparison with a newly computed view. It returns no certificate or cached state. A consumer uses the checker at the point where it receives an independently supplied view. A consumer that only needs a fresh view calls the computation function.
+
+No public overload accepts `bytes | ByteGraphV2` or schema 1 keys. No alternate fast path omits the graph parse. There is no public `already_validated` argument. Internally, the reader and projector can share a private source-record validator. Only a graph returned by the parser within the current public call reaches that validator. This local value is not a public validation certificate.
+
+**Exact types.**
+
+All new data classes are frozen and slotted. All sequence fields are tuples. Every field below is required. No field has an implicit null, empty tuple, or status default. The limit class alone has defaults equal to its hard maxima. The following annotations define the new types.
+
+```python
+type ItemKind = Literal[
+    "ClangVariableToken", "ClangOpToken", "ClangSyntaxToken",
+    "ClangFuncNameToken", "ClangTypeToken", "ClangCommentToken",
+    "ClangLabelToken", "ClangFieldToken", "ClangBitFieldToken",
+    "ClangCaseToken",
+]
+type RenderRule = Literal["identity", "illegal_char_cpp"]
+type AssociationRule = Literal["direct_api", "field_output", "case_op_only"]
+
+class SpanV2:
+    start: int
+    end: int
+
+class LineV2:
+    ordinal: int
+    api_line_number: int
+    indent: int
+    indent_span: SpanV2
+    first_item: int
+    item_count: int
+    separator_span: SpanV2
+
+class ItemV2:
+    ordinal: int
+    line_ordinal: int
+    ordinal_in_line: int
+    kind: ItemKind
+    syntax_type: int
+    original_text: str
+    rendered_text: str
+    render_rule: RenderRule
+    association_rule: AssociationRule
+    span: SpanV2
+    text_sha256: str
+    operation: OpKey | None
+    value: ValueKey | None
+    formal_ordinal: int | None
+    symbol_storage: tuple[StoragePiece, ...]
+
+class SourceGapV2:
+    code: GapCode
+    block: BlockKey | None
+    operation: OpKey | None
+    value: ValueKey | None
+    item_ordinal: int | None
+
+class ByteSourceV2:
+    schema: Literal[2]
+    profile: Literal["ordinary-byte-adapter/1"]
+    function: FunctionKey
+    pass_id: str
+    lift_sha256: str
+    graph_sha256: str
+    raw_c_sha256: str
+    raw_c_bytes: int
+    source_status: Literal["exact_printer_bytes"]
+    inventory_scope: Literal["post_pretty_printer"]
+    lines: tuple[LineV2, ...]
+    items: tuple[ItemV2, ...]
+    gaps: tuple[SourceGapV2, ...]
+
+class SourceTokenV2:
+    ordinal: int
+    span: SpanV2
+    kind: ItemKind
+    text_sha256: str
+    operation: OpKey | None
+    value: ValueKey | None
+    formal_ordinal: int | None
+    symbol_storage: tuple[StoragePiece, ...]
+
+class ProjectionRow:
+    item_ordinal: int
+    positive_ordinal: int | None
+
+class PositiveSpanView:
+    source_sha256: str
+    tokens: tuple[SourceTokenV2, ...]
+    projection: tuple[ProjectionRow, ...]
+```
+
+`FunctionKey`, `OpKey`, `ValueKey`, `BlockKey`, and `GapCode` above mean the exact public types from `byte_graph_v2.py`. `GapCode` retains all 13 existing schema 2 strings. `SourceGapV2` is new because graph `GapV2.item_ordinal` is always null. Source gaps can name an item. Do not change graph `GapV2` to accommodate source items.
+
+`SourceTokenV2` preserves the old positive token wire fields. It uses schema 2 keys. It neither subclasses nor aliases schema 1 `SourceToken`. Python data classes with the same fields are not interchangeable contracts. Do not cast a v2 key into a v1 key. The old parser and publication formats remain unchanged. No view has `schema=1`, and no old source artifact is created.
+
+The source supplies detached `record() -> dict[str, object]`, `to_bytes() -> bytes`, and `sha256: str`, consistent with the graph API. These operations encode content. They do not validate external bindings. The projector must not call them on an unchecked supplied object. It first checks exact nested types and bounds, builds a detached wire record through explicit fields, and validates that record against the current graph and raw C. Do not invoke candidate-controlled methods or use generic `dataclasses.asdict` as validation.
+
+For all typed entry points, exact type means `type(value) is ExpectedType`. Reject subclasses, wrong record classes, lists in tuple fields, Boolean integers, float integers, and custom scalar objects. Apply integer checks before equality, hashing, lookup, `hex`, slicing, or arithmetic. Apply string checks before encoding or comparison. Do not normalize an invalid typed value into a valid wire value. This also applies to every nested schema 2 key, `Sequence`, `Location`, `StoragePiece`, and `Address`.
+
+**Finite errors.**
+
+The new module owns `ByteSourceV2Error(ValueError)` and these four subclasses.
+
+| Error | Use |
+| --- | --- |
+| `ByteSourceV2FormatError` | Invalid type, shape, scalar, class, local relation, partition, or reference. A malformed candidate has this error. |
+| `ByteSourceV2LimitError` | Invalid limit or exceeded input, canonical byte, count, depth, or aggregate text limit. |
+| `ByteSourceV2PinError` | The supplied pass differs from the graph profile's fixed constants. |
+| `ByteSourceV2BindingError` | The graph, lift, pass, raw C, source identity, or well-formed candidate projection differs. |
+
+Translate only the four corresponding graph error classes, at the graph parser call. Preserve the cause. Do not catch all `ValueError`, `TypeError`, `AttributeError`, or `Exception` around the public operation. Catch only documented JSON and Unicode decoding failures at the decoder or encoder. Messages are fixed bounded strings. They contain no source text, caller object representation, filesystem paths, or process logs. Unexpected hash or implementation faults propagate. No exception returns an unavailable record or a success value. Unit D later converts permitted capture refusals into its separately specified envelope.
+
+**Source limits and caller reductions.**
+
+`ByteSourceV2Limits` has exactly the following nine integer fields. Each default is the hard maximum shown. Every public call rechecks the exact class and every field. Require `type(value) is int` and `0 < value <= maximum`. Zero is an invalid limit even though zero inventory counts are valid.
+
+| Field | Hard maximum |
+| --- | ---: |
+| `max_source_record_bytes` | 16,777,216 |
+| `max_source_bytes` | 1,048,576 |
+| `max_items` | 65,536 |
+| `max_lines` | 65,536 |
+| `max_original_text_bytes` | 1,048,576 |
+| `max_rendered_text_bytes` | 1,048,576 |
+| `max_storage_pieces` | 4 per item or projected token |
+| `max_gaps` | 256 |
+| `max_json_depth` | 32 |
+
+The source record byte cap applies independently to input bytes and canonical output bytes. A caller can lower every field. The canonical expansion of Unicode remains subject to the byte cap. Original and rendered text have separate aggregate UTF-8 byte counters. Empty text consumes zero bytes but still consumes an item. Each individual text must fit the remaining aggregate budget. Check a character-count lower bound before UTF-8 allocation. Do not infer the original-text bound from raw C length.
+
+A projection has at most `max_items` rows and `max_items` tokens. Its storage-piece count uses `max_storage_pieces` per token. Its source determines all string and span bounds. No separately supplied view byte parser or additional wire format is introduced. Bound candidate tuple lengths before iteration. Validate fixed-size token fields and storage names before comparison. The view therefore cannot evade source limits through a larger candidate inventory.
+
+Use the exact supplied `ByteGraphV2Limits`, with all 14 existing fields and hard maxima unchanged. They are graph bytes 16 MiB, source bytes 1 MiB, functions 32, graph blocks 32, listing blocks 32, analyzed operations 256, raw operations 256, raw instructions 256, inputs 256, values 65,792, references 65,792, directed edges 1,024, gaps 256, and JSON depth 32. Retain the existing graph rules for function ranges, aggregate listing ranges, and selected listing edges. The source layer must never recreate graph limits with defaults.
+
+Both source byte limits apply. Thus the effective raw C limit is `min(limits.max_source_bytes, graph_limits.max_source_bytes)`. Do not replace either supplied limit object with a larger value. Source JSON uses the source depth limit. Graph JSON uses the graph depth limit. The existing pass parser's fixed 64 KiB and depth-32 boundary remains unchanged. No new caller-reduced pass-byte field is implied.
+
+Program, lift, mapping, context, combined companion, and whole-bundle byte limits remain Unit D duties. A source-only call cannot check the complete envelope size. It must not claim that it did. These data bounds are not total process-memory or runtime limits.
+
+**Validation order.**
+
+The public operations use this order. Within each stage, exact type checks precede dependent operations.
+
+1. Check both limit objects and all their fields. Check exact outer input types. Check source, graph, and raw C byte lengths before decoding or hashing. For the typed source path, check source tuple counts and text lower bounds before materializing wire data. For the candidate path, check candidate outer type and tuple counts before recomputation.
+2. Check the container shapes consumed from `LiftIndex` before the unchanged graph parser dereferences them. Accept only an exact `LiftIndex`, an exact built-in `dict` or `MappingProxyType` for `functions`, exact `Function` records for the selected function, and exact tuples for consumed arrays. Copy either accepted function map once to a local map. Preserve insertion order. Check the function count before copying. Check every roster key as an exact unsigned 64-bit integer before lookup. Check the exact pass and pass-function classes, and the entry and call-ordinal scalar bounds, before selecting the function. Leave all other pass checks to the graph parser. A missing selected entry or a valid but mismatched roster is a binding error. Do not retain a caller's mutable map as validation state. Do not call a custom mapping implementation. Inspect only the fields consumed by the graph parser. Require exact `Block`, `Instruction`, `Operation`, `Operand`, `Sequence`, `Location`, and `StaticEdge` instances where consumed. Check range-pair tuple arity before unpacking. Require an exact edge tuple with at most the existing lift total of 1,000,000 entries. This is an inherited lift size bound, not a new per-function graph edge bound. Check graph count limits before descending into selected-function arrays. The existing graph parser remains responsible for integer values, roster equality, references, and graph relations. No unconsumed lift field gains validation or authority from this preflight.
+3. Call `parse_byte_graph_v2(graph_bytes, lift=local_lift, pass_record=pass_record, limits=graph_limits)`. Keep the returned graph only within this call. The parser rechecks pass constants, direct pass types, call ordinal, function identity, lift digest claims, ordinary raw C, complete graph relations, all limits, and mandatory gaps. Never substitute the supplied graph's `sha256` property for this call.
+4. Select the same function from the checked roster. Strictly encode its exact `raw_c`. Require byte-for-byte equality with `raw_c_bytes`. Require both digests to equal `graph.raw_c_sha256`. Hash equality alone is not the raw C equality test. No line-ending or Unicode normalization is permitted.
+5. Decode source JSON with exact closed fields, duplicate-key refusal, UTF-8, a pre-decoding depth check, and finite numeric errors. Reject trailing data, BOM, NaN, infinity, all floats, and isolated surrogates. For a typed source, explicitly check the full nested type tree and scalar bounds first. Then build the same detached wire fields. Both routes use the same source field and relation validator. There is no weaker typed-source route.
+6. Check schema, profile, source status, inventory scope, function, pass, lift digest, canonical graph digest, raw C digest, and byte count. The source graph digest is `SHA256(accepted_graph.to_bytes())`, not the hash of a noncanonical graph input. A stale source cannot bind a changed graph, pass, or ordinary C by carrying its old digest.
+7. Check line and item arrays, exact ordinals, all strings, class rules, link rules, storage rules, and cumulative counters. Build lookup tables only from the freshly parsed graph. Validate the complete partition and scalar boundaries described below.
+8. Check every source gap, its references, canonical order, uniqueness, and mandatory source gaps. Retain all supplied valid gaps. Do not copy graph gaps into source or remove graph gaps. The source's graph digest retains the separate graph gap inventory.
+9. Produce a new immutable source value. Check its canonical ASCII JSON bytes against `max_source_record_bytes`. Canonical form has sorted keys, compact separators, `ensure_ascii=true`, no non-finite numbers, and one final LF. Use bounded encoding or incremental byte counting. Refuse expansion beyond the cap. Do not allocate an unbounded buffer and then call it bounded validation.
+10. For projection, derive every row and token from that newly validated source. Compute `source_sha256` over all canonical source bytes. For the checker, validate candidate types and bounds, then compare every field with the recomputed result. Reject any difference. Do not repair, sort, deduplicate, or reindex the candidate.
+
+The small lift container preflight is local input handling. It is not a second graph algorithm or an authentication layer. It avoids generic exceptions from malformed containers while keeping semantic and scalar checks in the existing parser. A concurrent writer that uses reflection to mutate frozen objects is outside a pure function's synchronization contract. No result may cache caller input state across calls.
+
+**Complete source inventory.**
+
+`SpanV2` is a half-open UTF-8 byte interval. Require exact integer `0 <= start <= end <= len(raw_c_bytes)`. Every endpoint must be a Unicode scalar boundary, including an empty item endpoint. An empty slice can decode successfully even inside a multibyte scalar, so empty-slice decoding alone is insufficient. A strict sequential partition from zero, with each segment checked against complete UTF-8 text, establishes the boundary. A boundary bitmap is also valid if independently checked.
+
+Start the source cursor and item cursor at zero. For each line in tuple order, require its ordinal to equal the line cursor and `api_line_number=ordinal+1`. Require a nonnegative exact indent no greater than `max_source_bytes`. The indent span must start at the current source cursor. Its length equals the indent, and its bytes are exactly that many ASCII spaces.
+
+Require `first_item` to equal the current global item cursor. Require `item_count >= 1`, with no overrun of the item array. Each item must have the expected global ordinal, line ordinal, and per-line ordinal. Its span must start at the current byte cursor. Its byte slice must equal strict UTF-8 of `rendered_text`. Its digest must equal SHA-256 of that slice. Advance the item cursor once even when the span is empty. Advance the byte cursor by the rendered byte length.
+
+The line separator starts at that cursor. Its bytes must equal the pass separator, LF or CRLF. It is nonempty on every line, including the last line. The next line starts at its end. At completion, all lines and items are consumed and the byte cursor equals the full raw C length. No prefix, suffix, indentation, or separator is inferred. Do not split an item at an embedded newline. Do not rebuild line records by scanning newlines.
+
+Zero lines and zero items are accepted only with zero source bytes and a global `source_unbound` gap. This represents an explicit empty printer inventory. One empty line instead has at least one empty item and a separator. It is a distinct value. Structural consistency cannot establish that Java actually returned either inventory. That is a later capture obligation.
+
+Every empty item retains its identity, kind, original text, render rule, association rule, links, formal, storage, and item gaps. Multiple empty items can share one scalar boundary. Never merge them. A zero-width item can still have a direct operation or value link.
+
+**Rendering and class rules.**
+
+Require one of the ten exact `ItemKind` strings and an exact integer syntax type from 0 through 10. Unknown subclasses and `ClangBreak` refuse this source schema. Use `illegal_char_cpp` exactly for `ClangFuncNameToken`, `ClangVariableToken`, `ClangTypeToken`, `ClangFieldToken`, and `ClangLabelToken` when syntax type is not 5. All other cases require `identity`. Syntax type 5 is `CONST_COLOR` and requires `identity` even for those five classes.
+
+For identity rendering, original and rendered text must be exactly equal. For `illegal_char_cpp`, retain both supplied strings after scalar and byte checks. Do not implement Java `Character.isLetter(char)` with Python Unicode predicates. Do not infer rendered text from original text. The pinned Java transformer and independent Java controls remain required before producer admission. Both normalization forms remain distinct. Supplementary scalars occupy four UTF-8 bytes.
+
+The pinned getter contracts also restrict associations as follows.
+
+| Kind | Rule | Operation | Value | Formal and symbol storage |
+| --- | --- | --- | --- | --- |
+| `ClangVariableToken` | `direct_api` | Nullable analyzed key | Nullable value key | Direct `getHighSymbol(null)` observations |
+| `ClangOpToken`, `ClangFuncNameToken`, `ClangBitFieldToken` | `direct_api` | Nullable analyzed key | Null | Null formal and empty storage |
+| `ClangSyntaxToken`, `ClangTypeToken`, `ClangCommentToken`, `ClangLabelToken` | `direct_api` | Null | Null | Null formal and empty storage |
+| `ClangFieldToken` | `field_output` | Required analyzed key | Exactly the referenced operation output, including null | Null formal and empty storage |
+| `ClangCaseToken` | `case_op_only` | Nullable analyzed key | Null | Null formal and empty storage |
+
+The table follows the read pinned Java classes and inherited base getters. It does not guess an association from class spelling or printed text. `ClangBitFieldToken` has an operation getter but inherits null value and symbol getters. It never uses field-output association or field rendering.
+
+Every non-null operation must resolve in the complete analyzed bank. Every non-null value must resolve in the complete value bank. An unused or source-only value is valid. Do not restrict source values to operation operands. Do not join values by equal storage. For direct variable observations, do not require the linked value to be the linked operation's output or input. Those are independent direct observations. A direct symbol can exist without either link.
+
+Each case item requires exactly the mandatory gap shape `SourceGapV2("source_unbound", None, None, None, item.ordinal)`. Other valid gaps can also occur. A differently scoped source gap cannot replace this exact gap. Never call or emulate the case predecessor search. A field operation may have a null output. That permits a null field value, but a missing field operation itself refuses.
+
+A non-null formal is an exact integer from 0 through 127. It requires at least one storage piece because a present parameter symbol must have usable storage. Null formal with nonempty storage is valid for a direct non-parameter symbol. Null formal with empty storage does not expose a symbol identity. Do not invent a symbol-present field or infer a callable signature.
+
+**Storage and gaps.**
+
+A storage piece uses the existing `StoragePiece` and `Address` data classes. Its wire fields remain exactly `address`, `size`, `register`, and `stack_offset`. Address space is nonempty scalar text of at most 128 UTF-8 bytes. Offset is canonical unsigned 64-bit hex. Size is an exact integer from 1 through 8,192. Require unsigned offset plus size no greater than `2**64`. Register is null or nonempty scalar text of at most 256 UTF-8 bytes.
+
+In `stack` space, require an exact signed 64-bit stack offset and null register. Require `stack_offset % 2**64 == unsigned_offset`. Reject `stack_offset < 0 < stack_offset + size`. Require `stack_offset + size <= 2**63`. An interval that ends exactly at zero or at the signed upper endpoint is permitted if the unsigned interval also does not wrap. Outside stack space, stack offset must be null. Preserve piece order and repeated pieces. No register name is inferred from an address. No storage interval proves aliasing, identity, or pointer validity.
+
+Source gap fields are exactly `code`, `block`, `operation`, `value`, and `item_ordinal`. All nullable references must resolve in the current source and graph. Gap operations can use raw or analyzed keys. Item operation fields can use only analyzed keys. A gap with both block and operation must name an operation owned by that block. Do not infer an unencoded relation between a gap's value and operation or between its item and other references. Check canonical-byte sort order and uniqueness after type validation. Retain every valid gap. Require the exact case and empty-inventory gaps above. The five graph global gaps remain enforced in graph validation.
+
+**Projection and supplied-view checks.**
+
+Initialize positive ordinal zero. For every complete item in order, append one `ProjectionRow`. An empty rendered span gets null positive ordinal and no token. Every nonempty rendered span gets the current positive ordinal and a `SourceTokenV2`. Advance the positive ordinal only in that case.
+
+Copy the span, kind, text digest, operation, value, formal ordinal, and the complete ordered storage tuple from the freshly validated item. Rebuild these values as needed to detach them from caller state. Do not derive links again from address, text, or nearby items. Include positive whitespace and comment items. Do not create indentation or separator tokens. The complete source hash binds all omitted line trivia, all empty items, original text, rules, and gaps.
+
+The checker validates the exact `PositiveSpanView`, `ProjectionRow`, and `SourceTokenV2` types and all nested key and storage types. It rejects Boolean ordinals before comparison because `True == 1`. It rejects stale source hash, missing or duplicate rows, reordered rows, missing tokens, extra tokens, changed positive ordinals, changed spans, changed class, changed text digest, changed operation or value, changed formal, and changed or reordered storage. It compares every field, including nulls and every repeated piece. It does not accept an otherwise well-formed candidate solely because its hash or token count matches.
+
+A self-consistent replacement source with new valid hashes is new supplied content. The pure reader can accept it. It cannot prove that the original Java capture contained every empty item or truthful link. A supplied candidate is exact only relative to the complete source supplied to this call. Producer authentication and semantic correctness remain separate gates.

@@ -1413,3 +1413,62 @@
 - The user requires regular GitHub commits. Push each verified small unit and
   report its hash. No incomplete quality gate becomes a green commit. Preserve
   corpus commitments and accepted images. Full capture stays OPEN after screening.
+
+
+## 2026-11-13. Accept the reviewed comparator integration
+
+- Push exact comparator integration d43f604 after its full installed quality hook
+  passes. Root repeats 28 focused controls, two valid real-report comparisons and
+  54 missing or contradictory self-match refusals. The three source files match
+  7ee3a1d. Every other old tracked file matches before progress updates.
+- Fresh full Sol integration review passes and supplies a separate issue 0001
+  closure PASS. Root reads its complete 22,156-byte report and verifies all 88
+  explicit artifacts. Preserve all process exceptions and failed-input controls.
+  Archive the complete public report and exact proofs. Close issue 0001 for this
+  repair. Keep all five broader validator defects open in issue 0003.
+- The first evening Core full gate has one Hypothesis timing failure, 18,351
+  passes, 26 skips and 93.46 percent evaluator coverage. Preserve the full log.
+  No product assertion fails. The call takes 317.56 ms against 200 ms, then passes
+  on repeat. Keep the deadline unchanged. The separate retry passes 303 focused
+  diagnostic and replay-validation controls before the full hook. Both initial
+  review queues stop before a model starts. Fresh source reviews remain required.
+- Preserve all eight current Core files with exact patch reconstruction. The
+  earlier seven-file and original writer backups remain exact. A separate Astra
+  Author now validates private custody and publication evidence without a VM or
+  target execution. Root reads only approved aggregates. Another Astra role
+  resolves the source schema 2 validation boundary before implementation.
+- Verify current worker source digest a52b1803bb430af420705f5ffd4cd3521aacce06f607eabd92d53f2739d08f06.
+  No local image is rebuilt. Full capture remains OPEN after provider screening.
+  The user pause deadline stays 21:46:45 UTC. Start draining at 21:31:45.
+
+
+## 2026-11-13. Prepare the evening pause handoff
+
+- Push complete internal Core source 14c41da after the separate full retry passes.
+  Preserve the failed timing check and unchanged 200 ms limit. Both fresh full
+  source reviews are active. Keep Core outside main until findings are resolved.
+- Astra returns a concrete source schema 2 boundary proposal. Root reads the full
+  API, test plan and report and verifies all 11 explicit artifacts. Preserve it
+  as unadopted. Fresh Sol design review remains required before implementation.
+  The literal Boolean-address serializer control supports the bytes-only boundary.
+- The dedicated Author verifies static custody and saved aggregate records with
+  no new execution or VM. Root reads approved aggregates only. Amber first
+  publication stays HOLD. Cedar has a precise earliest retained npm timestamp.
+  Keep first public program snapshots, historical execution truth and native
+  evidence limits. Fresh public-record Sol review is active. Issue 0002 stays open.
+- Preserve the Author checkout mismatch. Its actual head is 8f1c394 while the
+  brief names 293477f. Root did not verify this before launch. AGENTS and SPEC
+  match exactly. No target or product script ran. Preserve all process deviations.
+- Prepare the 21:46:45 UTC pause with draining at 21:31:45. Only bounded handoff
+  checks may remain after draining. Run the full hook, push and obtain fresh Sol
+  handoff review. The final shared checkpoint records later verdicts and actual
+  stop state. Do not treat this pause or source checkpoint as SPEC completion.
+
+- Astra complete Core review returns HOLD for a before-allocation text cap. A
+  10,000-byte ordinary string is copied under an 8,192-byte retained limit before
+  later canonical emission refuses. Root reads the full report. Preserve its
+  literal failing control. Keep Core outside main and retain the requirement.
+- The first handoff hook refuses Python code-block formatting in the exact copied
+  design API. Preserve its bytes as api.md.txt and update the archive manifest.
+  No source artifact, format setting, test deadline or quality rule changes.
+  Rerun the complete unchanged hook. Preserve the failed first handoff log.

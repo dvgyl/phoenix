@@ -1,0 +1,147 @@
+{
+  "schema": 1,
+  "checked_at_utc": "2026-11-13T21:22:42.839817+00:00",
+  "revision": "d43f604bfdb6ef63b2b9086352c440be3559b1d5",
+  "checkout": "/Volumes/PhoenixWork/worktrees/m1-preflight-review-2",
+  "clean": true,
+  "source_head_verified": {
+    "head": "d43f604bfdb6ef63b2b9086352c440be3559b1d5",
+    "clean": true,
+    "read_only": true,
+    "purpose": "Source schema 2 boundary design"
+  },
+  "verdict": "PASS-to-implement",
+  "scope": "Unit B source schema 2 validation boundary design only.",
+  "selected_interface": "Graph bytes with explicit LiftIndex, PassRecord, raw C bytes, source limits, and graph limits.",
+  "implementation_verdict": "Not supplied. Unit B is not implemented.",
+  "producer_admission": "HOLD",
+  "production": "HOLD",
+  "full_capture": "OPEN after provider screening",
+  "report": {
+    "path": "/Volumes/PhoenixWork/audit/m2-source-v2-boundary-design-astra-evening-20261113/report.md",
+    "bytes": 16740,
+    "sha256": "a2ce8bc4dfdcb1fe87cab92893cc16774caf68379439a0fb83557af7c18f62ac"
+  },
+  "artifacts": [
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-source-v2-boundary-design-astra-evening-20261113/report.md",
+      "bytes": 16740,
+      "sha256": "a2ce8bc4dfdcb1fe87cab92893cc16774caf68379439a0fb83557af7c18f62ac"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-source-v2-boundary-design-astra-evening-20261113/api.md",
+      "bytes": 26701,
+      "sha256": "d1bd7b486f162bd759fcf7311ec6fcbf5cb7714ecefa03ae67ac4267579d7a46"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-source-v2-boundary-design-astra-evening-20261113/test-plan.md",
+      "bytes": 15186,
+      "sha256": "decca810cb751d01e39981a9bbcf62b04a557b7aecdc7ee2ea4e3a69bd06c20a"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-source-v2-boundary-design-astra-evening-20261113/todo.md",
+      "bytes": 1231,
+      "sha256": "852d3831f204514d4b4cb0caefd31cb362e4a8427c7465bb7b196a92ca1e5a09"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-source-v2-boundary-design-astra-evening-20261113/boundary-probe.json",
+      "bytes": 1228,
+      "sha256": "7572d56e112c4ca8d838e6adb20f81fe25fce8fb3ec2e00cc7089a50ba0b86e8"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-source-v2-boundary-design-astra-evening-20261113/input-identities.json",
+      "bytes": 7223,
+      "sha256": "a8cf56d9b7f9d9fce55a71d75108177dace694d4b922b456bec53b52169d67a3"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-source-v2-boundary-design-astra-evening-20261113/final-head.txt",
+      "bytes": 41,
+      "sha256": "b3f28b725dcc86f6560d2374a3ff47a6c3c3a46611f6420c171ae7a93fac2fb4"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/audit/m2-source-v2-boundary-design-astra-evening-20261113/final-status.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-source-v2-boundary-design-astra-evening-20261113/boundary_probe.py",
+      "bytes": 4945,
+      "sha256": "33c43a33ebee1e34977dd2bedbc63321ecd98ecfdb13365b10b13d5d43764475"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-source-v2-boundary-design-astra-evening-20261113/verify_inputs.py",
+      "bytes": 2943,
+      "sha256": "e9ce02756c0eff1e06105850aa82edabb404a438737857174f5c77204d8bf36d"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/tmp/m2-source-v2-boundary-design-astra-evening-20261113/final_verify.py",
+      "bytes": 6788,
+      "sha256": "6990ae63ff9e31734d26565d70fe7cd7c60408ebe26f3d5fe858b0a70143bf07"
+    }
+  ],
+  "self": {
+    "path": "/Volumes/PhoenixWork/audit/m2-source-v2-boundary-design-astra-evening-20261113/final-check.json",
+    "hash_omitted": "A file cannot contain its own final hash."
+  },
+  "artifact_inventory_method": "Explicit created-file allowlist. No directory walk. All dispatch data excluded.",
+  "checks": {
+    "frozen_revision_and_clean_status": "PASS",
+    "current_graph_and_test_bytes_match_prior_integration": "PASS",
+    "selected_saved_primary_bytes_match_pinned_manifest": "PASS",
+    "independent_boundary_probe_assertions": "PASS",
+    "api_signature_syntax_and_required_validation_inputs": "PASS",
+    "final_input_hashes_unchanged": "PASS",
+    "product_tests": "Not run. Design-only task.",
+    "code_quality_suite": "Not run. No product edit.",
+    "routing_attestation": "Unavailable"
+  },
+  "stop_markers": {
+    "PAUSED": false,
+    "DRAINING": false
+  },
+  "draining_at_utc": "2026-11-13T21:31:45Z",
+  "pause_deadline_utc": "2026-11-13T21:46:45Z",
+  "service": {
+    "requested": "Standard",
+    "settings_changed": false,
+    "fast_enabled": false,
+    "routing_attestation": null
+  },
+  "process": {
+    "nested_dispatch": false,
+    "background_children_created": false,
+    "all_owned_foreground_commands_completed_before_final_check": true,
+    "python_flags": [
+      "-B"
+    ],
+    "python_child_environment": "env -i; fixed PATH; scoped TMPDIR; PYTHONNOUSERSITE=1; PYTHONDONTWRITEBYTECODE=1",
+    "network": false,
+    "target_execution": false,
+    "java_execution": false,
+    "compiler_execution": false,
+    "vm_operation": false,
+    "product_or_git_write": false,
+    "private_or_dispatch_content_read": false,
+    "guard_inspection_or_change": false,
+    "provider_screening_retry_or_bypass": false,
+    "exceptions": [
+      "Bootstrap pwd did not source task-env.sh or check stop markers.",
+      "A bootstrap shell tried an absent task-env path and continued with read-only instruction reads.",
+      "Other bootstrap shells used the general environment or selected environment names before the exact task environment was located.",
+      "The supplied environment repeatedly reported a denied mkdir for /Volumes/PhoenixWork/vm. It was not investigated.",
+      "Large displays were split after truncation. Required complete inputs were covered."
+    ]
+  },
+  "remaining_gates": [
+    "Unit B implementation and independent exact-revision review",
+    "Root integration and required quality checks",
+    "Pure conversion and same-call collector dependencies",
+    "Process launcher and full capture review",
+    "Source/tool manifests, installation verification, and producer admission",
+    "Native state and inventory, entry relation, raw/analyzed effects, and memory effects",
+    "Source grammar, callable interface, pointer proof, and deterministic active emission",
+    "Compiled public positives, Linux controls, replay, and production publication",
+    "M4 and every SPEC section 9 condition"
+  ],
+  "exit_zero_is_not_a_verdict": true
+}

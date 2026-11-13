@@ -1,0 +1,785 @@
+{
+  "schema": 1,
+  "utc": "2026-11-13T21:20:16.318471+00:00",
+  "verdict": "STATIC_CUSTODY_VERIFIED_PUBLICATION_HOLD",
+  "source_archive": {
+    "filename": "t3-sources-20261113.tar.gz",
+    "sha256": "e5f05d6515dc29f64f0e9dff2142a7aae774e42566cc1291e8b82a2901c689b0",
+    "bytes": 47659717,
+    "member_count": 3248,
+    "all_members_match_frozen_disk": true,
+    "unsafe_members": 0,
+    "extracted_members": 0
+  },
+  "heldout_archive": {
+    "filename": "t3-inputs-20261113.tar.gz",
+    "sha256": "913937828ac76216a0f465c40f57cf55b8c139c47778e1f74e3e9d3b940d736b",
+    "bytes": 156487,
+    "member_count": 5,
+    "all_members_match_frozen_disk": true,
+    "unsafe_members": 0,
+    "extracted_members": 0
+  },
+  "release_manifest_sha256": "3541907830dbf31246de4b622cce15d6d9acb0ecbfaaadfda7d9f0c102f23a11",
+  "release_manifest_bytes": 9871,
+  "binary_identities": [
+    {
+      "category": "text",
+      "compiler": "gcc",
+      "flags": [
+        "-O0"
+      ],
+      "name": "amber-orbit",
+      "sha256": "01389b0d8a340ba142eb8d17f44e7e531b536dcd20d38a2c28f31d19e4a09b8d",
+      "tier": "T3",
+      "bytes": 39136,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "text",
+      "compiler": "gcc",
+      "flags": [
+        "-O2"
+      ],
+      "name": "amber-orbit",
+      "sha256": "0384e6c8c37332efbad0cb65968ccd3c906b0b4a0d02e93cea5248e4b4f76cd3",
+      "tier": "T3",
+      "bytes": 35040,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "text",
+      "compiler": "clang",
+      "flags": [
+        "-O0"
+      ],
+      "name": "amber-orbit",
+      "sha256": "1f04212d12a10c4c86d7374b8f7576767f67d3648f9b481a20727644bb546121",
+      "tier": "T3",
+      "bytes": 39408,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "text",
+      "compiler": "clang",
+      "flags": [
+        "-O2"
+      ],
+      "name": "amber-orbit",
+      "sha256": "567e82cfb4c24b57a6509995f8b1c75bf8b9013e9c642512737d3443f7cf17d1",
+      "tier": "T3",
+      "bytes": 31200,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "tables",
+      "compiler": "gcc",
+      "flags": [
+        "-O0"
+      ],
+      "name": "cedar-arc",
+      "sha256": "ec6ace52d4a48228a61eda4ad74efc834d3c7bc049262dc739d0e39934106de4",
+      "tier": "T3",
+      "bytes": 51416,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "tables",
+      "compiler": "gcc",
+      "flags": [
+        "-O2"
+      ],
+      "name": "cedar-arc",
+      "sha256": "a7482fb0e0478cfa45b19239dd48faab422d2cd236142ecc3ed16ed84612f3d3",
+      "tier": "T3",
+      "bytes": 47320,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "tables",
+      "compiler": "clang",
+      "flags": [
+        "-O0"
+      ],
+      "name": "cedar-arc",
+      "sha256": "3a599a3b1e29704245d3be06b38eb2d4e1dab8d88cd1fe298df12f3ad9dfefed",
+      "tier": "T3",
+      "bytes": 55752,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "tables",
+      "compiler": "clang",
+      "flags": [
+        "-O2"
+      ],
+      "name": "cedar-arc",
+      "sha256": "36f1ae9a12b8d43a8edc42c5cb8e9de50edddb8f58cde5a9c16ea244e13745cc",
+      "tier": "T3",
+      "bytes": 47560,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "text",
+      "compiler": "gcc",
+      "flags": [
+        "-O0"
+      ],
+      "name": "silver-vale",
+      "sha256": "3aa198059ba25764385d15d83f7e8c6d14161c12d0eeb9be966603cccf454ad9",
+      "tier": "T3",
+      "bytes": 14472,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "text",
+      "compiler": "gcc",
+      "flags": [
+        "-O2"
+      ],
+      "name": "silver-vale",
+      "sha256": "14ab4e75efbb9ab26f4e1bd68eaaf704d43ee8b894a21f574e3f7218a4a420bf",
+      "tier": "T3",
+      "bytes": 14472,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "text",
+      "compiler": "clang",
+      "flags": [
+        "-O0"
+      ],
+      "name": "silver-vale",
+      "sha256": "573f98ea1f1375f61d95aa4eaab847b21f7564487cab6ca7a85d76d1520a2db7",
+      "tier": "T3",
+      "bytes": 14552,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "text",
+      "compiler": "clang",
+      "flags": [
+        "-O2"
+      ],
+      "name": "silver-vale",
+      "sha256": "39c2826a49d1079b2a8cbd7214f5a1dcb5c67abe700fdc3f12b81237c8466f4b",
+      "tier": "T3",
+      "bytes": 14568,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "configuration",
+      "compiler": "gcc",
+      "flags": [
+        "-O0"
+      ],
+      "name": "cobalt-spring",
+      "sha256": "9e5c2f8853b02db2c69ce3a73abc66add02f38c587e0bd74d3546b25bc0c1863",
+      "tier": "T3",
+      "bytes": 43144,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "configuration",
+      "compiler": "gcc",
+      "flags": [
+        "-O2"
+      ],
+      "name": "cobalt-spring",
+      "sha256": "6990706fccff8c14e0c16fb1f4837e885f9f29560317f84ecd78983d206fae71",
+      "tier": "T3",
+      "bytes": 39048,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "configuration",
+      "compiler": "clang",
+      "flags": [
+        "-O0"
+      ],
+      "name": "cobalt-spring",
+      "sha256": "7c4319093fa8c90ab6d5068717f1c472a89eb13f15a56c98386be57b8d95a807",
+      "tier": "T3",
+      "bytes": 47544,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "configuration",
+      "compiler": "clang",
+      "flags": [
+        "-O2"
+      ],
+      "name": "cobalt-spring",
+      "sha256": "c36a5ffd771afff2c132a2a7bd9aac2690fb9479f76d018a4b6b3445719e9434",
+      "tier": "T3",
+      "bytes": 39264,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "file analysis",
+      "compiler": "gcc",
+      "flags": [
+        "-O0"
+      ],
+      "name": "maple-cove",
+      "sha256": "ee6bf9277df9e8c4a9c76fa323d16c51d736d03ee1a81f2562c8252f1ecf4274",
+      "tier": "T3",
+      "bytes": 22664,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "file analysis",
+      "compiler": "gcc",
+      "flags": [
+        "-O2"
+      ],
+      "name": "maple-cove",
+      "sha256": "833dc610b2749b32679234d5b2642c8cd776d99a7ed5d20d58d52ebfa942a19f",
+      "tier": "T3",
+      "bytes": 18568,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "file analysis",
+      "compiler": "clang",
+      "flags": [
+        "-O0"
+      ],
+      "name": "maple-cove",
+      "sha256": "ef3b1b5eb83e85bb2b506e19d8294afba684fbabc85532fa4f0880488016830b",
+      "tier": "T3",
+      "bytes": 22872,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    },
+    {
+      "category": "file analysis",
+      "compiler": "clang",
+      "flags": [
+        "-O2"
+      ],
+      "name": "maple-cove",
+      "sha256": "88545c4e96288ac628854a5c0bece7a1e8e8914d3cdf7e09879d78595538fca9",
+      "tier": "T3",
+      "bytes": 18768,
+      "elf64_x86_64": true,
+      "stripped_static_check": true,
+      "glibc_interpreter": true
+    }
+  ],
+  "source_revision_and_licence_checks": [
+    {
+      "name": "amber-orbit",
+      "revision": "a550a68e8a22e5a587a051a30f795ae7e54d0f6f",
+      "archive_sha256": "a801b50ef1fcce67f7386ccdfa24d246237ea14facb08b69c0006e5fc2c3c6d5",
+      "source_file_count": 35,
+      "source_archive_match": true,
+      "inventory_match": true,
+      "license": "MIT",
+      "license_sha256": "45e42d02982ef4df9dd555da713ebb5de1d03b1bc3841a006ed7822df7300f9b",
+      "license_bytes": 1068,
+      "license_url": "https://github.com/regisvidal/tpl2c/blob/a550a68e8a22e5a587a051a30f795ae7e54d0f6f/LICENSE",
+      "exact_notice_matches": true,
+      "official_tree_sha1": "0aa04f800bd896ed709a53c7c6d06b956db7a590",
+      "archive_tree_sha1": "0aa04f800bd896ed709a53c7c6d06b956db7a590",
+      "tree_matches": true,
+      "official_pinned_licence_matches": true,
+      "metadata_url": "https://api.github.com/repos/regisvidal/tpl2c/git/commits/a550a68e8a22e5a587a051a30f795ae7e54d0f6f",
+      "metadata_sha256": "27a532121eeb12daec01dcc91da9d821be4a1a298af25312e17117546f774c56",
+      "commit_author_date": "2026-10-21T09:48:24Z",
+      "commit_committer_date": "2026-10-21T09:48:24Z"
+    },
+    {
+      "name": "cedar-arc",
+      "revision": "84aaef68695c4a9b77f1e46c73f12672d440f3c7",
+      "archive_sha256": "6292be170812f9c36842ba130f9e305460b4cc6ce25ac112a2371d67649f4a04",
+      "source_file_count": 83,
+      "source_archive_match": true,
+      "inventory_match": true,
+      "license": "MIT",
+      "license_sha256": "754b0fa218fdf024eeb1efdfe54098ba0138fae97e5855d9b8db5c57836fac78",
+      "license_bytes": 1211,
+      "license_url": "https://github.com/partoska/cisivi/blob/84aaef68695c4a9b77f1e46c73f12672d440f3c7/LICENSE.txt",
+      "exact_notice_matches": true,
+      "official_tree_sha1": "d67d0e65c5ad4b65d4ce23f77b6b44395f818ead",
+      "archive_tree_sha1": "d67d0e65c5ad4b65d4ce23f77b6b44395f818ead",
+      "tree_matches": true,
+      "official_pinned_licence_matches": true,
+      "metadata_url": "https://api.github.com/repos/partoska/cisivi/git/commits/84aaef68695c4a9b77f1e46c73f12672d440f3c7",
+      "metadata_sha256": "9d7666f6349a0e061f8233d57c1997fdd49b3aed0d80f6eb32784feadd260c84",
+      "commit_author_date": "2026-10-31T23:01:19Z",
+      "commit_committer_date": "2026-10-31T23:01:19Z"
+    },
+    {
+      "name": "silver-vale",
+      "revision": "3c115e3a3205a55e2bd4c90236298d10aa7f7c7d",
+      "archive_sha256": "e877317ca4b4ca2b410982bf1914705201dae30d83fd2c2cdf19023c41a87c7c",
+      "source_file_count": 22,
+      "source_archive_match": true,
+      "inventory_match": true,
+      "license": "MIT",
+      "license_sha256": "4f3d217797684b106312e5c1c39aa30187d743c1c6da45ba3a19c20d058c0d41",
+      "license_bytes": 1120,
+      "license_url": "https://github.com/SyntaxError2505/jlook/blob/3c115e3a3205a55e2bd4c90236298d10aa7f7c7d/LICENSE",
+      "exact_notice_matches": true,
+      "official_tree_sha1": "aaeee08c644398232c6413bc7e9711344d3583d1",
+      "archive_tree_sha1": "aaeee08c644398232c6413bc7e9711344d3583d1",
+      "tree_matches": true,
+      "official_pinned_licence_matches": true,
+      "metadata_url": "https://api.github.com/repos/SyntaxError2505/jlook/git/commits/3c115e3a3205a55e2bd4c90236298d10aa7f7c7d",
+      "metadata_sha256": "4ef330a9d280cffd7aeccb3a8c85506d041bfc536bf738cb619f5c540c820334",
+      "commit_author_date": "2026-07-21T19:11:56Z",
+      "commit_committer_date": "2026-07-21T19:11:56Z"
+    },
+    {
+      "name": "cobalt-spring",
+      "revision": "a2712e5a1c969dc7745f0ff12a1001d5c15401d6",
+      "archive_sha256": "e298cde6a1f07d229b5a00211ea79841f7c5bfa123fa5bf7251e644e0701e619",
+      "source_file_count": 83,
+      "source_archive_match": true,
+      "inventory_match": true,
+      "license": "MIT",
+      "license_sha256": "754b0fa218fdf024eeb1efdfe54098ba0138fae97e5855d9b8db5c57836fac78",
+      "license_bytes": 1211,
+      "license_url": "https://github.com/partoska/bikini/blob/a2712e5a1c969dc7745f0ff12a1001d5c15401d6/LICENSE.txt",
+      "exact_notice_matches": true,
+      "official_tree_sha1": "8fcd7fbea2acfe710ac3749ec7dabb00808d33fd",
+      "archive_tree_sha1": "8fcd7fbea2acfe710ac3749ec7dabb00808d33fd",
+      "tree_matches": true,
+      "official_pinned_licence_matches": true,
+      "metadata_url": "https://api.github.com/repos/partoska/bikini/git/commits/a2712e5a1c969dc7745f0ff12a1001d5c15401d6",
+      "metadata_sha256": "b3c2af8aa5b8f4525f7eb0ccdf4e54f605a92b17c42681e57d4cee826f9623a0",
+      "commit_author_date": "2026-11-04T20:58:35Z",
+      "commit_committer_date": "2026-11-04T20:58:35Z"
+    },
+    {
+      "name": "maple-cove",
+      "revision": "4ea8dc350be6b806857234eca282088614635e80",
+      "archive_sha256": "6fcb36273f4eafdfafac177afc796d8cfef94981cb7c231ad224676dca5644b9",
+      "source_file_count": 18,
+      "source_archive_match": true,
+      "inventory_match": true,
+      "license": "MIT",
+      "license_sha256": "d6a2142f8408c91f348cebf2357f561db104bb650d80d0bca489132be46b70fb",
+      "license_bytes": 1062,
+      "license_url": "https://github.com/r4venrudy/rudy-loadmap/blob/4ea8dc350be6b806857234eca282088614635e80/LICENSE",
+      "exact_notice_matches": true,
+      "official_tree_sha1": "fea26841ea097c83c9f2458bb06369ca6488208c",
+      "archive_tree_sha1": "fea26841ea097c83c9f2458bb06369ca6488208c",
+      "tree_matches": true,
+      "official_pinned_licence_matches": true,
+      "metadata_url": "https://api.github.com/repos/r4venrudy/rudy-loadmap/git/commits/4ea8dc350be6b806857234eca282088614635e80",
+      "metadata_sha256": "4f8e001e4158df9a5162e47f82be3c10485561d81da0241e0b81597619900826",
+      "commit_author_date": "2026-11-05T11:13:07Z",
+      "commit_committer_date": "2026-11-05T11:13:07Z"
+    }
+  ],
+  "custody_checks": {
+    "source_manifest_files": 3247,
+    "frozen_input_and_generator_files": 6,
+    "validation_manifest_files": 15208,
+    "release_files": 21,
+    "all_passed": true
+  },
+  "input_manifest_verified": true,
+  "saved_record_checks": {
+    "input_cases": 2816,
+    "unique_invocations": 2782,
+    "variant_case_pairs": 11264,
+    "saved_original_completions": 45056,
+    "original_worker_exit_records": 82,
+    "original_nonzero_exit_records": 0,
+    "saved_rebuild_file_matches": 20,
+    "expected_outcome_files": 20,
+    "mutation_counts": {
+      "invalid_mutation_retained": 16,
+      "killed_confirmed": 36,
+      "survived_unclassified": 4,
+      "mutant_oracle_inconclusive": 2
+    },
+    "native_x86_evidence": false,
+    "new_executions": 0,
+    "all_passed": true
+  },
+  "saved_program_aggregates": [
+    {
+      "name": "amber-orbit",
+      "cases": 512,
+      "unique_invocations": 512,
+      "repeated_cases": 0,
+      "branches_taken": 514,
+      "branches_total": 695,
+      "lines_executed": 655,
+      "lines_total": 724,
+      "files": 6,
+      "saved_four_streams_equal_per_variant": true,
+      "saved_cross_compiler_results_equal": true,
+      "saved_instrumented_results_equal_under_declared_rule": true
+    },
+    {
+      "name": "cedar-arc",
+      "cases": 768,
+      "unique_invocations": 760,
+      "repeated_cases": 8,
+      "branches_taken": 882,
+      "branches_total": 1211,
+      "lines_executed": 1220,
+      "lines_total": 1438,
+      "files": 4,
+      "saved_four_streams_equal_per_variant": true,
+      "saved_cross_compiler_results_equal": true,
+      "saved_instrumented_results_equal_under_declared_rule": true
+    },
+    {
+      "name": "silver-vale",
+      "cases": 512,
+      "unique_invocations": 502,
+      "repeated_cases": 10,
+      "branches_taken": 74,
+      "branches_total": 75,
+      "lines_executed": 145,
+      "lines_total": 146,
+      "files": 5,
+      "saved_four_streams_equal_per_variant": true,
+      "saved_cross_compiler_results_equal": true,
+      "saved_instrumented_results_equal_under_declared_rule": true
+    },
+    {
+      "name": "cobalt-spring",
+      "cases": 512,
+      "unique_invocations": 512,
+      "repeated_cases": 0,
+      "branches_taken": 566,
+      "branches_total": 870,
+      "lines_executed": 922,
+      "lines_total": 1137,
+      "files": 4,
+      "saved_four_streams_equal_per_variant": true,
+      "saved_cross_compiler_results_equal": true,
+      "saved_instrumented_results_equal_under_declared_rule": true
+    },
+    {
+      "name": "maple-cove",
+      "cases": 512,
+      "unique_invocations": 496,
+      "repeated_cases": 16,
+      "branches_taken": 304,
+      "branches_total": 360,
+      "lines_executed": 298,
+      "lines_total": 320,
+      "files": 3,
+      "saved_four_streams_equal_per_variant": true,
+      "saved_cross_compiler_results_equal": true,
+      "saved_instrumented_results_equal_under_declared_rule": true
+    }
+  ],
+  "publication": {
+    "amber-orbit": {
+      "verdict": "HOLD_FIRST_PUBLICATION",
+      "claimed_first_publication": "2026-08-24",
+      "article_date": "2026-08-10",
+      "pinned_history_version": "0.1.0",
+      "pinned_history_date": "2026-08-24",
+      "pinned_history_quote": "Version 0.1.0 (2026-08-24):",
+      "rename_history_version": "0.4.0",
+      "rename_history_date": "2026-09-21",
+      "current_article_last_modified": "Tue, 27 Oct 2026 08:55:06 GMT",
+      "reachable_commit_count": 2,
+      "earliest_reachable_commit_date": "2026-10-16T12:21:52Z",
+      "missing_fact": "A primary record must establish when version 0.1.0, or an earlier version of the same program, first became publicly available. The retained record lacks a contemporaneous August release or distribution record linked to that program.",
+      "limit": "The August article date and the August version-history date are author assertions preserved in current primary documents. Neither proves the first public availability of the program. October events neither refute nor prove the August date. No date is substituted."
+    },
+    "cedar-arc": {
+      "verdict": "CONFIRMED_FIRST_RETAINED_NPM_PUBLICATION",
+      "claimed_day": "2026-10-31",
+      "first_retained_npm_version": "0.0.0-stage",
+      "first_retained_npm_publication": "2026-10-31T21:08:56.042Z",
+      "registry_created": "2026-10-31T21:08:56.042Z",
+      "registry_modified": "2026-10-31T23:11:20.601Z",
+      "complete_registry_times": {
+        "created": "2026-10-31T21:08:56.042Z",
+        "modified": "2026-10-31T23:11:20.601Z",
+        "0.0.0-stage": "2026-10-31T21:08:56.042Z",
+        "1.0.0": "2026-10-31T21:11:34.496Z",
+        "1.0.1": "2026-10-31T23:11:20.277Z"
+      },
+      "github_release_published_at": "2026-10-31T21:16:51Z",
+      "all_retained_versions_have_times": true,
+      "limit": "The full current registry record establishes package creation and its earliest retained version. It does not prove the first public program snapshot, rule out an earlier name or copy, or exclude deleted and recreated registry history."
+    }
+  },
+  "primary_publication_receipts": [
+    {
+      "key": "amber-article",
+      "url": "https://regisvidal.com/articles/compiled-templates-for-c/",
+      "utc": "2026-11-13T21:11:39.968711+00:00",
+      "status": 200,
+      "bytes": 8593,
+      "sha256": "07ba55c5e01fc4a0965da7ecdb974b1a3f5ab928db8b1c40a48edb187cafffdd"
+    },
+    {
+      "key": "amber-announcement",
+      "url": "https://regisvidal.com/articles/tpl2c-1-0/",
+      "utc": "2026-11-13T21:11:40.127463+00:00",
+      "status": 200,
+      "bytes": 4944,
+      "sha256": "c80df2f5d47c81fca9c9f5bf4b6d350b6e2f175c7f0ef7bc2f1fc2f510297718"
+    },
+    {
+      "key": "amber-changelog",
+      "url": "https://raw.githubusercontent.com/regisvidal/tpl2c/a550a68e8a22e5a587a051a30f795ae7e54d0f6f/Changelog",
+      "utc": "2026-11-13T21:11:40.307106+00:00",
+      "status": 200,
+      "bytes": 849,
+      "sha256": "7f6e94c0ab76b9ecca6e309c5ad38c7d352d3889cb9b704c3bc133a9a1355815"
+    },
+    {
+      "key": "cedar-npm-full",
+      "url": "https://registry.npmjs.org/@partoska%2fcisivi",
+      "utc": "2026-11-13T21:11:40.602332+00:00",
+      "status": 200,
+      "bytes": 11906,
+      "sha256": "60e7ed4be323b44bbabfb22d523cc6a5f67978cf97ae7396fdf55a391b96d5d7"
+    },
+    {
+      "key": "official-model",
+      "url": "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+      "utc": "2026-11-13T21:11:41.208938+00:00",
+      "status": 200,
+      "bytes": 497324,
+      "sha256": "7f808a41fafa56923d60e99de9a656f1539b7c359724fc858cfcd1a170eedc87"
+    },
+    {
+      "key": "official-comparison",
+      "url": "https://developers.openai.com/api/docs/models/compare?model=gpt-6.1-sol",
+      "utc": "2026-11-13T21:11:41.631967+00:00",
+      "status": 200,
+      "bytes": 454967,
+      "sha256": "b79e7a04fc88d81258dfc94808fdf74a520d9258637df39bd60a871a28c19a3f"
+    },
+    {
+      "key": "amber-orbit-license",
+      "url": "https://raw.githubusercontent.com/regisvidal/tpl2c/a550a68e8a22e5a587a051a30f795ae7e54d0f6f/LICENSE",
+      "utc": "2026-11-13T21:11:42.097095+00:00",
+      "status": 200,
+      "bytes": 1068,
+      "sha256": "45e42d02982ef4df9dd555da713ebb5de1d03b1bc3841a006ed7822df7300f9b"
+    },
+    {
+      "key": "cedar-arc-license",
+      "url": "https://raw.githubusercontent.com/partoska/cisivi/84aaef68695c4a9b77f1e46c73f12672d440f3c7/LICENSE.txt",
+      "utc": "2026-11-13T21:11:42.361632+00:00",
+      "status": 200,
+      "bytes": 1211,
+      "sha256": "754b0fa218fdf024eeb1efdfe54098ba0138fae97e5855d9b8db5c57836fac78"
+    },
+    {
+      "key": "silver-vale-license",
+      "url": "https://raw.githubusercontent.com/SyntaxError2505/jlook/3c115e3a3205a55e2bd4c90236298d10aa7f7c7d/LICENSE",
+      "utc": "2026-11-13T21:11:42.658554+00:00",
+      "status": 200,
+      "bytes": 1120,
+      "sha256": "4f3d217797684b106312e5c1c39aa30187d743c1c6da45ba3a19c20d058c0d41"
+    },
+    {
+      "key": "cobalt-spring-license",
+      "url": "https://raw.githubusercontent.com/partoska/bikini/a2712e5a1c969dc7745f0ff12a1001d5c15401d6/LICENSE.txt",
+      "utc": "2026-11-13T21:11:42.956605+00:00",
+      "status": 200,
+      "bytes": 1211,
+      "sha256": "754b0fa218fdf024eeb1efdfe54098ba0138fae97e5855d9b8db5c57836fac78"
+    },
+    {
+      "key": "maple-cove-license",
+      "url": "https://raw.githubusercontent.com/r4venrudy/rudy-loadmap/4ea8dc350be6b806857234eca282088614635e80/LICENSE",
+      "utc": "2026-11-13T21:11:43.282359+00:00",
+      "status": 200,
+      "bytes": 1062,
+      "sha256": "d6a2142f8408c91f348cebf2357f561db104bb650d80d0bca489132be46b70fb"
+    },
+    {
+      "key": "amber-commits",
+      "url": "https://api.github.com/repos/regisvidal/tpl2c/commits?per_page=100",
+      "utc": "2026-11-13T21:11:44.721017+00:00",
+      "status": 200,
+      "bytes": 5370,
+      "sha256": "13202e92d83c3c5dc4aee9a794b5ff5f11bd027e646790bad515b48d2ccfe827"
+    },
+    {
+      "key": "cedar-commits",
+      "url": "https://api.github.com/repos/partoska/cisivi/commits?per_page=100",
+      "utc": "2026-11-13T21:11:45.098203+00:00",
+      "status": 200,
+      "bytes": 6120,
+      "sha256": "ce870f6d558e89919ac82fa395d1f9b5bf74c972885159af960f60e7d5d5a215"
+    },
+    {
+      "key": "cedar-release",
+      "url": "https://api.github.com/repos/partoska/cisivi/releases/tags/v1.0.0",
+      "utc": "2026-11-13T21:11:45.439289+00:00",
+      "status": 200,
+      "bytes": 39946,
+      "sha256": "1deb7383fc07013d7d4204ddc41011adc651b1d5b20a03d526931a7fdab131e7"
+    }
+  ],
+  "official_cutoff": {
+    "model": "gpt-6.1-sol",
+    "knowledge_cutoff": "2026-04-30",
+    "training_completion_proved": false,
+    "limit": "The knowledge cutoff does not prove training completion or absence of earlier copies."
+  },
+  "checked_runtime_assertions": [
+    "Case counts and unique invocation counts match the frozen input records.",
+    "All four saved original result streams match for each variant. Case indices and stream lengths are complete.",
+    "All four saved compiler and optimization variants match for each program.",
+    "Saved coverage results match the original results under the declared coverage-only omission.",
+    "Saved GCC coverage counters reproduce the five branch and line totals.",
+    "Saved mutant records preserve 36 confirmed kills, four survivors, two inconclusive results, and sixteen invalid mutations.",
+    "Twenty saved rebuild files match their release identities. This does not repeat the builds."
+  ],
+  "runtime_assertions_not_proved": [
+    "Historical execution truth and emulator identity are not independently attested.",
+    "No target, compiler, linker, Ghidra, Phoenix, or evaluation was executed.",
+    "No reconstruction success, portability result, or native-hardware result is supplied."
+  ],
+  "preserved_failures": {
+    "initial_build_setup_failures": 40,
+    "orchestration_interruptions": 2,
+    "prior_selections_with_insufficient_publication_evidence": 2,
+    "invalid_mutations": 16,
+    "survivors_unclassified": 4,
+    "mutant_oracle_inconclusive": 2
+  },
+  "protected_commitments": {
+    "public_commitment_file_sha256": "a7629f299361aef47377047255807407ba3bedd69ad1bd436928a7bdd3b15c7e",
+    "public_commitment_file_bytes": 2349,
+    "protected_old_commitment_sha256": "682f8447f1eebdf6f21dc6a5505c2cc626d5d58ab85aa7c32f084dbb3a4e1d68",
+    "protected_old_commitment_is_current_prefix": true
+  },
+  "instruction_identity": {
+    "AGENTS.md": {
+      "bytes": 11583,
+      "sha256": "5dc37aed176f6a9990979b29df9b771bfaedcf07df6e09c1d34a5b851216bc3c",
+      "matches_frozen_revision": true
+    },
+    "SPEC.md": {
+      "bytes": 25447,
+      "sha256": "dbc3ec8aab2fb74e5bab303017208a2ed93169acc7d2fb3e5938b88b2c073671",
+      "matches_frozen_revision": true
+    }
+  },
+  "checkout_head_observed": "8f1c394de34d79c09ae01c65b4bb1ae60daa0bc3",
+  "requested_model": "GPT-6 Astra",
+  "requested_service_tier": "Standard",
+  "routing_independently_attested": false,
+  "service_tier_independently_attested": false,
+  "agent_sealed": true,
+  "honor_system": true,
+  "full_capture_review": "OPEN",
+  "phoenix_score": null,
+  "phoenix_eval_run_id": null,
+  "new_target_executions": 0,
+  "git_mutations": 0,
+  "uploads": 0,
+  "owned_children_remaining": 0,
+  "vm_untouched": true,
+  "vm_started": false,
+  "vm_lease_held": false,
+  "failures": [
+    {
+      "code": "PUB-1",
+      "state": "HOLD",
+      "detail": "A primary record must establish when version 0.1.0, or an earlier version of the same program, first became publicly available. The retained record lacks a contemporaneous August release or distribution record linked to that program."
+    },
+    {
+      "code": "ENV-1",
+      "state": "RECORDED",
+      "detail": "Every required task environment source reported a denied mkdir for /Volumes/PhoenixWork/vm. The environment script and installed guard were not inspected or changed."
+    },
+    {
+      "code": "CHECKOUT-1",
+      "state": "RECORDED",
+      "detail": "The checkout HEAD is 8f1c394de34d79c09ae01c65b4bb1ae60daa0bc3. Both instruction files match 293477f643a764d7fe34054899d2fee215f1daf1 byte for byte. No checkout change was made."
+    },
+    {
+      "code": "OUTPUT-1",
+      "state": "RECORDED",
+      "detail": "Three bulk read outputs were truncated. Required instructions were read again in full. Private records were processed by bounded file checks."
+    },
+    {
+      "code": "PROCESS-1",
+      "state": "RECORDED",
+      "detail": "The first custody command session identifier was not retained. Its complete result file was checked. A targeted check found no remaining process for that exact script."
+    },
+    {
+      "code": "REVIEW-1",
+      "state": "OPEN",
+      "detail": "No nested reviewer or model ran. No independent model-routing, service-tier, or original-execution attestation is supplied."
+    }
+  ],
+  "limitations": [
+    "Hashes establish custody. They do not prove that a historical execution occurred or that the stored outcomes are true.",
+    "Saved Rosetta and QEMU x86-64 results are emulated evidence. No native x86-64 or AArch64 reconstruction evidence is supplied.",
+    "The fresh static checks reuse the original Author records. They are independent calculations, not independent observations of historical execution.",
+    "The corpus remains agent-sealed on an honor system. No human seal or cross-vendor independence is claimed.",
+    "GPT-6 Astra and Standard service were requested. Provider routing and the actual service tier are not independently attested. No model settings were changed.",
+    "A knowledge cutoff of 2026-04-30 does not prove training completion or absence of earlier copies.",
+    "The first public program snapshot is not established for every program. Earlier names, copies, or deleted publication history cannot be excluded.",
+    "SPEC has no numerical T3 adequacy gate. Saved qualification counts have no phoenix-eval run ID and are not Phoenix headline results.",
+    "This role gives no capture, producer, production, milestone, or Phoenix score approval."
+  ],
+  "remaining_work": [
+    "A primary record must establish when version 0.1.0, or an earlier version of the same program, first became publicly available. The retained record lacks a contemporaneous August release or distribution record linked to that program.",
+    "Root must retain the amber-orbit HOLD and review the corrected cedar-arc package-publication label. A fresh independent public-record review remains required.",
+    "Full capture review remains OPEN after provider screening. Do not retry, rephrase, replace, change providers or settings, or bypass screening.",
+    "Root owns public integration and all Git writes. Preserve the old commitment bytes and all failure categories.",
+    "The required M2 and M3 acceptance runs, M4 evaluation, baselines, ablations, costs, failure taxonomy, and independent milestone reviews remain outside this task.",
+    "SPEC section 9 remains unmet here. It requires completed M4, the report, publication after the required freeze, and reproducible headline numbers through phoenix-eval --replay.",
+    "No automatic continuation is scheduled. Any further private work needs an explicit task. Runtime work also needs a current VM lease."
+  ],
+  "automatic_continuation": false,
+  "approved_for_root": true,
+  "private_material_included": false,
+  "record_scope": "Selected safe Author assertions. Root did not inspect private bytes. Fresh public-record Sol review is pending.",
+  "approved_handoff_identity": {
+    "bytes": 13361,
+    "sha256": "c47be4e27e7bcf092dc62cdede405b3786e3bceaf59fed9ec592c825839c9a1c"
+  }
+}

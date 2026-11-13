@@ -1,0 +1,42 @@
+{
+  "head": "d43f604bfdb6ef63b2b9086352c440be3559b1d5",
+  "remote": "d43f604bfdb6ef63b2b9086352c440be3559b1d5",
+  "branch": "main",
+  "base": "b656c46e1c74d279554f9ab710b62a29d3300dcf",
+  "clean": true,
+  "full_hook_passed": true,
+  "log": "/Volumes/PhoenixWork/audit/resume-20261113-evening/comparator-main-full-hook-commit-push.log",
+  "files": [
+    {
+      "path": "docs/STATUS.md",
+      "bytes": 5166,
+      "sha256": "946125b384953580b723561c20c9ef71e459486f790ff0720d17d9598f81f3cf"
+    },
+    {
+      "path": "docs/LOG.md",
+      "bytes": 88721,
+      "sha256": "7c854bd96864eed3b89ebe4ee0a609b28b9b812eb5f7360473b9d39d92379f47"
+    },
+    {
+      "path": "docs/HANDOFF.md",
+      "bytes": 8361,
+      "sha256": "c2094439236de07ae0d6e6a6e3b695cfb8588fc35dce2d967900c4f84450debd"
+    },
+    {
+      "path": "docs/issues/0001-public-report-self-check.md",
+      "bytes": 2207,
+      "sha256": "4ea07292eb3efb28f785cf131a202b5085d2f747fcaedbd50870eee2a0c2c6a8"
+    },
+    {
+      "path": "phoenix_eval/reports.py",
+      "bytes": 2165,
+      "sha256": "14576c15afdf9221006625b9e70be9ac564035c88329b9c9014cda25ae17db27"
+    },
+    {
+      "path": "tests/test_reports.py",
+      "bytes": 3431,
+      "sha256": "1b9fa5a003bbcef08550f1e6cbb6ff962bff48f7b7cc563e234bb93533a43b36"
+    }
+  ],
+  "finished_utc": "2026-11-13T21:04:38.176067+00:00"
+}

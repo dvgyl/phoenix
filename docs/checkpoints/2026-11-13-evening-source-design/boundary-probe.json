@@ -1,0 +1,27 @@
+{
+  "literal_graph_accepted": true,
+  "typed_boolean_offset_serializes_to_same_bytes": true,
+  "serialize_then_parse_does_not_reject_typed_boolean_offset": true,
+  "typed_graph_is_not_graph_bytes": "ByteGraphV2FormatError",
+  "changed_ordinary_raw_c": "ByteGraphV2BindingError",
+  "changed_pass_claim_without_rebinding": "ByteGraphV2BindingError",
+  "changed_fixed_pin": "ByteGraphV2PinError",
+  "caller_reduced_graph_byte_limit": "ByteGraphV2LimitError",
+  "typed_pass_boolean_entry": "ByteGraphV2FormatError",
+  "coherently_rebound_digest_claims_accepted": true,
+  "authority": "Structure only. No producer or semantic authority.",
+  "imports": [
+    {
+      "path": "/Volumes/PhoenixWork/worktrees/m1-preflight-review-2/phoenix/lift/byte_graph_v2.py",
+      "sha256": "1de24d3ccdd8d3322144ef260137996189c898faece0fa80f447ed756cd373b3"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/worktrees/m1-preflight-review-2/phoenix/lift/index.py",
+      "sha256": "b1f40cc786323778ae0bb84357a832e34fba8290336a0e274a6b2ad569e435de"
+    },
+    {
+      "path": "/Volumes/PhoenixWork/worktrees/m1-preflight-review-2/phoenix/lift/mapping.py",
+      "sha256": "400b0c21201a522133767b5505c02dc000d8ed25e7d5390744c1b383bd0df0aa"
+    }
+  ]
+}

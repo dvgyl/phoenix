@@ -1,0 +1,8 @@
+{
+  "base": "e7218853a0f47f5470bea597e1d57f98231cc66c",
+  "dependency_commit": "8f1c394de34d79c09ae01c65b4bb1ae60daa0bc3",
+  "path": "tests/test_byte_export.py",
+  "sha256": "f33e4c3dd7174df32ddcf890c847370ba3c327d71902580b5ea3684b5a29f81b",
+  "previous_pending_files_preserved": 7,
+  "product_bytes_changed_by_port": false
+}

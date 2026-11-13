@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "scope": "Exact comparator integration and complete public review. No full validator or execution approval.",
+  "files": [
+    {
+      "path": "integration-review-pass.md.txt",
+      "bytes": 22156,
+      "sha256": "a06557ac4fb2b6f0225cc93d29c654033c599e255fb00133814d9cb8310588b5",
+      "source": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/report.md"
+    },
+    {
+      "path": "integration-review-final-check.json",
+      "bytes": 26130,
+      "sha256": "650b1d03026179336ab33ae0c1474a1c4bceac76e9f7a65611bbefe930d869e5",
+      "source": "/Volumes/PhoenixWork/audit/m2-comparator-evening-integration-review-sol-20261113/final-check.json"
+    },
+    {
+      "path": "main-after-push.json",
+      "bytes": 1347,
+      "sha256": "1224df07113d5148460a36a522ac062ab621947ed1c5bc861d1bf610c8b4ec8b",
+      "source": "/Volumes/PhoenixWork/audit/resume-20261113-evening/comparator-main-after-push.json"
+    },
+    {
+      "path": "root-actual-report-controls.json",
+      "bytes": 776,
+      "sha256": "0696a41e1fe14633088864cd887332369c59a236a927a5614857f01ee1f6e9e5",
+      "source": "/Volumes/PhoenixWork/audit/resume-20261113-evening/comparator-independent-result.json"
+    },
+    {
+      "path": "current-worker-source.json",
+      "bytes": 277,
+      "sha256": "b5918796d11cf76f855547403b4b8abef57720b1983c48645a033262077d5ca1",
+      "source": "/Volumes/PhoenixWork/audit/resume-20261113-evening/current-worker-source.json"
+    }
+  ]
+}

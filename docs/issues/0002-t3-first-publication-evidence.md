@@ -28,3 +28,19 @@ All five programs have observed post-cutoff public releases. Exact first public
 development snapshots remain a limit. The official knowledge cutoff does not
 prove training completion. This issue supplies no Phoenix reconstruction score
 or milestone acceptance.
+
+
+## Evening static review, 13 November
+
+The dedicated Author repeats static custody checks without executing targets.
+Both archive commitments, retained members, twenty releases, five source Git
+trees and exact MIT notices agree. These are Author assertions. Stored outcome
+and counter agreement does not prove historical execution truth or native use.
+
+Amber remains HOLD for first public availability. Current history and the dated
+article do not supply a contemporaneous August distribution record. No later
+date replaces the claim. Cedar's complete current npm record identifies
+0.0.0-stage at 2026-10-31T21:08:56.042Z as the earliest retained publication.
+This proves neither first program publication nor absence of an earlier copy.
+A fresh independent public-record Sol review is active. Keep this issue OPEN.
+Read [the selected safe assertions](../checkpoints/2026-11-13-evening-t3/README.md).

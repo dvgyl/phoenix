@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "status": "Unadopted Astra proposal. Fresh Sol design review remains required.",
+  "files": [
+    {
+      "path": "report.md",
+      "bytes": 16740,
+      "sha256": "a2ce8bc4dfdcb1fe87cab92893cc16774caf68379439a0fb83557af7c18f62ac"
+    },
+    {
+      "path": "api.md.txt",
+      "bytes": 26701,
+      "sha256": "d1bd7b486f162bd759fcf7311ec6fcbf5cb7714ecefa03ae67ac4267579d7a46"
+    },
+    {
+      "path": "test-plan.md",
+      "bytes": 15186,
+      "sha256": "decca810cb751d01e39981a9bbcf62b04a557b7aecdc7ee2ea4e3a69bd06c20a"
+    },
+    {
+      "path": "final-check.json",
+      "bytes": 6541,
+      "sha256": "8196faba4f3c323610cc9d4dafa808973bc28d9efd5140b3d61d924e4b804a8a"
+    },
+    {
+      "path": "boundary-probe.json",
+      "bytes": 1228,
+      "sha256": "7572d56e112c4ca8d838e6adb20f81fe25fce8fb3ec2e00cc7089a50ba0b86e8"
+    }
+  ]
+}

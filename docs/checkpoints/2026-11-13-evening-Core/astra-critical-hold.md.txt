@@ -1,0 +1,88 @@
+Phoenix must meet every SPEC section 9 condition. This review checks the complete private U2 unit at `14c41daba86903d4cd27ab68c00ada9df14003b5`. The base is `e7218853a0f47f5470bea597e1d57f98231cc66c`. The branch is `agent/m2-private-compiled-readback-20261113`.
+
+The full private-unit verdict is **HOLD** against the current review requirements. One allocation requirement needs a correction or an explicit contract resolution. The stored design requires byte limits during canonical emission. The current task also requires byte limits before allocation. The implementation meets the former rule but fails the latter rule for decoded text. This is a bounded resource-control finding. It is not a false successful readback, a source-authority bypass, or a disproved U1 debit formula.
+
+The separate comment verdict is **PASS**. No source, comment, Git state, dependency, or test expectation was changed. Root owns integration. The review did not dispatch another model or agent.
+
+The ranked finding is as follows.
+
+| Rank | Finding and location | Evidence and correction |
+| --- | --- | --- |
+| F1. Medium. Required before-allocation byte cap | [collector_compiled.py:624](/Volumes/PhoenixWork/worktrees/m1-ledger-identity/phoenix/observe/collector_compiled.py:624), especially the copy at line 644 and UTF-8 decode at line 647. The cap is applied later at line 868. | A valid synthetic ELF contains a 10,000-byte ordinary gap string and a retained `data_bytes` limit of 8,192. Preflight reads this limit. The decoder still copies all 10,000 bytes and decodes them. Only canonical emission returns `record_limit`. [independent-v2.json](independent-v2.json) records the copy sizes. [allocation-gate.log](allocation-gate.log) preserves the failed requirement assertion. |
+
+F1 is reproducible with [independent_v2.py](/Volumes/PhoenixWork/tmp/m2-Core-final-critical-review-astra-evening-20261113/independent_v2.py). The fixture uses the public independent literal ELF builder. Expected bytes are a small comparison input. They never supply actual decoded state. Instrumentation replaces only the module's `bytes` lookup after preflight. It forwards every operation to the original built-in and records copy lengths. The product source is unchanged. The resulting refusal is `record_limit`, with no partial result. The earlier 32-byte-cap probe remains in [independent.json](independent.json).
+
+Apply a safe lower bound on the encoded text size before copying or decoding it. With ASCII-escaped JSON, a valid UTF-8 byte count cannot exceed the encoded string's content size. Thus a text slice that alone exceeds the applicable root cap cannot fit. Include quotes and the final LF in the bound. Carry the applicable plan or scope cap during decode if their smaller caps must also govern allocation. Add a direct control that makes an oversized copy fail if it starts. Preserve strict UTF-8 rules and the accepted refusal order for inputs that do fit. Keep all existing expectations.
+
+This correction does not establish a total memory bound. It only rejects an allocation that the known byte cap already makes impossible to use. The alternative is an explicit reviewed narrowing of the current before-allocation requirement to emission only. I do not make that contract change in this report. The earlier design's emission-only wording explains the implementation choice. It does not silently override the current task.
+
+The remaining architecture observations are not additional blocking defects.
+
+| Observation | Evidence and limit |
+| --- | --- |
+| WorkUsage is not a count of all Python work. | [The index operation at line 253](/Volumes/PhoenixWork/worktrees/m1-ledger-identity/phoenix/observe/collector_compiled.py:253) reads existing metadata records, builds maps, and sorts loads. A probe with its scalar allowance exhausted still indexed 16 sections, 59 symbols, 49 relocations, and four loads. It charged 3,936 name-scan units and no decoded scalar units. These records were already decoded by U1. The selected scalar definition counts decoded cells, not every metadata access, comparison, allocation, or sort. This does not disprove that definition. |
+| The U1 formula remains supported at the frozen source. | The scalar debit equals the U1 unpack counters. The scan debit covers disjoint base spans, names, SysV name hashing, dependency names, and three additional dynamic-string tags. Six new long-name cases passed. Their exact and one-below combined-budget controls also passed. No reset, retry, or larger allowance was observed. |
+| Later worker resource limits remain necessary. | Map construction, validation of existing records, object storage, and Python allocation overhead are not a complete CPU or memory meter. Neither finite counters nor file limits prove a 1 GiB bound. Native resource measurements and process enforcement remain open. |
+
+The long-name cases use both machines and unrelated static names of 64, 512, and 2,048 bytes. Each U1 scalar count is 1,105. Actual U1 scan counts are 12,363, 13,707, and 18,315. Conservative debits are 470,723, 472,067, and 476,675. Full scalar usage is 6,932. Full scan usage increases with later name processing. [adversarial.json](adversarial.json) records every case. These are accounting units, not performance results. This finite set does not prove the estimate for every possible ELF.
+
+I read all 1,012 reader lines, all 1,750 compiled-reader test lines, all 1,946 layout test lines, the complete layout addition, ADR0043, and the progress appends. I also read the full unchanged U1 implementation to check the debit and metadata assumptions. I read AGENTS.md and SPEC.md in full. The four final compiled-data design documents, complete staged U2 contract, API, test plan, and report were read. The fresh Sol architecture report, layout source report, and main layout integration report were read in full. Their layout-only PASSs were not used as reader approval. The writer report and selected metadata were read. Metadata shapes were inspected before selecting fields.
+
+The implementation review supports these properties.
+
+- Exact immutable bytes enter public U1 once. Profile selection occurs first. U1 receives the remaining scan and scalar limits. Its source and first refusal remain unchanged. The result retains that same complete immutable view, every dynamic row, and every accepted relocation.
+- All 5,021 witness words are compared with installed independent descriptors. All 47 directory entries bind dimensions, exact local symbols, checked sections and loads, and relative relocations. Zero-length loads cannot hide a valid file-backed load. Pointer words do not replace relocation evidence.
+- Physical bytes and nonbyte rows are reserved before logical decoding. Forty-seven cursors reserve whole slices before descent. Active empty slices use the current cursor. Inactive semantic cells must be zero. Final exhaustion covers every row and byte.
+- All 214 fields retain their meanings. Objects remain distinct from tuples. Ordered pairs, variants, nulls, empty text, signed extremes, unsigned maxima, and endpoints through `2**64` remain distinct. UTF-8 is strict. Literal spellings are exact.
+- Five singleton references and 31 limit scalars give 41 preflight scalar reads. They grant no ownership. Traversal checks the references again. Relevant array, route path, and membership caps precede tuple construction. Shared scalar and string tables do not inherit route-only limits. Neutral checks use an address map and stored path groups.
+- Canonical emission checks root and active subtree caps before each append. Every cap includes its final LF. Character escaping has bounded temporaries. Complete independently emitted bytes are compared before D, R, and N. No expected JSON parser or writer oracle supplies decoded values.
+- Only the finite decode-refusal exception is caught at the transaction boundary. Unrelated programming errors remain visible. The exercised product closure is the standard library plus U1 and the installed layout. Pure-operation and fresh-import controls pass.
+
+The independent controls supplement the repeated suite. The normative document's complete 214-field inventory matches the literal test inventory. A further 116 mutations cover inactive payload cells for every active variant alternative. Every mutation refuses as `logical_shape`. Two reordered-relocation controls retain input order and still bind directory pointers correctly. Two stale pointer-word controls preserve logical bytes while changing immutable input bytes. A literal signed-pair control produces exactly `[-9223372036854775808,18446744073709551615]` inside the independently specified JSON object. The original suite also checks every witness word, directory component, symbol contract, field, option, cursor, and retained limit. Synthetic success proves consistency only.
+
+The exact scope is eight files. [source-check.json](source-check.json) records every byte count and SHA-256.
+
+| Path | Scope |
+| --- | --- |
+| `phoenix/observe/collector_compiled.py` | New complete private reader. SHA-256 `0854643fed620f23034173ec56b5dfd23dc90de44678a707ccdb3d2bcd4dbdf9`. |
+| `phoenix/observe/collector_layout.py` | Append 1,039 bytes of independent limits. The old 46,854-byte prefix is exact. |
+| `tests/test_observe_collector_compiled.py` | New complete controls. SHA-256 `7e659873a77badf41679885797bac42991e7e4cf236000b2a30e26beeff20c1b`. |
+| `tests/test_observe_collector_layout.py` | Append 1,307 bytes. The old 67,028-byte prefix is exact. |
+| `tests/test_byte_export.py` | Exact dependency port from main `8f1c394`. SHA-256 `f33e4c3dd7174df32ddcf890c847370ba3c327d71902580b5ea3684b5a29f81b`. |
+| `docs/adr/0043-independent-compiled-readback.md` | Preserve the prior decision and add the private-reader decision. |
+| `docs/STATUS.md` | Preserve the old 5,553-byte prefix and append 1,105 bytes. |
+| `docs/LOG.md` | Preserve the old 78,536-byte prefix and append 2,493 bytes. |
+
+All 302 old tracked files outside this scope retain their exact blob IDs and modes. This includes U1, the native header, source reader, data writer, recipes, dependencies, admission, and identity algorithms. U1 remains `dae95a30f96c556a1731a59edada95e4622991889ffcfdfa576bf773a17929eb`. The checkout is clean and matches the requested head.
+
+The five-file, seven-file, and eight-file backup patches reconstruct every manifest file exactly. The original writer test differs from the final test only by the reported comment replacement and two direct fixture assertions. [root-assertion-delta.patch](root-assertion-delta.patch) records that exact change. No product expectation changed. Future integration must apply only this reviewed delta and retain all later main additions. This older branch must not replace main as a whole.
+
+The observed checks and their evidence are as follows.
+
+| Check | Result |
+| --- | --- |
+| Five affected test files | 14,451 passed. [affected-v3.log](affected-v3.log) and [exact command](affected-v3-command.json). |
+| Dependency fixture file | 223 passed. [fixture.log](fixture.log). |
+| Ruff and format checks | Passed for four reader/layout Python files. [ruff.log](ruff.log), [format.log](format.log). |
+| Strict mypy | Passed for the same four files. [mypy.log](mypy.log). |
+| Independent variants, inventory, metadata, and budgets | All stated controls passed. [adversarial.json](adversarial.json). |
+| Before-allocation requirement | Failed. A 10,000-byte copy occurs under the 8,192-byte retained cap. [allocation-gate.log](allocation-gate.log). |
+| Source and backup reconstruction | Passed. [source-check.json](source-check.json). |
+
+[quality-commands.json](quality-commands.json) records exact quality commands and the child environment. Every shell sourced the required task environment. Python commands used the frozen interpreter, `-B`, explicit import paths, and absent bytecode prefixes. Test runs used seed 20261113, disabled plugin autoload, an explicit Hypothesis plugin, task-local configuration, rootdir, confcutdir, basetemp, and scoped caches. The affected runner disabled the Hypothesis database. The separate fixture run used its task-local Hypothesis directory. No test deadline or product expectation was weakened.
+
+The review had two setup failures. The first test command omitted explicit Hypothesis plugin loading. Pytest rejected its seed option before tests ran. [affected.log](affected.log) preserves exit 4. The second command used a task root outside the checkout with checkout test paths. Pytest traversed their common parent and attempted a directory stat on the denied sibling Author worktree. The guard refused it. No Author contents were read. [affected-v2.log](affected-v2.log) preserves exit 4. The corrected command collects only task-local links to the five specified public tests. Their resolved paths still identify the frozen originals. This correction did not alter or relax the guard. These process failures limit strict process assurance and are not hidden as test passes.
+
+The required environment script repeatedly reported `mkdir: /Volumes/PhoenixWork/vm: Operation not permitted`. Its later task exports loaded. I did not change the script or inspect the guard. Some large read displays truncated. Smaller explicit reads covered the omitted sections. The task checklist was created after review work started. No claim of a complete pre-execution checklist is made.
+
+The complete old root hook failure and both evening hook records were read. Their byte identities and full non-progress readbacks are retained in [root-log-identities.json](root-log-identities.json). The old hook refused duplicate identity 9 in an unchanged property fixture. The product correctly rejected duplicate ownership. The exact dependency port now checks collisions and preserves zero and fresh-ID success cases. No product byte changed in that port.
+
+The first evening hook failed only a Hypothesis timing check in unchanged replay-validation tests. The first call took 317.56 ms against 200 ms. A later call took 63.25 ms. This was not a product assertion failure. The separate retry first passed 303 focused tests, then passed the unchanged full hook, committed the exact eight files, and pushed `14c41da`. Those hook and push results are attributed root execution evidence. I did not repeat the full repository hook or contact the remote. The earlier failed source proof does not exist and was not invented.
+
+The writer's failure history remains separate. Its report records 457 failures from a mechanical alias edit, two failures from a malformed geometry helper, one failure from a 45-versus-41 preflight assertion, and the genuine zero-length-load regression. It also records initial lint, typing, and formatting failures and a later correction to a new dynamic-count control. No old expectation was weakened. Its earlier successful totals are historical test sets. The final affected total is 14,451. The two stopped review queues supplied no review and are not counted.
+
+Comment findings are empty. Tokenization found zero comment tokens in the reader, layout, and both affected collector tests. Module docstrings state the authority or test-evidence boundary and qualify as contract text. There are no new suppressions, narration comments, MUST KILL findings, or comment HOLDs. Deletions, restorations, edits, and nested comment reviews are zero. The [Poteto skill](/Users/devg/.codex/plugins/cache/pstack-claude/pstack/0.9.138/skills/poteto-mode/SKILL.md) and its comment-sicko rules supplied this separate check. Boundary Discipline kept submitted bytes separate from installed descriptors and later source authority. Its leaf skill was read. Direct task rules replaced nested dispatch and source-edit steps.
+
+No compiler, linker, target, Ghidra, native loader, Docker, Colima, Lima, VM, network, credential, or upload operation ran. No sealed source, held-out input, private archive or run, Author contents, Codex session, archived session, dispatcher events, dispatcher stderr, or dispatcher summary was read. The forbidden layout-writer initial log was not read. No audit walk or process scan ran. The denied collection stat is disclosed above. No provider, model, service, or Fast setting changed. GPT-6 Astra and Standard were requested. Routing and service tier are not independently attested by these files. All owned children completed. No continuation is scheduled.
+
+The remaining gates are unchanged. Root needs the separate complete Sol implementation review and resolution of F1 before this review can pass the current requirements. Final identity_inputs, profile and source-manifest parsing, inspection encoding, and one immutable inspection/evidence transaction remain open. U3 source identities and fixed witness assertions remain open. Actual compiler retention and both native profiles remain open. Trusted issuance, cache reinspection, operational use of the retained arrays, full source and import closure, calibration, capture, and production remain open. Full capture review remains OPEN after provider screening. This task did not retry or replace it. No corpus score, milestone acceptance, or SPEC section 9 completion is supplied.
