@@ -25,12 +25,13 @@ The reviewed scope, frames, complete collector data, byte graph, corrected
 source reader, typed collector header and project-profile reader are on
 main. Their PASS results grant no runtime or semantic authority.
 
-The exact byte diagnostic files from `7562edb` are being integrated.
+The exact byte diagnostic files from `7562edb` are integrated at `fc008b8`.
+The full main hook passed. Fresh Sol integration review is active.
 The source branch passed its full hook and fresh independent Sol review.
 Prior F1, F2 and F3 HOLDs remain preserved. Complete producer admission
 is on HOLD for entry association, native liveness and printer inventory.
-The exact passive ELF files at `11cb51b` also passed their full hook and
-fresh Sol review. Integration is next. Candidate page granules and actual
+The exact passive ELF files at `11cb51b` are being integrated. Their
+source branch passed its full hook and fresh Sol review. Candidate page granules and actual
 compiled retention remain unapproved.
 
 Astra is implementing only the approved graph schema 2 reader in an

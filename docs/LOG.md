@@ -1192,3 +1192,22 @@
 - Full capture review stays OPEN after provider screening. No task retries,
   provider changes or settings changes bypass that gate. M2, M3, M4,
   publication, all baselines and every headline replay remain required.
+
+
+## 2026-11-13. Integrate the reviewed passive ELF reader
+
+- The exact byte diagnostic integration passed the full main hook and
+  was pushed at `fc008b8`. A fresh independent Sol integration review
+  reads a separate frozen checkout at that exact commit.
+- Copy only the passive ELF module, its tests and ADR0041 from exact
+  reviewed `11cb51b`. Every other tracked byte remains exact before
+  progress updates. No later main file is deleted or replaced.
+- The prior code review passed F1 and the explicit O1 test-profile rule.
+  Root previously repeated all 1,344 new controls. Candidate Linux page
+  granules, actual compiled retention and production remain open.
+- Run the full main quality hook and obtain fresh independent integration
+  review. The separate Astra U2 advisory reads unchanged `11cb51b` in
+  its original frozen worktree. No source reader or writer is imported
+  by this standard-library ELF parser. No plugin is loaded.
+- No new corpus evaluation, runtime capture or target execution follows
+  this integration. Full capture review stays OPEN after screening.
