@@ -110,7 +110,15 @@ Astra source for complete private U2 readback. Its branch is
 move it. The role is `audit/m2-private-compiled-readback-writer-astra-20261113`.
 It ended at 15:19:19 UTC. Root preserved all five returned files with exact
 reconstruction, read the complete product and tests, and repeated 14,451 controls.
-The full source hook is active. Obtain fresh full Sol and independent Astra
+The full source hook failed one unchanged property test at local_id9. The
+remaining 18,351 tests passed and 26 were skipped. Identity 9 already exists in
+that synthetic fixture. The strict graph reader correctly refuses the duplicate.
+Root preserves the full failure log and all seven staged files in
+`audit/resume-20261113/private-u2-core-root-pending-backup`. The earlier five-file
+writer-return backup also remains exact. No Core commit or push exists.
+Port the separately verified fixture correction before repeating the full hook.
+The queued Astra review was stopped before any model started. Both review briefs
+are prepared. Obtain fresh full Sol and independent Astra
 critical reviews. Retained limits need independent numeric literals.
 Final identity_inputs and one immutable metadata-evidence
 transaction remain separate public-success gates. Preserve the accepted U1

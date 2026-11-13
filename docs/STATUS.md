@@ -64,8 +64,13 @@ remain test-only. No decoder or native layout approval is supplied.
 
 Astra returned complete private U2 readback in the old layout worktree. Root
 preserved its five files, read the complete source and tests, and repeated
-14,451 affected controls. The full source hook is active. Fresh full Sol and
-independent Astra critical reviews remain required. Final identity inputs,
+14,451 affected controls. The full source hook is HOLD: one old property test
+failed, while 18,351 passed and 26 were skipped. Its generated identity 9
+collides with an existing fixture identity. The reader correctly refuses the
+duplicate. Root corrects the test separately. Preserve all seven staged Core
+files and both exact backups. Port the verified fixture correction and repeat
+the full hook. Fresh full Sol and independent Astra critical reviews remain
+required. Final identity inputs,
 immutable metadata retention and native approval remain separate gates.
 
 Full capture review remains OPEN after provider screening. Parser-only PASS,

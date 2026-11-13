@@ -1349,3 +1349,27 @@
   or sealed reconstruction score follows from this integration.
 - The user pause deadline remains 16:15:25 UTC today. Start draining at 16:00:25.
   Preserve all pending files and review results before the safe handoff.
+
+
+## 2026-11-13. Correct the diagnostic identity property fixture
+
+- The full Core source hook fails one unchanged diagnostic property test.
+  It reports 18,351 passing tests, 26 skips and 93.46 percent evaluator coverage.
+  Generated local_id9 collides with the fixture's existing value identity 9.
+  The production reader correctly refuses the duplicate. Preserve the full log.
+- Root reproduces the literal failure on main. The fixture has identities zero
+  through nine. Replace the hard-coded early return for identities one through
+  eight with the actual occupied identity set. Every collision must now refuse.
+  Fresh identities must still succeed. Add explicit examples for zero and nine.
+  No product parser or assertion is weakened. Root direct controls zero through
+  ten all pass after correction. The full diagnostic module is checked again.
+- Keep all seven Core files staged and uncommitted. Both the original five-file
+  return and the complete Root state have verified reconstruction backups.
+  Stop the queued critical-review launcher before any model starts. Its failed
+  prerequisite cannot become a green source claim. Port this separate fixture
+  fix and rerun the full Core gate before commit. Both Core reviews remain open.
+- Run the full main hook, push and obtain fresh independent Sol review of this
+  test-only correction. Graph integration review runs in a frozen checkout.
+  T3 safe assertion review and both comparator reviews are separate records.
+  Full capture remains OPEN after provider screening. The pause deadline stays
+  16:15:25 UTC. Start draining at 16:00:25 and preserve every unfinished gate.
