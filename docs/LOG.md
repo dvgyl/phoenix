@@ -1162,3 +1162,33 @@
   and original report hashes remain exact. Update the manifest names.
   No quality setting, command or product source changed. Repeat the full
   mandatory hook for the final documentation commit.
+
+
+## 2026-11-13. Resume the complete Phoenix goal
+
+- The user explicitly resumed work through every SPEC section 9 condition.
+  Root read AGENTS, SPEC, the current Poteto skill, final handoff and
+  canonical checkpoint. All 31 saved artifact hashes verify. Main, both
+  reviewed source branches and the handoff match their recorded clean tips.
+- All 29 older pending public source files match their committed backups.
+  Root verified stopped Colima, no Phoenix worker and safe storage space.
+  The expired timer remains retired. Remove both pause markers only after
+  these checks. No new deadline or automation is created.
+- Fast-forward the documentation-only handoff. Its non-documentation
+  implementation is exact main. Preserve the approved T2 addition and
+  accepted T0 and T1 commitments. Root read only approved aggregate T2
+  records. Private source, held-out input, archives and Author logs remain
+  sealed. T2 adequacy is not a Phoenix reconstruction score.
+- Copy only five exact reviewed byte diagnostic files from `7562edb`.
+  Every other tracked file remains byte-identical before progress updates.
+  The old branch lacks later main files. None of those files is deleted.
+  Full checks and fresh independent integration review are required.
+- Required Astra implements the separate pure graph schema 2 unit in
+  its own worktree. Root remains the only integration and Git writer.
+  Native explicit-model tools advertise Priority. The existing guarded
+  CLI requests Standard and high effort with Fast and nested models off.
+  No session history is read to infer effort. At most four models include
+  root. Routing is not independently attested.
+- Full capture review stays OPEN after provider screening. No task retries,
+  provider changes or settings changes bypass that gate. M2, M3, M4,
+  publication, all baselines and every headline replay remain required.
