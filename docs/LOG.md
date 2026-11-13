@@ -946,3 +946,32 @@
   automation and local dispatch-marker timer are set. Drain at 00:56:47 UTC
   on 13 November. Stop all workers, queues and the VM by 01:11:47 UTC.
   Preserve private sealing, pending public files and every open gate.
+
+## 2026-11-13. Implement Unit A of the ordinary byte adapter
+
+- Added the isolated schema 2 graph reader under `ordinary-byte-adapter/1`.
+  Literal expectations preceded reader code. Tests retain different entry
+  and cover addresses, actual Java flags, full supplied banks, unused values,
+  repeated slots, parallel edges, self-loops, and explicit proof gaps.
+- Kept all old source and test files unchanged. No producer, selector,
+  semantic checker, old-format conversion, or emitter was added.
+- Recorded implementation choices in ADR0042 and the task audit report.
+  Required independent review and the root's full hook remain open.
+- Preserved the initial missing-module test result, Ruff and mypy failures,
+  and the test setup failure at the old lift reader's 257-input limit.
+  The corrected control tests the new reader boundary directly.
+- The supplied task environment reports a denied `/Volumes/PhoenixWork/vm`
+  directory write. The guard was not inspected or changed. Initial path
+  discovery and the corrected primary-source lookup are in the audit report.
+- No target, compiler, Ghidra job, VM, provider, or nested model ran. No Git
+  mutation was made. Full capture review remains OPEN after provider
+  screening. All SPEC section 9 work remains in the root's scope.
+- Final host validation passed 1,095 graph, source, and evidence tests.
+  One live Ghidra test was excluded. Fifteen selected index and mapping
+  controls also passed. Ruff format, lint, and strict mypy passed.
+  Coverage measured 522 of 530 lines in the new reader. Imports resolved
+  to the assigned checkout. The bytecode prefix remained absent.
+- The initial identities of all named old sources and tests still match.
+  STATUS and LOG retain their complete original byte prefixes. The base
+  commit and empty staged diff remain unchanged. Only the five permitted
+  source paths changed. No owned background process was started.

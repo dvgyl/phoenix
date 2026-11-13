@@ -144,3 +144,20 @@ Do not resume without a new user instruction.
 4. Finish private T2 and T3 qualification. Complete and replay M2 and M3.
 5. Freeze M4 with every baseline and ablation. Publish required artifacts
    and reproduce every headline result. Meet every SPEC section 9 condition.
+
+## 2026-11-13. Unit A ordinary byte graph reader
+
+The isolated `agent/m2-byte-graph-v2-20261113` worktree now has the schema 2
+observation reader and synthetic controls. ADR0042 records the Unit A choices.
+The reader retains actual flags, complete supplied Java banks, ordered slots,
+and mandatory native and effect gaps. The old readers remain unchanged.
+Independent review and the root's full repository hook remain required.
+Unit B, producer admission, semantic checking, and emission remain open.
+The full capture review remains OPEN after provider screening.
+No milestone or evaluation result is claimed.
+
+Unit A validation passed on Python 3.12.13. The selected graph, source,
+and evidence suite passed 1,095 tests. One live Ghidra test was excluded.
+The separate index and mapping controls passed 15 tests. Ruff format,
+Ruff lint, and strict mypy passed. The new module has 98 percent line
+coverage. These are host unit checks, not Phoenix evaluation results.
