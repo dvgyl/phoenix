@@ -1273,3 +1273,27 @@
   old timed-pause handoff in the public archive. The expired timer remains
   retired. Full capture stays OPEN after provider screening. Every SPEC
   section 9 condition, all baselines, publication and headline replay remain.
+
+
+## 2026-11-13. Integrate the reviewed candidate layout definitions
+
+- Layout source e721885 passes the full hook, push and fresh full Sol review.
+  Root reads the complete report and verifies its artifact hash. Root repeats
+  1,744 focused controls. The reviewer adds 2,020 independent mutation refusals.
+- Import only the exact module, test and ADR0043 from that immutable commit.
+  All 332 old tracked files match before progress updates. Root first guesses
+  the wrong test filename. The first module copy is exact. Record the setup
+  failure. Preflight all actual paths and hashes from the source proof before
+  the remaining copies. No expected value changes. No active writer is edited.
+- The separate Astra Core writer owns the former layout checkout. Complete
+  private readback still needs root checks, fresh full Sol and independent
+  Astra critical review. Final identity and metadata-transaction gates remain.
+- Root repeats the graph repair controls and corrects its related edge-caller
+  equality defect. The graph source still needs its full hook and full review.
+- The dedicated T3 Author returns approved qualification and sealing aggregates.
+  Read only its three approved files. Verify its released lease and stopped
+  Colima. Fresh public-record Sol review is active. Retain publication limits,
+  mutation survivors, inconclusive results and earlier failures. No Phoenix
+  reconstruction score or milestone acceptance is supplied.
+- Run full main checks, push and obtain fresh independent Sol integration
+  review. Both layout profiles remain test-only. Full capture remains OPEN.

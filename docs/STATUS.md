@@ -43,19 +43,26 @@ replay snapshots match. Positive GCC builds retain two warnings each.
 Positive Clang builds have zero warnings. Negative builds retain three each.
 These public fixture checks are not sealed reconstruction scores.
 
-Schema 2 graph source `23e05e9` is on HOLD for two functional defects.
-The recognized-name set confuses six Java constant names with exported
-mnemonics. Supplied function identities also need exact integer checks
-before equality and lookup. Root reproduced 28 failures and 38 passes.
-A separate Astra fix uses the isolated source worktree. Full checks and
-fresh full Sol review are required before integration. Earlier comment
-HOLDs and their test-only corrections remain preserved.
+Schema 2 graph source `23e05e9` remains on HOLD pending a checked repair.
+Astra corrected six exported mnemonics and exact integer function identities.
+Root also corrected the same equality defect for listing-edge callers.
+Ten new refusals failed before that correction. All twelve caller controls
+now pass. Root repeated 1,311 focused controls and 65 independent controls.
+The historical test-file hash assertion remains an expected failure after
+new regressions. Its original expectation is unchanged. Full source checks,
+push and fresh full Sol review remain required before integration.
 
-Candidate layout source `e721885` passed its full hook and is pushed.
-Root repeated 1,744 layout, ELF, data and header controls. Fresh full Sol
-implementation review remains required. Both candidate definitions are
-test-only. No decoder or native layout approval is supplied. The staged U2
-design keeps final identity inputs and metadata retention open.
+Candidate layout source `e721885` passed its full hook, push and fresh full
+Sol implementation review. Root repeated 1,744 layout, ELF, data and header
+controls. The reviewer added 2,020 independent mutation refusals. Main imports
+only its exact module, tests and ADR0043. This integration still requires
+its full checks and fresh Sol integration review. Both candidate definitions
+remain test-only. No decoder or native layout approval is supplied.
+
+A separate Astra writer implements complete private U2 readback in the old
+layout worktree. Do not edit or move that checkout. The returned source needs
+root checks, a fresh full Sol review and an independent Astra critical review.
+Final identity inputs and immutable metadata retention remain separate gates.
 
 Full capture review remains OPEN after provider screening. Parser-only PASS,
 representation checks and public switch checks do not replace it. Complete
@@ -72,9 +79,17 @@ held-out kills. One confirmation uses a declared emulator diagnostic rule.
 All 60 final rebuilds match. These are source adequacy counts, not Phoenix
 scores. Accepted T0 and T1 commitments remain exact.
 
-A dedicated Standard Astra Corpus Author owns private T3 qualification and
-its sole VM lease. Root reads only approved aggregate records. No other role
-may use that VM before release. Accepted M1 image identities remain preserved.
+A dedicated Standard Astra Corpus Author completed T3 qualification and sealing
+for five programs and 20 variants. Root read only its three approved aggregate
+records. Fresh Sol public-record review is active. The Author reports 11,264
+variant-case pairs and 45,056 original executions with no oracle disagreement.
+Source coverage is 2,340/3,211 branch counters. The small mutation sample has
+36 confirmed kills, four survivors and two inconclusive results among 42
+compiled mutants. Keep invalid mutations, setup failures and interruptions.
+T3 has no numerical adequacy gate in SPEC. No Phoenix score was produced.
+Publication evidence retains first-public-snapshot and training-date limits.
+The Author released its VM lease and stopped Colima. Root confirmed that Colima
+is stopped. Accepted M1 image identities remain preserved.
 Current worker and checker source labels were verified for the public runs.
 Keep tools, caches, temporary files and VM disks on external APFS.
 The internal free-space baseline is 14,432,616 KiB. Investigate values below
@@ -82,13 +97,13 @@ The internal free-space baseline is 14,432,616 KiB. Investigate values below
 
 ## Next actions
 
-1. Correct both graph defects, run full checks, push and obtain fresh full
+1. Finish graph source checks, push and obtain fresh full
    Sol review. Integrate exact accepted bytes without replacing later main.
-2. Finish layout implementation review and its exact integration. Then add
-   complete private U2 readback with retained limits and independent tests.
+2. Check and review the exact layout integration. Review the complete private
+   U2 readback after its writer ends. Keep native and public-success gates open.
 3. Complete the separate source adapter, indirect calls, byte idioms and
    fault localization. Keep all authority and full capture gates explicit.
-4. Finish private T3 through its separate Author. Complete and replay M2
+4. Review and commit approved T3 records and commitments. Complete and replay M2
    and M3, including types, modules and the Astra readability review.
 5. Freeze M4 with every baseline and ablation. Publish failures, costs,
    limitations and required artifacts. Reproduce every headline result.

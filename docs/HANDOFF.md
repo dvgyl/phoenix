@@ -31,8 +31,8 @@ No intermediate checkpoint defines completion.
    alone is insufficient. Required independent reviews stay closed until
    their actual full verdicts pass.
 6. Check the VM lease before any Linux action. The dedicated private Corpus
-   Author owns T3 qualification. Do not inspect its private containers, logs,
-   sources, held-out inputs or archives. Read only its approved aggregates.
+   Author released its T3 lease after qualification. Do not inspect private
+   logs, sources, held-out inputs or archives. Read only approved aggregates.
 
 Use ASD-STE100 Issue 9. Write for clear human understanding. Do not ask
 questions. Use Standard service. Native explicit-model delegates advertise
@@ -71,26 +71,35 @@ credential log is included. Keep the private material outside the repository.
 
 The last reviewed graph source is `23e05e9` in
 `worktrees/m1-public-profile` on `agent/m2-byte-graph-v2-20261113`.
-Its full functional review is HOLD. F1 concerns six exported mnemonics.
-F2 concerns Boolean and float function identities. Root repeated the exact
-28 failures and 38 passes. A fresh Astra fix role is under
-`audit/m2-byte-graph-v2-f1-f2-writer-astra-20261113`. Check its actual end,
-preserve pending files, read the full diff and repeat its controls. Run the
-full hook, commit, push and obtain a fresh full Sol review. Do not integrate
-this source or use its first comment-only report as functional approval.
+Its full functional review is HOLD. Astra corrected F1, F2 and comment C5 under
+`audit/m2-byte-graph-v2-f1-f2-writer-astra-20261113`. It ended at 14:39:09 UTC.
+Root read the complete report and preserved its three pending files with exact
+patch reconstruction. Root corrected the related listing-edge caller equality
+defect after ten failing controls. All twelve new caller controls pass. Root
+also repeated 1,311 focused and 65 independent controls. The old test-file hash
+assertion still fails after the added regressions. Its expectation is unchanged.
+Read the actual pending diff. Run the full hook, commit, push and obtain fresh
+full Sol review. Do not integrate this source before that verdict. The first
+comment-only review supplies no functional approval.
 
-Layout source `e721885` is clean and pushed in `worktrees/m1-ledger-identity`
-on `agent/m2-collector-layout-20261113`. Its full hook and 1,744 focused
-controls pass. A fresh full Sol review is under
-`audit/m2-collector-layout-full-review-sol-20261113`. Root read all product
-source and executable test code. Literal vectors bind the independently
-checked proposed-layout digest. Its initial raw import-guard failure log
+Layout source `e721885` passed its full hook, push and fresh full Sol review at
+`audit/m2-collector-layout-full-review-sol-20261113`. Root repeated 1,744 focused
+controls. The reviewer added 2,020 independent mutation refusals. Root read all
+product source and executable test code. Main imports only the exact three
+source paths from that immutable commit. The integration needs full checks and
+fresh Sol review. Literal vectors bind the independently checked proposed-layout
+digest. The writer's initial raw import-guard failure log
 printed part of an inherited environment. Keep that log local. Do not read
 or publish it. The corrected child uses an explicit minimal environment.
 
-No decoder may rely on the layout before implementation review passes.
-The next U2 subunit needs complete private readback and independent retained
-limit literals. Final identity_inputs and one immutable metadata-evidence
+The old layout worktree `worktrees/m1-ledger-identity` now belongs to the ACTIVE
+Astra writer for complete private U2 readback. Its branch is
+`agent/m2-private-compiled-readback-20261113`, based on `e721885`. Do not edit or
+move it. The role is `audit/m2-private-compiled-readback-writer-astra-20261113`.
+Preserve its pending files after it ends. Read the full diff and repeat checks.
+Then run the full hook, push, and obtain fresh full Sol and independent Astra
+critical reviews. Retained limits need independent numeric literals.
+Final identity_inputs and one immutable metadata-evidence
 transaction remain separate public-success gates. Preserve the accepted U1
 source and its refusal order. Actual compiler retention and both Linux
 profile approvals remain open.
@@ -108,16 +117,21 @@ The dedicated Standard Astra role uses public control metadata under
 `audit/t3-author-resume-control-20261113`. Its root-readable files belong
 only in the `approved` child directory. Its private dispatch and work logs
 remain under the protected Author roots. Root must never read those files.
-The Author uses frozen tooling `worktrees/m1-ci-reliable` at `293477f`.
-Do not move that checkout until the Author ends. The sole VM lease is
-`private-t3-qualification-20261113`. Wait for approved lease release before
-any public VM use. Keep accepted M1 images and committed T0-T2 batches exact.
+The Author ended at 14:49:05 UTC. Root read only its approved `status.json`,
+`handoff.md` and `commitment-addition.md`. It reports qualification and sealing
+for five programs and 20 variants. Its approved release says Colima is stopped
+and no owned container or child remains. Root confirmed stopped Colima and
+released the live lease record. Keep accepted M1 images and T0-T2 batches exact.
 
-T3 runtime qualification remains open until its approved final handoff.
-Two earlier publication dates were inferred. The Author must retain that
-limit and resolve evidence conservatively. Root reads only categories,
-identities, dates, licences, commitments and approved aggregate adequacy.
-No private input or source crosses into the principal or pipeline context.
+Fresh Sol PUBLIC RECORD review is active under
+`audit/t3-approved-record-review-sol-20261113`. Its frozen checkout is
+`worktrees/m1-ci-reliable` at `293477f`. Do not move it while review runs.
+No private runtime evidence is approved by that review. Root reads only
+categories, identities, dates, licences, commitments and aggregate adequacy.
+The Author replaced two selections with insufficient publication evidence.
+Keep all publication and training-date limits, mutation survivors and
+inconclusive results. No private input or source crosses into the principal
+or pipeline context. No Phoenix reconstruction score was produced.
 
 Continue through M2, M3, M4, every baseline, publication and every headline
 replay. Preserve corpus sealing and all prior failures. Keep frequent green
