@@ -1263,3 +1263,41 @@
   the focused-test environment with plugin autoload disabled. Preserve that
   setup failure. Rerun the unchanged hook with normal plugin loading. No
   product code, quality setting or expected result changes for this retry.
+
+
+## 2026-11-13. Implement complete private compiled-data readback
+
+- Fresh Astra implements the private staged U2 contract. It retains the same
+  immutable U1 parse, checks all 5,021 witness words and 47 directory tables,
+  decodes all fields, reserves whole slices and requires complete exhaustion.
+  Independent retained-limit literals preserve the old layout and test prefixes.
+- Root preserves all five returned files before any edit. Read the full product,
+  tests, ADR and diff. Repeat 14,451 affected controls. Keep every writer helper,
+  regression and quality failure. A zero-length-load regression fixes only U2.
+  The accepted U1 source and its refusal order remain exact.
+- Root replaces one test narration comment with two direct precondition asserts.
+  No product expectation changes. The required full hook checks that exact pair.
+  No source helper supplies the actual decoded logical state. Synthetic fixtures
+  establish consistency only. They do not prove native compiler retention.
+- Full Sol implementation and independent Astra critical reviews remain required.
+  Final identity inputs, immutable inspection/evidence transaction, real witness
+  sources, native trials, issuance, operational use, calibration and capture remain.
+  Full capture stays OPEN after provider screening. No retry or bypass occurs.
+- The user requests a pause after one hour. Stop at 16:15:25 UTC on 13 November.
+  Start draining at 16:00:25. Preserve every pending file and required review.
+  No corpus input, source, archive, Author log or private checkpoint is read.
+
+
+## 2026-11-13. Resume the complete private readback gate
+
+- Verify the paused main and all seven pending file hashes. Preserve a new exact
+  reconstruction backup before the port. The original backups remain immutable.
+- Copy only tests/test_byte_export.py from reviewed main 8f1c394. Its SHA-256 is
+  f33e4c3dd7174df32ddcf890c847370ba3c327d71902580b5ea3684b5a29f81b.
+  Every occupied identity now requires refusal. Zero and fresh IDs still pass.
+  No product reader or expected refusal changes. Keep the prior failed full gate.
+- Repeat the full repository hook. Commit and push only after it passes. Obtain
+  fresh full Sol implementation and independent Astra critical reviews before
+  later architectural use. Stage ADR0043 with the complete dependency port.
+- The new user pause deadline is 21:46:45 UTC. Begin the handoff at 21:31:45.
+  Keep corpus sealing, accepted tags and images exact. Full capture remains OPEN.

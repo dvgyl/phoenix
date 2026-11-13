@@ -1903,3 +1903,44 @@ local_branch_guard,metadata_only
 47 scope_sha256 f_scope_sha256 96 h
 47 transport_limits f_transport_limits 104 r:transport_limits
 """
+
+
+def test_independent_retained_limit_literals() -> None:
+    assert layout.TRANSPORT_MAXIMA == (
+        ("data_bytes", 16777216),
+        ("elf_segments", 1024),
+        ("gap_records", 65536),
+        ("lift_bytes", 67108864),
+        ("mapping_bytes", 67108864),
+        ("omissions", 4096),
+        ("original_bytes", 16777216),
+        ("route_memberships", 1179648),
+        ("route_path_positions", 1179648),
+        ("routes", 4096),
+        ("users", 4096),
+    )
+    assert layout.TRACE_MAXIMA == (
+        ("events", 10000),
+        ("execution_callbacks", 1000000),
+        ("frames", 64),
+        ("snapshot_bytes", 8),
+        ("translated_instructions", 1000000),
+        ("wire_bytes", 8388608),
+    )
+    assert layout.CAPTURE_MAXIMA == (
+        ("events", 10000),
+        ("execution_callbacks", 1000000),
+        ("frames", 64),
+        ("full_plan_bytes", 524288),
+        ("full_plan_sites", 4096),
+        ("guarded_instructions", 65536),
+        ("receipt_bytes", 65536),
+        ("route_entries", 32),
+        ("scope_bytes", 8388608),
+        ("snapshot_bytes", 8),
+        ("thunk_neutral_bytes", 32),
+        ("thunk_neutral_instructions", 8),
+        ("translated_instructions", 1000000),
+        ("wire_bytes", 8388608),
+    )
+    assert layout.IMAGE_DYNAMIC_MAXIMUM == 65536

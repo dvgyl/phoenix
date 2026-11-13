@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from hypothesis import given, settings
+from hypothesis import example, given, settings
 from hypothesis import strategies as st
 from test_byte_graph import sample, wire
 from test_byte_source import source_sample
@@ -475,12 +475,18 @@ def test_noncanonical_draft_and_prefinal_lift_hash_reject() -> None:
 
 
 @given(st.integers(min_value=0, max_value=2**32 - 1))
+@example(local_id=0)
+@example(local_id=9)
 @settings(max_examples=20, deadline=None)
 def test_actual_value_object_ids_are_not_storage_keys(local_id: int) -> None:
     data = diagnostic_sample()
-    if local_id in range(1, 9):
-        return
     record = data[3]["functions"][0]
+    assert record["graph"]["values"][0]["id"]["local_id"] == 0
+    occupied = {
+        value["id"]["local_id"]
+        for value in record["graph"]["values"]
+        if value["id"]["local_id"] != 0
+    }
 
     def change(value: Any) -> None:
         if isinstance(value, dict):
@@ -493,6 +499,10 @@ def test_actual_value_object_ids_are_not_storage_keys(local_id: int) -> None:
                 change(child)
 
     change(record)
+    if local_id in occupied:
+        with pytest.raises(ByteExportError):
+            convert(data)
+        return
     result = convert(data).functions[0].graph
     assert result is not None and result.values[0].id.local_id == local_id
 

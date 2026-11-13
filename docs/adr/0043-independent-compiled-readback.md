@@ -2,8 +2,12 @@
 
 Date: 2026-11-13.
 
-Status: First U2 subunit. Synthetic layout checks only. Fresh independent
-implementation review is required before a decoder uses this layout.
+Status: Private U2 is implemented for review. The first layout subunit passed
+fresh full Sol review at `e7218853`. The dated addition below records private
+readback. Final inspection and native approval remain open.
+
+The following sections retain the first layout decision. The dated addition
+records its extension without changing that decision.
 
 ## Scope
 
@@ -175,3 +179,78 @@ and import closure, launch association, and per-trial calibration.
 Full capture review remains OPEN after provider screening. This work
 does not retry, replace, or bypass that review. No corpus score, runtime
 authority, milestone acceptance, or SPEC section 9 completion follows.
+
+## 2026-11-13. Private logical readback
+
+The first layout subunit received the fresh full Sol PASS at `e7218853`.
+This addition implements the next private subunit. It adds
+`collector_compiled.py` and its matching tests. It adds independent retained
+limit literals to `collector_layout.py`. The first subunit's inventory remains
+214 fields, 100 types, 653 members, 47 tables, 5021 words, and 40168 bytes.
+
+`_readback` accepts exact immutable plugin bytes, `ExpectedCollector`, one
+installed profile ID, and the existing `InspectionLimits`. It returns frozen
+`LogicalReadback` or the existing finite refusal. There is no public wrapper,
+final inspection result, inspection encoder, source-manifest parser, profile
+parser, identity-input amendment, or issuance API. F1 and F2 remain open.
+
+The result retains the complete immutable U1 view from the same public parse.
+This keeps every dynamic row and relocation available for the later reviewed
+transaction. It does not implement final evidence serialization or issuance.
+The exact input bytes remain in that view. Expected bytes do not supply any
+actual logical field or substitute for emitted output.
+
+The decoder uses checked row spans and installed typed descriptors. It reserves
+whole slices before descent. Active empty slices use the current cursor.
+Inactive leaves must be zero and consume no logical storage. Every table and
+byte must be exhausted. Empty physical arrays produce no logical rows.
+`LogicalObject` distinguishes objects from arrays. Ordered pairs, array order,
+nullable values, route positions, roles, users, omissions, and gaps remain data.
+
+The independent directory check binds every scalar dimension, exact local
+symbol, and pointer relocation. It reads no pointer-word fallback. U1 still
+owns the complete protection, alias, metadata, F1 write-mapping, and O1 section
+checks. U1 remains unchanged at the source digest recorded above. Zero-length
+load entries do not participate in the U2 file-backed table lookup. A retained
+regression test first exposed that extra-refusal defect.
+
+One call-local budget covers the operation. Profile selection precedes U1.
+U1 receives only remaining work limits. The documented conservative debit
+precedes witness work. Preflight reads the five fixed singleton references and
+31 retained limit scalars. These 41 scalar reads grant no ownership. Traversal
+reads and validates the references again. All represented limits remain exact.
+Large arrays and call-wide route totals are checked before tuple construction.
+A guard-address map supports one pass over each stored route path. No route-by-
+guard product, scope selection, or provider identity check is introduced.
+
+Canonical output uses sorted object keys, compact separators, ASCII escapes,
+and a final LF. Each append checks root and active plan or scope bounds first.
+Each bound reserves its final LF. Character escaping has bounded temporary
+storage. The final immutable copy is charged separately. Complete actual bytes
+must match expected bytes before D, R, and N checks. Matching caller data grants
+no source authority.
+
+The implementation retains the accepted trade-offs. The conservative U1 debit
+can refuse work that exact counters might permit. The independent descriptors
+and literal test inventory increase code size. They avoid a shared writer
+oracle. Two preflight and traversal reads cost more work but retain ownership
+checks and early allocation limits. Character emission costs more calls than
+whole-string encoding but permits checks before every append. None of these
+finite caps establishes total memory, latency, or native approval.
+
+Tests use literal offsets and cells from the independent test inventory. They
+exercise both machines, several placements, every witness position, every field,
+all variant alternatives, inactive cells, directory scalars, pointer contracts,
+local symbols, cursor exhaustion, text and integer edges, lower limits, budgets,
+import closure, immutable results, and visible programming faults. Public raw
+reconstruction prepares expectations before source helpers are disabled.
+Dormant termination records receive private descriptor tests. Public main-window
+contracts remain empty. Coherent fabricated positives prove consistency only.
+
+Root must read the diff, repeat controls, run full hooks, and obtain fresh full
+Sol implementation review. Fresh independent Astra critical review is also
+required before later architectural use. No independent review is supplied by
+the writer. U3, native compiler retention, Linux profile approval, trusted
+issuance, native operational use, calibration, capture, and production remain
+open. Full capture review remains OPEN after provider screening. No corpus
+score, milestone acceptance, or SPEC section 9 completion follows.

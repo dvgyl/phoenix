@@ -1475,3 +1475,43 @@ def _definition(profile_id: str) -> LayoutDefinition:
         if profile_id == definition.id:
             return definition
     raise ValueError("Unknown candidate profile ID.")
+
+
+TRANSPORT_MAXIMA = (
+    ("data_bytes", 16777216),
+    ("elf_segments", 1024),
+    ("gap_records", 65536),
+    ("lift_bytes", 67108864),
+    ("mapping_bytes", 67108864),
+    ("omissions", 4096),
+    ("original_bytes", 16777216),
+    ("route_memberships", 1179648),
+    ("route_path_positions", 1179648),
+    ("routes", 4096),
+    ("users", 4096),
+)
+TRACE_MAXIMA = (
+    ("events", 10000),
+    ("execution_callbacks", 1000000),
+    ("frames", 64),
+    ("snapshot_bytes", 8),
+    ("translated_instructions", 1000000),
+    ("wire_bytes", 8388608),
+)
+CAPTURE_MAXIMA = (
+    ("events", 10000),
+    ("execution_callbacks", 1000000),
+    ("frames", 64),
+    ("full_plan_bytes", 524288),
+    ("full_plan_sites", 4096),
+    ("guarded_instructions", 65536),
+    ("receipt_bytes", 65536),
+    ("route_entries", 32),
+    ("scope_bytes", 8388608),
+    ("snapshot_bytes", 8),
+    ("thunk_neutral_bytes", 32),
+    ("thunk_neutral_instructions", 8),
+    ("translated_instructions", 1000000),
+    ("wire_bytes", 8388608),
+)
+IMAGE_DYNAMIC_MAXIMUM = 65536

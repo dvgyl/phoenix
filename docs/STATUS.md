@@ -99,3 +99,24 @@ The complete literal vectors retain their independent proposed-layout identity.
 The full hook and fresh full Sol implementation review remain required.
 No decoder, final profile, inspection success or Linux approval is supplied.
 Full capture review stays OPEN after provider screening.
+
+
+## Complete private U2 source, 13 November
+
+Astra adds private logical readback and independent retained-limit literals.
+Root preserves all five returned files with exact reconstruction. Root reads
+all 1,012 product lines, all 1,749 test lines, the full ADR and the retained-limit
+additions. Root repeats 14,451 affected tests. Replace one test narration comment
+with two direct fixture assertions. Full source checks, fresh full Sol and
+independent Astra critical reviews remain required. No final wrapper, inspection,
+identity-input amendment, issuance, native approval or runtime authority exists.
+The user pause deadline is 16:15:25 UTC today. Start draining at 16:00:25.
+
+
+## Evening resume, 13 November
+
+The user resumes work for one more hour and requests regular GitHub commits.
+The new pause deadline is 21:46:45 UTC. Port the exact reviewed fixture correction
+from main 8f1c394. Preserve all seven prior pending files and their staged ADR.
+The product reader bytes remain exact. Repeat the full hook before source commit.
+Fresh full Sol and independent Astra critical reviews remain required.
