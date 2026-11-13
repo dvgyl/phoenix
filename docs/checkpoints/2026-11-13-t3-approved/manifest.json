@@ -1,0 +1,17 @@
+{
+  "schema": "phoenix-public-checkpoint-manifest-1",
+  "prepared_at_utc": "2026-11-13T15:19:12.320248+00:00",
+  "scope": "Explicit approved aggregate assertions and full independent public-record HOLD. No private data.",
+  "files": [
+    {
+      "path": "aggregate-assertions.json",
+      "bytes": 10559,
+      "sha256": "a5abe472a743edeaaa897717f12104c443d6b40d264706fb0a871b7e01d00594"
+    },
+    {
+      "path": "public-record-review-hold.md.txt",
+      "bytes": 21666,
+      "sha256": "dd047c19ba82f77a3170d0b6b81b50afe298fb959666c29918487fd0b080b9ff"
+    }
+  ]
+}

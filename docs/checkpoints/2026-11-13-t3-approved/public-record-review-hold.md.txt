@@ -1,0 +1,241 @@
+This review supports the Phoenix v1 goal in SPEC section 9. It checks the approved T3 aggregate handoff for public integration.
+
+The full bounded verdict is PUBLIC RECORD HOLD. All 34 record checks pass. Two first-publication assertions remain unverified within the permitted metadata scope.
+
+Root can record the archive hashes as Author assertions and the checked aggregate arithmetic with the limits below. This verdict gives no private runtime approval.
+
+The HOLD concerns the stated August publication date and the first npm publication claim. It does not depend on a numerical T3 adequacy gate. SPEC defines no such gate.
+
+The frozen checkout is `293477f643a764d7fe34054899d2fee215f1daf1`. AGENTS.md and SPEC.md match that commit byte for byte. Both files were read in full.
+
+The protected public commitment revision is `7cc2c49304f5fb2f32479338521d170ee643c73f`. Its file SHA-256 is `682f8447f1eebdf6f21dc6a5505c2cc626d5d58ab85aa7c32f084dbb3a4e1d68`.
+
+Only the three approved Author files were read. Their status record has approved_for_root=true and private_material_included=false. No path named inside those files was opened.
+
+The input hashes follow. Each hash is SHA-256.
+
+| Input | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `status.json` | 15261 | `12010817aad5021911d134c86c2317d38b5e8904fd5b349f2d43772b90901791` |
+| `handoff.md` | 6108 | `452a18c93c6b4a59aa8c4a65eed0837ce7e9513c350bd320b075df2b88d970e2` |
+| `commitment-addition.md` | 1186 | `6b8daab1321559486092fe5a2cee258ef0481b0825b314c03e7a5987ebf39f27` |
+| `AGENTS.md` | 11583 | `5dc37aed176f6a9990979b29df9b771bfaedcf07df6e09c1d34a5b851216bc3c` |
+| `SPEC.md` | 25447 | `dbc3ec8aab2fb74e5bab303017208a2ed93169acc7d2fb3e5938b88b2c073671` |
+| `existing_commitments_at_7cc2c49` | 729 | `682f8447f1eebdf6f21dc6a5505c2cc626d5d58ab85aa7c32f084dbb3a4e1d68` |
+
+
+The findings are ranked by their effect on the full public record.
+
+1. PUB-1 has high severity. The stated amber-orbit first-publication date is not independently verified in this role. The approved date is 2026-08-24. Permitted metadata shows a branch event on 2026-10-16 and a release on 2026-10-21. The August article and Changelog were not opened. The later public records do not refute the August date. They do not prove that date or first publication. Label the August date as an Author assertion. Keep the independently observed dates and the first-publication limit with the public record.
+
+2. PUB-2 has medium severity. The first npm publication assertion is not independently verified. Abbreviated registry metadata lists 0.0.0-stage, 1.0.0, and 1.0.1. It gives modified=2026-10-31T23:11:20.601Z but no version publication times. Modified time is not first-publication time. The staged version has no date in the permitted response. The GitHub v1.0.0 release date is independently confirmed. Keep the GitHub release date as verified. Label the first npm date as an Author assertion until publication metadata can establish it within the permitted scope.
+
+3. VERIFY-1 has medium severity. Archive, binary, licence, and stopped-VM statements remain Author assertions. The three approved files agree on these statements. The reviewer did not open archives, release files, or the VM.  Preserve these limits. Keep dedicated private verification and M4 publication open.
+
+4. SCORE-1 has medium severity. The record provides qualification aggregates and no Phoenix reconstruction result. There are 36 confirmed kills, four survivors, and two inconclusive results among 42 compiled mutants. Full capture review is OPEN. Phoenix score is null.  Preserve all failure categories. Claim no T3 numerical adequacy pass, reconstruction success, native x86 validation, or M2/M4 acceptance.
+
+5. PROCESS-1 has low severity. The review has recorded setup and procedure failures. One initial pwd command did not source the task environment or check stop controls. Fourteen required environment sources reported a denied mkdir. One skill path was absent. Two outputs were truncated and then read in smaller parts.  Keep these failures with the audit. No guard change or private retry is authorized.
+
+The arithmetic checks compare the approved records. They do not reproduce private executions or inspect test inputs. No phoenix-eval run ID is supplied.
+
+The following program subtotals agree with the handoff table. A compiled mutant is a confirmed kill, a survivor, or an inconclusive result.
+
+| Program | Cases | Unique invocations | Repeated cases | Variant-case pairs | Completions | Branches | Compiled | Killed | Survived | Inconclusive | Invalid |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| amber-orbit | 512 | 512 | 0 | 2048 | 8192 | 514/695 | 7 | 6 | 0 | 1 | 6 |
+| cedar-arc | 768 | 760 | 8 | 3072 | 12288 | 882/1211 | 9 | 8 | 1 | 0 | 2 |
+| silver-vale | 512 | 502 | 10 | 2048 | 8192 | 74/75 | 8 | 7 | 0 | 1 | 0 |
+| cobalt-spring | 512 | 512 | 0 | 2048 | 8192 | 566/870 | 8 | 5 | 3 | 0 | 4 |
+| maple-cove | 512 | 496 | 16 | 2048 | 8192 | 304/360 | 10 | 10 | 0 | 0 | 4 |
+| Total | 2816 | 2782 | 34 | 11264 | 45056 | 2340/3211 | 42 | 36 | 4 | 2 | 16 |
+
+
+Five programs have four variants each. The variant matrix is {gcc, clang} × {-O0, -O2}. All twenty identity tuples and SHA-256 values are distinct.
+
+2816 × 4 = 11264 variant-case pairs. Two Rosetta runs and two QEMU runs give four original executions per pair. 11264 × 4 = 45056 completions.
+
+The 34 repeated cases remain in the totals. Input uniqueness and binary content were not independently checked. Only the approved identity and count records were checked.
+
+Branch counters total 2340/3211, or 72.8745%. The stated measure is GCC O0 branch counters, including short-circuit branches. This is an Author adequacy assertion.
+
+36 + 4 + 2 = 42 compiled mutants. 6 + 2 + 0 + 4 + 4 = 16 invalid mutants. The invalid mutants remain outside the compiled denominator.
+
+36/42 is 85.7143% of compiled mutants. This ratio is not a non-equivalent mutant score. The four survivors are not proved equivalent. The two inconclusive results are not kills.
+
+Forty initial build setup failures and two interrupted attempts remain recorded. The interruptions do not add to 45056 completions. Two prior selections remain classified as insufficient first-publication evidence.
+
+The Author reports zero original worker failures, emulator disagreements, cross-compiler disagreements, instrumented differences, and excluded final inputs. This review checks record consistency only.
+
+The original qualification has no normalization rule. The separate instrumented check omits only its generated coverage directory. These scopes remain separate.
+
+The twenty approved identities follow. These are metadata checks. No binary was opened or hashed by this reviewer.
+
+| Program | Compiler | Flag | Category | Tier | SHA-256 |
+| --- | --- | --- | --- | --- | --- |
+| amber-orbit | gcc | -O0 | text | T3 | `01389b0d8a340ba142eb8d17f44e7e531b536dcd20d38a2c28f31d19e4a09b8d` |
+| amber-orbit | gcc | -O2 | text | T3 | `0384e6c8c37332efbad0cb65968ccd3c906b0b4a0d02e93cea5248e4b4f76cd3` |
+| amber-orbit | clang | -O0 | text | T3 | `1f04212d12a10c4c86d7374b8f7576767f67d3648f9b481a20727644bb546121` |
+| amber-orbit | clang | -O2 | text | T3 | `567e82cfb4c24b57a6509995f8b1c75bf8b9013e9c642512737d3443f7cf17d1` |
+| cedar-arc | gcc | -O0 | tables | T3 | `ec6ace52d4a48228a61eda4ad74efc834d3c7bc049262dc739d0e39934106de4` |
+| cedar-arc | gcc | -O2 | tables | T3 | `a7482fb0e0478cfa45b19239dd48faab422d2cd236142ecc3ed16ed84612f3d3` |
+| cedar-arc | clang | -O0 | tables | T3 | `3a599a3b1e29704245d3be06b38eb2d4e1dab8d88cd1fe298df12f3ad9dfefed` |
+| cedar-arc | clang | -O2 | tables | T3 | `36f1ae9a12b8d43a8edc42c5cb8e9de50edddb8f58cde5a9c16ea244e13745cc` |
+| silver-vale | gcc | -O0 | text | T3 | `3aa198059ba25764385d15d83f7e8c6d14161c12d0eeb9be966603cccf454ad9` |
+| silver-vale | gcc | -O2 | text | T3 | `14ab4e75efbb9ab26f4e1bd68eaaf704d43ee8b894a21f574e3f7218a4a420bf` |
+| silver-vale | clang | -O0 | text | T3 | `573f98ea1f1375f61d95aa4eaab847b21f7564487cab6ca7a85d76d1520a2db7` |
+| silver-vale | clang | -O2 | text | T3 | `39c2826a49d1079b2a8cbd7214f5a1dcb5c67abe700fdc3f12b81237c8466f4b` |
+| cobalt-spring | gcc | -O0 | configuration | T3 | `9e5c2f8853b02db2c69ce3a73abc66add02f38c587e0bd74d3546b25bc0c1863` |
+| cobalt-spring | gcc | -O2 | configuration | T3 | `6990706fccff8c14e0c16fb1f4837e885f9f29560317f84ecd78983d206fae71` |
+| cobalt-spring | clang | -O0 | configuration | T3 | `7c4319093fa8c90ab6d5068717f1c472a89eb13f15a56c98386be57b8d95a807` |
+| cobalt-spring | clang | -O2 | configuration | T3 | `c36a5ffd771afff2c132a2a7bd9aac2690fb9479f76d018a4b6b3445719e9434` |
+| maple-cove | gcc | -O0 | file analysis | T3 | `ee6bf9277df9e8c4a9c76fa323d16c51d736d03ee1a81f2562c8252f1ecf4274` |
+| maple-cove | gcc | -O2 | file analysis | T3 | `833dc610b2749b32679234d5b2642c8cd776d99a7ed5d20d58d52ebfa942a19f` |
+| maple-cove | clang | -O0 | file analysis | T3 | `ef3b1b5eb83e85bb2b506e19d8294afba684fbabc85532fa4f0880488016830b` |
+| maple-cove | clang | -O2 | file analysis | T3 | `88545c4e96288ac628854a5c0bece7a1e8e8914d3cdf7e09879d78595538fca9` |
+
+
+Both official OpenAI pages give the gpt-6.1-sol knowledge cutoff as 2026-04-30. The pages were checked on 2026-11-13. A knowledge cutoff does not prove training completion. [Official model metadata](https://developers.openai.com/api/docs/models/gpt-6.1-sol). [Official comparison metadata](https://developers.openai.com/api/docs/models/compare?model=gpt-6.1-sol).
+
+GitHub and npm metadata were read without authentication on 2026-11-13 from 15:01:54 to 15:02:22 UTC. All fourteen metadata requests returned HTTP 200.
+
+Only release, event, and Git commit metadata endpoints were used for GitHub. Only selected metadata fields were displayed and retained. No release description or commit message was displayed.
+
+The observed publication records follow. A release timestamp proves that release publication. It does not establish the first public development snapshot.
+
+| Program | Approved publication date | Independently observed publication metadata | Result |
+| --- | --- | --- | --- |
+| amber-orbit | 2026-08-24 | Branch CreateEvent 24291445866 at 2026-10-16T12:21:53Z. Release 419409950, v1.0.0, at 2026-10-21T10:12:08Z. | August date remains an Author assertion. |
+| cedar-arc | 2026-10-31 | Release 430191520, v1.0.0, at 2026-10-31T21:16:51Z. | Release date confirmed. First npm publication remains unverified. |
+| silver-vale | 2026-06-30 | Release 346956767, v1.0.0, at 2026-06-30T16:18:22Z. | Release date confirmed. |
+| cobalt-spring | 2026-10-29 | Branch CreateEvent 25705345968 at 2026-10-29T23:05:29Z. Release 428492332, v1.0.0, at 2026-10-29T23:21:33Z. | Event and release dates confirmed. |
+| maple-cove | 2026-11-03 | Branch CreateEvent 26228926366 at 2026-11-03T09:59:09Z. Release 432523606, v0.1.0-preview, at 2026-11-03T10:01:13Z. | Event and release dates confirmed. |
+
+
+The primary metadata URLs and selected revision dates follow.
+
+| Program | Primary release record | Primary commit record | Author and committer date |
+| --- | --- | --- | --- |
+| amber-orbit | [Release metadata](https://api.github.com/repos/regisvidal/tpl2c/releases?per_page=100) | [Commit metadata](https://api.github.com/repos/regisvidal/tpl2c/git/commits/a550a68e8a22e5a587a051a30f795ae7e54d0f6f) | 2026-10-21T09:48:24Z |
+| cedar-arc | [Release metadata](https://api.github.com/repos/partoska/cisivi/releases?per_page=100) | [Commit metadata](https://api.github.com/repos/partoska/cisivi/git/commits/84aaef68695c4a9b77f1e46c73f12672d440f3c7) | 2026-10-31T23:01:19Z |
+| silver-vale | [Release metadata](https://api.github.com/repos/SyntaxError2505/jlook/releases?per_page=100) | [Commit metadata](https://api.github.com/repos/SyntaxError2505/jlook/git/commits/3c115e3a3205a55e2bd4c90236298d10aa7f7c7d) | 2026-07-21T19:11:56Z |
+| cobalt-spring | [Release metadata](https://api.github.com/repos/partoska/bikini/releases?per_page=100) | [Commit metadata](https://api.github.com/repos/partoska/bikini/git/commits/a2712e5a1c969dc7745f0ff12a1001d5c15401d6) | 2026-11-04T20:58:35Z |
+| maple-cove | [Release metadata](https://api.github.com/repos/r4venrudy/rudy-loadmap/releases?per_page=100) | [Commit metadata](https://api.github.com/repos/r4venrudy/rudy-loadmap/git/commits/4ea8dc350be6b806857234eca282088614635e80) | 2026-11-05T11:13:07Z |
+
+
+The exact upstream revision IDs in status.json match all five Git commit metadata responses. Commit dates do not prove publication dates. Release target_commitish is main. No tag-to-source identity is asserted.
+
+amber-orbit public events were checked at [event metadata](https://api.github.com/repos/regisvidal/tpl2c/events?per_page=100).
+
+cobalt-spring public events were checked at [event metadata](https://api.github.com/repos/partoska/bikini/events?per_page=100).
+
+maple-cove public events were checked at [event metadata](https://api.github.com/repos/r4venrudy/rudy-loadmap/events?per_page=100).
+
+The [abbreviated npm metadata](https://registry.npmjs.org/@partoska%2fcisivi) lists 0.0.0-stage, 1.0.0, and 1.0.1. Its modified timestamp is 2026-10-31T23:11:20.601Z.
+
+That npm response has no first-publication timestamp. The client accepted application/vnd.npm.install-v1+json. It did not request the full package document or an embedded README.
+
+The August origin article and Changelog were not opened. The author announcement was not opened. No upstream technical documentation, licence body, source, tree, patch, or diff was requested.
+
+The permitted metadata supports public releases after the knowledge cutoff for all five programs. It does not establish every stated first-publication date. Earlier undisclosed copies remain possible.
+
+All five licences are MIT in the approved status record. The licence URLs and exact notice claims remain Author assertions. Licence bodies were outside this review.
+
+The archive commitments follow. The filenames and hashes agree between status.json and commitment-addition.md. Archive bytes were not read.
+
+| Archive | Author-reported bytes | Author-asserted SHA-256 |
+| --- | ---: | --- |
+| `t3-sources-20261113.tar.gz` | 47659717 | `e5f05d6515dc29f64f0e9dff2142a7aae774e42566cc1291e8b82a2901c689b0` |
+| `t3-inputs-20261113.tar.gz` | 156487 | `913937828ac76216a0f465c40f57cf55b8c139c47778e1f74e3e9d3b940d736b` |
+
+
+The release manifest SHA-256 is reported as `3541907830dbf31246de4b622cce15d6d9acb0ecbfaaadfda7d9f0c102f23a11`. This reviewer did not open that manifest.
+
+The Author reports twenty matching rebuild hashes, stripped binaries, compiler identities, and pinned worker image identities. This reviewer checked the approved statements only.
+
+The approved stop claims agree. The VM lease is released, Colima is stopped, and owned qualification child and container counts are zero. No VM or process check was made here.
+
+The corpus remains agent-sealed on an honor system. GPT-6 Astra and Standard were requested for the Author. This reviewer gives no independent provider routing attestation.
+
+The safe public integration scope is the two archive hash assertions and the qualified aggregate record. Public integration must retain the publication evidence limits and every failure category.
+
+An audit-only append simulation preserved the existing commitment bytes and produced eight archive entries. No repository file was changed. The protected T0-T2 commitments follow.
+
+| Existing archive | Protected SHA-256 |
+| --- | --- |
+| `t0-source.tar.gz` | `0ec88f1de7ce2577f4ab9d23bcfdf08c1795e9582984c0f5a3455483dd242b99` |
+| `t0-inputs.tar.gz` | `1d57dce417990d2092f758b8812adfa9f83cfc352d99e694c27dca0814922ee5` |
+| `t1-source.tar.gz` | `6e1667e79f6f245d2e87c6558bea22d5d48f7de4847f9e6a35e2095a2c9a3385` |
+| `t1-inputs.tar.gz` | `4f4394480b69a593ba1f2b68fb026db5ff69225ca4c6bf85cfc1602af73d8c8f` |
+| `t2-source.tar.gz` | `5f3b67cce71ad1ec6e7876889ff1e609a4072b2feb833fb23f2ba2f072fd8788` |
+| `t2-inputs.tar.gz` | `27ea3363f4cd1ef284db6b3ec0ff24c5d7bb7cf3ca8fcfc20e5cd6f4211e6574` |
+
+
+Root owns all integration and Git writes. This review does not approve publication of private resume pointers or any private artifact. No full approved input file needs public copying.
+
+The separate comment review found zero code comments in the three approved files. It has zero findings, deletions, restorations, MUST KILL flags, and HOLD comments.
+
+No application source or product diff was in the comment review scope. Markdown prose was reviewed as documentation. The installed comment-sicko rules were read. No nested comment reviewer ran.
+
+The Poteto, technical-writing, no-comments, how, and unslop rules were read. The user prohibition on nested dispatch took priority over skill delegation rules.
+
+The task stayed within the Investigation scope. Throughput checkpoint is n/a for a read-only investigation. Skill requirements for product edits, Git writes, history reads, and nested review were skipped.
+
+The procedure failures and limits follow.
+
+F1 has count 1. The first command was pwd. It did not source task-env.sh or check PAUSED and DRAINING. It returned only the authorized checkout path.
+
+F2 has count 14. Each required task-env.sh source reported mkdir: /Volumes/PhoenixWork/vm: Operation not permitted. The task environment was not inspected or changed. These denials were not VM execution.
+
+F3 has count 1. The attempted skills/comment-sicko/SKILL.md path did not exist. The installed poteto-mode/references/agents/comment-sicko.md rules were then read.
+
+F4 has count 2. The initial combined reads exceeded tool output limits. The missing instruction text was read in smaller parts.
+
+F5 has count 2. PUB-1 and PUB-2 remain unresolved. No prohibited source-adjacent page or full npm document was opened to close them.
+
+F6 has count 1. Initial document and metadata command reads used the sourced shell environment. The six Python check processes used explicit minimal child environments. No credential file or authenticated network client was used.
+
+The final record has fifteen shell batches. Fourteen sourced the required task environment. The first pwd command is the recorded exception. Stop controls were absent before the later shell batches.
+
+The six Python check processes used -B, no bytecode, scoped HOME, TMPDIR, and XDG_CACHE_HOME, and explicit minimal child environments. Existing standard preload values were preserved.
+
+The review made fourteen local Git read commands. It made no Git write. It used two official web opens, two cutoff finds, thirteen GitHub metadata requests, and one abbreviated npm request.
+
+No model, agent, API, model CLI, continuation, or dispatch was started. No Fast setting was enabled. Standard was requested. Provider routing was not independently attested.
+
+No compiler, linker, target, Ghidra, plugin, Docker, Colima, Lima, or VM command ran. No process scan, audit walk, guard inspection, or guard change was made.
+
+The one tool session, 58457, ended with exit code zero. All owned shell, Python, and Git children ended. No owned background child remains. This statement uses owned completion records, not a process scan.
+
+No sealed source, held-out input, private archive, outcome, Author log, private history, dispatcher file, Codex session, or archived session was read.
+
+The principal commands are preserved in final-check.json. The check scripts and selected metadata responses remain in this audit directory. The scripts perform only arithmetic, hash, and metadata checks.
+
+The arithmetic command was `/usr/bin/python3 -B /Volumes/PhoenixWork/audit/t3-approved-record-review-sol-20261113/check-record.py`. It ran twice. All 34 final checks pass.
+
+The metadata command was `/usr/bin/python3 -B /Volumes/PhoenixWork/audit/t3-approved-record-review-sol-20261113/check-metadata.py`. It ran once for each of releases, commits, and events.
+
+Each later shell began with `source /Volumes/PhoenixWork/audit/t3-approved-record-review-sol-20261113/task-env.sh`. Each later batch checked `/Volumes/PhoenixWork/audit/continue-v1/PAUSED` and `/Volumes/PhoenixWork/audit/continue-v1/DRAINING`.
+
+The remaining gates follow.
+
+1. Root must resolve the public-record labels for PUB-1 and PUB-2. This review makes no document or product edit.
+
+2. Root owns T3 public reader and manifest integration. Preserve all six existing T0-T2 commitments. The frozen reader limit remains an Author assertion in this review.
+
+3. A later dedicated private verifier must check archive commitments and private runtime evidence. This role supplies no such verification.
+
+4. Full capture review remains OPEN after provider screening. Do not retry, replace, rephrase, bypass, or change providers or settings for that task.
+
+5. No Phoenix reconstruction, fully-successful score, native x86 validation, or M2/M4 acceptance is supplied by these inputs.
+
+6. The applicable M2 and M3 acceptance runs and independent milestone reviews remain outside this review. No acceptance state is inferred from original qualification.
+
+7. SPEC section 9 requires completed M4, held-out T0-T3 results against every baseline, costs, and a failure taxonomy in docs/REPORT.md.
+
+8. SPEC section 9 requires publication of the harness, benchmark binaries, held-out inputs, and committed source tarballs after the required freeze.
+
+9. SPEC section 9 requires every headline number to reproduce with phoenix-eval --replay and an evaluation run ID.
+
+10. Report the knowledge-cutoff limit, unknown first development snapshots, possible undisclosed earlier copies, and agent sealing on an honor system.
+
+Phoenix v1 completion is not established by this review. Full capture review remains OPEN. This public-record HOLD supplies no private runtime acceptance.

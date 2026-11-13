@@ -1297,3 +1297,31 @@
   reconstruction score or milestone acceptance is supplied.
 - Run full main checks, push and obtain fresh independent Sol integration
   review. Both layout profiles remain test-only. Full capture remains OPEN.
+
+
+## 2026-11-13. Commit safe T3 assertions and set the new pause deadline
+
+- The user requests a pause after one hour. Set the new deadline to 16:15:25
+  London time on 13 November. Begin draining at 16:00:25. Arm the one-time
+  heartbeat and local marker watchdog. The old three-hour timer stays historical.
+  Publish and read the new shared checkpoint with this instruction.
+- The dedicated Author reports qualification and sealing for five T3 programs
+  and 20 variants. Root reads only three approved aggregate files. Fresh full
+  public-record Sol review returns HOLD for the August and first npm date labels.
+  All 34 record checks pass. Later release metadata does not prove first publication.
+- Root repeats aggregate arithmetic and every program's four-variant matrix.
+  Append the two archive commitments as Author assertions. Preserve all 729 old
+  commitment bytes. Do not open private archives to verify those assertions.
+  Preserve mutation survivors, inconclusive results, invalid mutations, setup
+  failures, interrupted attempts and all publication limits. No Phoenix score exists.
+- Preserve the exact full public-record HOLD and an explicitly selected safe
+  aggregate record. Do not copy full approved inputs with private resume pointers.
+  Track the unresolved publication labels in issue 0002. Private evidence needs
+  a separate dedicated Author. No such continuation is started in this commit.
+- The graph repair is pushed at 59266a9. Exact layout integration is pushed at
+  2046688. Both full hooks pass. Fresh full Sol reviews are active. The layout
+  integration review also checks the stale-docs correction. Keep all verdicts
+  and authority boundaries distinct. Full capture remains OPEN after screening.
+- The public comparator source correction passes 28 focused tests and 54 actual
+  report negative controls in its own checkout. Its full hook is active. The
+  historical known-limit control remains exact. Fresh Sol and Astra reviews remain.

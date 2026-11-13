@@ -3,9 +3,13 @@
 ## Active resume
 
 The user explicitly resumed the complete SPEC section 9 goal on 13 November.
-The goal is ACTIVE. The old three-hour deadline and timed pause are historical.
-The timer remains retired. No new deadline exists. PAUSED and DRAINING were
-removed after verification. Do not restart old queues or pause the goal.
+The goal is ACTIVE until the new user-requested pause deadline. The user said,
+"Please pause after an hour of work." Pause all work at 16:15:25 London time
+on 13 November 2026. Begin draining and the handoff at 16:00:25. The one-time
+heartbeat and local marker watchdog are armed. Read the live deadline record.
+The old three-hour deadline is historical. Do not restart old queues. At the
+new deadline, stop all workers, preserve files, finish the handoff and set the
+existing goal to paused. Do not mark it complete or resume without instruction.
 
 The exact old handoff is preserved at
 [the timed-pause archive](checkpoints/2026-11-13-resume/HANDOFF-paused.md).
@@ -69,25 +73,30 @@ credential log is included. Keep the private material outside the repository.
 
 ## Open implementation units
 
-The last reviewed graph source is `23e05e9` in
+The repaired graph source is `59266a9` in
 `worktrees/m1-public-profile` on `agent/m2-byte-graph-v2-20261113`.
-Its full functional review is HOLD. Astra corrected F1, F2 and comment C5 under
+The prior `23e05e9` full review is HOLD. Astra corrected F1, F2 and comment C5 under
 `audit/m2-byte-graph-v2-f1-f2-writer-astra-20261113`. It ended at 14:39:09 UTC.
 Root read the complete report and preserved its three pending files with exact
 patch reconstruction. Root corrected the related listing-edge caller equality
 defect after ten failing controls. All twelve new caller controls pass. Root
 also repeated 1,311 focused and 65 independent controls. The old test-file hash
 assertion still fails after the added regressions. Its expectation is unchanged.
-Read the actual pending diff. Run the full hook, commit, push and obtain fresh
-full Sol review. Do not integrate this source before that verdict. The first
+The full source hook and push passed. Fresh FULL Sol review is active under
+`audit/m2-byte-graph-v2-repair-full-review-sol-20261113` in that frozen checkout.
+Do not edit or move it. Do not integrate this source before its verdict. The first
 comment-only review supplies no functional approval.
 
 Layout source `e721885` passed its full hook, push and fresh full Sol review at
 `audit/m2-collector-layout-full-review-sol-20261113`. Root repeated 1,744 focused
 controls. The reviewer added 2,020 independent mutation refusals. Root read all
 product source and executable test code. Main imports only the exact three
-source paths from that immutable commit. The integration needs full checks and
-fresh Sol review. Literal vectors bind the independently checked proposed-layout
+source paths from that immutable commit at main `2046688`. Its full hook and
+push passed. Fresh full Sol integration review is active under
+`audit/m2-layout-main-integration-review-sol-20261113` in frozen
+`worktrees/m1-follow-up-review-e07ec17`. Do not move that checkout. The review also
+checks closure of the stale layout instructions found by the prior docs review.
+Literal vectors bind the independently checked proposed-layout
 digest. The writer's initial raw import-guard failure log
 printed part of an inherited environment. Keep that log local. Do not read
 or publish it. The corrected child uses an explicit minimal environment.
@@ -123,9 +132,13 @@ for five programs and 20 variants. Its approved release says Colima is stopped
 and no owned container or child remains. Root confirmed stopped Colima and
 released the live lease record. Keep accepted M1 images and T0-T2 batches exact.
 
-Fresh Sol PUBLIC RECORD review is active under
-`audit/t3-approved-record-review-sol-20261113`. Its frozen checkout is
-`worktrees/m1-ci-reliable` at `293477f`. Do not move it while review runs.
+Fresh Sol PUBLIC RECORD review ended at 15:11:56 UTC with HOLD under
+`audit/t3-approved-record-review-sol-20261113`. Root read the full report.
+All 34 record checks pass. Two publication labels remain unverified. Safe
+archive commitments are recorded as Author assertions. Root repeated aggregate
+arithmetic and preserved every old commitment byte. Read the complete public
+review and tracked issue before resolving those labels. The old review checkout
+is `worktrees/m1-ci-reliable` at `293477f`; no role now owns it.
 No private runtime evidence is approved by that review. Root reads only
 categories, identities, dates, licences, commitments and aggregate adequacy.
 The Author replaced two selections with insufficient publication evidence.

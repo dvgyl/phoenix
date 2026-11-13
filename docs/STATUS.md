@@ -2,8 +2,10 @@
 
 The complete SPEC section 9 goal is active. M0 and M1 are accepted.
 M2 through M4, publication and every headline replay remain incomplete.
-The user resumed work on 13 November. The old timer is retired. No new
-pause deadline exists. Use Standard service and preserve corpus sealing.
+The user resumed work on 13 November, then requested a one-hour pause.
+Pause all work at 16:15:25 London time on 13 November 2026. Begin the handoff
+at 16:00:25. The old three-hour timer is historical. Use Standard service
+and preserve corpus sealing.
 
 ## Accepted measured results
 
@@ -43,20 +45,20 @@ replay snapshots match. Positive GCC builds retain two warnings each.
 Positive Clang builds have zero warnings. Negative builds retain three each.
 These public fixture checks are not sealed reconstruction scores.
 
-Schema 2 graph source `23e05e9` remains on HOLD pending a checked repair.
+Schema 2 graph source `59266a9` contains the checked repair of `23e05e9`.
 Astra corrected six exported mnemonics and exact integer function identities.
 Root also corrected the same equality defect for listing-edge callers.
 Ten new refusals failed before that correction. All twelve caller controls
 now pass. Root repeated 1,311 focused controls and 65 independent controls.
 The historical test-file hash assertion remains an expected failure after
-new regressions. Its original expectation is unchanged. Full source checks,
-push and fresh full Sol review remain required before integration.
+new regressions. Its original expectation is unchanged. The full source hook
+and push passed. Fresh full Sol review is active before integration.
 
 Candidate layout source `e721885` passed its full hook, push and fresh full
 Sol implementation review. Root repeated 1,744 layout, ELF, data and header
 controls. The reviewer added 2,020 independent mutation refusals. Main imports
-only its exact module, tests and ADR0043. This integration still requires
-its full checks and fresh Sol integration review. Both candidate definitions
+only its exact module, tests and ADR0043 at `2046688`. Its full hook and push
+passed. Fresh Sol integration review is active. Both candidate definitions
 remain test-only. No decoder or native layout approval is supplied.
 
 A separate Astra writer implements complete private U2 readback in the old
@@ -81,13 +83,17 @@ scores. Accepted T0 and T1 commitments remain exact.
 
 A dedicated Standard Astra Corpus Author completed T3 qualification and sealing
 for five programs and 20 variants. Root read only its three approved aggregate
-records. Fresh Sol public-record review is active. The Author reports 11,264
+records. Fresh Sol public-record review returns HOLD for two publication
+labels. The safe archive commitments remain Author assertions. Root repeated
+aggregate arithmetic. Private runtime and archive verification remain open.
+The Author reports 11,264
 variant-case pairs and 45,056 original executions with no oracle disagreement.
 Source coverage is 2,340/3,211 branch counters. The small mutation sample has
 36 confirmed kills, four survivors and two inconclusive results among 42
 compiled mutants. Keep invalid mutations, setup failures and interruptions.
 T3 has no numerical adequacy gate in SPEC. No Phoenix score was produced.
 Publication evidence retains first-public-snapshot and training-date limits.
+Track the two publication labels in `docs/issues/0002-t3-first-publication-evidence.md`.
 The Author released its VM lease and stopped Colima. Root confirmed that Colima
 is stopped. Accepted M1 image identities remain preserved.
 Current worker and checker source labels were verified for the public runs.
@@ -97,13 +103,13 @@ The internal free-space baseline is 14,432,616 KiB. Investigate values below
 
 ## Next actions
 
-1. Finish graph source checks, push and obtain fresh full
+1. Obtain fresh full graph source
    Sol review. Integrate exact accepted bytes without replacing later main.
 2. Check and review the exact layout integration. Review the complete private
    U2 readback after its writer ends. Keep native and public-success gates open.
 3. Complete the separate source adapter, indirect calls, byte idioms and
    fault localization. Keep all authority and full capture gates explicit.
-4. Review and commit approved T3 records and commitments. Complete and replay M2
+4. Verify the T3 publication labels through a separate Author. Complete and replay M2
    and M3, including types, modules and the Astra readability review.
 5. Freeze M4 with every baseline and ablation. Publish failures, costs,
    limitations and required artifacts. Reproduce every headline result.

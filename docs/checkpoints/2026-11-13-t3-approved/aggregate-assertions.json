@@ -1,0 +1,356 @@
+{
+  "schema": "phoenix-t3-approved-public-record-1",
+  "status": "HOLD for first-publication evidence. Qualified aggregate assertions only.",
+  "qualification_source": "Separate dedicated Corpus Author. Agent-sealed on the honor system.",
+  "author_status_sha256": "12010817aad5021911d134c86c2317d38b5e8904fd5b349f2d43772b90901791",
+  "review_report_sha256": "dd047c19ba82f77a3170d0b6b81b50afe298fb959666c29918487fd0b080b9ff",
+  "private_material_included": false,
+  "phoenix_score": null,
+  "counts": {
+    "program_count": 5,
+    "variant_count": 20,
+    "input_count": 2816,
+    "unique_invocation_count": 2782,
+    "variant_case_pairs": 11264,
+    "completed_original_executions": 45056,
+    "branches_taken": 2340,
+    "branches_total": 3211,
+    "mutants_compiled": 42,
+    "mutation_results": {
+      "invalid_mutation_retained": 16,
+      "killed_confirmed": 36,
+      "mutant_oracle_inconclusive": 2,
+      "survived_unclassified": 4
+    },
+    "initial_build_setup_failures": 40,
+    "orchestration_interruptions": 2,
+    "original_oracle_disagreements": 0,
+    "original_worker_failures": 0,
+    "cross_compiler_input_disagreements": 0,
+    "instrumented_behavior_differences": 0,
+    "excluded_final_inputs": 0,
+    "rebuild_hash_matches": 20
+  },
+  "definitions": {
+    "coverage_definition": "GCC O0 branch counters, including short-circuit branches.",
+    "mutation_limits": "A small relational-operator sample. Four survivors are not proved equivalent. Two mutant oracle results are inconclusive. Invalid mutations are retained and excluded from the compiled denominator. SPEC sets no numerical T3 adequacy gate.",
+    "instrumentation_disclosure": "Only the generated coverage directory is omitted in the separate instrumented-outcome check. Original qualification has no normalization.",
+    "publication_limits": "Author records and primary public events support post-cutoff publication. The exact first public development snapshot is not independently established for every program. An undisclosed earlier copy cannot be excluded.",
+    "normalization_rules": [],
+    "repeats_per_emulator": 2
+  },
+  "official_cutoff": {
+    "knowledge_cutoff": "2026-04-30",
+    "model": "gpt-6.1-sol",
+    "training_completion_proved": false,
+    "urls": [
+      "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+      "https://developers.openai.com/api/docs/models/compare?model=gpt-6.1-sol"
+    ]
+  },
+  "programs": [
+    {
+      "name": "amber-orbit",
+      "category": "text",
+      "upstream": "regisvidal/tpl2c",
+      "revision": "a550a68e8a22e5a587a051a30f795ae7e54d0f6f",
+      "publication": "2026-08-24",
+      "license": "MIT",
+      "input_count": 512,
+      "unique_invocations": 512,
+      "branches_taken": 514,
+      "branches_total": 695,
+      "mutation_results": {
+        "invalid_mutation_retained": 6,
+        "killed_confirmed": 6,
+        "mutant_oracle_inconclusive": 1
+      }
+    },
+    {
+      "name": "cedar-arc",
+      "category": "tables",
+      "upstream": "partoska/cisivi",
+      "revision": "84aaef68695c4a9b77f1e46c73f12672d440f3c7",
+      "publication": "2026-10-31",
+      "license": "MIT",
+      "input_count": 768,
+      "unique_invocations": 760,
+      "branches_taken": 882,
+      "branches_total": 1211,
+      "mutation_results": {
+        "invalid_mutation_retained": 2,
+        "killed_confirmed": 8,
+        "survived_unclassified": 1
+      }
+    },
+    {
+      "name": "silver-vale",
+      "category": "text",
+      "upstream": "SyntaxError2505/jlook",
+      "revision": "3c115e3a3205a55e2bd4c90236298d10aa7f7c7d",
+      "publication": "2026-06-30",
+      "license": "MIT",
+      "input_count": 512,
+      "unique_invocations": 502,
+      "branches_taken": 74,
+      "branches_total": 75,
+      "mutation_results": {
+        "killed_confirmed": 7,
+        "mutant_oracle_inconclusive": 1
+      }
+    },
+    {
+      "name": "cobalt-spring",
+      "category": "configuration",
+      "upstream": "partoska/bikini",
+      "revision": "a2712e5a1c969dc7745f0ff12a1001d5c15401d6",
+      "publication": "2026-10-29",
+      "license": "MIT",
+      "input_count": 512,
+      "unique_invocations": 512,
+      "branches_taken": 566,
+      "branches_total": 870,
+      "mutation_results": {
+        "invalid_mutation_retained": 4,
+        "killed_confirmed": 5,
+        "survived_unclassified": 3
+      }
+    },
+    {
+      "name": "maple-cove",
+      "category": "file analysis",
+      "upstream": "r4venrudy/rudy-loadmap",
+      "revision": "4ea8dc350be6b806857234eca282088614635e80",
+      "publication": "2026-11-03",
+      "license": "MIT",
+      "input_count": 512,
+      "unique_invocations": 496,
+      "branches_taken": 304,
+      "branches_total": 360,
+      "mutation_results": {
+        "invalid_mutation_retained": 4,
+        "killed_confirmed": 10
+      }
+    }
+  ],
+  "publication_date_status": "All program publication fields are Author assertions. See the independent review for confirmed later release and event dates. Amber August and first npm labels remain unverified.",
+  "binary_identity_assertions": [
+    {
+      "category": "text",
+      "compiler": "gcc",
+      "flags": [
+        "-O0"
+      ],
+      "name": "amber-orbit",
+      "sha256": "01389b0d8a340ba142eb8d17f44e7e531b536dcd20d38a2c28f31d19e4a09b8d",
+      "tier": "T3"
+    },
+    {
+      "category": "text",
+      "compiler": "gcc",
+      "flags": [
+        "-O2"
+      ],
+      "name": "amber-orbit",
+      "sha256": "0384e6c8c37332efbad0cb65968ccd3c906b0b4a0d02e93cea5248e4b4f76cd3",
+      "tier": "T3"
+    },
+    {
+      "category": "text",
+      "compiler": "clang",
+      "flags": [
+        "-O0"
+      ],
+      "name": "amber-orbit",
+      "sha256": "1f04212d12a10c4c86d7374b8f7576767f67d3648f9b481a20727644bb546121",
+      "tier": "T3"
+    },
+    {
+      "category": "text",
+      "compiler": "clang",
+      "flags": [
+        "-O2"
+      ],
+      "name": "amber-orbit",
+      "sha256": "567e82cfb4c24b57a6509995f8b1c75bf8b9013e9c642512737d3443f7cf17d1",
+      "tier": "T3"
+    },
+    {
+      "category": "tables",
+      "compiler": "gcc",
+      "flags": [
+        "-O0"
+      ],
+      "name": "cedar-arc",
+      "sha256": "ec6ace52d4a48228a61eda4ad74efc834d3c7bc049262dc739d0e39934106de4",
+      "tier": "T3"
+    },
+    {
+      "category": "tables",
+      "compiler": "gcc",
+      "flags": [
+        "-O2"
+      ],
+      "name": "cedar-arc",
+      "sha256": "a7482fb0e0478cfa45b19239dd48faab422d2cd236142ecc3ed16ed84612f3d3",
+      "tier": "T3"
+    },
+    {
+      "category": "tables",
+      "compiler": "clang",
+      "flags": [
+        "-O0"
+      ],
+      "name": "cedar-arc",
+      "sha256": "3a599a3b1e29704245d3be06b38eb2d4e1dab8d88cd1fe298df12f3ad9dfefed",
+      "tier": "T3"
+    },
+    {
+      "category": "tables",
+      "compiler": "clang",
+      "flags": [
+        "-O2"
+      ],
+      "name": "cedar-arc",
+      "sha256": "36f1ae9a12b8d43a8edc42c5cb8e9de50edddb8f58cde5a9c16ea244e13745cc",
+      "tier": "T3"
+    },
+    {
+      "category": "text",
+      "compiler": "gcc",
+      "flags": [
+        "-O0"
+      ],
+      "name": "silver-vale",
+      "sha256": "3aa198059ba25764385d15d83f7e8c6d14161c12d0eeb9be966603cccf454ad9",
+      "tier": "T3"
+    },
+    {
+      "category": "text",
+      "compiler": "gcc",
+      "flags": [
+        "-O2"
+      ],
+      "name": "silver-vale",
+      "sha256": "14ab4e75efbb9ab26f4e1bd68eaaf704d43ee8b894a21f574e3f7218a4a420bf",
+      "tier": "T3"
+    },
+    {
+      "category": "text",
+      "compiler": "clang",
+      "flags": [
+        "-O0"
+      ],
+      "name": "silver-vale",
+      "sha256": "573f98ea1f1375f61d95aa4eaab847b21f7564487cab6ca7a85d76d1520a2db7",
+      "tier": "T3"
+    },
+    {
+      "category": "text",
+      "compiler": "clang",
+      "flags": [
+        "-O2"
+      ],
+      "name": "silver-vale",
+      "sha256": "39c2826a49d1079b2a8cbd7214f5a1dcb5c67abe700fdc3f12b81237c8466f4b",
+      "tier": "T3"
+    },
+    {
+      "category": "configuration",
+      "compiler": "gcc",
+      "flags": [
+        "-O0"
+      ],
+      "name": "cobalt-spring",
+      "sha256": "9e5c2f8853b02db2c69ce3a73abc66add02f38c587e0bd74d3546b25bc0c1863",
+      "tier": "T3"
+    },
+    {
+      "category": "configuration",
+      "compiler": "gcc",
+      "flags": [
+        "-O2"
+      ],
+      "name": "cobalt-spring",
+      "sha256": "6990706fccff8c14e0c16fb1f4837e885f9f29560317f84ecd78983d206fae71",
+      "tier": "T3"
+    },
+    {
+      "category": "configuration",
+      "compiler": "clang",
+      "flags": [
+        "-O0"
+      ],
+      "name": "cobalt-spring",
+      "sha256": "7c4319093fa8c90ab6d5068717f1c472a89eb13f15a56c98386be57b8d95a807",
+      "tier": "T3"
+    },
+    {
+      "category": "configuration",
+      "compiler": "clang",
+      "flags": [
+        "-O2"
+      ],
+      "name": "cobalt-spring",
+      "sha256": "c36a5ffd771afff2c132a2a7bd9aac2690fb9479f76d018a4b6b3445719e9434",
+      "tier": "T3"
+    },
+    {
+      "category": "file analysis",
+      "compiler": "gcc",
+      "flags": [
+        "-O0"
+      ],
+      "name": "maple-cove",
+      "sha256": "ee6bf9277df9e8c4a9c76fa323d16c51d736d03ee1a81f2562c8252f1ecf4274",
+      "tier": "T3"
+    },
+    {
+      "category": "file analysis",
+      "compiler": "gcc",
+      "flags": [
+        "-O2"
+      ],
+      "name": "maple-cove",
+      "sha256": "833dc610b2749b32679234d5b2642c8cd776d99a7ed5d20d58d52ebfa942a19f",
+      "tier": "T3"
+    },
+    {
+      "category": "file analysis",
+      "compiler": "clang",
+      "flags": [
+        "-O0"
+      ],
+      "name": "maple-cove",
+      "sha256": "ef3b1b5eb83e85bb2b506e19d8294afba684fbabc85532fa4f0880488016830b",
+      "tier": "T3"
+    },
+    {
+      "category": "file analysis",
+      "compiler": "clang",
+      "flags": [
+        "-O2"
+      ],
+      "name": "maple-cove",
+      "sha256": "88545c4e96288ac628854a5c0bece7a1e8e8914d3cdf7e09879d78595538fca9",
+      "tier": "T3"
+    }
+  ],
+  "archive_assertions": [
+    {
+      "filename": "t3-sources-20261113.tar.gz",
+      "bytes": 47659717,
+      "sha256": "e5f05d6515dc29f64f0e9dff2142a7aae774e42566cc1291e8b82a2901c689b0"
+    },
+    {
+      "filename": "t3-inputs-20261113.tar.gz",
+      "bytes": 156487,
+      "sha256": "913937828ac76216a0f465c40f57cf55b8c139c47778e1f74e3e9d3b940d736b"
+    }
+  ],
+  "release_manifest_sha256_assertion": "3541907830dbf31246de4b622cce15d6d9acb0ecbfaaadfda7d9f0c102f23a11",
+  "private_runtime_independently_verified": false,
+  "root_aggregate_arithmetic_repeated": true,
+  "full_capture_review": "OPEN after provider screening",
+  "milestone_acceptance": false
+}
