@@ -1273,3 +1273,24 @@
   old timed-pause handoff in the public archive. The expired timer remains
   retired. Full capture stays OPEN after provider screening. Every SPEC
   section 9 condition, all baselines, publication and headline replay remain.
+
+
+## 2026-11-13. Refuse contradictory public self-check evidence
+
+- The tracked comparator issue accepts self_match=false when the overall flag
+  and fingerprints agree. Root reproduces 24 failures and one passing control.
+  Require exact true for every program before fingerprint comparison. Missing
+  and non-Boolean values also refuse. No schema or signature changes.
+- Add the actual required flag to the original positive fixture. Preserve its
+  original changed-case-count refusal. All 28 final controls pass. Root checks
+  copies of the three actual public reports: two positive comparisons pass and
+  54 missing or contradictory flags refuse. All source reports remain exact.
+- Keep the historical independent script and its known-limit assertion unchanged.
+  That script still describes its original frozen implementation. New checks
+  prove the corrected behavior. Do not change a historical expected result.
+- Run the full hook and obtain fresh Sol correctness and Astra harness reviews.
+  Keep the issue open until main integration. The evaluator source digest will
+  change. Do not retag accepted M1 images or reuse stale worker labels later.
+- The first candidate checkout has retained untracked files. Its clean assertion
+  refuses before a branch or file change. Use a verified clean stopped checkout.
+  No pending file is removed. Full capture remains OPEN after screening.

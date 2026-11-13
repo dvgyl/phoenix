@@ -96,3 +96,12 @@ The internal free-space baseline is 14,432,616 KiB. Investigate values below
 The report-comparator self-check gap is tracked in
 `docs/issues/0001-public-report-self-check.md`. Current complete assertions
 detect it. It does not invalidate the accepted bounded public records.
+
+
+## Public report self-check correction, 13 November
+
+An isolated source correction requires exact true for each program self_match.
+Root retains the 24-failure parent check. All 28 final tests and 54 actual-report
+negative controls pass. Both native-only and native/emulated positive comparisons
+pass. Full source checks, Sol correctness review and Astra harness review remain
+required. No old public report, historical control, score or image is changed.

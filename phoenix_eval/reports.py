@@ -17,6 +17,10 @@ def compare_public_reports(paths: list[Path]) -> dict[str, object]:
             raise ValueError(
                 f"The public report failed or repeats an execution mode. {path}"
             )
+        if any(item.get("self_match") is not True for item in report["programs"]):
+            raise ValueError(
+                f"The public report lacks passing self-match evidence. {path}"
+            )
         programs = {
             item["program"]: [item["cases"], item["outcome_sha256"]]
             for item in report["programs"]
