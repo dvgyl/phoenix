@@ -1,0 +1,72 @@
+{
+  "run_id": "m0-6eec2537a59849949769d511b662e6ea",
+  "mode": "native-amd64",
+  "runtime": {
+    "daemon_architecture": "amd64",
+    "engine_version": "29.4.2",
+    "amd64_engine": "native",
+    "arm64_engine": null,
+    "binfmt_registrations": null
+  },
+  "worker_images": {
+    "amd64": "sha256:b058863ab33b47cf1797ea9d154e91f921c94452c71c2601244f49ef06e8172b"
+  },
+  "evaluator": {
+    "commit": "293477f643a764d7fe34054899d2fee215f1daf1",
+    "worker_source_sha256": "f2ae5cdece588e795c60c3c45f630027cc3f4d954738b6801a842b1cc2f391a1"
+  },
+  "seed": 31640025043986808,
+  "self_trials": 3,
+  "sandbox_probes": {
+    "amd64": true
+  },
+  "programs": [
+    {
+      "program": "bitstats",
+      "cases": 10,
+      "original_sha256": "33bdfb0965f873857b8820deda63d6ec666277f2f7eade008b943f5198ce4ae0",
+      "outcome_sha256": "500392090011d59f61cf09ee3e989867c885e124f13b556755fbb741f110bbef",
+      "self_match": true,
+      "matches_expected_public_behavior": true,
+      "coverage": null,
+      "coverage_failure": null,
+      "independent_oracle_healthy": true,
+      "emulator_sensitive_cases": 0,
+      "portability": {
+        "amd64-gcc": true,
+        "amd64-clang": true
+      },
+      "mutations": {
+        "amd64": {
+          "killed": 5,
+          "total": 5,
+          "valid": true
+        }
+      }
+    },
+    {
+      "program": "filemarks",
+      "cases": 6,
+      "original_sha256": "18c3c25d438bc695b48c0223a0e9c1afd736e5b88cc3038c1fbbb0b7ba70c42b",
+      "outcome_sha256": "a9f42673172c0fe3e025e7260d9859e3e291378e5711192a73dc01d0392baae1",
+      "self_match": true,
+      "matches_expected_public_behavior": true,
+      "coverage": null,
+      "coverage_failure": null,
+      "independent_oracle_healthy": true,
+      "emulator_sensitive_cases": 0,
+      "portability": {
+        "amd64-gcc": true,
+        "amd64-clang": true
+      },
+      "mutations": {
+        "amd64": {
+          "killed": 5,
+          "total": 5,
+          "valid": true
+        }
+      }
+    }
+  ],
+  "behavior_checks_passed": true
+}

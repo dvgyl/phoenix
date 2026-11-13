@@ -1237,3 +1237,39 @@
 - Required Astra advises structural separation of operational dispatcher
   outputs from reviewer artifacts. Existing guards remain immutable.
   This addresses a repeated manifest failure without a screening change.
+
+
+## 2026-11-13. Preserve reviewed resume evidence
+
+- Integrate exact byte and ELF source with full hooks and fresh Sol reviews.
+  Correct eight non-hermetic diagnostic test failures. Root and fresh Sol
+  reproduce the parent failures and all 223 corrected passes with no ambient
+  PHOENIX_ROOT. Both earlier CPU logs retain the same eight failures.
+- Native workflow 43431817090 passes both CPUs and comparison at 293477f.
+  Verify both complete ZIP digests. Mac M0 run
+  m0-ea89531416274da5b4df008f7a219d06 agrees on revision, worker source, seed,
+  cases and outcomes. Fresh Sol passes the bounded public evidence. Root
+  repeats nine check groups and four pure controls. Preserve aggregate limits.
+- Public switch run public-switch-293477f-20261113 has eight positive 56/56
+  builds and eight negative 0/3 builds. All negative differences are stdout.
+  Replay source snapshots match. GCC warnings and raw-evidence limits remain.
+  The fixed fixture uses no live model. This is not a sealed reconstruction.
+- Preserve the first graph comment HOLD and later full functional HOLD.
+  The latter has two real defects and 28 failing independent controls. Root
+  reproduces them. A fresh Astra fix is isolated. No graph schema 2 source
+  is integrated before correction and fresh full independent review.
+- Preserve checked layout source e721885 and its 1,744 focused passes.
+  Its first root hook failed before pytest because root disabled plugin
+  autoload. The unchanged hook passes with normal plugin loading. Keep the
+  setup failure. Fresh full Sol implementation review remains required.
+- Resume private T3 qualification through a dedicated Standard Astra Corpus
+  Author and its sole VM lease. Root reads approved aggregates only. Preserve
+  T0-T2 commitments, original pending files, accepted tags and M1 images.
+- Archive only explicit public reports and proof records. No raw model,
+  Author, environment or credential log is copied. The original layout
+  import-guard failure log remains local because it printed part of an
+  inherited environment. Track the public report-comparator self-check gap.
+- Replace the current handoff with the active state. Preserve the exact
+  old timed-pause handoff in the public archive. The expired timer remains
+  retired. Full capture stays OPEN after provider screening. Every SPEC
+  section 9 condition, all baselines, publication and headline replay remain.

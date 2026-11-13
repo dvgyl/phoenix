@@ -1,0 +1,32 @@
+{
+  "workflow": 43431817090,
+  "evaluator": {
+    "commit": "293477f643a764d7fe34054899d2fee215f1daf1",
+    "worker_source_sha256": "f2ae5cdece588e795c60c3c45f630027cc3f4d954738b6801a842b1cc2f391a1"
+  },
+  "seed": 31640025043986808,
+  "runs": {
+    "apple-silicon": "m0-ea89531416274da5b4df008f7a219d06",
+    "native-amd64": "m0-6eec2537a59849949769d511b662e6ea",
+    "native-arm64": "m0-442cee7c141a4f0a9bf22e6ae364e22b"
+  },
+  "programs": {
+    "bitstats": [
+      10,
+      "500392090011d59f61cf09ee3e989867c885e124f13b556755fbb741f110bbef"
+    ],
+    "filemarks": [
+      6,
+      "a9f42673172c0fe3e025e7260d9859e3e291378e5711192a73dc01d0392baae1"
+    ]
+  },
+  "complete_report_assertions_passed": true,
+  "archive_digests_verified": true,
+  "report_sha256": {
+    "/Volumes/PhoenixWork/audit/resume-20261113/native-ci-293477f/public-amd64/m0.json": "201ea10af098a666892621a71d45a6f37c0829b76c1c789f3c41bee575e8ce34",
+    "/Volumes/PhoenixWork/audit/resume-20261113/native-ci-293477f/public-arm64/m0.json": "2774c96ef0a0e5ee620cac096a38fdc091c5dfd5d499b31d4a5b8932162bf664",
+    "/Volumes/PhoenixWork/audit/public-m0-293477f-20261113/m0-ea89531416274da5b4df008f7a219d06/m0.json": "405ba283c70335418c1b2dce2327bbb4069e190eda16873c04bd4be6acdfaf03"
+  },
+  "image_identity_note": "Native and Mac image identities differ. Each report binds its own images. The worker source identity matches.",
+  "new_milestone_claim": false
+}

@@ -1,0 +1,30 @@
+{
+  "head": "e7218853a0f47f5470bea597e1d57f98231cc66c",
+  "remote": "e7218853a0f47f5470bea597e1d57f98231cc66c",
+  "clean": true,
+  "full_hook_passed": true,
+  "focused_tests": 1744,
+  "base": "293477f643a764d7fe34054899d2fee215f1daf1",
+  "exact_authored_source_files": [
+    {
+      "path": "phoenix/observe/collector_layout.py",
+      "bytes": 46854,
+      "sha256": "2179189c102f72826fe3d4c0d2a777fd51d58b8b59b3bf013325cfc3232972c2",
+      "executable": false
+    },
+    {
+      "path": "tests/test_observe_collector_layout.py",
+      "bytes": 67028,
+      "sha256": "f9e9b828546a328393dfe7ada059aba51b1d2fba95cc2f5aebcaa7750668ec97",
+      "executable": false
+    },
+    {
+      "path": "docs/adr/0043-independent-compiled-readback.md",
+      "bytes": 9466,
+      "sha256": "3852f08f429496841a1c66e3d320c0090b7e160fc261c1cb98a23f36529b2c68",
+      "executable": false
+    }
+  ],
+  "raw_initial_failure_log_published": false,
+  "first_hook_setup_failure_preserved": true
+}

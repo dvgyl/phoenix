@@ -1,0 +1,10 @@
+{
+  "commit": "293477f643a764d7fe34054899d2fee215f1daf1",
+  "public_linux_evidence_accepted": true,
+  "independent_review_report_sha256": "9fedd04ff3a9820c8e35911f960805917756ca2352e4ff7cbcc643725e966172",
+  "parent_repeat_exit": 0,
+  "review": "/Volumes/PhoenixWork/audit/m2-public-linux-evidence-review-sol-20261113/report.md",
+  "limits_preserved": "M0 aggregate-only archives and pair aggregates do not contain every raw trial output. Comparator ignores self_match; complete root and review assertions check it. Public fixture results do not grant capture,collector or corpus authority.",
+  "M2_accepted": false,
+  "full_capture_review": "OPEN after provider screening"
+}

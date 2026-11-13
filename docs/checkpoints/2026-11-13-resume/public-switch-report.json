@@ -1,0 +1,268 @@
+{
+  "kind": "public-U2-production-caller",
+  "run_id": "public-switch-293477f-20261113",
+  "results": [
+    {
+      "compiler": "gcc",
+      "binary_sha256": "77c5e688b1722df1d3bfdae92c7664ec7d5b37c35378103edf4c138c9e28c77a",
+      "project_sha256": "158c4d9d7135d81bea72d2992bf8425f8448b839f740e4312ab2d551032ebbba",
+      "protected_source_sha256": "cce405c1e42b76d8751bdc9e2301605685549e9f193959e6535f099fa87326bb",
+      "development_cases": 53,
+      "verification_cases": 56,
+      "source_bytes": 2488,
+      "replay_source_equal": true,
+      "development_passed": true,
+      "replay_development_passed": true,
+      "measured": {
+        "total_cases": 56,
+        "eligible_cases": 56,
+        "emulator_disagreements": 0,
+        "evaluation_errors": 0,
+        "original_error_categories": {},
+        "recovered_blocks": 46,
+        "covered_blocks": 31,
+        "builds": [
+          {
+            "architecture": "amd64",
+            "compiler": "gcc",
+            "compiled": true,
+            "warnings": 2,
+            "matched_cases": 56,
+            "evaluation_errors": 0,
+            "failure_categories": {},
+            "executable_sha256": "39eb0a4bc6b6f68c87a863265fcb2f04df4395d2ffe3c2378941a133bc856679"
+          },
+          {
+            "architecture": "amd64",
+            "compiler": "clang",
+            "compiled": true,
+            "warnings": 0,
+            "matched_cases": 56,
+            "evaluation_errors": 0,
+            "failure_categories": {},
+            "executable_sha256": "962eb51a701627c9b1667a7221b3096a62e9ecee1a62a3ba8ee16437842fde5b"
+          },
+          {
+            "architecture": "arm64",
+            "compiler": "gcc",
+            "compiled": true,
+            "warnings": 2,
+            "matched_cases": 56,
+            "evaluation_errors": 0,
+            "failure_categories": {},
+            "executable_sha256": "60023c1d40d9bd4854bd170a854757d77f7d992d8d286e9f7731a02b6a1f6059"
+          },
+          {
+            "architecture": "arm64",
+            "compiler": "clang",
+            "compiled": true,
+            "warnings": 0,
+            "matched_cases": 56,
+            "evaluation_errors": 0,
+            "failure_categories": {},
+            "executable_sha256": "da601ae389dc9296489cce580d30f1b7719cc3ffb861f83a852109c84cf0e2f6"
+          }
+        ],
+        "behavior_passed": true
+      },
+      "negative_source_control": {
+        "source_contract_rejected": true,
+        "stale_metadata_retained": true,
+        "measured": {
+          "total_cases": 3,
+          "eligible_cases": 3,
+          "emulator_disagreements": 0,
+          "evaluation_errors": 0,
+          "original_error_categories": {},
+          "recovered_blocks": 46,
+          "covered_blocks": 20,
+          "builds": [
+            {
+              "architecture": "amd64",
+              "compiler": "gcc",
+              "compiled": true,
+              "warnings": 3,
+              "matched_cases": 0,
+              "evaluation_errors": 0,
+              "failure_categories": {
+                "stdout": 3
+              },
+              "executable_sha256": "1707fcb41da8812c8b8562e0884fef61f28f6fa2f101f0d6fc16e84073521fe2"
+            },
+            {
+              "architecture": "amd64",
+              "compiler": "clang",
+              "compiled": true,
+              "warnings": 3,
+              "matched_cases": 0,
+              "evaluation_errors": 0,
+              "failure_categories": {
+                "stdout": 3
+              },
+              "executable_sha256": "42f0642222e628b3fd734ff545999d3bcb784cd39ff50a9dc7bcbbac93f604c7"
+            },
+            {
+              "architecture": "arm64",
+              "compiler": "gcc",
+              "compiled": true,
+              "warnings": 3,
+              "matched_cases": 0,
+              "evaluation_errors": 0,
+              "failure_categories": {
+                "stdout": 3
+              },
+              "executable_sha256": "388233ab9e6fb17d586058de6880209e638a06d98d6a30018b08b78c4c6bae57"
+            },
+            {
+              "architecture": "arm64",
+              "compiler": "clang",
+              "compiled": true,
+              "warnings": 3,
+              "matched_cases": 0,
+              "evaluation_errors": 0,
+              "failure_categories": {
+                "stdout": 3
+              },
+              "executable_sha256": "e9a3c9f1a6d95bd85259eadd83f2ee806614be4d40d18f621c0bc28e076d5190"
+            }
+          ],
+          "behavior_passed": false
+        },
+        "expected_failure_observed": true
+      },
+      "passed": true
+    },
+    {
+      "compiler": "clang",
+      "binary_sha256": "d2f2dd7313f3171cd10612d900a218ec2c7d5c68bca5d30ef30f10af9e467a76",
+      "project_sha256": "3e4d1112a4b34b150b6abe00ed19f27eef32c6a459d97d92b216df97cc1f1416",
+      "protected_source_sha256": "6525c1bb96dc833b0e96fc3dad36831bc9c363702ea213f42821cdd925b4ebf1",
+      "development_cases": 53,
+      "verification_cases": 56,
+      "source_bytes": 2423,
+      "replay_source_equal": true,
+      "development_passed": true,
+      "replay_development_passed": true,
+      "measured": {
+        "total_cases": 56,
+        "eligible_cases": 56,
+        "emulator_disagreements": 0,
+        "evaluation_errors": 0,
+        "original_error_categories": {},
+        "recovered_blocks": 47,
+        "covered_blocks": 32,
+        "builds": [
+          {
+            "architecture": "amd64",
+            "compiler": "gcc",
+            "compiled": true,
+            "warnings": 2,
+            "matched_cases": 56,
+            "evaluation_errors": 0,
+            "failure_categories": {},
+            "executable_sha256": "f9f5b8255ef933ae84b52bb06ef2f5ae0f37bdcf03e0e5bc443fbee30a8f77a9"
+          },
+          {
+            "architecture": "amd64",
+            "compiler": "clang",
+            "compiled": true,
+            "warnings": 0,
+            "matched_cases": 56,
+            "evaluation_errors": 0,
+            "failure_categories": {},
+            "executable_sha256": "5ea64790d01ef3a7d6e7d62ea1ffebe85f4c9851094b3d7fa71835efb096f97b"
+          },
+          {
+            "architecture": "arm64",
+            "compiler": "gcc",
+            "compiled": true,
+            "warnings": 2,
+            "matched_cases": 56,
+            "evaluation_errors": 0,
+            "failure_categories": {},
+            "executable_sha256": "b1316d8158eaba863671d51a56ba4364241721c41398c17a0284e4aeb0b29759"
+          },
+          {
+            "architecture": "arm64",
+            "compiler": "clang",
+            "compiled": true,
+            "warnings": 0,
+            "matched_cases": 56,
+            "evaluation_errors": 0,
+            "failure_categories": {},
+            "executable_sha256": "d645d14b15a19a262f2f25a6666a4ac20a2709a0b9e5b5ed35cd0874e4883761"
+          }
+        ],
+        "behavior_passed": true
+      },
+      "negative_source_control": {
+        "source_contract_rejected": true,
+        "stale_metadata_retained": true,
+        "measured": {
+          "total_cases": 3,
+          "eligible_cases": 3,
+          "emulator_disagreements": 0,
+          "evaluation_errors": 0,
+          "original_error_categories": {},
+          "recovered_blocks": 47,
+          "covered_blocks": 20,
+          "builds": [
+            {
+              "architecture": "amd64",
+              "compiler": "gcc",
+              "compiled": true,
+              "warnings": 3,
+              "matched_cases": 0,
+              "evaluation_errors": 0,
+              "failure_categories": {
+                "stdout": 3
+              },
+              "executable_sha256": "a4fc91c0496349b6586cc735ba001092063b5cf8793e195da2967027161e7c43"
+            },
+            {
+              "architecture": "amd64",
+              "compiler": "clang",
+              "compiled": true,
+              "warnings": 3,
+              "matched_cases": 0,
+              "evaluation_errors": 0,
+              "failure_categories": {
+                "stdout": 3
+              },
+              "executable_sha256": "582f7ecc4232bea2575844eab0b20e38485de6fa4d5f70b38bde9b74aaa815b3"
+            },
+            {
+              "architecture": "arm64",
+              "compiler": "gcc",
+              "compiled": true,
+              "warnings": 3,
+              "matched_cases": 0,
+              "evaluation_errors": 0,
+              "failure_categories": {
+                "stdout": 3
+              },
+              "executable_sha256": "d4a3325afae66ac66dcaafebd7e568271485ffe185e82405d625d60aa752f9d3"
+            },
+            {
+              "architecture": "arm64",
+              "compiler": "clang",
+              "compiled": true,
+              "warnings": 3,
+              "matched_cases": 0,
+              "evaluation_errors": 0,
+              "failure_categories": {
+                "stdout": 3
+              },
+              "executable_sha256": "62464cd292db39e95247d896adc93fff27736535012e64b3d924b44c6ca9f343"
+            }
+          ],
+          "behavior_passed": false
+        },
+        "expected_failure_observed": true
+      },
+      "passed": true
+    }
+  ],
+  "complete": true,
+  "passed": true
+}

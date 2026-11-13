@@ -1,0 +1,46 @@
+{
+  "run_id": "public-switch-293477f-20261113",
+  "head": "293477f643a764d7fe34054899d2fee215f1daf1",
+  "report_sha256": "107709fdb0678c993c098b332f8b8e7391076c6ee025532e69c19cd195746bef",
+  "preflight_sha256": "c24e9733ac484aaec5acfe090e5d0bf67cfbd062e5d3475b432c9bbc2c43f638",
+  "complete_two_compiler_rows": true,
+  "positive_builds": 8,
+  "cases_per_positive_build": 56,
+  "positive_case_build_matches": 448,
+  "negative_builds": 8,
+  "unvisited_cases_per_negative_build": 3,
+  "negative_stdout_mismatches": 24,
+  "replay_archives_equal": true,
+  "fixed_public_provider_only": true,
+  "warnings_by_input_and_control": {
+    "gcc-measured": [
+      2,
+      0,
+      2,
+      0
+    ],
+    "gcc-negative": [
+      3,
+      3,
+      3,
+      3
+    ],
+    "clang-measured": [
+      2,
+      0,
+      2,
+      0
+    ],
+    "clang-negative": [
+      3,
+      3,
+      3,
+      3
+    ]
+  },
+  "artifact_files": 132,
+  "artifact_bytes": 4846789,
+  "independent_evidence_review": "pending",
+  "full_capture_review": "OPEN after provider screening",
+  "M2_accepted": false
+}

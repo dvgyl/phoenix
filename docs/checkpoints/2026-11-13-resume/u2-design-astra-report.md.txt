@@ -1,0 +1,96 @@
+Phoenix needs verified completion through SPEC section 9. This task supplies a concrete U2 implementation plan for complete independent logical readback. It completes the assigned architecture investigation only. It does not complete U2 implementation, M2, M4, or Phoenix v1.
+
+The recommendation is to implement the independent logical core now. Use frozen logical objects, installed typed descriptors, lazy byte decoding, per-table cursors, complete exhaustion, and exact canonical-byte comparison. Keep U1 unchanged. Both Linux profiles, page-granule approval, actual compiler retention, trusted issuance, native traversal, and production remain HOLD. Full capture review remains OPEN after provider screening. This task does not retry or replace that review.
+
+The deliverables are [u2-contract.md](u2-contract.md), [u2-api.md](u2-api.md), and [u2-test-plan.md](u2-test-plan.md). They define exact functions, records, field variants, ownership rules, failure categories, bounded work, and independent controls. Root owns every later source and Git change. No source file or ADR was reserved. ADR0042 remains assigned to the separate byte adapter. U2's future decision record is ADR0043.
+
+The important implementation choices are as follows.
+
+| Area | Selected implementation |
+| --- | --- |
+| Independence | Standard library, `collector_elf`, and `collector_layout` only. No writer, source reader, `FrozenRecord`, projection, recovery dependency, `ctypes`, compiler, loader, or native-memory packing. |
+| Logical representation | Private frozen `LogicalObject` with sorted unique entries. Exact null, Boolean, integer, string, and tuple values. Arrays and objects remain distinct. |
+| Schema | Independently transcribe the final 214-field inventory. Expand nested descriptors into the fixed 100-type, 653-member, 47-table vector. Keep both candidate profiles test-only. |
+| Ownership | Reserve an entire slice before descending. Active empty slices use the current cursor. Inactive payloads are all zero and consume nothing. Require complete exhaustion. |
+| Comparison | Produce actual complete canonical bytes from decoded fields. Compare them directly with complete expected bytes. Never return expected bytes as readback. |
+| Physical checks | Use the current public U1 call on the same immutable snapshot. Preserve exact objects, all directory fields, all 47 relocations, aliases, metadata protection, F1, and O1. |
+| Work accounting | Debit an explicit upper bound for U1 before U2 work. Charge every later scan, scalar, comparison, encoding, and hash. Do not reset budgets. |
+| Test evidence | Literal cells and canonical strings, complete public raw-reconstruction records, every field and witness word, and corruption controls with finite expected reasons. |
+
+The final architecture has two integration differences and one identity-input gap. They do not require another layout study.
+
+First, the final design places witness checks before physical directory checks. The accepted U1 performs its directory checks before it returns. Preserve U1's first refusal. Root should record the resulting order in ADR0043 and test inputs with two faults. U2 must not bypass an accepted U1 check to reproduce the earlier proposed ordering.
+
+Second, U1's consumed counters are private and absent from `CollectorElf`. The API document gives a source-derived upper debit for scans and an exact successful-read scalar count. This permits conservative U2 implementation without changing U1. A later exact-counter return can reduce over-refusal after separate review. The current design must not give U1 and U2 separate full budgets.
+
+Third, the final inspection record needs a reader-source-manifest digest. The final layout profile also needs real witness-source and checks-source digests. The U3 files do not exist at the frozen revision. The pure selected call has no route for the reader-source-manifest bytes. Embedding a manifest digest in source that the manifest hashes creates a cycle. Silently reading files changes the pure boundary. Invented hashes are not acceptable.
+
+The conservative resolution is concrete. Implement and test the complete private `LogicalReadback` first. Keep final public `CompiledDataInspection` success closed while those inputs are unavailable. The API document proposes one explicit root-reviewed amendment, a required `identity_inputs` byte record for final source and profile manifests. The later coordinator supplies installed bytes and independently validates source association. Matching caller data still grants no authority. This is a proposed amendment, not an assertion that the selected API already contains it. A private evidence record also retains the complete dynamic and relocation arrays for the later artifact coordinator. Root must freeze that retention route before claiming final inspection integration.
+
+The logical core can receive its independent review before U3. U3 can then supply actual fixed source bytes without any compiler run. Final inspection-record integration follows with a separate review. This sequence preserves the existing field inventory, witness shape, and source-to-output identity order. It does not fabricate a production layout profile or widen this task into native compilation.
+
+The exact input basis is recorded in [input-identities.json](input-identities.json). It has lengths and SHA-256 values for 31 named records. The read scope was as follows.
+
+| Input | Read scope |
+| --- | --- |
+| Frozen checkout | `11cb51b06ff181209c7a9e23ed9bb6f758cea839`, tree `f0bb72fd716b86ef01d5b8b7a2e64c33ee02a2f5`, at `/Volumes/PhoenixWork/worktrees/m1-ci-reliable`. |
+| `AGENTS.md` and `SPEC.md` | Read both in full. The task's read-only scope overrides general source, status, Git, and delegation work. |
+| `collector_elf.py` | Read all 1517 lines, including the accepted F1 and O1 paths. |
+| `collector_data.py` | Read all 369 lines. Used to understand complete logical bytes and retained transport bounds. No product dependency was added. |
+| `collector_header.py` and `collector_header_read.py` | Read all 780 and 859 lines. Used to verify traversal, inactive payloads, canonical text, geometry, and existing limits. |
+| `native/collector_data_v1.h` | Read all 505 lines. Its path is under `phoenix/observe/`, not repository-root `native/`. |
+| ADR0041 | Read completely. Its older review-OPEN text is superseded only for U1 code review by the supplied final Sol PASS. Its Linux HOLD remains. |
+| Public tests | Read all 1567 ELF, 1006 header, and 970 collector-data test lines. Used the independent literal ELF builder in the small probe. |
+| Final U1 report | Read `/Volumes/PhoenixWork/audit/m2-passive-elf-f1-review-sol-20261113/report.md` completely. Used its passive-code-only PASS. Did not rerun or independently certify its full test counts. |
+| Final compiled design | Read all four files from the specified `m1-preflight-review-2` checkpoint directory. Used these as the final design basis. |
+| Required architecture | Read both tracked `docs/reviews/2026-11-12/collector-architecture-astra-report.md` and `collector-architecture-astra.md` completely. Preserved corrected F1 through F4. |
+| Complete selected transport API | Read `/Volumes/PhoenixWork/audit/m2-collector-transport-design-astra-resume-20261112/api.md` completely. Corrected architecture and final compiled design take precedence over its old sharing and authority proposals. |
+| Proposed layout | Read the explicitly cited `/Volumes/PhoenixWork/tmp/m2-compiled-data-design-astra-20261112/proposed-layout.json`. Used it as proposed layout evidence only. |
+| Limit declarations | Read the `TraceLimits` and `CaptureLimits` declaration excerpts in `plan.py` and `scope.py`. Did not import those modules in the probes. |
+| Public progress | Read STATUS, the latest LOG entries, and the last 20 Git commit subjects for the required session checklist. |
+| Installed skill | Read Poteto 0.9.138, its Codex mapping, Investigation workflow, how guide, Boundary Discipline, unslop, and technical-writing leaves. |
+
+The checkpoint design hashes match the four identities listed in ADR0041. The proposed-layout digest is `2afb7057b427333e0c6caea163bb16c513d9432dd1fae57284edb13367f70868`. The ELF module digest is `dae95a30f96c556a1731a59edada95e4622991889ffcfdfa576bf773a17929eb`. The scripts checked its actual import path. Product imports were limited to `phoenix`, `phoenix.observe`, and `phoenix.observe.collector_elf` in the probe.
+
+The completed checks are local design checks, not Phoenix evaluation results.
+
+| Check | Observed result and limit |
+| --- | --- |
+| Static schema expansion | Expanded the final document's 214 fields independently. Every type, member, and table record equalled the proposed layout. Totals were 100, 653, and 47. No compiler or product schema import. |
+| Witness arithmetic | `9 + 100*3 + 653*7 + 47*3` equalled 5021 words and 40168 bytes. |
+| U1 synthetic inputs | Four cases passed in each of two probe versions. Cases were two machines with two placements. Both probes used the same public literal builder. These are four unique cases, not eight independent cases. |
+| U1 budget observation | Each case recorded 12879 charged scan bytes and 1105 scalar visits. The selected scan upper debit was 470582. The refined scalar formula was exactly 1105. These are accounting units, not time or memory measurements. |
+| Signed-value sketch | Seven literal cases passed. They include both signed extremes, invalid sign, both overflows, and negative zero. This is an audit sketch, not U2 product code. |
+| UTF-8 and canonical text | One positive byte string and five invalid byte strings passed their expected checks. The positive string retained NUL, quote, backslash, LF, U+00FF, U+00E9, and U+1D11E. |
+| Import and bytecode checks | The actual frozen ELF source path and digest matched. No writer, source reader, `collector_data`, or `ctypes` import occurred. The dedicated bytecode prefix remained absent. |
+| Source preservation | Final `git status --short` was empty. `git diff --exit-code HEAD` passed. HEAD and tree remained exact. |
+
+Evidence is in [schema-check.json](schema-check.json), [field-inventory.json](field-inventory.json), [probe-1.log](probe-1.log), [probe-2.log](probe-2.log), [synthetic-results.json](synthetic-results.json), and [synthetic-results-v2.json](synthetic-results-v2.json). The audit scripts are [probe.py](../../tmp/m2-compiled-readback-u2-design-astra-20261113/probe.py), [probe_v2.py](../../tmp/m2-compiled-readback-u2-design-astra-20261113/probe_v2.py), and [check_schema.py](../../tmp/m2-compiled-readback-u2-design-astra-20261113/check_schema.py).
+
+All three script commands used the checkout's `.venv/bin/python -B`. The first probe used a larger conservative scalar debit. The second used the exact source-derived formula in the API. Both passed. The first script, result, and log remain. No failing test was removed or relaxed. No pytest suite, compiler, linker, target, native profile trial, or performance benchmark ran. The planned U2 tests have not run because U2 is not implemented.
+
+One filename search reported `rg: native: No such file or directory`. The actual fixed header was then read at `phoenix/observe/native/collector_data_v1.h`. Some combined read displays were truncated. Smaller explicit reads covered the affected source, API, skill, and architecture sections. These are command/read limitations, not product-test failures. No failed synthetic check occurred. The exact retained script logs are not substitutes for the tool's earlier read records.
+
+Structural inspection supports bounded added work. The descriptor expansion is fixed. Logical traversal visits each claimed row and byte span once. Canonical emission and complete comparison add work proportional to their actual bytes. Route lower-limit checks use an address map and stored path positions. Physical ownership uses bounded interval indexes. No relocation-by-logical-row product is needed. The logical graph and output buffers still consume Python object storage. No total memory or timing claim follows from these bounds.
+
+The required unresolved gates are explicit.
+
+- Root must implement the complete U2 core, run the relevant and repository checks, and obtain fresh independent review.
+- Root must resolve the final identity-input and metadata-retention interface before final public inspection success. No missing hash may become a success placeholder.
+- U3 must freeze and review the actual data-only witness and complete C assertions. The 5021-word synthetic vector does not prove compiler layout or retention.
+- U4 must approve page granules and loader assumptions separately for each Linux profile. It must inspect actual GCC and Clang outputs at O0 and O2 on the required native hosts. Resource and determinism checks remain open.
+- U5 must prove trusted issuance, cache reinspection, complete native directory traversal, and use of those same arrays. Complete passive data can coexist with code that ignores it.
+- Full capture review, source/import closure, accepted launch association, freshness calibration, live outcome checks, and recovery admission remain separate.
+- SPEC section 9 still requires M4, T0 through T3 results against every baseline, costs and failures, required publication, and replay of every headline number.
+
+Poteto's [Boundary Discipline](/Users/devg/.codex/plugins/cache/pstack-claude/pstack/0.9.138/skills/principle-boundary-discipline/SKILL.md) shaped the main decision. It led to a pure byte decoder and separate source authority. The Investigation workflow used one direct sequential pass. The user prohibited all nested models, agents, model APIs, model CLIs, sessions, and dispatch scripts. That rule replaced the skill's delegation steps. The [task list](../../tmp/m2-compiled-readback-u2-design-astra-20261113/todo.md) records the workflow. `throughput checkpoint: n/a, read-only investigation`.
+
+Standard service and GPT-6 Astra were requested. This task did not change service or provider settings and did not enable Fast mode. Host routing was not independently attested. No nested model process was started. No source write, Git mutation, external network command, credential access, compiler, linker, target, Ghidra, plugin load, Docker, Colima, Lima, or VM command ran. The installed guard was not inspected, changed, relaxed, or nested.
+
+No sealed source, held-out input, source archive, private run, Author worktree/log/output/history, Codex session, archived session, dispatcher event, stderr, summary, or private dispatch record was read. Directory searches exposed public filenames only. The original compiled-design audit directory was used only for filename discovery. Its old report and API were not substituted for the final checkpoint copies. The explicitly named proposed-layout record was the only original compiled-layout evidence read outside those copies.
+
+Every shell sourced `env.sh`. Initial read-only shells scoped the task temporary root, general cache, bytecode prefix, and coverage path. Before any Python probe, the [scope environment](../../tmp/m2-compiled-readback-u2-design-astra-20261113/scope-env.sh) placed all relevant cache, data, bytecode, coverage, Hypothesis, and pytest locations under the task temporary root. No pytest command ran. The absent bytecode prefix and actual import origins were checked before and after the probe. All task writes stayed under the assigned audit and temporary directories.
+
+Both external volumes were mounted. The final internal available space was 15142672 KiB. STATUS records a baseline of 14432616 KiB. The observed value did not require a storage move. No storage, provider, screening, or guard setting changed.
+
+PAUSED and DRAINING under `audit/continue-v1` were checked before new synthetic batches and at final verification. No sentinel was present at those checks. No pause instruction arrived. All ordinary shell and Python children completed. No owned background child, model child, or scheduled continuation remains. [final-check.json](final-check.json) records the final document and source checks.

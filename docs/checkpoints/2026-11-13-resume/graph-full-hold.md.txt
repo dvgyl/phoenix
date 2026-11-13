@@ -1,0 +1,145 @@
+The goal is to review the complete Phoenix Unit A at exact commit `23e05e96ecfddad009edb403cae2393422e14514`. This is a full correctness, security, contract, integration-readiness, and comment review. No source or comment was changed.
+
+**Full functional verdict. HOLD.** Two P2 defects remain. The independent final control batch has 28 failed cases and 38 passed cases. The current repository batch passed 1,095 tests and excluded one live test. Passing repository tests do not close the two defects.
+
+**Comment verdict. HOLD.** C1–C4 are corrected. One provenance comment needs correction with the opcode defect. This comment decision is separate from the full functional HOLD.
+
+**Ranked functional findings.**
+
+1. **F1. P2. Use the actual pinned mnemonic strings.** Location `phoenix/lift/byte_graph_v2.py:55`. The set `_KNOWN_OPCODES` contains Java constant identifiers for six operations. The exported operation records use `PcodeOp.getMnemonic()`. The actual strings are `INT2FLOAT`, `FLOAT2FLOAT`, `TRUNC`, `CEIL`, `FLOOR`, and `ROUND`. The set instead contains `FLOAT_INT2FLOAT`, `FLOAT_FLOAT2FLOAT`, `FLOAT_TRUNC`, `FLOAT_CEIL`, `FLOAT_FLOOR`, and `FLOAT_ROUND`.
+
+   This affects `_check_gaps` at lines 885 and 892. An observation with an actual pinned mnemonic is refused unless it adds an unsupported-opcode gap. A fabricated constant-name alias is accepted without that required gap. This violates both ordinary-observation compatibility and the unknown-mnemonic gap rule. It does not grant semantic authority because the mandatory effect gaps still remain.
+
+   The saved pinned primary source is `/Volumes/PhoenixWork/tmp/m2-byte-adapter-design-astra-20261112/primary/PcodeOp.java`. Its SHA-256 is `28254c46b0f6744c3ad8ca0757a6d46d5922b743857121cada7b559af18d2d8b`. Lines 665–676 show the six return strings. The unchanged `ghidra_scripts/ExportLift.java:565` stores `op.getMnemonic()`. The primary method has 74 mnemonic strings. Six are missing from the reader set, and six reader entries are not returned mnemonic strings. The reader set equals the Java constant-name set. Thus, the prior review's 74-name comparison checked the wrong representation.
+
+   Independent literal controls test all six pairs in both raw and analyzed domains. All 24 cases fail. Actual mnemonic cases raise `ByteGraphV2FormatError: A required observation gap is absent.` Alias cases report `DID NOT RAISE ByteGraphV2FormatError`. See `tests-opcodes.log`, `tests-full-final.log`, and `evidence.json`. Root must correct the set and add controls against actual return strings. Keep old readers unchanged.
+
+2. **F2. P2. Validate supplied lift function identities before equality comparisons.** Location `phoenix/lift/byte_graph_v2.py:670`. `_bound_function` compares roster keys and `Function.entry` to the checked pass entry without checking their exact types. At entry 1, Python makes `True == 1` and `1.0 == 1` true. Both values also address the same dictionary slot. At entry 4096, `4096.0` has the same problem.
+
+   A directly constructed `LiftIndex` can therefore use a Boolean or float roster key, or a selected `Function.entry` with either type. The reader accepts it. The graph entry comparison at line 749 also uses equality. The malformed supplied identity becomes indistinguishable from an exact integer identity in the accepted canonical record. This bypasses the required direct-input type checks. A normally parsed lift does not produce these values, so this defect concerns the public supplied-object boundary.
+
+   Four independent cases require a finite format refusal. Each reports `DID NOT RAISE ByteGraphV2FormatError`. The unmodified positive literal passes. The separate probe also confirms acceptance of float identity fields at entry 4096, with unchanged canonical graph bytes. See `tests-full-final.log` and `probe.log`. Root must validate the roster keys and selected function entry as exact bounded integers before it compares or selects them. No broad exception handler is needed.
+
+No additional functional defect was established in the reviewed scope. Integration readiness remains HOLD until both findings are corrected and independently checked.
+
+**Complete contract inspection.**
+
+The complete 1,016-line product module, complete 1,733-line final test file, ADR0042, AGENTS.md, and SPEC.md were read. All four final design records were read. The complete writer report and final check, prior comment-only report and final check, and all named parent records were read. Split reads covered truncated displays. The review also checked the actual ordinary exporter mnemonic call and the pinned Java mnemonic method.
+
+The reader retains supplied value identities before it compares operand storage. It does not construct identities by storage. The new literal has distinct values at equal storage, repeated ordered inputs `[3, 2, 3]`, an unused value, separate raw and analyzed keys at the same sequence, parallel edges, and a self-loop. It retains an empty block zero, a distinct cover address, actual dead flags, an unowned operation, exact native null, and mandatory gaps. A value permutation changes the canonical hash. Nested records are frozen and slotted. Nested serialization is detached. The independent current nested-record control passed.
+
+The source scan checks complete bank projection against the supplied analyzed roster in order. It checks opcode, sequence identity, widths, definitions, outputs, and ordered operands. Definitions and outputs must refer to the same value key. Every parent relation must agree with its block list. Decoded block indices must equal list slots. Both edge directions check reciprocal slots. Empty and unreachable supplied blocks remain present. Raw instruction sites include zero-operation instructions. Bank flags remain actual Booleans. Native inventory fields remain `not_exported`. Native entry remains null. Global native, entry-effect, and memory-effect gaps remain mandatory.
+
+Unknown names generally require exact operation-specific gaps, with the F1 exception above. Unowned operations require their gap. Conflicting or free nonconstant value interpretations require exact value-specific `ssa_unbound` gaps. Phi arity differences retain the actual arrays and require `phi_binding_unproved`. Phi operands remain associated with incoming slot order. No graph proves raw/analyzed effects or reconstructs native state.
+
+The module has no file, environment, process, provider, publication, semantic-checking, or emission operation. PassRecord source and tool hashes remain supplied observations. Canonical identity is not an attestation. A coherent fabricated record can pass structural checks. No constructor or accepted record returns producer or emission authority.
+
+Wire parsing uses closed shapes, exact scalar types, strict UTF-8, duplicate-key refusal, bounded depth, and finite error classes. Canonical bytes use sorted keys, compact ASCII JSON, and one LF. The parser checks the canonical output byte count separately. Unrelated hash faults propagate. The unchanged prior controls test RuntimeError, ValueError, TypeError, and OSError propagation. Direct pass and limit objects are revalidated. Direct lift scalar validation has the F2 exception above. No total-memory claim is made.
+
+**Finite bounds.**
+
+These observations come from the repeated repository controls and the unchanged 104-control suite. They are host test results, not Phoenix evaluation results. Array count checks combine with byte limits.
+
+| Bound | Exact and one-over evidence |
+| --- | --- |
+| Graph bytes | 16 MiB with legal trailing whitespace passes. One additional byte refuses. Canonical Unicode expansion is checked separately. |
+| Source bytes | 1 MiB of strict UTF-8 passes. One additional ASCII byte refuses. Multibyte source is counted in bytes. |
+| JSON depth | A valid graph passes at its exact reduced depth and fails one lower limit. Depth 32 reaches a shape refusal. Depth 33 reaches a limit refusal. This is not a successful depth-32 graph claim. |
+| Pass bytes | 64 KiB with legal whitespace passes. One additional byte refuses. |
+| Functions | 32 passes; 33 refuses. Call ordinal 31 passes; 32 refuses. |
+| Graph blocks and listing blocks | 32 passes for each inventory; 33 refuses. |
+| Raw and analyzed operations | 256 passes separately in each domain; 257 refuses. |
+| Raw instruction sites | 256 passes; 257 refuses. Zero-operation sites remain present. |
+| Inputs per operation | 256 passes; 257 refuses. Constructed raw and analyzed lift operands also receive the count check. |
+| Values | Reduced exact count 257 passes and fails with limit 256. The complete tested 65,792-value wire record exceeds 16 MiB and refuses. Its next count also refuses. No successful full 65,792-value wire record is claimed. |
+| References per domain | 65,792 passes separately in raw and analyzed domains. Limit 65,791 refuses the same record. Outputs and repeated input slots count. `65,792 = 256 * (256 + 1)`. A next count also breaks an operation or input bound. |
+| Directed graph edges | 1,024 passes; 1,025 refuses. Reciprocal storage is checked without doubling the directed-edge count. |
+| Gaps | 256 passes; 257 refuses. Required gaps cannot be dropped to meet a limit. |
+| Supplied function ranges | 256 passes; 257 refuses. |
+| Aggregate supplied listing-block ranges | 256 passes; 257 refuses. |
+| Supplied listing edges | 1,024 passes; 1,025 refuses. The scan selects edges by caller. It does not certify listing-edge semantics. |
+
+The scan includes supplied lift ranges, listing edges, instruction sizes, raw and analyzed operands, widths, definitions, and repeated references. All 14 limit fields reject invalid types, nonpositive values, and one above their hard maximum. Address, sequence, width, local-ID, signed order, fixed profile, and UTF-8 name boundaries have current controls. The new failures remain failures despite these passing checks.
+
+**Identity, history, and old contracts.**
+
+`identity.json` verifies this exact history.
+
+```text
+2c9934a6b96004536c5db98e844dce180c958c25
+  -> dc428feb29609255bb0739741a21e45e263d3712
+  -> 23e05e96ecfddad009edb403cae2393422e14514
+```
+
+All 240 tracked worktree files match exact HEAD. All 237 old paths were compared with `2c9934a`. Every old path is unchanged except STATUS and LOG, which retain their complete old byte prefixes. The only new paths are the product module, its test file, and ADR0042. The module and ADR are exact across the two Unit A commits.
+
+| Final file | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `phoenix/lift/byte_graph_v2.py` | 36011 | `497b3e493a4d7d6b49881a0e0f609995604900489e04908d3926308c8aa3ce5c` |
+| `tests/test_byte_graph_v2.py` | 61076 | `de6f8374c491bd508296ac108f371ce8e294f993f29d6efdf8fc127140a2f139` |
+| ADR0042 | 7842 | `887b46d9535af16ffe3b744ae5ef05569a2fe4c32b562f15191020d719b052f2` |
+
+The package initializers, index, mapping, evidence, old graph and source readers, tools.lock, uv.lock, and pyproject.toml match main `293477f`. All four design records match that commit. No real shared-dependency mismatch was found. This source branch predates newer main files. It must not replace newer main as a whole.
+
+Actual imports for all six checked lift modules resolve inside the frozen checkout. Their bytes match HEAD. Python is 3.12.13 from the checkout's existing environment. Every Python command uses `-B`. The new bytecode prefix remains absent.
+
+Both saved full-hook and push logs were inspected. Each contains `Phoenix quality checks...Passed`, the corresponding commit result, and a successful branch push. The hook runs `scripts/check`. That script runs Ruff, format checks, mypy, and pytest with the evaluator coverage gate. The final correction log records the update `dc428fe..23e05e9`. The local remote-tracking branch equals exact HEAD. This verifies the available saved hook and push evidence. No network recheck occurred. The hook logs do not expose individual test counts, so none are inferred from them.
+
+The saved correction patch equals the complete Git diff between the two commits. The supplied parent-focused logs each contain `1095 passed, 1 deselected`. The original pending manifest matches the first commit's identities. The parent repeated 105 historical independent controls before the test correction. Those records are prior evidence, not this review's functional approval.
+
+Both old readers and all publication source bytes remain unchanged. The repeated current suite checks old graph rejection of schema 2 and new graph rejection of schema 1. The new module has no conversion into schema 1. Fourteen further unchanged tests passed for publication versions 1–3 and their artifact bindings. These use public synthetic files and mocked launch calls inside the permitted temporary root. They perform no real Ghidra job or external publication.
+
+**Comment findings.**
+
+C1–C4 are closed at the final revision. The test file has no remaining comment or docstring sites. `detached_fixture_record` names the JSON copy operation. The operation returns the same fixture data and removes aliases. All original assertion ASTs are unchanged. The new helper adds one type assertion. All sample data and all four phi fixture variants equal their first-commit values. The malformed-pass test copies a frozen record, changes `timeout_seconds` to `True` through `object.__setattr__`, and still requires refusal. It passed independently. The product module and ADR did not change.
+
+**C5. P3. Remove the misleading opcode provenance comment when F1 is corrected.** Location `phoenix/lift/byte_graph_v2.py:46`. The comment says these names are observations at the pinned `PcodeOp.java` revision. The six disputed names exist there as constant identifiers. They are not the API's exported mnemonic observations. The keep-list exception therefore binds a different representation from the one this code reads. The exact primary method at lines 665–676 proves the distinction. `MUST KILL _KNOWN_OPCODES` identifies the mistaken name source. Removing the comment alone cannot close F1. This is one proposed comment deletion, with zero actual deletions.
+
+Eight public-contract docstrings remain protected by the supplied keep list. There are nine comment or docstring sites in the product module and final test file together. No unresolved external-source lookup remains. No suppression remains in these files. No comment was restored or edited. ADR0042 and the progress records were read as documents.
+
+**Executed checks and retained failures.**
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Current new/old graph, source, and evidence suites | 1,095 passed; 1 live test excluded | `tests-current.log` |
+| Relevant unchanged index and mapping controls | 15 passed | `tests-index.log` |
+| Unchanged prior controls except the historical fixture identity control | 104 passed; 1 excluded | `tests-prior-104.log` |
+| Historical fixture identity control, unchanged | 1 failed before behavioral work | `tests-prior-history.log` |
+| Initial new independent literal controls | 38 passed; 4 failed | `tests-full-independent.log` |
+| Additional analyzed mnemonic controls | 12 failed | `tests-opcodes.log` |
+| Final complete independent control file | 38 passed; 28 failed | `tests-full-final.log` |
+| Unchanged publication controls | 14 passed | `tests-publication.log` |
+| Ruff, format, strict mypy | Each passed | `ruff.log`, `format.log`, `mypy.log` |
+| Current-suite module coverage | 522 of 530 statements, 98 percent rounded | `coverage-current.json` |
+| Actual source identity, fixture comparison, and parent patch checks | Passed | `identity.json`, `evidence.json` |
+
+The historical failure expects test hash `6e524f9d...` but observes `de6f8374...`. The expected historical hash was not changed. The file remains unchanged at SHA-256 `80b4995f030afbd020d4b61c12c8786c57611086699c3a7df5b1a779ad3ceb49`. That failure supplies no behavioral coverage. A new independent current literal tests nested operations, keys, edges, freezing, and detached serialization. The old 104 controls ran unchanged. No old test expectation was changed.
+
+All 28 final behavioral failures are expected-refusal or actual-mnemonic mismatches against the product. They are not helper setup failures. The original logs remain complete. The runner's own exit 0 means only that its command ledger was written. It does not turn failed child checks into PASS.
+
+Initial missing-path probes checked PAUSED and DRAINING at guessed root locations and returned shell exit 1. The actual marker directory was then taken from the named prior report. One later read-only search named absent `tests/test_switch_evidence.py` and returned an input/output error. The correct files were then selected through `rg --files`. Large displays were split after truncation. These inspection failures are retained here. No failed test was hidden, retried with weaker expectations, or changed to xfail.
+
+**Commands and process limits.**
+
+Every shell first sourced `/Volumes/Extreme Pro/Phoenix/env.sh`. The review environment then scoped temporary files, caches, data, bytecode, Hypothesis, pytest, coverage, Ruff, and mypy to the permitted temporary root. `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` disabled automatic test-plugin discovery. Only the existing Hypothesis and pytest-cov instrumentation was loaded explicitly where needed. All generated test files are public synthetic Python controls.
+
+The complete command arguments for the grouped checks are in `check-results.json` and `run_checks.py`. The principal commands were as follows. `$PWD` is the frozen checkout. The review environment defines `$REVIEW_TMP` and `$REVIEW_OUT`.
+
+```sh
+source /Volumes/PhoenixWork/tmp/m2-byte-graph-v2-full-review-sol-20261113/env.sh
+.venv/bin/python -B "$REVIEW_TMP/identity.py"
+.venv/bin/python -B -m pytest -q -p no:cacheprovider -p hypothesis.extra.pytestplugin -p pytest_cov.plugin --rootdir="$PWD" --confcutdir="$PWD" --basetemp="$REVIEW_TMP/pytest-current" --hypothesis-seed=20261113 --cov=phoenix.lift.byte_graph_v2 --cov-report="json:$REVIEW_OUT/coverage-current.json" --cov-report=term-missing tests/test_byte_graph_v2.py tests/test_byte_graph.py tests/test_byte_source.py tests/test_lift_evidence.py -k 'not public_phase_grid_storage'
+.venv/bin/python -B "$REVIEW_TMP/run_checks.py"
+.venv/bin/python -B -m pytest -q --tb=short -p no:cacheprovider --rootdir="$REVIEW_TMP" --confcutdir="$REVIEW_TMP" --basetemp="$REVIEW_TMP/pytest-full-final" "$REVIEW_TMP/test_full_controls.py"
+.venv/bin/python -B -m pytest -q -p no:cacheprovider -p hypothesis.extra.pytestplugin --rootdir="$PWD" --confcutdir="$PWD" --basetemp="$REVIEW_TMP/pytest-publication" --hypothesis-seed=20261113 tests/test_recovery_u1.py::test_complete_publication_is_required tests/test_switch_artifacts.py tests/test_switch_source_generation.py
+.venv/bin/python -B "$REVIEW_TMP/inspect_evidence.py"
+git diff --check
+```
+
+Only the two assigned directories received writes. The artifact manifest uses an explicit created-file allowlist. No whole-audit or process scan occurred. The initial read-only Git history was limited to the required session and source history. No private source, held-out input, private run, Author file or history, source archive, Codex session, archived session, dispatcher event, stderr, or summary was inspected. No installed guard was inspected, probed, changed, or relaxed. No network request, credential read, compiler, linker, target, Ghidra job, native plugin, Docker, Colima, Lima, or VM operation occurred. No nested model, agent, API, CLI dispatch, or scheduled continuation occurred.
+
+The specific review restrictions replaced source/Git writes, nested review dispatch, general milestone work, and progress-file edits. These conflicts are recorded here because repository writes are forbidden. Poteto and Comment Sicko were read from version `0.9.138`. The Prove It Works principle changed the verification method. Actual source bytes, imports, API return strings, and literal controls were checked instead of relying on prior verdicts or exit 0. Throughput checkpoint is not applicable to this read-only review.
+
+The service setting was not changed. Fast mode was not enabled. Available permitted records cannot independently attest provider routing or the service tier. PAUSED and DRAINING in `audit/continue-v1` were checked before each new batch after the actual path was identified. Neither marker was present. The old pause deadline was not used as a new deadline. All owned check children ended. No background child or continuation remains. Final internal free space was 14,693,396 KiB, above the recorded 14,432,616 KiB baseline.
+
+Full capture review remains **OPEN after provider screening**. It was not retried, replaced, rephrased, or bypassed. Producer admission, Unit B, Java adapter capture, selector integration, Unit D, native facts, semantics, entry and memory effects, callable interfaces, source grammar, pointer proofs, emission, and runtime controls remain open. This report supplies no native approval, corpus score, milestone, M4, or SPEC section 9 completion. No later unit may use this HOLD as producer, semantic, emission, runtime, or milestone authority.

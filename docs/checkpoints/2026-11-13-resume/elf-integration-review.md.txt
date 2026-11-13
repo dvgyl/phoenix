@@ -1,0 +1,108 @@
+Phoenix needs independent evidence for the passive ELF integration before later work can use it. The verdict is PASS for exact commit `53e8987e2e9ed6a02b519ebc856ad8dc99268c91`. This PASS covers passive representation code only. No blocking behavioral or integration defect was found. Comment findings are separate and nonblocking.
+
+Actual compiled retention is NOT ESTABLISHED. Both Linux profiles and production remain HOLD. Full capture review remains OPEN after provider screening. No plugin was loaded. This review did not retry, replace or rephrase the capture task. It did not change its provider or settings. No new corpus score or SPEC section 9 completion is claimed.
+
+The reviewed checkout is `/Volumes/PhoenixWork/worktrees/m1-ci-reliable`. Root retains all source and Git authority. I read AGENTS.md and SPEC.md in full. I read the complete 1,517-line ELF module, its complete 1,567-line test file, ADR0041 and the stable native declarations. I read the full final source review and parsed its complete final-check. I also read the two required root integration records. [The parsed prior record](prior-final-check-read.json) retains its results and scope limits. No installed guard was read, changed, relaxed, probed or nested.
+
+The source identities before and after agree.
+
+| File | SHA-256 before and after |
+| --- | --- |
+| `phoenix/observe/collector_elf.py` | `dae95a30f96c556a1731a59edada95e4622991889ffcfdfa576bf773a17929eb` |
+| `tests/test_observe_collector_elf.py` | `676c42f4ee0e59aa55f9ecbc6728298fc7de6952242196a67b49ebf352403f1d` |
+| `docs/adr/0041-passive-collector-elf.md` | `64cd2506a23174b0248349d904b276b0d02fee957aa1c80bb06989d09fa2d7db` |
+| `phoenix/observe/collector_header.py` | `fa5d25fb5c910796127bb29a17f5f111b6555beb9dc02a82ad75611747578684` |
+| `phoenix/observe/collector_header_read.py` | `087c9e62fa56ffbca7757c50577368fa0370eed744dd4aa47325e3ed7164d669` |
+| `phoenix/observe/collector_data.py` | `d5005ac55660660be160181ff89f985e6b02e754bc16a8b9a9c286a5e8cef309` |
+| `phoenix/observe/native/collector_data_v1.h` | `2e278603d75d6cd436aedc72af3f1903334dadc37d6d8847dfd3dd825018acb3` |
+
+The three imported unit files are exact bytes from reviewed `11cb51b06ff181209c7a9e23ed9bb6f758cea839`. The recorded parent is `fc008b8abd96151a506571842d48cfab8eaff0c0`. All 302 parent files remain present. Exactly 300 remain byte-identical. Only STATUS and LOG changed. LOG keeps the complete parent prefix. The three ELF files are additions. [The integration diff](integration.patch) contains no other change.
+
+Against `2c9934a`, all 237 old files remain present. Exactly 232 remain byte-identical. The five changed paths are STATUS, LOG, corpus_commitments, the review manifest and ExportLift.java. All five already differed in the recorded parent. The integration preserves their parent bytes except for the stated STATUS and LOG updates. There are 68 additions against that older base. Earlier LOG entries receive insertions, with zero deleted lines. The older LOG is therefore not a byte prefix. This distinction does not change the exact parent-prefix result. [The path comparison](baseline-path-comparison.txt) and [line counts](baseline-numstat.txt) preserve that comparison. The earlier byte diagnostic integration was neither deleted nor changed.
+
+All 302 hashes in root's `elf-integration-source.json` match the recorded parent. Its three imported hashes match the reviewed files. The root after-push record names this exact HEAD and remote revision. It records a clean tree and a passed full hook. This review verified that record locally. It made no network check of the remote and did not repeat the repository-wide hook.
+
+HEAD stayed exact. The tree stayed `f68b2e254f0acf5bb971c463375f4684aea11615`. All 305 tracked file hashes match HEAD and both snapshots. The checkout stayed clean. [Before](source-before.json) and [after](source-after.json) retain every tracked hash. [Stable declaration checks](stable-declarations.json) also prove exact bytes against `11cb51b`, the parent and `2c9934a`.
+
+The ELF module imports only `array`, `bisect`, `dataclasses`, `struct` and `typing`. Its package initializers add no dependency. An isolated Python process with `-B -S` traced actual imports and checked their standard-library origin. No renderer, source reader, native loader, provider or evaluation module entered through the ELF import. Two other isolated processes checked both header-first and ELF-first import order. All imported Phoenix paths and hashes match this checkout. All 47 physical table names and sizes agree with the unchanged header grammar. The native table tags and directory declaration also agree. These agreement checks do not establish a compiled ABI. [Actual import evidence](actual-imports-verified.json) retains paths, hashes and import requests.
+
+The repeated local checks are as follows. These are review test counts, not Phoenix evaluation results.
+
+| Check | Result | Child exit |
+| --- | --- | --- |
+| Current checkout ELF, header, collector data, frames and scope tests | 2,472 passed | 0 |
+| Unchanged old behavioral controls | 2,169 passed. One historical identity control deselected | 0 |
+| Unchanged corrected controls | 1,344 passed | 0 |
+| Final new integration controls | 78 passed | 0 |
+| Historical original-source identity test, run separately | One expected hash failure. 2,105 other controls deselected | 1 |
+| First new integration run | 76 passed and two import-helper failures | 1 |
+| Second new integration run | 76 passed and two import-helper failures | 1 |
+| Ruff lint and format for both imported Python files | Passed | 0 |
+| Strict mypy for both imported Python files | Passed | 0 |
+
+The four final passing suites contain 6,063 test cases. The historical identity failure is excluded from that total. Earlier failed runs are not added to the passing total. Every test log, command record, result and coverage database remains available. Exit 0 alone did not determine PASS.
+
+The historical test is unchanged at `test_independent_elf_v2.py:53`. It still expects old `a4ceff84e6dd3a7762fb6115d46c644bc72add234c083d1d7f09a0c53b380487`. It first verifies the correct imported path. It then fails only at the expected digest comparison against current `dae95a30f96c556a1731a59edada95e4622991889ffcfdfa576bf773a17929eb`. [The complete failure](historical.log) is separate. [Reused evidence identities](reused-evidence-identities.json) bind the old tests and fixtures. No old behavioral expectation changed.
+
+Statement coverage for `collector_elf.py` is 668/672 from the checkout suite, 670/672 from the old suite, 659/672 from the corrected suite and 654/672 from the final integration suite. These are separate measurements. They are not combined or presented as repository-wide coverage. [The coverage summary](coverage-summary.json) lists uncovered lines. The historical test also has a retained coverage database, but it is not behavioral coverage evidence.
+
+Each test command uses its exact test root as both `--rootdir` and `--confcutdir`. The checkout suite uses the checkout root. The old and historical suites use their original audit root. The corrected suite uses its original corrected audit root. The integration suite uses this audit root. Each run has a distinct basetemp and coverage file under this review's temporary root. Pytest cache writes and automatic plugin discovery are disabled. The Hypothesis plugin is explicit. Both the Hypothesis seed and PYTHONHASHSEED are 20261113. `-B`, PYTHONDONTWRITEBYTECODE and a new absent bytecode prefix prevent stale bytecode use. The prefix stayed absent.
+
+Source the review environment before these reproduction commands.
+
+```sh
+source /Volumes/PhoenixWork/tmp/m2-elf-main-integration-review-sol-20261113/env.sh
+.venv/bin/python -B "$REVIEW_AUDIT/run_checks.py" existing
+.venv/bin/python -B "$REVIEW_AUDIT/run_checks.py" old
+.venv/bin/python -B "$REVIEW_AUDIT/run_checks.py" corrected
+.venv/bin/python -B "$REVIEW_AUDIT/run_checks.py" integration-v3
+.venv/bin/python -B "$REVIEW_AUDIT/run_checks.py" historical
+.venv/bin/python -B "$REVIEW_AUDIT/run_checks.py" ruff
+.venv/bin/python -B "$REVIEW_AUDIT/run_checks.py" format
+.venv/bin/python -B "$REVIEW_AUDIT/run_checks.py" mypy
+```
+
+Run these commands from the frozen checkout. Exact expanded arguments and scoped environments are in each `*.command.json`. The historical command must return 1 for its preserved old digest expectation. The commands reproduce checks. They do not replace the preserved records from this review.
+
+The new controls use an independent literal ELF builder. They check both machines, empty and populated tables, reversed relocation order and optional imports. They preserve all 47 pointer cells. They also show that changing every stale pointer word can change input identity while leaving passive relocation interpretation unchanged. Separate actual-path instrumentation observes three page-map calls for every accepted relocation. Each call checks the exact translated file offset, width eight and `executable=False`. Relative, GLOB_DAT, main-range JUMP_SLOT and PLT-range JUMP_SLOT all run.
+
+The full eight-byte check is at `collector_elf.py:1279` through `:1285`. `file_span(where, 8)` requires all bytes to be readable and file-backed in one exact load. Alignment, writable permission and absence of executable permission remain mandatory. Every existing page map checks `[where, where + 8)`. There is no section-coverage exemption. The corrected public controls test coherent mappings, different file translations, executable aliases and zero fill at all three candidate distances. Exact file-end success passes. Zero, one or seven backed bytes refuse. Direct helper controls put a conflict or hole at each byte position. An aligned eight-byte write cannot cross any tested page boundary. The helper controls therefore supplement the public ELF controls.
+
+The executable-section index starts at `collector_elf.py:1172`. It includes nonempty sections with both SHF_ALLOC and SHF_EXECINSTR, including NOBITS. The query at `:1286` through `:1292` rejects every nonempty intersection with an eight-byte write. Zero-size and nonallocated sections do not trigger this rule. Exact endpoint adjacency passes. Explicit `sh_info` does not bypass it. The 800-case corrected public matrix covers both machines, all relocation placements and metadata choices. Several executable intervals inside one write also refuse.
+
+The single-predecessor interval query depends on disjoint positive-length allocated sections. The envelope enforces that precondition at `collector_elf.py:658` through `:660`. It checks unsigned extents before index construction. Existing controls reject section overlap and unsigned overflow. A write end equal to `2**64` remains valid where all other conditions pass. The direct interval oracle performs 40,960 comparisons on disjoint sets. It agrees with the indexed predicate. This is separate helper evidence, not an assertion that every helper state is a valid ELF.
+
+All 47 local symbols, directory scalar cells and pointer relocations remain checked. Each pointer needs its exact machine-specific relative kind, symbol zero and exact local-symbol addend. The original pointer word is not a fallback. Missing, duplicate, wrong-kind, wrong-symbol, wrong-target and storage-alias controls still refuse. Relocation input order remains observable. Accepted relative, GLOB_DAT and JUMP_SLOT classes retain their exact per-machine values. Unsupported classes and encodings remain rejected. Protected objects and ELF metadata still reject intersecting writes. Feasible one-byte intersections refuse. Exact adjacency passes.
+
+Count limits precede dependent allocation or access. The corrected maximum-count controls parse 4,096 sections and 262,144 relocations on each machine. They retain all 47 pointers and complete relocation indexes. Their instrument records exactly 12,288 section visits within each runtime relocation pass. Lower limits refuse. Source inspection supports one section index and logarithmic interval queries. This is a structural bound. No timing benchmark, total Python memory bound or measured peak-memory claim follows. U2 must account for its complete logical readback work separately.
+
+All failures in this review remain preserved. My first identity helper incorrectly expected only STATUS and LOG differences against both bases. It failed because the older base already lacked later main changes. The second helper incorrectly required the older LOG to be a byte prefix. It failed because the earlier documentation integration inserted historical entries. The corrected helper distinguishes exact parent preservation from the older-base comparison. `verify_identity_initial.py`, `verify_identity_v2.py`, `identity-before.log` and `identity-before-v2.log` retain those failures.
+
+The first import helper incorrectly prohibited relative imports inside Python's standard library. The second helper added relative-name resolution but had not explicitly imported `importlib.util` under `-S`. Both failed only for the ELF-first processes. The header-first process and 75 other controls passed in each run. The third helper explicitly imports that standard-library resolver before tracing. It retains the same standard-library-only dependency requirement. No product fixture or expected parser result changed. The three helper and test versions, failure logs, stderr files and command records remain separate. No test collection failure occurred. The first final helper then failed because the process guard refused `ps` with `PermissionError`. The process listing did not run. `finish_checks_initial.py` and `finish-initial.log` preserve that failure. No retry or guard change followed. Child completion is supported by the returned tool sessions, synchronous subprocess results and the three isolated import command records. A system process listing was not available. The next final helper attempted to build a directory-wide artifact manifest. Access to the dispatcher-owned `events.jsonl` path was refused before its content was read. The helper stopped. `finish_checks_v2.py` and `finish-final.log` preserve this failure. The final helper uses an explicit list of reviewer-created files. It does not retry that path. No dispatcher event content was read.
+
+The installed no-comments rules produced the following separate findings. No source file was touched. The actual deletion count is zero. Twelve comments or test docstrings are marked MUST KILL for a later, separately reviewed source change. Two protocol or loader comments remain on comment-review HOLD because this task permits no external source verification. Two product API docstrings are retained as public contracts. The literal TABLE_SPEC string is data and is excluded.
+
+| Severity | Path and line | Finding and action |
+| --- | --- | --- |
+| Low | `phoenix/observe/collector_elf.py:177` | MUST KILL `_TABLES`. Remove the narration of its physical contract. Keep the scope contract in the public API documentation. |
+| Low | `phoenix/observe/collector_elf.py:233` | MUST KILL `_PAGE_GRANULES`. Express the test-only status in the symbol name and retain the approval limit in ADR0041. The comment does not state an approved Linux rule. |
+| Low | `phoenix/observe/collector_elf.py:388` | MUST KILL `_page_map`. Remove the sweep narration. The events and interval construction already express the operation. |
+| Low | `phoenix/observe/collector_elf.py:479` | MUST KILL `_Reader.unpack`. Express its integer-only format restriction through named formats or types. Remove the internal-invariant comment. |
+| Low | `tests/test_observe_collector_elf.py:1` | MUST KILL the test module docstring. Its synthetic scope is already in the test names and ADR. |
+| Low | `tests/test_observe_collector_elf.py:21` | MUST KILL `TABLE_SPEC`. Remove the independence narration. Preserve the literal independent data. |
+| Low | `tests/test_observe_collector_elf.py:116` | MUST KILL `fixture`. Remove its implementation-narration docstring. |
+| Low | `tests/test_observe_collector_elf.py:397` | MUST KILL `test_literal_complete_view`. Replace the deliberate frozen-field assignment with a runtime mutation operation that preserves the negative test without `type: ignore[misc]`. |
+| Low | `tests/test_observe_collector_elf.py:399` | MUST KILL `test_literal_complete_view`. Apply the same change to the nested frozen-symbol mutation. |
+| Low | `tests/test_observe_collector_elf.py:878` | MUST KILL `prefix_alias_fixture`. Express the fixture shape in its name and assertions. Remove the narration docstring. |
+| Low | `tests/test_observe_collector_elf.py:935` | MUST KILL `test_page_alias_with_wrong_file_bytes`. Express the shortened load and rounded conflict in the fixture or assertions. Remove the narration. |
+| Low | `tests/test_observe_collector_elf.py:1145` | MUST KILL `test_sysv_hash_checks_actual_bucket_membership`. Express the expected bucket values as test data or assertions. Remove the numeric explanation comment. |
+| Low, comment-review HOLD | `phoenix/observe/collector_elf.py:771` | The comment assigns ABI meanings to numeric dynamic tags. Keep it pending checks against the authoritative ELF and machine ABI tag definitions. No external tag-definition source was read in this task. |
+| Low, comment-review HOLD | `phoenix/observe/collector_elf.py:1454` | The comment states an effect on later loader interpretation. Keep it pending the pinned loader source review required for U4. No Linux loader source was read in this task. |
+
+The two mypy suppressions hide valid frozen-property diagnostics. Installed `mypy/plugins/dataclasses.py:751` through `:779` marks frozen fields as properties. Installed `mypy/messages.py:1671` reports writes to read-only properties. The rule protects correctness. This is why the no-comments rules flag those suppressions even though the negative runtime tests are useful. No comment that states a foreign protocol rule was deleted. The two such comments remain on HOLD. Stable header and data modules are skipped for comment changes because the integration must preserve their exact bytes.
+
+A coherent fabricated ELF can pass these controls. The fixed test granules 4096, 16384 and 65536 are not Linux approvals. The public view and its constructors grant no authority. U2 complete logical readback, the fixed witness, real GCC and Clang retention, trusted issuance, native table use, calibration, capture and production remain open. Full capture review remains OPEN after provider screening. M2 through M4, publication and headline replay remain outside this PASS.
+
+I used installed Poteto version 0.9.138, its Investigation workflow and its no-comments reviewer rules. The task checklist is in `todo.md`. The user prohibited source edits and nested models. Those limits replace the skill's edit and dispatch steps. The report follows the requested review format. Standard service and GPT-6.1 Sol were requested. No service setting changed. Fast mode was not enabled. Host model routing was not independently attested.
+
+Every write stayed in the two permitted review roots. No nested model, agent, API, model CLI, session or dispatch ran. No network, credential, compiler, linker, target, Ghidra, plugin load, Docker, Colima, Lima or VM operation ran. No private source, held-out input, archive, private run, Author material, Codex session or dispatcher event, stderr or summary was read. No background continuation was scheduled. PAUSED and DRAINING in `audit/continue-v1` were absent before new execution batches and at final verification. There is no new pause deadline. All owned commands and their synchronous children returned. No background child was started. A system process listing was unavailable under the guard. `final-check.json` binds the final evidence.

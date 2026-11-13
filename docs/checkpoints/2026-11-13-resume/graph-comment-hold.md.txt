@@ -1,0 +1,135 @@
+# Unit A comment review
+
+The goal is to review exact Unit A commit `dc428feb29609255bb0739741a21e45e263d3712` without source changes. This report contains comment findings only. The wider Phoenix goal remains with root.
+
+**Decision. HOLD for the comment gate.** Four comment or docstring sites do not meet the supplied Comment Sicko rules. Each finding is P3. None demonstrates a runtime defect. This decision applies only to the exact Unit A comment review. It is not a full functional approval or a milestone decision.
+
+## Ranked comment findings
+
+1. **C1. P3. Remove the argument-type suppression at `tests/test_byte_graph_v2.py:1017`.** `test_pass_constructor_does_not_bypass_checks` suppresses `arg-type` for `timeout_seconds=True`. The installed mypy rule checks argument types. It is a correctness rule, not a style rule. The supplied comment policy permits no such suppression. `MUST KILL test_pass_constructor_does_not_bypass_checks` applies to the suppression, not to the negative control. Retain the malformed-input assertion through an explicit dynamic test boundary. The rule is defined at `.venv/lib/python3.12/site-packages/mypy/errorcodes.py:58`.
+
+2. **C2. P3. Remove the fixture-alias explanation at `tests/test_byte_graph_v2.py:301`.** The comment explains why `sample` serializes and parses three fixture objects before it returns them. This is a property of the fixture construction. It is not an external constraint that forces this construction. `MUST KILL sample` applies to the hidden alias-removal step. A named fixture-copy operation can express this behavior. The JSON statement itself is true. The local CPython `json/decoder.py:137` creates a new object during parsing, and `:213` creates its dictionary. This finding does not claim that JSON preserves aliases or that the comment is false. It flags the internal fixture workaround under the supplied policy.
+
+3. **C3. P3. Remove the helper narration at `tests/test_byte_graph_v2.py:48`.** The `sample` docstring describes how the test data was written. It does not define a public API contract or document an external constraint. The fixture and its assertions already show the data relation. Delete this docstring without changing the expected observations.
+
+4. **C4. P3. Remove the test-module narration at `tests/test_byte_graph_v2.py:1`.** The module docstring describes the controls and repeats the authority restriction. This test module does not expose the reader API. The public module and parser docstrings already state that restriction. The supplied keep list does not cover this test narration.
+
+No comment or source edit was made. The actual deletion count is zero. The proposed deletion count is four one-line sites. No comment was restored. No finding requires removal of a test or a change to old expectations.
+
+## Kept comments and review limits
+
+The module docstring at `phoenix/lift/byte_graph_v2.py:1`, the five public error docstrings at lines 63, 67, 71, 75, and 79, and the public parser docstrings at lines 491 and 913 define API scope or error contracts. They meet the public-contract exception.
+
+The opcode comment at `phoenix/lift/byte_graph_v2.py:46` meets the external dependency exception. The saved official `PcodeOp.java` has SHA-256 `28254c46b0f6744c3ad8ca0757a6d46d5922b743857121cada7b559af18d2d8b`. This equals its saved primary-source manifest entry at Ghidra revision `8ca9077040cc43cd790babcfccf19475622a3e9a`. All 74 opcode names match. The reader uses this set only to require an unsupported-opcode gap. See `opcode-comment-evidence.json`.
+
+The audit found 13 comment and docstring sites in the two Python files. Nine are kept and four are flagged. There is no unresolved external-rule comment HOLD. ADR0042 and the appended progress records were read as review context. They are documents, not code comments.
+
+The Poteto and Comment Sicko instructions were read from version `0.9.138`. The direct user restrictions replaced nested dispatch, source edits, Git writes, and network steps. The Prove It Works principle changed the verification choice. I checked actual source bytes and imports, repeated tests, and inspected saved hook and push records instead of accepting exit status alone. Throughput checkpoint is not applicable to this read-only review.
+
+## Exact identity evidence
+
+The complete 1,016-line reader, complete 1,729-line test file, ADR0042, AGENTS.md, SPEC.md, all four final design records, the writer report and final check, and the named parent records were read. Split reads covered truncated displays.
+
+`identity.json` records the following results.
+
+| Check | Result |
+| --- | --- |
+| Worktree HEAD and local remote-tracking branch | Both equal exact commit `dc428feb29609255bb0739741a21e45e263d3712` |
+| Tracked worktree bytes versus exact source commit | All match |
+| Old tracked paths versus `2c9934a6b96004536c5db98e844dce180c958c25` | 237 paths checked; no forbidden change |
+| STATUS and LOG | Complete old byte prefixes retained; changes are appends |
+| New paths | Only the reader, its test file, and ADR0042 |
+| Shared dependencies versus main `293477f` | Package initializers, index, mapping, evidence, tools.lock, uv.lock, and pyproject.toml all match |
+| Four frozen design records | Each matches its bytes in `293477f` |
+| Actual imports | All six checked modules resolve inside the frozen checkout |
+| Python | 3.12.13; frozen checkout `.venv/bin/python` |
+| Bytecode | `-B` and `PYTHONDONTWRITEBYTECODE=1`; the new prefix remains absent |
+
+The reader SHA-256 is `497b3e493a4d7d6b49881a0e0f609995604900489e04908d3926308c8aa3ce5c`. The test SHA-256 is `6e524f9dea455c1a940cc92b46425061634391a0ba97abd801b3f837bbc9c5c4`. The ADR SHA-256 is `887b46d9535af16ffe3b744ae5ef05569a2fe4c32b562f15191020d719b052f2`. The parent source record and pending-backup manifest contain these same complete file identities.
+
+The saved full-hook log contains `Phoenix quality checks...Passed`, the commit result for `dc428fe`, and the successful new-branch push. The hook configuration runs `scripts/check`. That script runs Ruff, format checks, mypy, and pytest with the evaluator coverage gate. The parent focused log contains `1095 passed, 1 deselected`. The saved post-push source record and the local remote-tracking ref agree. `parent-evidence.json` binds these records. This verifies the saved hook and push evidence. No network recheck was made. The hook log does not expose separate subcommand counts, so this report supplies none.
+
+The source branch predates later main additions. No main file was replaced. No source or Git write occurred.
+
+## Repeated host checks
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| New graph tests and unchanged graph, source, and evidence suites | 1,095 passed; one live test excluded | `tests-current.log` |
+| Selected unchanged index and mapping controls | 15 passed | `tests-index.log` |
+| Initial independent controls | 104 passed; edge fixture required a correction | `tests-independent-first.log` |
+| Final independent controls | 105 passed | `tests-independent-final.log` |
+| Ruff | Passed | `ruff.log` |
+| Ruff format | Two files already formatted | `format.log` |
+| Strict mypy | No issue in the two files | `mypy.log` |
+| Current-suite reader coverage | 522 of 530 statements executed; eight missed | `coverage-current.json` |
+| Final identity check and `git diff --check` | Passed | `identity-final.log` |
+
+These are host unit-test results. They are not Phoenix evaluation results. The coverage observation is for the new reader only. It does not replace the evaluator coverage gate.
+
+The independent controls use a separate literal graph and ordinary lift. They cover an empty entry block, one zero-operation raw instruction, an unused value, maximum local identity and address, exact Unicode retention, nested frozen records, detached nested serialization, canonical ASCII expansion, altered direct limit objects, exact and next listing-range and edge counts, malformed direct listing scalars, exact required SSA gaps, and propagation of four hash fault types. One additional control uses the hash-checked frozen phi fixture only to exercise all nested operation and edge record types. Its expected slot values are literal.
+
+The reader retains supplied operation and value keys. Operand projection uses those keys before it compares storage. Equal storage does not reconstruct identity. The repeated controls cover actual dead Booleans, empty and disconnected blocks, dense block slots, entry versus cover addresses, required null native entry, separate raw and analyzed identities, unused values, repeated ordered inputs, reciprocal parallel edges and self-loops, phi slots, and mandatory global gaps. Unknown opcodes, unowned operations, ambiguous value flags, and phi-arity differences retain required gaps. Acceptance remains structural. Source and tool hashes in PassRecord are supplied observations.
+
+The complete source scan found no file, environment, process, provider, publication, semantic, or emission operation in the new module. Imports provide immutable ordinary record types. Old reader and publication bytes remain unchanged. The current tests reject schema 2 in the old graph reader and reject schema 1 in the new graph reader. There is no weaker schema conversion.
+
+## Bound checks
+
+The repeated suite checks each limit field for exact integer type, positivity, and refusal above its hard maximum. It checks graph arrays and the supplied ordinary lift. The relevant lift scans include listing ranges, listing edges, raw and analyzed operands, repeated references, and instruction records.
+
+| Bound | Exact and next-count evidence |
+| --- | --- |
+| Graph bytes | 16 MiB accepted with legal trailing whitespace; one extra byte refused. Canonical output has a separate byte check. Independent non-ASCII input proves that canonical expansion also obeys the cap. |
+| Source UTF-8 bytes | 1 MiB of two-byte scalars accepted; one extra ASCII byte refused. Character count is not used as the final byte count. |
+| JSON depth | Valid graph at its exact reduced depth accepted; one lower limit refused. Depth 32 reaches shape refusal; depth 33 reaches limit refusal. No depth-32 array is claimed as an accepted graph. |
+| Functions | 32 accepted; 33 refused. Pass ordinal 31 accepted; 32 refused. |
+| Graph blocks and listing blocks | 32 accepted in each inventory; 33 refused. |
+| Operations | 256 accepted separately for raw and analyzed domains; 257 refused. |
+| Raw instructions | 256 accepted; 257 refused. Zero-operation instruction sites remain present. |
+| Inputs | 256 accepted; 257 refused. Direct constructed raw and analyzed lift records also receive the input limit check. |
+| Values | Reduced count boundaries pass and refuse as required. The complete 65,792-value fixture and its next count both exceed 16 MiB and are refused. No full 65,792-value wire success is claimed. |
+| References | 65,792 accepted in each domain; the same data fails a 65,791 limit. The hard limit is `256 * (256 + 1)`. A next count also exceeds an input or operation bound. No independent successful one-over construction is claimed. |
+| Directed graph edges | 1,024 accepted; 1,025 refused. Reciprocal storage is not counted as a second directed edge. |
+| Gaps | 256 accepted; 257 refused. |
+| Referenced listing ranges and edges | Independent direct lift controls accept 256 function ranges, 256 aggregate listing ranges, and 1,024 listing edges. Their next counts are refused. |
+| Pass bytes | 64 KiB accepted with legal whitespace; one extra byte refused. |
+
+The tests also check fixed profile constants, scalar limits, strict Boolean fields, canonical hexadecimal fields, duplicate JSON keys, invalid Unicode, malformed finite wire inputs, and detached canonical identities. Runtime, ValueError, TypeError, and OSError hash faults propagate in the independent controls. No total-memory limit is claimed.
+
+## Commands and failures
+
+Every shell first sourced `/Volumes/Extreme Pro/Phoenix/env.sh`. After setup, it sourced the review-only `env.sh` in the assigned temporary directory. This scopes cache, data, temporary, coverage, Hypothesis, mypy, Ruff, and bytecode locations. `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` disables automatic pytest plugin discovery. The current suite explicitly loads only the installed Hypothesis and pytest-cov test instrumentation.
+
+The main commands were these. `$PWD` was the frozen checkout. `$REVIEW_TMP` and `$REVIEW_OUT` were the two assigned directories.
+
+```sh
+.venv/bin/python -B "$REVIEW_TMP/identity.py"
+.venv/bin/python -B -m pytest -q -p no:cacheprovider -p hypothesis.extra.pytestplugin -p pytest_cov.plugin --rootdir="$PWD" --confcutdir="$PWD" --basetemp="$REVIEW_TMP/pytest-current" --hypothesis-seed=20261113 --cov=phoenix.lift.byte_graph_v2 --cov-report="json:$REVIEW_OUT/coverage-current.json" --cov-report=term-missing tests/test_byte_graph_v2.py tests/test_byte_graph.py tests/test_byte_source.py tests/test_lift_evidence.py -k 'not public_phase_grid_storage'
+.venv/bin/python -B -m pytest -q -p no:cacheprovider --rootdir="$REVIEW_TMP" --confcutdir="$REVIEW_TMP" --basetemp="$REVIEW_TMP/pytest-independent-final" "$REVIEW_TMP/test_independent.py"
+.venv/bin/python -B -m ruff check phoenix/lift/byte_graph_v2.py tests/test_byte_graph_v2.py
+.venv/bin/python -B -m ruff format --check phoenix/lift/byte_graph_v2.py tests/test_byte_graph_v2.py
+.venv/bin/python -B -m mypy --strict phoenix/lift/byte_graph_v2.py tests/test_byte_graph_v2.py
+git diff --check
+```
+
+The unchanged index batch used the same frozen rootdir and confcutdir, seed `20261113`, and `$REVIEW_TMP/pytest-index`. It selected `test_duplicate_keys_and_noncanonical_addresses_reject`, `test_analyzed_dangling_definition_rejects`, `test_unmapped_analyzed_proposal_has_explicit_gap`, `test_poisoned_mapping`, `test_instruction_bytes_and_binary_identity_are_bound`, `test_metadata_anchor_changes_reject`, and `test_jump_arrays_are_preserved_separately` from `tests/test_recovery_u1.py`.
+
+No test assertion failed. The following setup and inspection exceptions remain part of the record.
+
+- Initial `ls` probes for PAUSED and DRAINING at guessed root paths returned missing-path errors and shell exit 1. The design report identified the actual `audit/continue-v1` marker directory. Both actual markers were absent when checked. The later batch check includes that directory.
+- Large initial displays were truncated. Smaller reads covered the missing text.
+- An inspection command guessed `tests/test_byte_export.py`. That file does not exist. `rg` reported an input/output error. This was not a passing test or a publication-suite result.
+- The first independent edge fixture used positional StaticEdge arguments incorrectly. The count checks still passed, but that fixture was not accepted as final evidence. I corrected it to exact keyword fields and a Location target. The final 105-control batch passed. The first 104-control log is retained.
+- The final check records each quality-tool exit separately. A later successful shell command does not replace an earlier tool result.
+
+No old expected result changed. No test was weakened. One named live Ghidra test stayed excluded.
+
+## Process and open gates
+
+Only the two permitted directories received review writes. The manifest uses an explicit created-file allowlist. It does not scan the audit tree. No source edit, Git mutation, network request, credential read, compiler, linker, Ghidra job, native plugin, target, container, or VM operation was performed. No nested agent, model, API, model CLI, session reader, or dispatch was used. No private source, held-out input, source archive, private run, Author record, Codex session, event, dispatcher stderr, or dispatcher summary was read. The installed guard was not inspected, changed, or relaxed.
+
+The service setting was not changed. Fast mode was not enabled. The permitted evidence cannot independently attest provider routing or the service tier. This report makes no such attestation.
+
+PAUSED and DRAINING were checked before each shell batch after the marker path was identified. Both actual markers remained absent. The old checkpoint deadline was not treated as a new deadline. No background child or scheduled continuation was started. All owned check processes returned completion.
+
+Full capture review remains **OPEN after provider screening**. It was not retried or replaced. Producer admission, Unit B, Java adapter capture, selector integration, Unit D, native facts, entry and memory effects, source grammar, callable interfaces, pointer proofs, emission, publication, and runtime controls remain open. No native approval, corpus score, milestone, M4, or SPEC section 9 completion is supplied.

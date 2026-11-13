@@ -1,0 +1,20 @@
+[
+  {
+    "name": "public-amd64",
+    "artifact_id": 14043065291,
+    "zip_bytes": 975,
+    "zip_sha256": "sha256:f0cbb51eaee74401169ec2b9013f3ea2fcc8318d5899ec32841ed48a05a7ecad",
+    "report_sha256": "201ea10af098a666892621a71d45a6f37c0829b76c1c789f3c41bee575e8ce34",
+    "member": "m0-6eec2537a59849949769d511b662e6ea/m0.json",
+    "report": "/Volumes/PhoenixWork/audit/resume-20261113/native-ci-293477f/public-amd64/m0.json"
+  },
+  {
+    "name": "public-arm64",
+    "artifact_id": 14042965458,
+    "zip_bytes": 980,
+    "zip_sha256": "sha256:c5bdab372c1f00881813fbbeb92a78f9637b7314a4916add5ac30caa7e8a22e6",
+    "report_sha256": "2774c96ef0a0e5ee620cac096a38fdc091c5dfd5d499b31d4a5b8932162bf664",
+    "member": "m0-442cee7c141a4f0a9bf22e6ae364e22b/m0.json",
+    "report": "/Volumes/PhoenixWork/audit/resume-20261113/native-ci-293477f/public-arm64/m0.json"
+  }
+]

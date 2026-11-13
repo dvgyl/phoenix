@@ -1,0 +1,101 @@
+{
+  "run_id": "m0-ea89531416274da5b4df008f7a219d06",
+  "mode": "apple-silicon",
+  "runtime": {
+    "daemon_architecture": "arm64",
+    "engine_version": "29.5.2",
+    "amd64_engine": "rosetta",
+    "arm64_engine": "native",
+    "binfmt_registrations": "enabled\n\nregistration python3.12\nenabled\ninterpreter /usr/bin/python3.12\nflags: \noffset 0\nmagic cb0d0d0a\n\nregistration qemu-i386\nenabled\ninterpreter /usr/bin/qemu-i386\nflags: POCF\noffset 0\nmagic 7f454c4601010100000000000000000002000300\nmask fffffffffffefe00fffffffffffffffffeffffff\n\nregistration qemu-x86_64\ndisabled\ninterpreter /usr/bin/qemu-x86_64\nflags: POCF\noffset 0\nmagic 7f454c4602010100000000000000000002003e00\nmask fffffffffffefe00fffffffffffffffffeffffff\n\nregistration rosetta\nenabled\ninterpreter /mnt/lima-rosetta/rosetta\nflags: OCF\noffset 0\nmagic 7f454c4602010100000000000000000002003e00\nmask fffffffffffefe00fffffffffffffffffeffffff\n"
+  },
+  "worker_images": {
+    "amd64": "sha256:5b018fc1ba67c0f8ed5fa74b7bc157db2b23542e79373e9e784af2a4d65d1e43",
+    "arm64": "sha256:95d8ff50a90d316d94e68827760b0bce8c12167833321a40defabbdd13dff75d"
+  },
+  "evaluator": {
+    "commit": "293477f643a764d7fe34054899d2fee215f1daf1",
+    "worker_source_sha256": "f2ae5cdece588e795c60c3c45f630027cc3f4d954738b6801a842b1cc2f391a1"
+  },
+  "seed": 31640025043986808,
+  "self_trials": 3,
+  "sandbox_probes": {
+    "rosetta": true,
+    "arm64": true,
+    "qemu-x86-64": true
+  },
+  "programs": [
+    {
+      "program": "bitstats",
+      "cases": 10,
+      "original_sha256": "33bdfb0965f873857b8820deda63d6ec666277f2f7eade008b943f5198ce4ae0",
+      "outcome_sha256": "500392090011d59f61cf09ee3e989867c885e124f13b556755fbb741f110bbef",
+      "self_match": true,
+      "matches_expected_public_behavior": true,
+      "coverage": {
+        "recovered_blocks": 45,
+        "covered_blocks": 30,
+        "selected_cases": 4,
+        "mutation_candidates": 4,
+        "emulator_sensitive_candidates": 0
+      },
+      "coverage_failure": null,
+      "independent_oracle_healthy": true,
+      "emulator_sensitive_cases": 0,
+      "portability": {
+        "rosetta-gcc": true,
+        "rosetta-clang": true,
+        "arm64-gcc": true,
+        "arm64-clang": true
+      },
+      "mutations": {
+        "rosetta": {
+          "killed": 5,
+          "total": 5,
+          "valid": true
+        },
+        "arm64": {
+          "killed": 5,
+          "total": 5,
+          "valid": true
+        }
+      }
+    },
+    {
+      "program": "filemarks",
+      "cases": 6,
+      "original_sha256": "18c3c25d438bc695b48c0223a0e9c1afd736e5b88cc3038c1fbbb0b7ba70c42b",
+      "outcome_sha256": "a9f42673172c0fe3e025e7260d9859e3e291378e5711192a73dc01d0392baae1",
+      "self_match": true,
+      "matches_expected_public_behavior": true,
+      "coverage": {
+        "recovered_blocks": 51,
+        "covered_blocks": 30,
+        "selected_cases": 4,
+        "mutation_candidates": 4,
+        "emulator_sensitive_candidates": 0
+      },
+      "coverage_failure": null,
+      "independent_oracle_healthy": true,
+      "emulator_sensitive_cases": 0,
+      "portability": {
+        "rosetta-gcc": true,
+        "rosetta-clang": true,
+        "arm64-gcc": true,
+        "arm64-clang": true
+      },
+      "mutations": {
+        "rosetta": {
+          "killed": 5,
+          "total": 5,
+          "valid": true
+        },
+        "arm64": {
+          "killed": 5,
+          "total": 5,
+          "valid": true
+        }
+      }
+    }
+  ],
+  "behavior_checks_passed": true
+}

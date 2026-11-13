@@ -1,0 +1,11 @@
+{
+  "head": "23e05e96ecfddad009edb403cae2393422e14514",
+  "remote": "23e05e96ecfddad009edb403cae2393422e14514",
+  "clean": true,
+  "full_hook_passed": true,
+  "prior": "dc428feb29609255bb0739741a21e45e263d3712",
+  "product_module_exact": true,
+  "ADR_exact": true,
+  "all_focused_checks_passed": true,
+  "tests_sha256": "de6f8374c491bd508296ac108f371ce8e294f993f29d6efdf8fc127140a2f139"
+}

@@ -1,0 +1,129 @@
+{
+  "schema": "phoenix-public-resume-checkpoint-1",
+  "created_at": "2026-11-13T14:34:10.343181+00:00",
+  "source_main": "293477f643a764d7fe34054899d2fee215f1daf1",
+  "files": [
+    {
+      "path": "HANDOFF-paused.md",
+      "bytes": 23328,
+      "sha256": "487441a32b65a4e75e78ffd7b4d3b53f879c7913902408095ff4154df36459dc"
+    },
+    {
+      "path": "byte-integration-review.md.txt",
+      "bytes": 17502,
+      "sha256": "fcdb14536401d7d1d872c61afb530cff9453defc15aab6ebe8052c446a5c4eab"
+    },
+    {
+      "path": "elf-integration-review.md.txt",
+      "bytes": 19833,
+      "sha256": "8971e80327048baa8bb6c7aa384c9df529a407cdb5168ca7cce301d867944479"
+    },
+    {
+      "path": "fixture-review.md.txt",
+      "bytes": 14656,
+      "sha256": "5e01d5fccfed578022072f80bcdf960641748d3ff1df8a6cbbfd6213dc7df6b1"
+    },
+    {
+      "path": "public-linux-review.md.txt",
+      "bytes": 21807,
+      "sha256": "9fedd04ff3a9820c8e35911f960805917756ca2352e4ff7cbcc643725e966172"
+    },
+    {
+      "path": "graph-comment-hold.md.txt",
+      "bytes": 16722,
+      "sha256": "f9df13cfb493a86ecf7eb1a008c80d778a2afed572b309c7542e428a97158240"
+    },
+    {
+      "path": "graph-full-hold.md.txt",
+      "bytes": 21206,
+      "sha256": "4ee4833908f57906d7fe20f0e9584b0255ebd7409e3324473be17a0c5b82f79b"
+    },
+    {
+      "path": "u2-design-astra-report.md.txt",
+      "bytes": 16123,
+      "sha256": "952e5e46cf71ab311338404df7f0d03e2dfd1f326a0fdc899eefc0848866e411"
+    },
+    {
+      "path": "u2-design-sol-report.md.txt",
+      "bytes": 21306,
+      "sha256": "3d17754ea72b3ee9b6efc0d82a68ae97668eafaef6a13af99f20bc1c4b266b91"
+    },
+    {
+      "path": "byte-integration-proof.json",
+      "bytes": 158,
+      "sha256": "67a809fa0a0f754b350479ace2b9e7f2d5c434bab707f006205ba57d3a584324"
+    },
+    {
+      "path": "elf-integration-proof.json",
+      "bytes": 158,
+      "sha256": "f07b94c7cc31739043c3404f4a5eb99c7967e69f1a320153c66deef3eb34e29d"
+    },
+    {
+      "path": "fixture-proof.json",
+      "bytes": 224,
+      "sha256": "ba557cb0d49add1723ef72b4a63c1e336df0a1ac9ad8d3206acb65d1c97b0f3b"
+    },
+    {
+      "path": "graph-source-proof.json",
+      "bytes": 933,
+      "sha256": "d208806567c9519b2a9ed45a0e8fc591fcbf3fc128a2823126fb2bc9b8bfcbb1"
+    },
+    {
+      "path": "graph-comment-correction-proof.json",
+      "bytes": 389,
+      "sha256": "9c25636cbcee467adec0b1b5d9e3ec0d346580e4480fcd1e4d33e1a8102402c7"
+    },
+    {
+      "path": "layout-source-proof.json",
+      "bytes": 975,
+      "sha256": "d01da1fafef35415ad0b81a13e144261d9a03eaf14336f8ab76840aebbbfcbf9"
+    },
+    {
+      "path": "native-artifact-metadata.json",
+      "bytes": 1698,
+      "sha256": "627719d1b203e1659ff8f061009734cb5082ab09709a993829ce8039062f0c18"
+    },
+    {
+      "path": "native-verified-archives.json",
+      "bytes": 867,
+      "sha256": "073e5d1e630ffd68cbcf6bfcb621f1cbbc0e6cb96f674236313406337c2c0e20"
+    },
+    {
+      "path": "native-amd64-m0.json",
+      "bytes": 2031,
+      "sha256": "201ea10af098a666892621a71d45a6f37c0829b76c1c789f3c41bee575e8ce34"
+    },
+    {
+      "path": "native-arm64-m0.json",
+      "bytes": 2031,
+      "sha256": "2774c96ef0a0e5ee620cac096a38fdc091c5dfd5d499b31d4a5b8932162bf664"
+    },
+    {
+      "path": "mac-m0.json",
+      "bytes": 3514,
+      "sha256": "405ba283c70335418c1b2dce2327bbb4069e190eda16873c04bd4be6acdfaf03"
+    },
+    {
+      "path": "public-m0-comparison.json",
+      "bytes": 1427,
+      "sha256": "bf4ac46cbbdc63441ba4b95686a6af17e5875030aa52a8d1641dc34bdd81a650"
+    },
+    {
+      "path": "public-switch-report.json",
+      "bytes": 9125,
+      "sha256": "107709fdb0678c993c098b332f8b8e7391076c6ee025532e69c19cd195746bef"
+    },
+    {
+      "path": "public-switch-proof.json",
+      "bytes": 1069,
+      "sha256": "37c8d973a82a84afb5d95cd47a82ee639b5bd4e583f1a9563c30e10d106edcb0"
+    },
+    {
+      "path": "public-linux-accepted.json",
+      "bytes": 676,
+      "sha256": "74b25a11904de202b33a1eb94d885b8b882c9f02d778b874dcc97201a9bd49c5"
+    }
+  ],
+  "private_material_included": false,
+  "raw_model_or_author_logs_included": false
+}
