@@ -1,5 +1,18 @@
 # Phoenix status
 
+Phoenix dispatch is paused for the user-requested deadline of
+01:11:47 UTC on 13 November. All workers, queues, the private Author and
+Colima are stopped. The timer and one-time automation are paused. Resume
+requires a new explicit instruction. Read HANDOFF and the canonical resume
+checkpoint first. M2 through M4, publication and headline replay remain open.
+
+Current source: main `2c9934a`, byte diagnostic `7562edb`, passive ELF
+`11cb51b`. Both corrected branches passed full hooks and fresh Sol review.
+Root repeated all 114 new byte controls and 1,344 new ELF controls. All
+passed. Integrate exact files after resume and preserve later main changes.
+T2 is sealed. Its approved hash addition is on the handoff branch.
+The earlier narrative below retains historical progress and open limits.
+
 M0 passed at `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
 M1 passed at `6897e4753d8acedfae57af63e6426faf116bed2e`.
 M2 work is in progress. No M2 result or later milestone is accepted.
@@ -152,3 +165,14 @@ The byte diagnostic is fully checked and pushed at `b252452`, but fresh
 Sol holds F2 for Python 3.12 path loops. Six new permanent controls are
 red. Required Astra advice is active. U1 is fully checked and pushed at
 `75b42cf`; fresh Sol review remains active. No new code is on main.
+
+
+T2 sealing completed at 00:48:17 UTC on 13 November. The approved Author
+handoff reports ten programs and 60 variants. Every program passed the
+required adequacy gates. Aggregate branch coverage is 18,590/21,685;
+mutant detection is 305/310. Five non-equivalent mutants survived. One
+confirmation used a declared emulator-diagnostic rule. These are corpus
+adequacy counts, not reconstruction scores. All 60 final rebuilds match.
+The T2 hash addition preserves accepted T0 and T1 commitments. The Author
+released the VM and stopped Colima. Root verified its process absent and
+Lima Stopped. T3 runtime qualification and all later milestones stay open.

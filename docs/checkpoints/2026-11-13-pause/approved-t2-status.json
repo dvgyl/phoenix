@@ -1,0 +1,37 @@
+{
+  "updated_at_utc": "2026-11-13T00:48:17.017610+00:00",
+  "state": "sealed",
+  "phase": "complete",
+  "required_programs": 10,
+  "required_variants": 60,
+  "validated_programs": 10,
+  "validated_variants": 60,
+  "fixed_inputs": 43276,
+  "planned_mutants": 310,
+  "coverage": {
+    "covered_branches": 18590,
+    "total_branches": 21685
+  },
+  "mutants": {
+    "killed": 305,
+    "non_equivalent": 310
+  },
+  "minimum_branch_coverage": {
+    "covered": 2742,
+    "total": 3225
+  },
+  "minimum_mutant_detection": {
+    "killed": 29,
+    "total": 32
+  },
+  "generator_replays_passed": 20,
+  "generator_replays_required": 20,
+  "lease_owner": null,
+  "vm_released": true,
+  "vm_running": false,
+  "source_archive_sha256": "5f3b67cce71ad1ec6e7876889ff1e609a4072b2feb833fb23f2ba2f072fd8788",
+  "input_archive_sha256": "27ea3363f4cd1ef284db6b3ec0ff24c5d7bb7cf3ca8fcfc20e5cd6f4211e6574",
+  "disclosure": "Agent-sealed on the honor system. These are source adequacy counts, not reconstruction scores.",
+  "owner_blocker": null,
+  "mutant_diagnostic_rule_confirmations": 1
+}

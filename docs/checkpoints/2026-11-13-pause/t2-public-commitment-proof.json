@@ -1,0 +1,9 @@
+{
+  "old_bytes": 453,
+  "old_sha256": "37fb2f8442216fadafbb17695a245b23aaca8c9ef1c4ce5b4977a52f7379e752",
+  "new_sha256": "682f8447f1eebdf6f21dc6a5505c2cc626d5d58ab85aa7c32f084dbb3a4e1d68",
+  "old_t0_t1_prefix_exact": true,
+  "source_archive_sha256": "5f3b67cce71ad1ec6e7876889ff1e609a4072b2feb833fb23f2ba2f072fd8788",
+  "heldout_archive_sha256": "27ea3363f4cd1ef284db6b3ec0ff24c5d7bb7cf3ca8fcfc20e5cd6f4211e6574",
+  "authority": "Approved dedicated Author handoff only. Root did not open either archive."
+}

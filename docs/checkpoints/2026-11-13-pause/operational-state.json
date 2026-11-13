@@ -1,0 +1,19 @@
+{
+  "observed_at_utc": "2026-11-13T00:57:47.046963+00:00",
+  "model_worker_count": 0,
+  "queue_count": 0,
+  "private_author_process_count": 0,
+  "deadline_timer_process_count": 0,
+  "colima_state": "Stopped",
+  "lima_directory": "/Volumes/PhoenixWork/vm/colima/_lima/colima",
+  "dispatch_markers": [
+    "DRAINING",
+    "PAUSED"
+  ],
+  "one_time_automation": "PAUSED",
+  "main": "2c9934a6b96004536c5db98e844dce180c958c25",
+  "byte_branch": "7562edb423b55edd70c74366392d10f73d2729c3",
+  "elf_branch": "11cb51b06ff181209c7a9e23ed9bb6f758cea839",
+  "goal_pause_update": "The final action at the user deadline. Not a completion claim.",
+  "private_material_read_by_root": false
+}

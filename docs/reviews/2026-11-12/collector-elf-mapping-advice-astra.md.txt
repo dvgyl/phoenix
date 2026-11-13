@@ -1,0 +1,123 @@
+Phoenix needs a complete passive ELF write check before U2 can use this reader. I recommend the narrow F1 correction. For O1, select option 1 as an explicit conservative test-profile rule. The corrected implementation still needs independent review. U2 through U5, native profiles, and production remain HOLD.
+
+F1 in this report means the passive ELF finding. It is separate from the earlier design's F1 trusted-issuance requirement. Full capture review remains OPEN after provider screening. This report does not replace, retry, or bypass that review. It gives no producer, runtime, semantic, or Linux profile approval. SPEC.md section 9 remains open.
+
+The reviewed implementation is the frozen input from `75b42cf8b1da83b2090be8a7031216826986ba1f`. All three byte lengths and SHA-256 values match [source-manifest.json](inputs/source-manifest.json). [input-check.json](input-check.json) records the checks. The four final design hashes also match ADR0041. [design-check.json](design-check.json) records those checks.
+
+I read AGENTS.md and SPEC.md in the assigned read-only directory. I did not use that directory's older implementation. I did not read the changing `m1-ci-reliable` tree. The source-manifest supplies the commit association. I verified its file contents, not Git ancestry or the host's model routing.
+
+The F1 correction is justified by the source and synthetic controls. At [collector_elf.py line 1271](/Volumes/PhoenixWork/audit/m2-passive-elf-f1-design-astra-20261113/inputs/phoenix/observe/collector_elf.py:1271), `file_span(where, 8)` checks exact file-backed coverage. The next check requires alignment, PF_W, and absence of PF_X. Neither check examines the rounded page map. Section validation calls `page_mapping` at line 687. A write without section coverage therefore misses that check.
+
+Retain the returned file offset. Insert the existing full-span check after the existing destination permission check and before relocation indexing.
+
+```python
+offset, load = self.file_span(where, 8)
+_require(
+    where % 8 == 0 and not load.flags & 1 and bool(load.flags & 2),
+    "relocation_contract",
+    "Invalid relocation destination.",
+)
+self.page_mapping(where, offset, 8, False)
+```
+
+Use `False` for every accepted runtime write. Do not derive that argument from section flags. The write must satisfy the data rule even when a section declares executable instructions. Preserve every existing kind, symbol, addend, target-section, duplicate, metadata, and protected-object check. Preserve `file_span` and its readable, exact, complete file-backed requirement. Do not substitute `readonly`, add a new RELRO rule for unrelated writes, or change the candidate granules.
+
+The new call uses the existing reason `ambiguous_mapping`. It rejects conflicting rounded file translations, rounded executable coverage, zero fill, and holes. It checks all eight bytes. The exact load still supplies the expected file offset. Neither a relocation addend nor a section offset can replace it.
+
+I reproduced the eight original F1 acceptance gaps with the frozen reader. The same existing page check rejected all eight when called directly on their write spans. Eight section-covered counterparts already rejected. Six positive fixtures passed both the reader and direct page checks for every relocation. Those fixtures cover ordinary mappings, coherent rounded mappings, and the protected RELRO prefix on both machines. These are synthetic checks, not Linux observations.
+
+The source correction was not applied or tested here. Direct calls establish that the existing check detects these cases. They do not prove that a later patch calls it on every path. [controls.json](controls.json) retains the individual results. The independent HOLD remains the implementation verdict until the corrected revision passes its tests and review.
+
+O1 is a contract choice, not a second confirmed defect. The final design rejects executable destinations. It specifies stronger section checks for consumed objects. It does not clearly define section declarations for every unrelated write. The frozen reader retains section flags as evidence and uses load permissions for those writes. Its acceptance of an executable `.got` declaration must not be described as observed Linux behavior.
+
+The alternatives have these costs.
+
+| Alternative | Benefit | Cost and boundary | Decision |
+| --- | --- | --- | --- |
+| 1. Refuse writes that intersect allocated executable sections. | The profile never accepts a write into bytes declared as allocated instructions. The rule applies to the complete write inventory. | It can reject a general ELF file whose load is non-executable despite its section declaration. The added restriction concerns writes only. | Select for this test profile. |
+| 2. Retain section declarations and use PF_X as the permission rule. | It preserves the current acceptance set after F1. The permission rule follows the load model. | It needs an explicit statement that unrelated SHF_EXECINSTR declarations do not constrain writes. O1 and native applicability must remain HOLD. | A coherent alternative, but less conservative for this fixed profile. |
+| 3. Require executable flags to agree for every allocated section. | It supplies one global section-to-load consistency rule. | It rejects mismatches even when no relocation touches them. It also needs rules for NOBITS, empty sections, and sections without complete file-backed ownership. | Exceeds this correction. Do not add it. |
+
+The compatibility cost is structural, not measured. No compiler output or loader result was inspected. Option 1 can reject output that another contract permits. A future native-profile review must record such a refusal. It must not silently weaken this rule to accept a compiler output.
+
+The exact O1 rule is as follows. For each accepted eight-byte relocation, refuse any nonempty intersection between its virtual-address span and a nonempty section with both `SHF_ALLOC` and `SHF_EXECINSTR`. Apply the rule to relative, GLOB_DAT, and JUMP_SLOT writes on machines 62 and 183. Apply it whether `sh_info` is zero or names a target section. Use reason `relocation_contract` and fixed detail `A relocation touches allocated executable section bytes.`
+
+Use half-open intervals. A write at `where` occupies `[where, where + 8)`. A section occupies `[section.va, section.va + section.size)`. A one-byte intersection rejects. Exact endpoint adjacency passes this rule. Check virtual-address intersection, not the section name, start address alone, or complete containment.
+
+Build one sorted tuple of executable section intervals at the start of `runtime_relocations`, outside both relocation loops. Include every section type, including NOBITS. Select positive size and both flag bits. Keep a parallel tuple of starts. `envelope` already checks unsigned section extents and rejects overlapping positive-length allocated section intervals. The new index relies on that established precondition.
+
+The recommended index and query are as follows.
+
+```python
+executable_sections = tuple(sorted(
+    (s.va, s.va + s.size)
+    for s in self.sections
+    if s.size and s.flags & 2 and s.flags & 4
+))
+executable_starts = tuple(start for start, _ in executable_sections)
+```
+
+After the exact-load and F1 checks, perform this query before storing the relocation.
+
+```python
+i = bisect_left(executable_starts, where + 8) - 1
+_require(
+    i < 0 or executable_sections[i][1] <= where,
+    "relocation_contract",
+    "A relocation touches allocated executable section bytes.",
+)
+```
+
+`file_span(where, 8)` has already checked the unsigned end. Do not mask or wrap `where + 8`. An end equal to `2**64` is permitted. The predecessor is sufficient because indexed intervals are disjoint. Every earlier interval ends at or before the selected interval starts. If the selected interval ends before the write, earlier intervals cannot intersect it. An empty index passes.
+
+Do not add a section scan for each relocation. With S sections and R writes, the added O1 work is `O(S log S + R log S)`. Extra storage is `O(S)`. S remains at most 4096 and R at most 262144. Caller reductions remain binding. No byte array is allocated from a virtual address, section size, or `p_memsz`.
+
+F1 also uses an existing index. Each candidate page map uses a binary search, then visits intersecting intervals. For an eight-byte query, there are at most eight nonempty intervals because endpoints are integer byte addresses. With P program headers and the unchanged three granules, added query work is `O(R * 3 * (log P + 8))`. This is a source bound, not a measured time or memory result. No total Python memory guarantee follows from these bounds.
+
+The edge rules are explicit.
+
+| Case | O1 result | Other checks |
+| --- | --- | --- |
+| Only the first or last write byte intersects an allocated executable section. | Refuse. | Preserve all existing checks. |
+| Several disjoint executable sections lie within one write. | Refuse. | The last intersecting predecessor suffices. |
+| An executable section has no SHF_ALLOC bit. | Ignore it for O1. | File metadata protection can still reject the write. |
+| An allocated executable section has size zero. | Ignore it for O1. | Envelope checks still validate its fields. |
+| An allocated executable NOBITS section intersects a file-backed write. | Refuse by declaration. | This rule does not assert that Linux maps the section. |
+| The write has no section coverage. | O1 adds no refusal. | Exact-load, F1, alignment, metadata, and protected-object checks still apply. |
+| An executable declaration in a non-X load has no intersecting write. | O1 adds no refusal. | Consumed-object and all existing mapping rules remain in force. |
+| The write and section share only an endpoint. | No O1 refusal. | The complete write must pass all other checks. |
+
+I tested the proposed interval predicate separately against the frozen reader's section records. Twenty-four synthetic fixtures cover twelve cases on both machines. They include partial intersections, containment, endpoint adjacency, empty sections, nonallocated executable sections, ordinary data, NOBITS, and unrelated executable sections. The frozen reader accepts these fixtures. The separate predicate produces the proposed decisions. A bounded enumeration also matched a direct intersection oracle in 11603 comparisons. These local counts are not Phoenix evaluation results. They do not test an integrated O1 implementation.
+
+The correction needs the following permanent controls before implementation acceptance.
+
+1. Preserve all eight independent F1 cases with expected `ambiguous_mapping`. Preserve their section-covered counterparts. Keep a coherent unsectioned destination as a positive control. Check both machines.
+2. Verify that the new call checks size 8. Keep exact file-end success and a write beyond exact file-backed coverage as a refusal. A separate helper test can put a conflict in the last byte of a synthetic page-map interval. Label that as a helper test. Do not assert that every such interval arrangement can pass the ELF envelope. Do not require an impossible granule straddle for an aligned write.
+3. Exercise relative, GLOB_DAT, and JUMP_SLOT destinations through the new checks. Include `sh_info=0` and valid explicit target-section metadata. A global section index must work independently of `sh_info`.
+4. Preserve the executable `.got` controls with expected `relocation_contract`. Add first-byte and last-byte intersections, a section inside a write, a write inside a section, and several disjoint sections inside one write. Use a section alignment of 1 when needed. The relocation itself must stay eight-byte aligned.
+5. Keep positive controls for nonallocated executable sections, zero-size executable sections at the write and inside it, and exact endpoint adjacency. Keep an unrelated executable declaration with no intersecting write. Keep a coherent unsectioned write. Existing independent rejection rules still apply.
+6. Add allocated executable NOBITS intersection controls. Add an end at `2**64`. Check that malformed extents still refuse before index construction.
+7. Keep ordinary imports, all directory pointer cells, protected RELRO prefix acceptance, shortened RELRO refusal, protected-object refusal, and metadata refusal. Preserve immutable output records, input order, lower limits, and visible programming exceptions.
+8. Check the index against a simple intersection oracle on bounded synthetic intervals. Include empty indexes and exact boundaries. Add a bounded high-count control and inspect that index construction occurs once. Do not use wall time as the correctness oracle. Do not treat helper-only checks as proof of public parser behavior.
+
+The ADR update should state this exact contract.
+
+> Each runtime relocation writes eight bytes. The complete write must fit one readable, writable, non-executable, file-backed load. It must pass the existing page-mapping check for every test candidate granule. The test candidates remain 4096, 16384, and 65536. Section coverage does not exempt a write from this check. The page check refuses conflicting file bytes, executable coverage, zero fill, and holes.
+>
+> The test profile also refuses any write that intersects a nonempty allocated executable section. It uses SHF_ALLOC and SHF_EXECINSTR together. This rule includes NOBITS declarations. It ignores nonallocated sections and zero-size sections for this intersection test. Exact endpoint adjacency is not an intersection. An indexed query checks all eight write bytes. The rule applies to every accepted relocation kind and does not depend on sh_info.
+>
+> Section declarations do not establish observed runtime permissions. This refusal is a conservative test-profile condition. It does not require global agreement between section and load executable flags. Unsectioned destinations remain permitted when every other write check passes. Both native profiles remain HOLD until separate evidence establishes their applicability. No Linux behavior is claimed.
+
+The implementation scope remains `collector_elf.py`, its existing test file, and ADR0041. The main task may record its normal progress entries separately. This review changes none of those files. It changes no API, result schema, dependency, producer, native declaration, candidate granule, or runtime policy. F1 and O1 should remain separately described in the correction record. F1 repairs a confirmed omission. O1 records a new explicit conservative interpretation.
+
+The process and evidence limits are as follows. I used source reads, SHA-256 checks, and public synthetic Python controls only. The complete frozen product module was read. Test inspection was focused on mapping and relocation behavior. I did not rerun the full existing test suite, quality gate, or prior independent suite. Prior review test totals remain attributed evidence only. No actual corrected revision was supplied or reviewed.
+
+The control command used `python3 -B` with task-specific TMPDIR and XDG_CACHE_HOME and `PYTHONDONTWRITEBYTECODE=1`. [The retained script](/Volumes/PhoenixWork/tmp/m2-passive-elf-f1-design-astra-20261113/check_recommendation.py) imports the exact frozen module by path after checking its hash. It uses only the supplied literal fixture modules. It makes no product edit or monkeypatch. The script exited 0. All commands completed synchronously. There is no owned background process or scheduled continuation.
+
+I applied the [installed Poteto skill](/Users/devg/.codex/plugins/cache/pstack-claude/pstack/0.9.137/skills/poteto-mode/SKILL.md) and its Investigation workflow. Model the Domain led to one disjoint interval index. The user prohibited nested models, source changes, and history access. Those task limits replaced the corresponding skill and general session steps. The throughput checkpoint is not applicable to this read-only investigation. [todo.md](todo.md) records the workflow and exceptions.
+
+No nested model, model API, model CLI, or agent was invoked. Standard service was requested. No service setting changed and Fast mode was not enabled. No compiler, linker, Ghidra, target, plugin load, network, credential, container, or VM operation was used. The installed guard was not read, probed, changed, or wrapped in another sandbox.
+
+No sealed source, held-out input, archive, private run, Author material, history, dispatcher event, dispatcher stderr, or dispatcher summary was read. Directory listings exposed filenames only. I did not open those prohibited files. All writes stayed in the assigned audit and temporary directories. No input, existing audit document, source file, test file, or Git state changed. The named-input task restriction replaced general environment setup, STATUS, LOG, and history checks. No disk baseline or Git cleanliness claim is made.
+
+No DRAINING or PAUSED instruction arrived during this review. No sentinel location was supplied, so I make no claim that external sentinel files were absent. This bounded review ends now. No continuation will run after the finish time in [final-check.json](final-check.json). Completion is within 15 minutes of the supplied dispatch and before both stated UTC deadlines. SPEC section 9, full capture review, and all stated HOLD gates remain unchanged.

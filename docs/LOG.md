@@ -1102,3 +1102,63 @@
 - The private Author retains the VM. Its latest approved count is 7/10
   programs, lower than the earlier 8/10 snapshot. No cause is inferred.
   This is incomplete source adequacy, not a reconstruction result.
+
+
+## 2026-11-13. Preserve the approved T2 seal
+
+- The separate Corpus Author completed T2 and released the VM at
+  00:48:17 UTC. Root read only approved aggregate status and handoff.
+  No source, held-out input, private archive or Author log was opened.
+- All ten programs meet adequacy thresholds. The batch has 60 variants,
+  43,276 fixed inputs, 20 passing generator replays and 60 exact final
+  rebuilds. Aggregate branch coverage is 18,590/21,685. Mutant detection
+  is 305/310. Five confirmed non-equivalent mutants survive. Separate
+  witnesses do not count as held-out kills. One confirmation uses a
+  declared emulator-diagnostic rule. Original comparisons are exact.
+- Append only the approved T2 hash table. Retain the complete accepted
+  T0 and T1 prefix. Archives remain private until publication. The release
+  manifest hash is in the approved public handoff. No Phoenix score follows.
+- Root observed the private Author process absent and Lima Stopped at
+  00:50:43 UTC. No new VM run starts before the timed pause. Admission
+  must support the complete approved input set before sealed evaluation.
+
+
+## 2026-11-13. Complete the requested timed-pause handoff
+
+- Fresh independent Sol passed the byte diagnostic at `7562edb` and the
+  corrected passive ELF reader at `11cb51b`. Root read both full reports
+  and all new controls. All 114 byte and 1,344 ELF controls passed the
+  parent repeats under unchanged guards. Both source branches are clean,
+  fully checked, pushed and server-verified. Main stays `2c9934a`.
+- Fresh Sol passed the exact frozen handoff delta and six report copies.
+  A separate fresh Sol passed the approved T2 public hash addition and
+  aggregate disclosures. Root preserved exact reports and every HOLD.
+- At 00:57:47 UTC, root observed zero workers, queues and private Author
+  processes. The drain script found zero remaining targets and sent no
+  signal. The Author had stopped Colima. Root verified Lima Stopped.
+  The VM disk remains. No new VM run or source dispatch starts.
+- Both pause markers exist. The local timer has ended. The one-time
+  automation is paused. The full hook must pass before this handoff is
+  committed and pushed. The canonical checkpoint follows that push.
+- All 29 older public source drafts match their committed backups. Their
+  source worktrees and the public scratch files remain. Both corrected
+  source branches have no new pending source or ADR. Accepted tags and
+  all historical logs and failed checks remain unchanged.
+- Only the dedicated Author read private sources and held-out inputs.
+  Root read approved aggregate handoffs only. T2 is sealed, not a new
+  Phoenix result. T3 runtime qualification remains open.
+- The final goal-pause update is the last action at the user deadline.
+  SPEC section 9 is incomplete. Full capture review stays OPEN after
+  provider screening. Resume requires a new user instruction.
+
+- The first final-public metadata helper stripped a leading Git status
+  column. Its docs-only assertion failed before any commit. The dependent
+  proof copy then found no file. Both setup errors remain recorded. Root
+  corrected the helper to remove trailing newlines only and repeated it.
+
+- The first full hook refused two exact Astra report copies because their
+  Markdown Python examples need formatting. Root preserved that failure
+  and stored only those two copies with `.md.txt` suffixes. Their bytes
+  and original report hashes remain exact. Update the manifest names.
+  No quality setting, command or product source changed. Repeat the full
+  mandatory hook for the final documentation commit.

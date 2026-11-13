@@ -1,0 +1,31 @@
+{
+  "at_utc": "2026-11-13T01:02:56.200738+00:00",
+  "branches": {
+    "main": {
+      "worktree": "/Volumes/PhoenixWork/phoenix",
+      "branch": "main",
+      "head": "2c9934a6b96004536c5db98e844dce180c958c25",
+      "clean": true,
+      "remote": "2c9934a6b96004536c5db98e844dce180c958c25"
+    },
+    "byte": {
+      "worktree": "/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17",
+      "branch": "agent/m2-byte-export-producer",
+      "head": "7562edb423b55edd70c74366392d10f73d2729c3",
+      "clean": true,
+      "remote": "7562edb423b55edd70c74366392d10f73d2729c3"
+    },
+    "elf": {
+      "worktree": "/Volumes/PhoenixWork/worktrees/m1-ci-reliable",
+      "branch": "agent/m2-passive-collector-elf",
+      "head": "11cb51b06ff181209c7a9e23ed9bb6f758cea839",
+      "clean": true,
+      "remote": "11cb51b06ff181209c7a9e23ed9bb6f758cea839"
+    }
+  },
+  "legacy_pending_source_files": 29,
+  "legacy_files_exact": true,
+  "review_copies_exact": 25,
+  "handoff_non_doc_exact_main": true,
+  "m0_m1_unchanged": true
+}
