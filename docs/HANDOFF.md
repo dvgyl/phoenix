@@ -75,38 +75,42 @@ credential log is included. Keep the private material outside the repository.
 
 The repaired graph source is `59266a9` in
 `worktrees/m1-public-profile` on `agent/m2-byte-graph-v2-20261113`.
-The prior `23e05e9` full review is HOLD. Astra corrected F1, F2 and comment C5 under
+The prior `23e05e9` full review is preserved as HOLD. Astra corrected F1, F2 and comment C5 under
 `audit/m2-byte-graph-v2-f1-f2-writer-astra-20261113`. It ended at 14:39:09 UTC.
 Root read the complete report and preserved its three pending files with exact
 patch reconstruction. Root corrected the related listing-edge caller equality
 defect after ten failing controls. All twelve new caller controls pass. Root
 also repeated 1,311 focused and 65 independent controls. The old test-file hash
 assertion still fails after the added regressions. Its expectation is unchanged.
-The full source hook and push passed. Fresh FULL Sol review is active under
-`audit/m2-byte-graph-v2-repair-full-review-sol-20261113` in that frozen checkout.
-Do not edit or move it. Do not integrate this source before its verdict. The first
-comment-only review supplies no functional approval.
+The full source hook and push passed. Fresh FULL Sol review passed under
+`audit/m2-byte-graph-v2-repair-full-review-sol-20261113`. Root read its full report
+and repeated all 476 new independent controls. F1, F2 and the caller defect are
+closed for the pure reader. Main imports only its exact module, tests and ADR0042.
+Run the full main hook and obtain fresh Sol integration review. Preserve all
+later files. The first comment-only review supplies no functional approval.
 
 Layout source `e721885` passed its full hook, push and fresh full Sol review at
 `audit/m2-collector-layout-full-review-sol-20261113`. Root repeated 1,744 focused
 controls. The reviewer added 2,020 independent mutation refusals. Root read all
 product source and executable test code. Main imports only the exact three
 source paths from that immutable commit at main `2046688`. Its full hook and
-push passed. Fresh full Sol integration review is active under
+push passed. Fresh full Sol integration review passed under
 `audit/m2-layout-main-integration-review-sol-20261113` in frozen
 `worktrees/m1-follow-up-review-e07ec17`. Do not move that checkout. The review also
-checks closure of the stale layout instructions found by the prior docs review.
+closed the stale layout instructions found by the prior docs review. Root read
+the full integration report. Complete private U2 and both native profiles remain open.
 Literal vectors bind the independently checked proposed-layout
 digest. The writer's initial raw import-guard failure log
 printed part of an inherited environment. Keep that log local. Do not read
 or publish it. The corrected child uses an explicit minimal environment.
 
-The old layout worktree `worktrees/m1-ledger-identity` now belongs to the ACTIVE
-Astra writer for complete private U2 readback. Its branch is
+The old layout worktree `worktrees/m1-ledger-identity` contains the returned
+Astra source for complete private U2 readback. Its branch is
 `agent/m2-private-compiled-readback-20261113`, based on `e721885`. Do not edit or
 move it. The role is `audit/m2-private-compiled-readback-writer-astra-20261113`.
-Preserve its pending files after it ends. Read the full diff and repeat checks.
-Then run the full hook, push, and obtain fresh full Sol and independent Astra
+It ended at 15:19:19 UTC. Root preserved all five returned files with exact
+reconstruction, read the complete product and tests, and repeated 14,451 controls.
+The full source hook is active. Obtain fresh full Sol and independent Astra
 critical reviews. Retained limits need independent numeric literals.
 Final identity_inputs and one immutable metadata-evidence
 transaction remain separate public-success gates. Preserve the accepted U1

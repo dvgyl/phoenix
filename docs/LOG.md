@@ -1325,3 +1325,27 @@
 - The public comparator source correction passes 28 focused tests and 54 actual
   report negative controls in its own checkout. Its full hook is active. The
   historical known-limit control remains exact. Fresh Sol and Astra reviews remain.
+
+
+## 2026-11-13. Integrate the corrected schema 2 graph reader
+
+- Fresh full Sol passes exact source 59266a9. Root reads the complete report.
+  F1, F2 and the listing-edge caller defect are closed for the pure reader.
+  The separate comment verdict passes. Earlier HOLD reports remain preserved.
+- Root repeats all 476 new independent controls against exact source imports.
+  Earlier 1,311 focused passes, 65 behavior passes and the historical file-hash
+  failure remain separate. No assertion, xfail or old control changes.
+- Import only the exact module, tests and ADR0042. All 340 old tracked files
+  match before progress updates. Preserve every later layout, byte, ELF,
+  fixture, archive and corpus-commitment addition. No whole old branch is merged.
+- Fresh Sol also passes exact layout integration 2046688 and closes the prior
+  stale layout instructions. Read its full report. Complete private U2 and
+  both native profiles remain unapproved. The returned U2 source passes 14,451
+  affected tests and its full source hook is active in its isolated checkout.
+- Run the full main hook, push and obtain fresh full Sol integration review.
+  Source schema 2, same-call Java capture, conversion and producer admission
+  remain separate units. Every mandatory native, entry and memory gap remains.
+  Full capture remains OPEN after screening. No semantic or emission authority
+  or sealed reconstruction score follows from this integration.
+- The user pause deadline remains 16:15:25 UTC today. Start draining at 16:00:25.
+  Preserve all pending files and review results before the safe handoff.

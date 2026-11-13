@@ -45,26 +45,28 @@ replay snapshots match. Positive GCC builds retain two warnings each.
 Positive Clang builds have zero warnings. Negative builds retain three each.
 These public fixture checks are not sealed reconstruction scores.
 
-Schema 2 graph source `59266a9` contains the checked repair of `23e05e9`.
-Astra corrected six exported mnemonics and exact integer function identities.
-Root also corrected the same equality defect for listing-edge callers.
-Ten new refusals failed before that correction. All twelve caller controls
-now pass. Root repeated 1,311 focused controls and 65 independent controls.
-The historical test-file hash assertion remains an expected failure after
-new regressions. Its original expectation is unchanged. The full source hook
-and push passed. Fresh full Sol review is active before integration.
+Schema 2 graph source `59266a9` passed its full hook, push and fresh full Sol
+review. F1, F2 and the listing-edge caller defect are closed for this pure reader.
+Root repeated 1,311 focused controls, 65 older independent controls and all
+476 new review controls. The historical test-file hash assertion still fails
+after the new regressions. Its original expectation is unchanged. Main imports
+only the exact graph module, tests and ADR0042. The integration needs its full
+hook and fresh Sol review. Source schema 2, Java capture and producer admission
+remain separate work. No native fact or semantic proof follows from this PASS.
 
 Candidate layout source `e721885` passed its full hook, push and fresh full
 Sol implementation review. Root repeated 1,744 layout, ELF, data and header
 controls. The reviewer added 2,020 independent mutation refusals. Main imports
 only its exact module, tests and ADR0043 at `2046688`. Its full hook and push
-passed. Fresh Sol integration review is active. Both candidate definitions
+passed. Fresh Sol integration review passed and closed the prior stale-docs
+finding. Both candidate definitions
 remain test-only. No decoder or native layout approval is supplied.
 
-A separate Astra writer implements complete private U2 readback in the old
-layout worktree. Do not edit or move that checkout. The returned source needs
-root checks, a fresh full Sol review and an independent Astra critical review.
-Final identity inputs and immutable metadata retention remain separate gates.
+Astra returned complete private U2 readback in the old layout worktree. Root
+preserved its five files, read the complete source and tests, and repeated
+14,451 affected controls. The full source hook is active. Fresh full Sol and
+independent Astra critical reviews remain required. Final identity inputs,
+immutable metadata retention and native approval remain separate gates.
 
 Full capture review remains OPEN after provider screening. Parser-only PASS,
 representation checks and public switch checks do not replace it. Complete
@@ -103,9 +105,8 @@ The internal free-space baseline is 14,432,616 KiB. Investigate values below
 
 ## Next actions
 
-1. Obtain fresh full graph source
-   Sol review. Integrate exact accepted bytes without replacing later main.
-2. Check and review the exact layout integration. Review the complete private
+1. Check and review the exact graph integration. Preserve later main bytes.
+2. Review the complete private
    U2 readback after its writer ends. Keep native and public-success gates open.
 3. Complete the separate source adapter, indirect calls, byte idioms and
    fault localization. Keep all authority and full capture gates explicit.
