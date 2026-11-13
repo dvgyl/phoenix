@@ -1000,3 +1000,21 @@
   The full gate and fresh independent Sol review remain required.
 - Complete producer admission and full capture review remain open.
   No target ran and no VM action occurred. The timed pause still applies.
+
+
+## 2026-11-13. Correct the ordinary evidence error boundary
+
+- Fresh Sol held `01dc406` for F3. Root repeated 24 coherent invalid
+  cases and four valid controls before product changes. The premise
+  about complete reader refusal handling was false.
+- Required Astra selected a local EvidenceError conversion around the
+  ordinary parse_lift call. Root applied that handler and retained the
+  direct cause. Stable readers and other operation boundaries are exact.
+- All 40 permanent controls, 322 unchanged independent controls and 863
+  affected host tests passed. Two optional live tests skipped. Ruff and
+  strict mypy passed. Preserve the initial fixture and test typing errors.
+- This change needs the full hook and fresh independent Sol review.
+  No new Ghidra job is claimed. Earlier static evidence binds its older
+  source revisions. No target ran and no VM action occurred.
+- The producer remains on HOLD. Full capture review, all later gates
+  and the timed pause remain in force.

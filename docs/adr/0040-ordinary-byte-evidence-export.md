@@ -216,3 +216,30 @@ behavior. It does not authenticate exception origin or prevent filesystem
 races. Recheck behavior when Python changes. The full quality gate and
 fresh independent Sol review remain required. Producer admission stays
 on HOLD for its separate API and semantic gaps.
+
+
+## 2026-11-13. Normalize the ordinary evidence refusal
+
+Fresh independent Sol found F3 at `01dc406`. A validly bound ordinary
+lift can contain invalid static evidence. Its reader raises EvidenceError.
+The diagnostic did not convert that expected input refusal. Root repeated
+all 24 failing cases and four valid controls before the correction.
+
+Required Astra checked the reader exception contracts. The shared premise
+that every expected refusal already had one of three handled classes was
+false. Use one local EvidenceError handler around parse_lift in _convert.
+Return ByteExportError with code format and retain the direct cause.
+Keep all other operation boundaries and stable reader contracts unchanged.
+The class identifies a parser-boundary refusal. It does not authenticate
+an exception's origin. The bounded inventory found no further missing
+public-input refusal class. It is not a universal exception guarantee.
+
+All 40 new focused controls, 322 unchanged independent controls and 863
+affected host tests passed. Two optional live tests skipped. Ruff and
+strict mypy passed. Controls retain unrelated parser, hash, context and
+serializer errors. The first fixture setup and three test typing failures
+remain preserved. The final tests import public functions from their owners.
+No Java, pin, schema, ordinary exporter or publication format changed.
+The previous static jobs remain evidence for their exact old revisions.
+Full checks and fresh independent Sol review are required for this change.
+The complete producer and every semantic or production gate remain open.

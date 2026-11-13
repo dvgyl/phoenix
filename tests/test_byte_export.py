@@ -14,6 +14,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 from test_byte_graph import sample, wire
 from test_byte_source import source_sample
+from test_lift_evidence import wire as static_evidence_wire
 from test_recovery_u1 import mapping_wire
 
 from phoenix.lift import byte_export as exporter
@@ -26,6 +27,9 @@ from phoenix.lift.byte_export import (
 )
 from phoenix.lift.byte_graph import ByteGraphLimits
 from phoenix.lift.byte_source import ByteSourceLimits
+from phoenix.lift.evidence import EvidenceError, parse_static_evidence
+from phoenix.lift.index import LiftIndex, parse_lift
+from phoenix.lift.mapping import parse_mapping
 
 
 def diagnostic_sample() -> tuple[bytes, bytes, bytes, dict[str, Any], dict[str, Any]]:
@@ -1069,3 +1073,261 @@ def test_legacy_loop_shape_outside_resolution_stays_visible(
                 binary_path, stage, installation=tmp_path, java_home=tmp_path
             )
     assert caught.value is failure
+
+
+@pytest.mark.parametrize("entry", ["convert", "export"])
+@pytest.mark.parametrize("function", [0, 1])
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "valid",
+        "null",
+        "empty",
+        "incomplete",
+        "status",
+        "register_width",
+        "type_reference",
+    ],
+)
+def test_static_evidence_refusal_has_a_diagnostic_code(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    entry: str,
+    function: int,
+    fault: str,
+) -> None:
+    binary, lift, mapping, draft, context = diagnostic_sample()
+    root = tmp_path / "checkout"
+    scripts = root / "ghidra_scripts"
+    scripts.mkdir(parents=True)
+    for name in exporter._SCRIPTS:
+        (scripts / name).write_bytes(name.encode())
+    context["sources"] = {
+        f"ghidra_scripts/{name}": sha256(name.encode()).hexdigest()
+        for name in exporter._SCRIPTS
+    }
+    for record in draft["functions"]:
+        old = record["pass_id"]
+        record["pass"]["source_manifest_sha256"] = sha256(
+            wire(context["sources"])
+        ).hexdigest()
+        updated = sha256(wire(record["pass"])).hexdigest()
+        record.update(json.loads(wire(record).replace(old.encode(), updated.encode())))
+    draft["context"] = deepcopy(context)
+    monkeypatch.setattr(exporter, "_ROOT", root)
+    monkeypatch.setenv("PHOENIX_ROOT", str(tmp_path))
+    original_parser = parse_lift
+    parser_errors: list[EvidenceError] = []
+
+    def observed_parser(lift_bytes: bytes, binary_bytes: bytes) -> LiftIndex:
+        try:
+            return original_parser(lift_bytes, binary_bytes)
+        except EvidenceError as error:
+            parser_errors.append(error)
+            raise
+
+    monkeypatch.setattr(exporter, "parse_lift", observed_parser)
+    evidence: Any = deepcopy(static_evidence_wire())
+    if fault == "null":
+        evidence = None
+    elif fault == "empty":
+        evidence = {}
+    elif fault == "incomplete":
+        evidence = {"schema_version": 1}
+    elif fault == "status":
+        evidence["status"] = "verified"
+    elif fault == "register_width":
+        evidence["registers"][0]["bits"] = 0
+    elif fault == "type_reference":
+        evidence["listing"]["result"]["type"] = "absent"
+    if fault == "valid":
+        parse_static_evidence(evidence)
+    else:
+        with pytest.raises(EvidenceError):
+            parse_static_evidence(evidence)
+    document = json.loads(lift)
+    document["functions"][function]["static_evidence"] = evidence
+    changed_lift = wire(document)
+    mapping_record = json.loads(mapping)
+    mapping_record["lift_sha256"] = sha256(changed_lift).hexdigest()
+    changed_mapping = wire(mapping_record)
+    binary_path = tmp_path / "program.elf"
+    binary_path.write_bytes(binary)
+    stage = tmp_path / "stage"
+    stage.mkdir()
+    marker = stage / "evidence-current"
+    marker.write_bytes(b"Previous selected generation.\n")
+    jobs: list[Path] = []
+    monkeypatch.setattr(exporter, "_context", lambda *args: context)
+
+    def launch(command: list[str], work: Path, env: dict[str, str]) -> None:
+        jobs.append(work)
+        output = work / "output"
+        (output / "lift.json").write_bytes(changed_lift)
+        (output / "mapping.json").write_bytes(changed_mapping)
+        (output / "byte-draft.json").write_bytes(wire(draft))
+
+    def invoke() -> UnpublishedByteExport:
+        if entry == "convert":
+            return convert_byte_export(
+                binary,
+                changed_lift,
+                changed_mapping,
+                wire(draft),
+                installation=tmp_path,
+                java_home=tmp_path,
+            )
+        return export_byte_diagnostic(
+            binary_path, stage, installation=tmp_path, java_home=tmp_path
+        )
+
+    monkeypatch.setattr(exporter, "_headless", launch)
+    try:
+        if fault == "valid":
+            result = invoke()
+            assert result.status == "UNPUBLISHED"
+            assert result.lift == changed_lift and result.mapping == changed_mapping
+        else:
+            with pytest.raises(ByteExportError) as caught:
+                invoke()
+            assert caught.value.code == "format"
+            assert isinstance(caught.value.__cause__, EvidenceError)
+            assert len(parser_errors) == 1
+            assert caught.value.__cause__ is parser_errors[0]
+    finally:
+        assert marker.read_bytes() == b"Previous selected generation.\n"
+        assert set(stage.iterdir()) == {marker}
+        assert len(jobs) == (entry == "export")
+
+
+@pytest.mark.parametrize("site", ["hash", "context"])
+def test_evidence_error_outside_ordinary_parser_remains_visible(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
+) -> None:
+    binary, lift, mapping, draft, context = diagnostic_sample()
+    failure = EvidenceError("Unexpected error outside the parser.")
+
+    def broken(*args: object) -> None:
+        raise failure
+
+    monkeypatch.setattr(exporter, "_context", lambda *args: context)
+    monkeypatch.setattr(exporter, "sha256" if site == "hash" else "_context", broken)
+    with pytest.raises(EvidenceError) as caught:
+        convert_byte_export(
+            binary,
+            lift,
+            mapping,
+            wire(draft),
+            installation=tmp_path,
+            java_home=tmp_path,
+        )
+    assert caught.value is failure
+
+
+@pytest.mark.parametrize(
+    "error_type",
+    [
+        EvidenceError,
+        ValueError,
+        RuntimeError,
+        TypeError,
+        AssertionError,
+        OverflowError,
+        RecursionError,
+    ],
+)
+def test_ordinary_parser_normalizes_only_its_evidence_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error_type: type[Exception]
+) -> None:
+    binary, lift, mapping, draft, context = diagnostic_sample()
+    failure = error_type("Parser boundary control.")
+
+    def broken(*args: object) -> LiftIndex:
+        raise failure
+
+    monkeypatch.setattr(exporter, "_context", lambda *args: context)
+    monkeypatch.setattr(exporter, "parse_lift", broken)
+    if error_type is EvidenceError:
+        with pytest.raises(ByteExportError) as caught:
+            convert_byte_export(
+                binary,
+                lift,
+                mapping,
+                wire(draft),
+                installation=tmp_path,
+                java_home=tmp_path,
+            )
+        assert caught.value.code == "format" and caught.value.__cause__ is failure
+    else:
+        with pytest.raises(error_type) as original:
+            convert_byte_export(
+                binary,
+                lift,
+                mapping,
+                wire(draft),
+                installation=tmp_path,
+                java_home=tmp_path,
+            )
+        assert original.value is failure
+
+
+@pytest.mark.parametrize("site", ["canonical", "result"])
+def test_evidence_error_from_other_operations_stays_visible(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
+) -> None:
+    binary, lift, mapping, draft, context = diagnostic_sample()
+    failure = EvidenceError("Unexpected calculation failure.")
+
+    def broken(*args: object) -> None:
+        raise failure
+
+    monkeypatch.setattr(exporter, "_context", lambda *args: context)
+    if site == "canonical":
+        monkeypatch.setattr(exporter, "canonical", broken)
+    else:
+        monkeypatch.setattr(UnpublishedByteExport, "to_bytes", broken)
+    with pytest.raises(EvidenceError) as caught:
+        convert_byte_export(
+            binary,
+            lift,
+            mapping,
+            wire(draft),
+            installation=tmp_path,
+            java_home=tmp_path,
+        )
+    assert caught.value is failure
+
+
+def test_evidence_error_from_hash_after_readers_stays_visible(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    binary, lift, mapping, draft, context = diagnostic_sample()
+    failure = EvidenceError("Unexpected later hash failure.")
+    original_mapping = parse_mapping
+    original_hash = sha256
+    readers_complete = False
+
+    def observed_mapping(*args: Any) -> Any:
+        nonlocal readers_complete
+        result = original_mapping(*args)
+        readers_complete = True
+        return result
+
+    def later_hash(raw: bytes) -> Any:
+        if readers_complete:
+            raise failure
+        return original_hash(raw)
+
+    monkeypatch.setattr(exporter, "_context", lambda *args: context)
+    monkeypatch.setattr(exporter, "parse_mapping", observed_mapping)
+    monkeypatch.setattr(exporter, "sha256", later_hash)
+    with pytest.raises(EvidenceError) as caught:
+        convert_byte_export(
+            binary,
+            lift,
+            mapping,
+            wire(draft),
+            installation=tmp_path,
+            java_home=tmp_path,
+        )
+    assert readers_complete and caught.value is failure

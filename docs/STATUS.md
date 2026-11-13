@@ -159,3 +159,11 @@ focused controls, 174 unchanged independent controls and 823 affected
 host tests passed. Two optional live tests were skipped. Ordinary public
 static bytes remain exact. Full checks and fresh independent Sol review
 are still required. Both prior HOLDs and all producer gaps remain open.
+
+
+The F3 ordinary-evidence correction passed 40 focused controls, all 322
+unchanged independent controls and 863 affected host tests. Two optional
+live tests skipped. The local parser handler retains the original cause.
+Ruff and strict mypy pass. Full checks and fresh Sol review remain required.
+All three prior HOLDs, complete producer gaps and full capture review remain
+open. The user pause deadline is 01:11:47 UTC on 13 November.

@@ -28,6 +28,7 @@ from phoenix.lift.byte_source import (
     ByteSourceObservation,
     parse_byte_source,
 )
+from phoenix.lift.evidence import EvidenceError
 from phoenix.lift.index import parse_lift
 from phoenix.lift.mapping import (
     GhidraVA,
@@ -495,7 +496,12 @@ def _convert(
             for fn in roster
         ]
         del ordinary
-        index = parse_lift(lift, binary)
+        try:
+            index = parse_lift(lift, binary)
+        except EvidenceError as error:
+            raise ByteExportError(
+                "format", "The ordinary static evidence is invalid."
+            ) from error
         mapped = parse_mapping(mapping, binary, lift)
         if (index.image_base, index.startup) != (mapped.image_base, mapped.startup):
             raise ByteExportError("identity", "The ordinary lift and mapping disagree.")
