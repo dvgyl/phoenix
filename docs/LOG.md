@@ -1395,3 +1395,21 @@
   stopped, Colima is stopped, and pending hashes still match. Publish and read
   the shared resume checkpoint. Set the existing goal to paused at the deadline.
   Do not mark it complete. Full capture remains OPEN after screening.
+
+
+## 2026-11-13. Resume for one hour and integrate the comparator repair
+
+- The user explicitly resumes another hour of work. Verify the final checkpoint,
+  main b656c46, all seven Core pending hashes, stopped model processes and stopped
+  Colima before removing the old pause markers. Set the new deadline to 21:46:45
+  London time today. Begin draining at 21:31:45. Arm the new one-time timer.
+- Preserve all seven Core files again. Port the exact diagnostic fixture file
+  from 8f1c394. Product bytes remain exact. Run the full source hook before
+  commit and push. Both fresh full Core reviews remain required.
+- Import the three exact comparator files from 7ee3a1d. Every other tracked byte
+  matches before progress updates. Repeat focused controls and real public-report
+  refusals. Run the full main hook before commit and push. Obtain fresh full Sol
+  integration review. Issue 0001 stays open until then. Issue 0003 stays open.
+- The user requires regular GitHub commits. Push each verified small unit and
+  report its hash. No incomplete quality gate becomes a green commit. Preserve
+  corpus commitments and accepted images. Full capture stays OPEN after screening.

@@ -1,10 +1,10 @@
 # Phoenix status
 
 The full SPEC section 9 goal is incomplete. M0 and M1 are accepted. The user
-requested a one-hour pause at 16:15:25 London time on 13 November 2026.
-Implementation is stopped for the handoff. The shared checkpoint records final
-pause confirmation. Keep PAUSED after the deadline until explicit user resume.
-Use Standard service and preserve corpus sealing. The old timer is historical.
+resumed work for another hour at 20:46:45 London time on 13 November 2026.
+Pause at 21:46:45. Begin draining at 21:31:45. The new one-time timer is active.
+Use Standard service and preserve corpus sealing. Commit and push each verified
+unit. Earlier pause records and timers remain historical.
 
 ## Accepted measured results
 
@@ -31,17 +31,19 @@ tests and direct identity controls zero through ten pass. Existing collisions
 now require refusal instead of being skipped. Product readers stay exact.
 Fresh Sol review of this correction is part of the final handoff audit.
 
-Core readback remains uncommitted in its isolated branch at e721885. Root reads
-all source and tests and repeats 14,451 affected controls. The full hook fails
-one old property fixture; 18,351 tests pass and 26 are skipped. Identity 9 collides
-with an existing fixture identity. Port the verified test correction and repeat
-the gate. Seven staged files have exact local and public patch backups. Both
-fresh full Sol and independent Astra Core reviews remain open.
+Core readback has an exact seven-file backup. Port only the verified diagnostic
+fixture correction from 8f1c394. The eight-file source gate is active. The earlier
+failed full gate remains preserved. It had 18,351 passes, 26 skips and one strict
+identity-collision refusal from an incorrect fixture. Both fresh full Sol and
+independent Astra Core reviews remain required after the source gate and push.
 
 Comparator source 7ee3a1d passes its full hook, push, fresh Sol review and Astra
-harness review. Its main integration remains pending. Issue 0001 stays open.
-Issue 0003 tracks five broader validator limits. Old reports and historical
-controls remain exact. Future comparator integration changes worker identity.
+harness review. Main now imports only its three exact files. Root repeats the
+focused tests and real-report negative controls. The main full gate and fresh
+Sol integration review remain required. Issue 0001 stays open until that review.
+Issue 0003 tracks five broader validator limits. Old reports remain exact.
+This import changes the current worker source identity. Existing images do not
+inherit that identity. Preserve accepted M1 images and verify labels before use.
 
 The latest verified native workflow is 43431817090 at exact 293477f. Both CPU
 jobs and comparison pass. Complete Mac/native M0 and public switch evidence
@@ -72,13 +74,13 @@ Colima is stopped and the private lease is released. Check the live stop record.
 Accepted M0/M1 tags and images remain exact. All storage stays on external APFS.
 Internal baseline is 14,432,616 KiB. Investigate below 12,479,491 KiB.
 
-## Next actions after explicit resume
+## Next actions
 
-1. Read the shared checkpoint and handoff. Verify files, processes, VM and timer.
-2. Port the exact fixture fix to Core, repeat its full hook, push and obtain both
-   required reviews. Preserve every pending file and staged ADR first.
-3. Integrate the three exact comparator files with full checks and fresh review.
-   Then design the separate validator. Refresh current worker labels before use.
+1. Finish both full gates and push each green unit. Verify actual remote tips.
+2. Obtain fresh full Sol and independent Astra Core reviews. Integrate only
+   reviewed exact files after resolving findings. Preserve the staged ADR.
+3. Obtain fresh Sol comparator integration review. Design the separate validator
+   with Astra. Refresh current worker labels before use.
 4. Resolve T3 labels and private validation through a separate Author. Add T2/T3
    admission without reducing held-out sets. Continue byte source and adapter work.
 5. Complete M2, M3, M4, every baseline, publication and every headline replay.
