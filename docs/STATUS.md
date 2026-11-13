@@ -170,3 +170,18 @@ functional approval. Four test-only corrections remove narration and one
 typing suppression. Root repeated all 105 independent controls before these
 changes. The product reader remains exact. A full hook and fresh full Sol
 review are required. Producer admission and full capture remain open.
+
+
+## Graph schema 2 repair, 13 November
+
+Astra corrected F1, F2 and C5 after the full functional HOLD at 23e05e9.
+The recognized set uses the 74 actual getMnemonic return strings. Every
+supplied roster key and selected function entry has exact integer validation
+before equality or lookup. Root also validates non-null listing-edge callers
+before the edge count comparison. Ten malformed caller cases failed before
+that correction. All twelve caller controls now pass. Root repeated 1,311
+focused controls and 65 independent controls. All 73 old test function ASTs
+remain exact. The historical test-file hash check still fails after added
+regressions. Its expectation is unchanged. Full source checks and fresh FULL
+Sol review remain required. This source supplies no producer, native, semantic,
+emission, capture, runtime, corpus or milestone authority.

@@ -11,14 +11,17 @@ from hypothesis import strategies as st
 from phoenix.lift.byte_graph import ByteGraphFormatError, parse_byte_graph
 from phoenix.lift.byte_graph_v2 import (
     ByteGraphV2,
+    ByteGraphV2BindingError,
     ByteGraphV2Error,
     ByteGraphV2FormatError,
     ByteGraphV2LimitError,
     ByteGraphV2Limits,
+    PassRecord,
     parse_byte_graph_v2,
     parse_pass_record,
 )
-from phoenix.lift.index import LiftIndex, parse_lift
+from phoenix.lift.index import LiftIndex, StaticEdge, parse_lift
+from phoenix.lift.mapping import GhidraVA
 
 
 def wire(value: object) -> bytes:
@@ -1730,4 +1733,246 @@ def test_missing_or_invalid_ordinary_source_refuses(source: Any) -> None:
             wire(graph),
             lift=replace(lift, functions={lift.main: function}),
             pass_record=parse_pass_record(wire(record)),
+        )
+
+
+@pytest.mark.parametrize("domain", ["raw", "analyzed"])
+@pytest.mark.parametrize(
+    "mnemonic",
+    """
+UNIMPLEMENTED COPY LOAD STORE BRANCH CBRANCH BRANCHIND CALL CALLIND CALLOTHER RETURN
+INT_EQUAL INT_NOTEQUAL INT_SLESS INT_SLESSEQUAL INT_LESS INT_LESSEQUAL INT_ZEXT
+INT_SEXT INT_ADD INT_SUB INT_CARRY INT_SCARRY INT_SBORROW INT_2COMP INT_NEGATE
+INT_XOR INT_AND INT_OR INT_LEFT INT_RIGHT INT_SRIGHT INT_MULT INT_DIV INT_SDIV
+INT_REM INT_SREM BOOL_NEGATE BOOL_XOR BOOL_AND BOOL_OR FLOAT_EQUAL FLOAT_NOTEQUAL
+FLOAT_LESS FLOAT_LESSEQUAL FLOAT_NAN FLOAT_ADD FLOAT_DIV FLOAT_MULT FLOAT_SUB
+FLOAT_NEG FLOAT_ABS FLOAT_SQRT INT2FLOAT FLOAT2FLOAT TRUNC CEIL FLOOR ROUND
+MULTIEQUAL INDIRECT PIECE SUBPIECE CAST PTRADD PTRSUB SEGMENTOP CPOOLREF NEW
+INSERT ZPULL POPCOUNT LZCOUNT SPULL
+""".split(),
+)
+def test_pinned_mnemonic_observations_need_no_unsupported_gap(
+    domain: str, mnemonic: str
+) -> None:
+    document, graph, record = sample()
+    if domain == "raw":
+        document["functions"][0]["instructions"][1]["pcode"][0]["opcode"] = mnemonic
+    else:
+        document["functions"][0]["decompilation"]["analyzed_pcode"][0]["opcode"] = (
+            mnemonic
+        )
+        graph["operations"][0]["opcode"] = mnemonic
+        if mnemonic == "MULTIEQUAL":
+            graph["gaps"].append(
+                gap("phi_binding_unproved", operation=graph["operations"][0]["id"])
+            )
+    parsed = read(document, graph, record)
+    assert parsed.record() == graph
+    assert not any(item.code == "unsupported_opcode" for item in parsed.gaps)
+    assert parsed.entry.native_entry_address is None
+    assert {item.code for item in parsed.gaps} >= {
+        "native_state_unavailable",
+        "native_inventory_unavailable",
+        "native_cover_unavailable",
+        "entry_effect_binding_unproved",
+        "memory_effects_unproved",
+    }
+
+
+@pytest.mark.parametrize("domain", ["raw", "analyzed"])
+@pytest.mark.parametrize(
+    "mnemonic",
+    [
+        "FLOAT_INT2FLOAT",
+        "FLOAT_FLOAT2FLOAT",
+        "FLOAT_TRUNC",
+        "FLOAT_CEIL",
+        "FLOAT_FLOOR",
+        "FLOAT_ROUND",
+        "INVALID_OP",
+        "FUTURE_OP",
+        "int2float",
+    ],
+)
+def test_constant_alias_and_unknown_need_exact_opcode_gap(
+    domain: str, mnemonic: str
+) -> None:
+    document, graph, record = sample()
+    raw_key = graph["raw_operation_keys"][0]
+    analyzed_key = graph["operations"][0]["id"]
+    if domain == "raw":
+        document["functions"][0]["instructions"][1]["pcode"][0]["opcode"] = mnemonic
+        key, other_key = raw_key, analyzed_key
+    else:
+        document["functions"][0]["decompilation"]["analyzed_pcode"][0]["opcode"] = (
+            mnemonic
+        )
+        graph["operations"][0]["opcode"] = mnemonic
+        key, other_key = analyzed_key, raw_key
+    with pytest.raises(ByteGraphV2FormatError, match="required observation gap"):
+        read(document, graph, record)
+    graph["gaps"].append(gap("unsupported_opcode", operation=other_key))
+    with pytest.raises(ByteGraphV2FormatError, match="required observation gap"):
+        read(document, graph, record)
+    graph["gaps"].append(gap("unsupported_opcode", operation=key))
+    parsed = read(document, graph, record)
+    assert parsed.record() == graph
+    assert any(
+        item.code == "unsupported_opcode"
+        and item.operation is not None
+        and item.operation.domain == domain
+        for item in parsed.gaps
+    )
+
+
+def parsed_function_identity(entry: int) -> tuple[bytes, LiftIndex, PassRecord]:
+    document, graph, record = sample()
+    document = json.loads(
+        wire(document).replace(
+            b'"offset":"0x1000"', f'"offset":"{hex(entry)}"'.encode()
+        )
+    )
+    record["function"]["ghidra_entry"] = hex(entry)
+    parsed_pass = parse_pass_record(wire(record))
+    graph = json.loads(
+        wire(graph)
+        .replace(b'"ghidra_entry":"0x1000"', f'"ghidra_entry":"{hex(entry)}"'.encode())
+        .replace(graph["pass_id"].encode(), parsed_pass.sha256.encode())
+    )
+    graph["entry"]["ordinary_entry"] = address(entry)
+    graph["raw_instruction_sites"][0] = address(entry)
+    lift = bind(document, graph)
+    raw = wire(graph)
+    assert (
+        parse_byte_graph_v2(raw, lift=lift, pass_record=parsed_pass).record() == graph
+    )
+    assert type(next(iter(lift.functions))) is int
+    assert type(lift.functions[GhidraVA(entry)].entry) is int
+    return raw, lift, parsed_pass
+
+
+@pytest.mark.parametrize("entry", [1, 4096])
+def test_parsed_function_identity_accepts_exact_integer(entry: int) -> None:
+    raw, lift, record = parsed_function_identity(entry)
+    parsed = parse_byte_graph_v2(raw, lift=lift, pass_record=record)
+    assert parsed.function.ghidra_entry == entry
+    assert parsed.entry.ordinary_entry.offset == entry
+    assert parsed.to_bytes() == raw
+
+
+@pytest.mark.parametrize("entry", [1, 4096])
+@pytest.mark.parametrize(
+    "field", ["function_entry", "selected_key", "earlier_key", "later_key"]
+)
+@pytest.mark.parametrize("kind", ["boolean", "float", "negative", "overflow"])
+def test_constructed_function_identity_rejects_invalid_scalars(
+    entry: int, field: str, kind: str
+) -> None:
+    raw, lift, record = parsed_function_identity(entry)
+    bad: object = {
+        "boolean": True,
+        "float": float(entry),
+        "negative": -1,
+        "overflow": 2**64,
+    }[kind]
+    function = replace(lift.functions[GhidraVA(entry)])
+    changed = replace(lift)
+    if field == "function_entry":
+        object.__setattr__(function, "entry", bad)
+        changed = replace(lift, functions={GhidraVA(entry): function})
+    elif field == "selected_key":
+        object.__setattr__(changed, "functions", {bad: function})
+    else:
+        other_bad: object = (
+            False if kind == "boolean" else 2.0 if kind == "float" else bad
+        )
+        extra = replace(function, entry=GhidraVA(2))
+        if field == "earlier_key":
+            previous_pass_id = record.sha256
+            record = replace(record, call_ordinal=1)
+            raw = raw.replace(previous_pass_id.encode(), record.sha256.encode())
+            valid_roster = {GhidraVA(2): extra, GhidraVA(entry): function}
+            malformed_roster = {other_bad: extra, entry: function}
+        else:
+            valid_roster = {GhidraVA(entry): function, GhidraVA(2): extra}
+            malformed_roster = {entry: function, other_bad: extra}
+        changed = replace(lift, functions=valid_roster)
+        assert (
+            parse_byte_graph_v2(raw, lift=changed, pass_record=record).to_bytes() == raw
+        )
+        object.__setattr__(changed, "functions", malformed_roster)
+    with pytest.raises(ByteGraphV2FormatError, match="integer within the field bounds"):
+        parse_byte_graph_v2(raw, lift=changed, pass_record=record)
+
+
+@pytest.mark.parametrize("entry", [1, 4096])
+@pytest.mark.parametrize("field", ["function_entry", "selected_key"])
+def test_constructed_function_valid_mismatch_remains_binding_error(
+    entry: int, field: str
+) -> None:
+    raw, lift, record = parsed_function_identity(entry)
+    function = lift.functions[GhidraVA(entry)]
+    different = GhidraVA(entry + 1)
+    if field == "function_entry":
+        changed = replace(
+            lift, functions={GhidraVA(entry): replace(function, entry=different)}
+        )
+    else:
+        changed = replace(lift, functions={different: function})
+    with pytest.raises(ByteGraphV2BindingError):
+        parse_byte_graph_v2(raw, lift=changed, pass_record=record)
+
+
+@pytest.mark.parametrize("entry", [1, 4096])
+def test_listing_edge_count_accepts_optional_and_exact_integer_callers(
+    entry: int,
+) -> None:
+    raw, lift, record = parsed_function_identity(entry)
+    edges = tuple(
+        StaticEdge(caller, GhidraVA(entry), None, "call")
+        for caller in (None, GhidraVA(entry + 1), GhidraVA(entry))
+    )
+    changed = replace(lift, edges=edges)
+    assert (
+        parse_byte_graph_v2(
+            raw,
+            lift=changed,
+            pass_record=record,
+            limits=ByteGraphV2Limits(max_edges=1),
+        ).to_bytes()
+        == raw
+    )
+
+
+@pytest.mark.parametrize("entry", [1, 4096])
+@pytest.mark.parametrize("kind", ["true", "false", "float", "negative", "overflow"])
+def test_listing_edge_caller_rejects_invalid_scalar_before_count(
+    entry: int, kind: str
+) -> None:
+    raw, lift, record = parsed_function_identity(entry)
+    bad: object = {
+        "true": True,
+        "false": False,
+        "float": float(entry),
+        "negative": -1,
+        "overflow": 2**64,
+    }[kind]
+    edge = StaticEdge(GhidraVA(entry), GhidraVA(entry), None, "call")
+    assert (
+        parse_byte_graph_v2(
+            raw,
+            lift=replace(lift, edges=(edge,)),
+            pass_record=record,
+            limits=ByteGraphV2Limits(max_edges=1),
+        ).to_bytes()
+        == raw
+    )
+    malformed = replace(edge)
+    object.__setattr__(malformed, "caller", bad)
+    with pytest.raises(ByteGraphV2FormatError, match="integer within the field bounds"):
+        parse_byte_graph_v2(
+            raw,
+            lift=replace(lift, edges=(malformed,)),
+            pass_record=record,
+            limits=ByteGraphV2Limits(max_edges=1),
         )

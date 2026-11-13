@@ -43,7 +43,6 @@ _GAP_CODES: tuple[GapCode, ...] = (
     "interface_unproved",
 )
 _MANDATORY: tuple[GapCode, ...] = _GAP_CODES[:5]
-# These names are observations at the pinned PcodeOp.java revision.
 _KNOWN_OPCODES = frozenset(
     """
 UNIMPLEMENTED COPY LOAD STORE BRANCH CBRANCH BRANCHIND CALL CALLIND CALLOTHER RETURN
@@ -52,8 +51,8 @@ INT_SEXT INT_ADD INT_SUB INT_CARRY INT_SCARRY INT_SBORROW INT_2COMP INT_NEGATE
 INT_XOR INT_AND INT_OR INT_LEFT INT_RIGHT INT_SRIGHT INT_MULT INT_DIV INT_SDIV
 INT_REM INT_SREM BOOL_NEGATE BOOL_XOR BOOL_AND BOOL_OR FLOAT_EQUAL FLOAT_NOTEQUAL
 FLOAT_LESS FLOAT_LESSEQUAL FLOAT_NAN FLOAT_ADD FLOAT_DIV FLOAT_MULT FLOAT_SUB
-FLOAT_NEG FLOAT_ABS FLOAT_SQRT FLOAT_INT2FLOAT FLOAT_FLOAT2FLOAT FLOAT_TRUNC
-FLOAT_CEIL FLOAT_FLOOR FLOAT_ROUND MULTIEQUAL INDIRECT PIECE SUBPIECE CAST PTRADD
+FLOAT_NEG FLOAT_ABS FLOAT_SQRT INT2FLOAT FLOAT2FLOAT TRUNC
+CEIL FLOOR ROUND MULTIEQUAL INDIRECT PIECE SUBPIECE CAST PTRADD
 PTRSUB SEGMENTOP CPOOLREF NEW INSERT ZPULL POPCOUNT LZCOUNT SPULL
 """.split()
 )
@@ -668,6 +667,8 @@ def _bound_function(
         raise ByteGraphV2FormatError("Expected an ordinary lift index.")
     _count(len(lift.functions), limits.max_functions)
     roster = tuple(lift.functions)
+    for entry in roster:
+        _int(entry)
     if (
         record.call_ordinal >= len(roster)
         or roster[record.call_ordinal] != record.function.ghidra_entry
@@ -677,7 +678,10 @@ def _bound_function(
             "The pass does not bind the ordinary function roster."
         )
     function = lift.functions[record.function.ghidra_entry]
-    if type(function) is not Function or function.entry != record.function.ghidra_entry:
+    if type(function) is not Function:
+        raise ByteGraphV2BindingError("The ordinary function identity is invalid.")
+    _int(function.entry)
+    if function.entry != record.function.ghidra_entry:
         raise ByteGraphV2BindingError("The ordinary function identity is invalid.")
     _count(len(function.blocks), limits.max_listing_blocks)
     _count(len(function.instructions), limits.max_raw_instructions)
@@ -685,6 +689,9 @@ def _bound_function(
     _count(
         sum(len(block.ranges) for block in function.blocks), limits.max_raw_instructions
     )
+    for edge in lift.edges:
+        if edge.caller is not None:
+            _int(edge.caller)
     _count(sum(edge.caller == function.entry for edge in lift.edges), limits.max_edges)
     for start, end in (
         *function.ranges,

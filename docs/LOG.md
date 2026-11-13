@@ -989,3 +989,23 @@
 - Keep the product reader, ADR0042, old readers and all other source exact.
   Run the full hook and obtain fresh full independent Sol review before
   integration. Full capture review stays OPEN after provider screening.
+
+
+## 2026-11-13. Correct exported mnemonics and exact graph identities
+
+- Fresh Astra fixes six Java constant aliases in the recognized mnemonic set.
+  The 74 actual getMnemonic return strings match the pinned primary source.
+  Delete the incorrect provenance comment. Preserve all unknown-opcode gaps.
+- Validate every supplied function key and selected entry before comparison.
+  Root also reproduces ten accepted malformed listing-edge callers. Apply
+  the same existing integer validator before their equality-based count.
+  Optional None callers and valid integer callers remain accepted.
+- Root repeats 1,311 focused controls and 65 unchanged independent controls.
+  The twelve caller controls pass after ten red failures. Ruff, format and
+  strict mypy pass. All 73 old test function ASTs remain exact. New regressions
+  change the test-file hash. Preserve the historical assertion and its failure.
+- Preserve the initial Astra helper failures and quality failures. Root backs
+  up all three returned pending files before its coupled correction. No old
+  schema, reader, exporter, authority gate or accepted M0/M1 result changes.
+- Run the full hook, push and obtain fresh FULL independent Sol review before
+  integration. Full capture remains OPEN after provider screening.

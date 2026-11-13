@@ -65,7 +65,11 @@ independently authenticate unused values or their iteration order.
 
 Each unowned operation requires its own `unowned_operation` gap. An unknown
 mnemonic requires an operation-specific `unsupported_opcode` gap. Recognized
-names come from pinned `PcodeOp.java`. Recognition does not check semantics.
+names are the 74 named-case return strings of pinned
+`PcodeOp.getMnemonic()`. The ordinary exporter stores these strings.
+The six conversion and rounding names are `INT2FLOAT`, `FLOAT2FLOAT`,
+`TRUNC`, `CEIL`, `FLOOR`, and `ROUND`. Their `FLOAT_` constant identifiers
+are not recognized mnemonics. Recognition does not check semantics.
 A phi operation with no parent or a different incoming-edge count requires
 its own `phi_binding_unproved` gap. Its actual operands remain unchanged.
 
@@ -96,6 +100,13 @@ check but still fail the closed graph shape. Bounds are not a process-memory
 guarantee. Later units own program, bundle, context, mapping, and source bounds.
 
 Errors have finite classes for format, limit, pin, and binding failures.
+All supplied roster keys must be exact integers from zero through 2^64−1.
+The reader checks these keys before roster comparison or function lookup.
+It checks the selected `Function.entry` with the same rule before comparison.
+Boolean, float, negative, and overflowing identities cause a format error.
+Listing-edge callers use the same integer rule before the edge count comparison.
+The optional `None` caller remains valid. This check does not certify edge semantics.
+Valid but mismatched identities remain binding errors.
 Messages do not include caller data or process logs. The reader does not
 convert unexpected implementation exceptions into successful observations.
 
