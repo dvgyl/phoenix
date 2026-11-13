@@ -1,0 +1,113 @@
+Phoenix must meet every SPEC section 9 condition. This review checks the complete documentation and evidence delta at `7cc2c49304f5fb2f32479338521d170ee643c73f` against parent `293477f643a764d7fe34054899d2fee215f1daf1`.
+
+The full documentation and evidence-accuracy verdict is **HOLD**. One current instruction needs correction. The archive integrity checks pass. No new production-code defect was established in this documentation-only change. The separate comment verdict is **PASS within this diff**. This is a full documentation review, not a comment-only review or a Phoenix milestone approval.
+
+The frozen checkout is `/Volumes/PhoenixWork/worktrees/m1-preflight-review-2`. Root owns all corrections and Git writes. This review made no source, comment, tracked-document, index, branch, or tag change.
+
+**Ranked functional and documentation findings.**
+
+F1 is P2. Update the current layout review state. [STATUS.md line 55](/Volumes/PhoenixWork/worktrees/m1-preflight-review-2/docs/STATUS.md:55) says that fresh full implementation review remains required. Its next action at [line 87](/Volumes/PhoenixWork/worktrees/m1-preflight-review-2/docs/STATUS.md:87) says to finish that review. [HANDOFF.md line 84](/Volumes/PhoenixWork/worktrees/m1-preflight-review-2/docs/HANDOFF.md:84) identifies the review without its verdict. [Line 91](/Volumes/PhoenixWork/worktrees/m1-preflight-review-2/docs/HANDOFF.md:91) continues with a pending-review condition. A reader can repeat an accepted review instead of integrating the accepted unit.
+
+The exact full [layout report line 3](/Volumes/PhoenixWork/audit/m2-collector-layout-full-review-sol-20261113/report.md:3) gives PASS for candidate layout and descriptors only. Its complete SHA-256 is `3452597bad2851cf7f29fa5dfd7f0fb90d6f449c762a20ea3dd8c534ba031ee9`. Root's [layout-source-accepted.json line 2](/Volumes/PhoenixWork/audit/resume-20261113/layout-source-accepted.json:2) accepts exact source `e7218853a0f47f5470bea597e1d57f98231cc66c`. The record binds that report digest. It records 1,744 root focused tests, 2,020 added reviewer mutation controls, and the required retained-limit literals for the next unit. The acceptance record is 368 bytes with SHA-256 `925319dacc1abb22621f45b5d812004b271c89be327a27848ff3b2e4ae9f0944`.
+
+Root must state that the full candidate-layout review passed and was accepted. The next action is exact integration with the required integration checks. It is then complete private U2 readback with independent retained-limit literals. The correction must keep final `identity_inputs`, complete metadata retention, decoder review, actual compiler retention, and both Linux profile approvals open. Layout-only PASS grants none of those approvals.
+
+Suggested STATUS replacement text is as follows.
+
+> Candidate layout source `e721885` passed its full hook and fresh full Sol implementation review. Root accepted the layout-only unit. Root repeated 1,744 focused tests. The reviewer added 2,020 mutation controls. Integrate the exact accepted files with the required checks. Both candidate definitions remain test-only. Complete private readback and independent retained-limit literals are next. Final identity inputs, complete metadata retention, actual compiler retention, and both Linux profile approvals remain open.
+
+Apply the same state to HANDOFF and the next-actions list. This text is a recommendation only. No source edit was made.
+
+**Historical timing.**
+
+The manifest records preparation at `2026-11-13T14:34:10.343181+00:00`. The user states that the layout review ended at 14:27 and root accepted it after these documents were prepared. The completed report and root acceptance record establish the needed current-doc correction. They do not justify rewriting the immutable snapshot as if it already contained that acceptance.
+
+Keep [the LOG entry at line 1261](/Volumes/PhoenixWork/worktrees/m1-preflight-review-2/docs/LOG.md:1261) as a historical record. Append the later acceptance. Keep the archive and its earlier proof records exact. README's statement that layout implementation review is separate from the branch proof is correct. It does not claim that the review failed or passed.
+
+The user also states that the graph F1/F2 writer ended at 14:39 and the approved Corpus Author aggregate handoff arrived at 14:49. Both events follow document preparation. They are not defects in the prepared snapshot. Root must update later current instructions from approved evidence. Writer completion alone does not establish full graph approval. Author handoff arrival alone does not establish a new Phoenix score, release of a lease, or SPEC section 9 completion. This review did not read Author material to check those later events.
+
+**Exact scope and preservation.**
+
+I read AGENTS.md and SPEC.md completely. I read complete STATUS and HANDOFF, the complete LOG addition, the open comparator issue, every manifest payload, README, and manifest. I read all eight archived review reports in full. I also read the full public layout review as needed for F1. Separate reads covered truncated displays.
+
+The complete diff changes 30 paths. It modifies three existing documents and adds 27 documents or records. The parent has 305 tracked paths. The reviewed commit has 332. All 332 working files match their exact commit blobs. All 302 non-scoped tracked files retain their parent bytes and modes. All existing tracked modes remain exact. No product, test, workflow, schema, lock, quality setting, or comparator control changed.
+
+The historical pause handoff is exactly the parent HANDOFF. It has 23,328 bytes and SHA-256 `487441a32b65a4e75e78ffd7b4d3b53f879c7913902408095ff4154df36459dc`. The complete old LOG prefix has 76,897 bytes and SHA-256 `e5075409f6288482298c7b9c45f34430f1aff23521c86c50d96993187687babf`. It remains exact. The LOG addition has 2,407 bytes.
+
+The archive has 24 payload files with a total of 197,758 bytes. Every declared length and SHA-256 matches. There is no duplicate manifest entry, missing payload, symbolic link, subdirectory, or extra unclassified artifact. README and manifest are the two metadata files outside the payload list. The manifest lists the complete payload inventory. README explains the report groups, historical pause, limits, and private boundary. [file-checks.json](file-checks.json) records all expected and actual payload hashes. It also records hashes for all changed files. [source-final.json](source-final.json) records every tracked file and mode.
+
+All archive payloads decode as UTF-8. All archived JSON records parse without duplicate keys. Full content review found no sealed source, held-out input, private archive, Author output, raw model transcript, inherited environment dump, or credential. Supplementary secret-pattern checks found no match. Those patterns do not prove the absence of every possible secret format. The prohibited layout `pytest-initial.log` was not read, hashed, copied, or included. References to excluded files in reports are not copies of their contents.
+
+**Public source evidence.**
+
+I inspected the complete shapes of the five requested root JSON records before selecting their fields. They are unversioned records. Their observed key types are in [root-record-shapes.json](root-record-shapes.json). Their exact identities are in [evidence-checks.json](evidence-checks.json).
+
+| Root record | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `public-docs-after-push.json` | 248 | `71767d81fd5e9c0a8f85feeb696f544f90fa2b947a16a8023974cd309de11fcc` |
+| `public-linux-accepted.json` | 676 | `74b25a11904de202b33a1eb94d885b8b882c9f02d778b874dcc97201a9bd49c5` |
+| `public-evidence-parent-repeat/final-result.json` | 237 | `576f175040353c126765dd54e8e77152a8b77ce66d62c2003e53952dee33a02a` |
+| `layout-source-accepted.json` | 368 | `925319dacc1abb22621f45b5d812004b271c89be327a27848ff3b2e4ae9f0944` |
+| `layout-source-after-push.json` | 975 | `d01da1fafef35415ad0b81a13e144261d9a03eaf14336f8ab76840aebbbfcbf9` |
+
+The archived public acceptance record equals its root record. The archived layout proof equals `layout-source-after-push.json`. The accepted public review digest equals the complete archived report digest. Root's documentation after-push record names the exact reviewed HEAD and remote, 24 archived payloads, and a passed full hook. Current remote state and hook execution remain root-record claims. This review made no network check and ran no full hook.
+
+I read the actual successful `layout-source-full-hook-commit-push-retry.log` completely. It records the passed quality hook, `e721885` commit, and successful branch push. The separate setup-failure record retains hook exit 4. Pytest did not start because root had disabled plugin autoload and pytest-cov was unavailable. This was a setup failure. It was not a product pass or a product failure. No raw initial writer log was needed.
+
+**Counts and their limits.**
+
+M0 and M1 retain accepted commits `4ef231a1bbdc8d572e06dd5a44efff620dda0e97` and `6897e4753d8acedfae57af63e6426faf116bed2e`. The historical M1 original `m1-t0-6897e47` and replay `m1-t0-replay-6897e47` remain the basis for 19/20 behavior passes, 18/20 integrity passes, and 17/20 complete successes. Ghidra-raw has 8/20 in each category. Phoenix retains two embedded-text failures and one behavior failure. Raw retains 12 compiler-error variants. Each method has 792 eligible variant-case pairs. Coverage is 790/1,079 recovered block entries. It is not source branch coverage. These inherited historical counts agree with the parent and archived reports. This review did not rescore M1 or inspect a private run. Later code inherits none of those scores.
+
+The three archived public M0 reports agree at source `293477f`, worker source digest `f2ae5cdece588e795c60c3c45f630027cc3f4d954738b6801a842b1cc2f391a1`, and seed `31640025043986808`. Each has bitstats with 10 cases and filemarks with 6. Both outcome digests agree across all reports. Every recorded self-match, expected behavior, portability flag, and sandbox probe passes. Each report records three self trials and zero emulator-sensitive cases. Mutation controls record 20/20 kills on Mac and 10/10 on each native CPU. Five probe groups pass across the reports.
+
+Native modes use their own native engines. Their healthy-oracle flags do not prove that a second emulator ran. Mac records Rosetta and native arm64, with explicit QEMU comparison described by the complete archived review. Worker image IDs differ by context. Equal worker source does not mean equal image bytes. Mac coverage is 30/45 and 30/51 recovered blocks. Native coverage is null. The ZIP metadata agrees with the previous complete-archive verification records and archived report digests. This review did not reopen the original ZIPs or repeat executions. The archive retains aggregate reports, not every M0 trial output or probe transcript.
+
+The switch report has two complete original compiler rows. Each row has 53 development cases, 56 verification cases, and source replay equality. Eight positive builds each record 56/56 matches. The total is 448 case/build matches. Eight negative builds each compile and record zero matches for all three unvisited selector-11 cases. The total is 24 stdout differences. There are no recorded evaluation errors or emulator disagreements in either group. Positive GCC builds have two warnings each. Positive Clang builds have zero. Every negative build has three. Positive warnings total 8. Negative warnings total 24.
+
+The complete archived review checks 848 development and replay outcomes across 16 builds. That is a prior-review observation, not a new measurement here. The separate pair checks retain aggregates and executable identities rather than every rebuilt output. Exact replay snapshots were checked by that prior review. This review checks the complete preserved rows and their hash bindings. It did not replay targets or claim an independent output-level measurement. The fixed public response uses no live model. Its fixture token and cost zeros are not runtime cost results. These public fixtures supply no sealed score or M2 acceptance.
+
+The graph archive retains the initial comment-only HOLD and later full functional HOLD at `23e05e9`. The later report identifies six incorrect mnemonic names and unchecked Boolean or float function identities. Its final independent batch has 28 failures and 38 passes. The earlier 74-name comparison checked Java constant names rather than exported mnemonics. The later report corrects that mistake explicitly. Four original comment findings were corrected separately. Their correction is not functional approval. No graph schema 2 implementation enters this commit.
+
+The layout proof establishes the checked candidate branch. The later complete report establishes layout-only PASS. Neither establishes a decoder, final inspection, compiler retention, or native profile approval. The staged U2 design retains the final identity-input and complete-metadata transaction gates. Independent retained-limit literals remain required in the next unit.
+
+T1 remains 15 programs and 90 variants, with the disclosed narrow range of 304 to 316 C lines. T2 remains ten programs and 60 variants. Its approved aggregate adequacy is 18,590/21,685 source branches and 305/310 mutant kills. Five non-equivalent mutants survive. Separate witnesses do not count as held-out kills. One confirmation uses a declared emulator diagnostic rule. These are inherited Author adequacy counts, not Phoenix reconstruction scores. The corpus is agent-sealed on the honor system under SPEC section 6.1. No private revalidation occurred.
+
+**Independent file controls.**
+
+Seven evidence check groups pass. Four additional controls pass. They detect a false self-match, a missing positive switch match, a changed manifest payload, and an additional archive filename. These are file-validation controls. They are not Phoenix evaluation results.
+
+The worker digest was recalculated independently from the exact frozen file inventory. The integrity-checker digest was also recalculated. It is `2ff7b2c72638a963659c22fa5ace926a37f0a7a4d08d987ce918af4a473c63db`. No product module was imported or executed.
+
+The original public evidence script has SHA-256 `4b1680324733b3cad9aaee3e37a72674e9fb37ad5b8e408e4e60effdb4f9b3b5`. The root repeat has the same abstract syntax tree after replacement of only its OUT and TEMP assignments. Both result files retain nine passing groups and four passing pure controls. The root repeat final record gives exit zero. Its earlier setup failure remains preserved. This verifies the stated repeat scope without running that script.
+
+AST inspection of `phoenix_eval/reports.py` confirms that `compare_public_reports` does not read `self_match`. The existing `tests/test_reports.py` and comparator bytes remain exact parent bytes. [Issue 0001](/Volumes/PhoenixWork/worktrees/m1-preflight-review-2/docs/issues/0001-public-report-self-check.md:3) is OPEN. The complete assertions in the preserved public review check the missing fields. The open issue does not invalidate those checked bounded records. No old control was edited, relaxed, or replaced.
+
+**Separate comment findings.**
+
+There is no new executable source or test in the reviewed diff. There is no new code-comment, docstring, or typing-suppression finding. Markdown prose and immutable historical reports are not comment-deletion targets. F1 is a documentation-state error, not a comment finding. Previously reported code-comment findings remain historical findings outside this diff.
+
+Comment deletions, restorations, fixes, encodings, reruns, and new `MUST KILL` flags are all zero. No dependency-rule comment was deleted. No new dependency-comment HOLD was found. Root retains all authority to make later edits.
+
+**Commands and failures.**
+
+The retained scripts are [check_files.py](check_files.py), [check_evidence.py](check_evidence.py), and [finish.py](finish.py). Their outputs are [file-checks.json](file-checks.json), [evidence-checks.json](evidence-checks.json), [evidence-checks.log](evidence-checks.log), [source-final.json](source-final.json), and [finish.log](finish.log). Git commands and statuses are retained in the JSON records. [commands.md](commands.md) gives the reproduction commands and read scope.
+
+The checks used an explicit minimal child environment and Python `-B`. Python was the installed standard-library interpreter, version 3.14.6. No project runtime or test suite ran. PYTHONPATH named the frozen checkout. No Phoenix module import occurred. Thus no mutable checkout or stale product bytecode supplied a check. The new bytecode prefix remained absent. Every declared child cache path was within the assigned temporary root. The checks did not use those caches.
+
+The first shell could not find relative `task-env.sh`. Later shells sourced the exact task script. Each reported a denied `/Volumes/PhoenixWork/vm` directory creation from the workspace setup. The task exports then loaded. No guard change or alternate setup was used. Initial missing-path and skill-path reads and large truncated displays are retained in [failures.json](failures.json). Later smaller reads covered the required text. The first setup reads preceded the sentinel checks. Subsequent review batches checked the exact sentinel paths before work. No static file or AST assertion failed. No failure was converted into PASS.
+
+The installed Poteto 0.9.138, technical-writing, unslop, and comment rules were read. Prove It Works led to direct byte and parent comparisons. Explain the Number led to separate execution counts, warning counts, and evidence limits. Both principle leaves were read. The user prohibition on nested roles, edits, and runtime actions overrides skill steps that would perform those actions. `throughput checkpoint: n/a, read-only investigation`. The checklist is [todo.md](todo.md).
+
+**Process limits and remaining work.**
+
+All review writes stayed in the two assigned review roots. No successful outside-root write is established. The task environment's denied setup attempt is disclosed above. No nested model, agent, model API, model CLI, session, continuation, dispatch, compiler, linker, target, Ghidra, native plugin, container, or VM action ran. No network, credential, upload, process scan, private source, held-out input, private archive, private run, Author output or history, Codex session, archived session, dispatcher events, dispatcher stderr, or dispatcher summary was read. A top-level listing exposed dispatcher and guard filenames. Their contents were not opened or hashed. No installed guard was inspected, probed, changed, relaxed, or nested.
+
+Standard service was requested. No model, provider, service, or Fast setting changed. Routing and service tier were not independently attested. This review makes no routing attestation.
+
+All owned commands and synchronous children returned. No background child or scheduled continuation started. No global process census was made. PAUSED and DRAINING under `audit/continue-v1` were absent at the final check. The active goal, retired old timer, and absence of a new deadline agree with the user instruction and current documents. The archived pause instructions are historical.
+
+Root must correct F1 and obtain the required review of that documentation correction. It must complete graph correction and full review, exact layout integration, private U2 readback, final identity and metadata retention, remaining adapter units, indirect calls, byte idioms, fault localization, M2, M3, and the required readability assessment. Later Author progress must pass through the approved aggregate boundary.
+
+Full capture review remains **OPEN after provider screening**. No parser-only, representation, layout, or public fixture PASS closes that gate. Producer admission, native facts, compiled retention, trusted issuance, operational table use, calibration, capture, and production remain separate requirements. This review makes no retry, replacement, rephrasing, provider change, settings change, or screening bypass.
+
+Every SPEC section 9 condition remains incomplete. M4 must finish. The T0 through T3 report must include every baseline, costs, and a failure taxonomy. The required harness, benchmark binaries, held-out inputs, and committed source tarballs must be published at the approved stage. Every headline number must reproduce through `phoenix-eval --replay`. This documentation review accepts none of those conditions. Its HOLD remains until F1 is corrected.

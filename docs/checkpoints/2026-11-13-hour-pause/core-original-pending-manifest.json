@@ -1,0 +1,44 @@
+{
+  "schema": "phoenix-public-pending-backup-1",
+  "worktree": "/Volumes/PhoenixWork/worktrees/m1-ledger-identity",
+  "branch": "agent/m2-private-compiled-readback-20261113",
+  "base_commit": "e7218853a0f47f5470bea597e1d57f98231cc66c",
+  "patch": "pending.patch",
+  "patch_sha256": "08c9f4ea3e5e9d84c089340f2619344dbfabf980070c8bbceec2e6942d17d5e5",
+  "files": [
+    {
+      "path": "phoenix/observe/collector_layout.py",
+      "bytes": 47893,
+      "sha256": "a8fddcc0ac13b5edccfca2d6ec42413893782fe2460825926bbe5d114ed321f2",
+      "executable": false
+    },
+    {
+      "path": "phoenix/observe/collector_compiled.py",
+      "bytes": 35790,
+      "sha256": "0854643fed620f23034173ec56b5dfd23dc90de44678a707ccdb3d2bcd4dbdf9",
+      "executable": false
+    },
+    {
+      "path": "tests/test_observe_collector_layout.py",
+      "bytes": 68335,
+      "sha256": "7a67c5289de48ca31b68298626a5d31b4c61fccb56af700199fd64a3c033f589",
+      "executable": false
+    },
+    {
+      "path": "tests/test_observe_collector_compiled.py",
+      "bytes": 61198,
+      "sha256": "279703db9410b388e5a374f7846d0711d48dfb00ef744a719eb2b6725639b17e",
+      "executable": false
+    },
+    {
+      "path": "docs/adr/0043-independent-compiled-readback.md",
+      "bytes": 14451,
+      "sha256": "bf69e52acf7ac237f7a7816e0395f6e2bcd7f09b197b55e03d4b550d9dc23789",
+      "executable": false
+    }
+  ],
+  "reconstruction_verified": true,
+  "original_index_unchanged": true,
+  "original_files_unchanged": true,
+  "accepted_code": false
+}

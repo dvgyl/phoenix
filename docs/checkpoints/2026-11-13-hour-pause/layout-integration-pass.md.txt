@@ -1,0 +1,99 @@
+Phoenix must meet every SPEC section 9 condition. This review supplies the full functional integration decision for `2046688d77d65ed8677b6435e6e5b96b4aef828e` against `7cc2c49304f5fb2f32479338521d170ee643c73f`.
+
+The full integration verdict is **PASS for the candidate layout integration**. No blocking functional, contract, preservation, independence, or integration defect was found in this diff. Documentation F1 from the prior documentation review is **CLOSED**. The separate comment verdict is **PASS**. These decisions follow source review and executed checks. Exit 0 alone is not PASS.
+
+This decision does not approve complete private U2, a final inspection API, either native profile, or actual compiler retention. Full capture review remains OPEN after provider screening. Every SPEC section 9 completion gate remains open. Root owns source, Git, and later integration. This review changed no source or comment.
+
+The frozen checkout is `/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17`. Its HEAD matches the requested revision. All 335 tracked working files match their HEAD blobs and executable modes. The checkout is clean. The review did not read the active layout writer checkout.
+
+The ranked functional findings list is empty. There is no required code correction in the reviewed integration. The remaining gates below are required later work. They are not approvals supplied by this PASS.
+
+The exact imported source is `e7218853a0f47f5470bea597e1d57f98231cc66c`. Only these three files come from that source revision.
+
+| Path | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `phoenix/observe/collector_layout.py` | 46854 | `2179189c102f72826fe3d4c0d2a777fd51d58b8b59b3bf013325cfc3232972c2` |
+| `tests/test_observe_collector_layout.py` | 67028 | `f9e9b828546a328393dfe7ada059aba51b1d2fba95cc2f5aebcaa7750668ec97` |
+| `docs/adr/0043-independent-compiled-readback.md` | 9466 | `3852f08f429496841a1c66e3d320c0090b7e160fc261c1cb98a23f36529b2c68` |
+
+Each file matches its source Git blob, mode, and both after-push records. It also matches `layout-main-exact-copy.json`. The main parent has 332 tracked files. All 329 old files outside STATUS, HANDOFF, and LOG retain their exact blobs and modes. The only new paths are the three listed above. No old path was deleted. This complete tracked-file comparison preserves every later byte, ELF, fixture, archive, and product addition. Header, data, native declarations, recipes, dependencies, policy and admission hashes, and identity algorithms remain exact parent bytes.
+
+The complete old LOG is an exact 79,304-byte prefix. Its SHA-256 is `c5dab1b5fe5ba9f077a3cca0f4092eafe92aa0ef602f603ed9ce6e14e54faed8`. The new entry appends 1,603 bytes. The 26 files in the immutable resume archive retain their exact parent blobs. All 24 manifest payloads also match the prior documentation metadata by length and SHA-256. They total 197,758 bytes. README and manifest are the two other archive files. No archive or historical LOG correction was made.
+
+[identity-check.json](identity-check.json) records the tree comparison. [source-identities.json](source-identities.json) records every tracked path, mode, blob, length, and SHA-256. This was a required tracked-source comparison. It was not a filesystem or audit-directory walk.
+
+I read all 1,477 module lines, all 1,905 test lines, all 177 ADR0043 lines, and the complete progress delta. I read AGENTS.md and SPEC.md in full. I read all four final compiled-data design records and the complete staged U2 contract, API, test plan, and report. I read both prior review reports in full. Their metadata shapes were inspected before field selection. Later bounded reads covered truncated displays.
+
+The source layout review gives PASS only for installed candidate definitions and descriptors. Its exact report SHA-256 is `3452597bad2851cf7f29fa5dfd7f0fb90d6f449c762a20ea3dd8c534ba031ee9`. This review recalculated that digest. `layout-source-accepted.json` binds the same report and source revision. It requires independent retained-limit literals in the next readback unit. The source review supplies no decoder or native approval.
+
+The functional checks cover the complete installed contract. [collector_layout.py:14](/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17/phoenix/observe/collector_layout.py:14) starts the frozen descriptor records. They preserve unsigned values, Boolean values, fixed numbers, restored endpoints, signed pairs, text forms, exact table targets, options, and ordered variants. [TableField at line 103](/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17/phoenix/observe/collector_layout.py:103) has only logical name, native name, and descriptor. Private FieldSpec carries offsets. LayoutDefinition remains a staging record. It has no invented witness-source, checks-source, or reader-manifest digest.
+
+[Member expansion at line 1023](/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17/phoenix/observe/collector_layout.py:1023) preserves owner order, declared field order, composite members, and depth-first children. Offsets remain relative to the owner. Arrays remain single members with extents 32 or 47. [Validation at line 1327](/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17/phoenix/observe/collector_layout.py:1327) checks exact installed identities and inventories. Member validation permits parent-child containment and requires complete, disjoint sibling coverage. Descriptor and table cycles refuse. Equal field width cannot substitute for the correct slice type or semantic descriptor.
+
+[Installation at line 1461](/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17/phoenix/observe/collector_layout.py:1461) validates both definitions once. Selection requires an exact profile string. Machine 62 and machine 183 remain separate test-only definitions. Their equal geometry does not transfer approval between architectures. Private helpers operate on installed records. They do not expose a malformed-byte decoder boundary.
+
+The repeated independent inventory script reads the normative final design directly. It constructs expected geometry and member rows without product expansion, serialization, writer, or source-reader helpers. It compares the complete proposed-layout record, all product records, and every committed literal row. The proposed record digest remains `2afb7057b427333e0c6caea163bb16c513d9432dd1fae57284edb13367f70868`.
+
+| Independent check | Result |
+| --- | --- |
+| Logical fields | All 214 names, native names, offsets, and descriptors match. |
+| Native types | All 100 IDs, names, sizes, and alignments match. |
+| Expanded members | All 653 IDs, owners, paths, offsets, sizes, alignments, type codes, and extents match. |
+| Tables | All 47 tags, names, element types, sizes, record kinds, and field contracts match. |
+| Witness | Every one of 5,021 words matches for each machine. The formula is `9 + 100*3 + 653*7 + 47*3`. Explicit little-endian encoding has 40,168 bytes. |
+| Independent mutations | All 2,020 changed definitions reject across both machines. |
+
+The mutation controls change every descriptor and every member path. They also change equal-sized slice types and reverse variant targets. The tests add complete numeric inventory mutations, immutability checks, exact integer checks, cycles, containment, leaf coverage, visible programming faults, and denied external operations. All these checks concern representation. They do not inspect compiler output or run a decoder.
+
+The expected witness byte digests are `970e1263743cbd669043b3304367b2c84e566d5d653408bc9ac7c9c2b16b4492` for machine 62 and `6daf4c3519b5b3d2ccb6488bfe633b056a8464f1c7c9acfe0c3e6e648f7dd25e` for machine 183. These identify synthetic expected bytes.
+
+The observed layout import closure contains only `phoenix`, `phoenix.observe`, and `phoenix.observe.collector_layout`. Every actual path is in the frozen checkout. Their exact hashes are in [inventory-check.json](inventory-check.json). Direct product imports are `__future__`, `dataclasses`, and `typing`. The fresh-child test denies disallowed imports and checks actual origins and hashes. It uses `-B`, `-S`, an absent bytecode prefix, and four explicit environment variables. The parent check also uses an absent bytecode prefix. No writer, source reader, recovery schema, host ABI, `ctypes`, or native loader supplies product expectations.
+
+Documentation F1 is closed by [STATUS.md:55](/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17/docs/STATUS.md:55), [HANDOFF.md:85](/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17/docs/HANDOFF.md:85), and the appended [LOG entry at line 1278](/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17/docs/LOG.md:1278). Current instructions state that source layout review passed and root imported its exact files. Root acceptance is independently bound by the supplied acceptance record. The next action at [STATUS.md:102](/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17/docs/STATUS.md:102) is integration review, then complete private U2. Final identity inputs, an immutable metadata transaction, retained limits, decoder review, compiler retention, and both native approvals stay open. The old pending source-review instruction is removed. Historical instructions remain exact in the archive and old LOG prefix.
+
+The new graph claims match `graph-f1-f2-source-after-push.json`. It records 1,311 focused checks, 65 independent behavior controls, 12 caller controls, and ten parent failures. It retains the historical hash-assertion failure. The supplied later proof names `59266a9e949234f6d455726cc9238d65e79d74f4` and a passed full hook and push. The frozen progress text still lists that hook and push as next work. This is a conservative progress lag. Full graph review remains explicitly required in both records. No graph source enters this integration. This review did not read or certify that separate source.
+
+The T3 claims match only the three approved Author files and `t3-approved-vm-release.json`. Aggregate arithmetic agrees across five programs and 20 compiler variants. The Author reports 11,264 variant-case pairs and 45,056 completed original executions. It reports 2,340/3,211 GCC O0 branch counters. The small mutation sample has 36 confirmed kills, four unclassified survivors, and two inconclusive outcomes among 42 compiled mutants. Sixteen invalid mutations, 40 initial build setup failures, and two interrupted attempts remain disclosed. These are attributed qualification and adequacy records. They are not Phoenix scores or independent private-runtime validation.
+
+The approved status digest matches the root release record. That record says the lease was released and root observed stopped Colima. This review performed no VM action or process scan. The T3 public-record review and public integration remain pending in this snapshot. No private source, input, archive, checkpoint, log, or outcome was read. The approved records contain references to private paths. Those references were not followed.
+
+T3 publication and licence statements remain approved-record claims here. This task made no network check. The exact first public development snapshot is not established for every program. An earlier undisclosed copy cannot be excluded. The reported knowledge cutoff does not prove training completion. Qualification used emulated Linux x86-64, not native x86-64 validation. The corpus remains agent-sealed on an honor system. T1's narrow 304-to-316-line source range and T2's surviving mutants remain disclosed in STATUS. Their source adequacy is separate from Phoenix reconstruction success.
+
+The command results are as follows. [commands.jsonl](commands.jsonl) retains exact child arguments, exits, and complete output. [commands.md](commands.md) gives the reproduction procedure.
+
+| Check | Result |
+| --- | --- |
+| Complete tracked identity and mode check | PASS. 335 working files match HEAD. Three new files match exact source. All old bytes outside the three progress documents are preserved. |
+| Focused pytest through `run_focused.py` | 1,744 passed. Layout, ELF, data, and header tests. |
+| Independent inventory through `check_inventory.py` | PASS. Complete inventory, literals, witness, import closure, and 2,020 mutation refusals. |
+| Ruff check on both changed Python files | PASS. |
+| Ruff format check on both changed Python files | PASS. Both files are already formatted. |
+| Strict mypy on both changed Python files | PASS. No issue in two source files. |
+| Evidence check | PASS after the audit wording correction described below. Archive, review bindings, docs F1, graph counts, approved T3 arithmetic, and release binding pass. |
+| `git diff --check BASE HEAD` | PASS. No whitespace error. |
+
+The tests used Python 3.12, a minimal child environment, seed `20261113`, disabled plugin autoload and cache provider, no Hypothesis database, an explicit frozen rootdir, explicit test confcutdir, explicit configuration, and a fresh task basetemp. The repeated inventory script is byte-identical to the prior review script except its root and output assignments. The same restriction holds for the repeated test runner. AST comparisons verify those adaptations. Every cache location supplied to children is inside this task's temporary root. The bytecode prefix remains absent.
+
+The successful root main hook transcript was read in full. It records a passed quality hook, commit `2046688`, and a main push from `7cc2c49`. The source retry transcript also records a passed hook and push for `e721885`. The supplied after-push records bind the exact source identities. These are retained root execution records. This reviewer did not repeat the full repository hook or make a network check of the remote. The requested focused tests and changed-file quality checks were repeated directly.
+
+Failures remain visible. Root's initial copy guessed `tests/test_collector_layout.py`. The module copied before that failure matches the accepted module. The setup-failure and exact-copy records describe preflight of all actual paths and hashes before the remaining copies. No expected product result changed. Root's prior hook setup failure also remains disclosed by the source proof and prior complete reports. The successful retry is separate evidence.
+
+This review's initial evidence script incorrectly required the literal words `test-only` in both current documents. HANDOFF instead explicitly keeps actual compiler retention and both Linux profile approvals open at line 104. The initial assertion failure and script are retained. The corrected check accepts that explicit contract. The final check still requires the open native gate. No product code, committed test, expected value, or quality rule was changed.
+
+Initial setup reads also had limits. The first shell sourced the workspace environment instead of the task script. The next two read-only shells did not source the task script. Exact task setup was used after its location was found and before any Python or test check. Missing relative audit paths and absent sentinel files produced read errors. A listing of the assigned review directory exposed dispatcher and guard filenames. Their contents were not opened or hashed. Some combined displays were truncated. Smaller reads covered the required report, source, test, design, and approved-record text.
+
+Each mandatory task-env source reported `mkdir: /Volumes/PhoenixWork/vm: Operation not permitted`. The task exports then loaded. No guard or environment setup was changed. No successful outside-root write is established. These exceptions limit strict process assurance. They do not change the directly checked source or test results. [failures.json](failures.json) records them separately.
+
+The separate comment findings list is empty. Both added Python files have zero comment tokens. The module docstring states the authority contract and is retained. There is no new suppression, narration comment, foreign-rule comment, `MUST KILL`, or comment HOLD. Comment deletions, restorations, reruns, fixes, encodings, and encoding offers are zero. No source or comment edit was permitted. Markdown history is not a comment-deletion target.
+
+The installed Poteto 0.9.138, Investigation, how, no-comments, comment-sicko, technical-writing, and unslop rules were read. Prove It Works led to direct frozen-byte, Git, import-origin, and mutation checks. Explain the Number led to separate schema counts, synthetic controls, attributed T3 adequacy, and Phoenix scores. Both principle leaves were read. The direct task prohibition replaced nested dispatch and source-edit steps. `throughput checkpoint: n/a, read-only investigation`.
+
+Writes stayed in this task's audit and temporary roots. No target, compiler, linker, Ghidra, native plugin, Docker, Colima, Lima, VM, network, credential, or upload action ran. No sealed or held-out run, private Author material, Author worktree or history, Codex session, archived session, dispatcher event, dispatcher stderr, or dispatcher summary was read. No audit walk or process scan ran. No guard was inspected, probed, changed, relaxed, or nested. No nested model, agent, model API, model CLI, session, continuation, or dispatch ran. Fast was not enabled. No model, provider, or service setting changed. GPT-6.1 Sol and Standard were requested. No routing or service-tier attestation is available.
+
+PAUSED and DRAINING were absent at the established `audit/continue-v1` path before execution batches and at final verification. All owned shell, Python, pytest, Ruff, and mypy children completed. No background child or scheduled continuation was started. No global process census was used. Both external volumes remain mounted. The observed internal free space is above the recorded baseline threshold. No storage move was required.
+
+The remaining gates are separate. Complete private U2 needs actual U1 byte calls, witness comparison, independent directory binding, inactive-storage checks, cursor ownership and exhaustion, retained-limit literals, canonical output, and complete expected-byte comparison. It needs root checks, fresh full Sol review, and independent Astra critical review. Final `identity_inputs` and one immutable transaction retaining inspection and both complete metadata arrays remain unresolved. Null dynamic tail rows and unrelated accepted relocations must remain included. The shared budget and fixed U1 refusal order remain binding. Output and subtree limits must be checked before appends.
+
+U3 needs actual fixed witness and assertion sources. U4 needs actual GCC and Clang retention checks at O0 and O2 on both required native hosts. Page, loader, resource, and repeat-identity approvals remain open. U5 needs trusted issuance, fresh cache inspection, native traversal and operational use of the same arrays, full source and import closure, launch association, and per-trial calibration. Pure layout success grants none of these properties.
+
+Full capture remains OPEN after screening. No parser, layout, representation, or public fixture PASS closes it. This review did not retry, rephrase, replace, bypass, or change provider settings for that task. Graph integration and T3 public-record review remain separate. M2, M3, the readability review, M4 with every baseline and ablation, complete costs and failures, required publication, and every headline replay remain required. SPEC section 9 is not complete.

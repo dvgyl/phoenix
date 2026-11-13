@@ -1,0 +1,19 @@
+{
+  "literal_ids": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "all_passed": true,
+  "zero_and_fresh_ids_accepted": true,
+  "all_existing_collisions_require_refusal": true,
+  "product_changed": false
+}

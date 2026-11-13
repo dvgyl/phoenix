@@ -1,0 +1,3020 @@
+diff --git a/docs/LOG.md b/docs/LOG.md
+index 3fd2ac9155cdb9b20c402ef5f48516106cb42f6a..1a13d20b3291e33789fe7d9bbceca2a58f2aa3cc 100644
+--- a/docs/LOG.md
++++ b/docs/LOG.md
+@@ -1263,3 +1263,26 @@
+   the focused-test environment with plugin autoload disabled. Preserve that
+   setup failure. Rerun the unchanged hook with normal plugin loading. No
+   product code, quality setting or expected result changes for this retry.
++
++
++## 2026-11-13. Implement complete private compiled-data readback
++
++- Fresh Astra implements the private staged U2 contract. It retains the same
++  immutable U1 parse, checks all 5,021 witness words and 47 directory tables,
++  decodes all fields, reserves whole slices and requires complete exhaustion.
++  Independent retained-limit literals preserve the old layout and test prefixes.
++- Root preserves all five returned files before any edit. Read the full product,
++  tests, ADR and diff. Repeat 14,451 affected controls. Keep every writer helper,
++  regression and quality failure. A zero-length-load regression fixes only U2.
++  The accepted U1 source and its refusal order remain exact.
++- Root replaces one test narration comment with two direct precondition asserts.
++  No product expectation changes. The required full hook checks that exact pair.
++  No source helper supplies the actual decoded logical state. Synthetic fixtures
++  establish consistency only. They do not prove native compiler retention.
++- Full Sol implementation and independent Astra critical reviews remain required.
++  Final identity inputs, immutable inspection/evidence transaction, real witness
++  sources, native trials, issuance, operational use, calibration and capture remain.
++  Full capture stays OPEN after provider screening. No retry or bypass occurs.
++- The user requests a pause after one hour. Stop at 16:15:25 UTC on 13 November.
++  Start draining at 16:00:25. Preserve every pending file and required review.
++  No corpus input, source, archive, Author log or private checkpoint is read.
+diff --git a/docs/STATUS.md b/docs/STATUS.md
+index 921cf748ca4bafb1efc122c060dd5cdd16900cbf..2d5848c2e4c5f219f94d9c3a1c2fd98619c7a967 100644
+--- a/docs/STATUS.md
++++ b/docs/STATUS.md
+@@ -99,3 +99,15 @@ The complete literal vectors retain their independent proposed-layout identity.
+ The full hook and fresh full Sol implementation review remain required.
+ No decoder, final profile, inspection success or Linux approval is supplied.
+ Full capture review stays OPEN after provider screening.
++
++
++## Complete private U2 source, 13 November
++
++Astra adds private logical readback and independent retained-limit literals.
++Root preserves all five returned files with exact reconstruction. Root reads
++all 1,012 product lines, all 1,749 test lines, the full ADR and the retained-limit
++additions. Root repeats 14,451 affected tests. Replace one test narration comment
++with two direct fixture assertions. Full source checks, fresh full Sol and
++independent Astra critical reviews remain required. No final wrapper, inspection,
++identity-input amendment, issuance, native approval or runtime authority exists.
++The user pause deadline is 16:15:25 UTC today. Start draining at 16:00:25.
+diff --git a/docs/adr/0043-independent-compiled-readback.md b/docs/adr/0043-independent-compiled-readback.md
+index 4219fcaba8e8f46cf202a2ba7e610e16a9c2831a..7b5a278cdfacbc05d97df55c2a04dd6d7477e7df 100644
+--- a/docs/adr/0043-independent-compiled-readback.md
++++ b/docs/adr/0043-independent-compiled-readback.md
+@@ -2,8 +2,12 @@
+ 
+ Date: 2026-11-13.
+ 
+-Status: First U2 subunit. Synthetic layout checks only. Fresh independent
+-implementation review is required before a decoder uses this layout.
++Status: Private U2 is implemented for review. The first layout subunit passed
++fresh full Sol review at `e7218853`. The dated addition below records private
++readback. Final inspection and native approval remain open.
++
++The following sections retain the first layout decision. The dated addition
++records its extension without changing that decision.
+ 
+ ## Scope
+ 
+@@ -175,3 +179,78 @@ and import closure, launch association, and per-trial calibration.
+ Full capture review remains OPEN after provider screening. This work
+ does not retry, replace, or bypass that review. No corpus score, runtime
+ authority, milestone acceptance, or SPEC section 9 completion follows.
++
++## 2026-11-13. Private logical readback
++
++The first layout subunit received the fresh full Sol PASS at `e7218853`.
++This addition implements the next private subunit. It adds
++`collector_compiled.py` and its matching tests. It adds independent retained
++limit literals to `collector_layout.py`. The first subunit's inventory remains
++214 fields, 100 types, 653 members, 47 tables, 5021 words, and 40168 bytes.
++
++`_readback` accepts exact immutable plugin bytes, `ExpectedCollector`, one
++installed profile ID, and the existing `InspectionLimits`. It returns frozen
++`LogicalReadback` or the existing finite refusal. There is no public wrapper,
++final inspection result, inspection encoder, source-manifest parser, profile
++parser, identity-input amendment, or issuance API. F1 and F2 remain open.
++
++The result retains the complete immutable U1 view from the same public parse.
++This keeps every dynamic row and relocation available for the later reviewed
++transaction. It does not implement final evidence serialization or issuance.
++The exact input bytes remain in that view. Expected bytes do not supply any
++actual logical field or substitute for emitted output.
++
++The decoder uses checked row spans and installed typed descriptors. It reserves
++whole slices before descent. Active empty slices use the current cursor.
++Inactive leaves must be zero and consume no logical storage. Every table and
++byte must be exhausted. Empty physical arrays produce no logical rows.
++`LogicalObject` distinguishes objects from arrays. Ordered pairs, array order,
++nullable values, route positions, roles, users, omissions, and gaps remain data.
++
++The independent directory check binds every scalar dimension, exact local
++symbol, and pointer relocation. It reads no pointer-word fallback. U1 still
++owns the complete protection, alias, metadata, F1 write-mapping, and O1 section
++checks. U1 remains unchanged at the source digest recorded above. Zero-length
++load entries do not participate in the U2 file-backed table lookup. A retained
++regression test first exposed that extra-refusal defect.
++
++One call-local budget covers the operation. Profile selection precedes U1.
++U1 receives only remaining work limits. The documented conservative debit
++precedes witness work. Preflight reads the five fixed singleton references and
++31 retained limit scalars. These 41 scalar reads grant no ownership. Traversal
++reads and validates the references again. All represented limits remain exact.
++Large arrays and call-wide route totals are checked before tuple construction.
++A guard-address map supports one pass over each stored route path. No route-by-
++guard product, scope selection, or provider identity check is introduced.
++
++Canonical output uses sorted object keys, compact separators, ASCII escapes,
++and a final LF. Each append checks root and active plan or scope bounds first.
++Each bound reserves its final LF. Character escaping has bounded temporary
++storage. The final immutable copy is charged separately. Complete actual bytes
++must match expected bytes before D, R, and N checks. Matching caller data grants
++no source authority.
++
++The implementation retains the accepted trade-offs. The conservative U1 debit
++can refuse work that exact counters might permit. The independent descriptors
++and literal test inventory increase code size. They avoid a shared writer
++oracle. Two preflight and traversal reads cost more work but retain ownership
++checks and early allocation limits. Character emission costs more calls than
++whole-string encoding but permits checks before every append. None of these
++finite caps establishes total memory, latency, or native approval.
++
++Tests use literal offsets and cells from the independent test inventory. They
++exercise both machines, several placements, every witness position, every field,
++all variant alternatives, inactive cells, directory scalars, pointer contracts,
++local symbols, cursor exhaustion, text and integer edges, lower limits, budgets,
++import closure, immutable results, and visible programming faults. Public raw
++reconstruction prepares expectations before source helpers are disabled.
++Dormant termination records receive private descriptor tests. Public main-window
++contracts remain empty. Coherent fabricated positives prove consistency only.
++
++Root must read the diff, repeat controls, run full hooks, and obtain fresh full
++Sol implementation review. Fresh independent Astra critical review is also
++required before later architectural use. No independent review is supplied by
++the writer. U3, native compiler retention, Linux profile approval, trusted
++issuance, native operational use, calibration, capture, and production remain
++open. Full capture review remains OPEN after provider screening. No corpus
++score, milestone acceptance, or SPEC section 9 completion follows.
+diff --git a/phoenix/observe/collector_compiled.py b/phoenix/observe/collector_compiled.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..a5c4f70c276afaef37dde4034876339b2306bb68
+--- /dev/null
++++ b/phoenix/observe/collector_compiled.py
+@@ -0,0 +1,1012 @@
++"""Private compiled-data consistency. No result grants source or runtime authority."""
++
++from __future__ import annotations
++
++import json
++from bisect import bisect_right
++from collections.abc import Mapping
++from dataclasses import dataclass, field, fields, replace
++from hashlib import sha256
++from struct import Struct
++from types import MappingProxyType
++from typing import NoReturn, cast
++
++from phoenix.observe import collector_elf as elf_module
++from phoenix.observe import collector_layout as layout
++
++
++@dataclass(frozen=True, slots=True)
++class ExpectedCollector:
++    logical_raw: bytes
++    renderer_sha256: str
++    native_source_sha256: str
++
++
++type LogicalValue = None | bool | int | str | tuple[LogicalValue, ...] | LogicalObject
++
++
++@dataclass(frozen=True, slots=True)
++class LogicalObject:
++    entries: tuple[tuple[str, LogicalValue], ...]
++
++
++@dataclass(frozen=True, slots=True)
++class TableSpan:
++    tag: int
++    name: str
++    count: int
++    logical_element_bytes: int
++    logical_bytes: int
++    element_bytes: int
++    storage_bytes: int
++    section_index: int
++    static_symbol_index: int
++    va: elf_module.ElfVa
++    file_offset: elf_module.FileOffset
++    pointer_relocation: elf_module.Rela
++
++
++@dataclass(frozen=True, slots=True)
++class DirectoryView:
++    export: elf_module.Export
++    data_digest: bytes
++    renderer_digest: bytes
++    native_digest: bytes
++    tables: tuple[TableSpan, ...]
++
++
++@dataclass(frozen=True, slots=True)
++class WorkUsage:
++    scanned_upper: int
++    scalar_upper: int
++
++
++@dataclass(frozen=True, slots=True)
++class LogicalReadback:
++    logical_raw: bytes
++    logical_sha256: str
++    directory: DirectoryView
++    witness_export: elf_module.Export
++    elf: elf_module.CollectorElf
++    limits: elf_module.InspectionLimits
++    usage: WorkUsage
++
++
++class _DecodeRefusal(Exception):
++    def __init__(self, result: elf_module.InspectionRejected):
++        self.result = result
++
++
++def _refuse(reason: elf_module.InspectionReason, detail: str) -> NoReturn:
++    raise _DecodeRefusal(elf_module.InspectionRejected(reason, detail))
++
++
++def _require(ok: bool, reason: elf_module.InspectionReason, detail: str) -> None:
++    if not ok:
++        _refuse(reason, detail)
++
++
++@dataclass(slots=True)
++class WorkBudget:
++    limits: elf_module.InspectionLimits
++    scanned: int = 0
++    scalars: int = 0
++
++    def scan(self, amount: int) -> None:
++        assert amount >= 0
++        _require(
++            amount <= self.limits.scanned_bytes - self.scanned,
++            "work_limit",
++            "The byte-scan limit is exceeded.",
++        )
++        self.scanned += amount
++
++    def scalar(self, amount: int = 1) -> None:
++        assert amount >= 0
++        _require(
++            amount <= self.limits.scalar_visits - self.scalars,
++            "work_limit",
++            "The scalar-visit limit is exceeded.",
++        )
++        self.scalars += amount
++
++    def depth(self, depth: int) -> None:
++        _require(
++            depth <= self.limits.nesting, "work_limit", "The nesting limit is exceeded."
++        )
++
++
++@dataclass(slots=True)
++class CursorState:
++    cursors: list[int] = field(default_factory=lambda: [0] * 47)
++    route_paths: int = 0
++    route_memberships: int = 0
++
++
++@dataclass(frozen=True, slots=True)
++class _Indexes:
++    exports: Mapping[str, elf_module.Export]
++    symbols: Mapping[bytes, elf_module.Symbol]
++    sections: Mapping[int, elf_module.Section]
++    relocations: Mapping[int, elf_module.Rela]
++    loads: tuple[elf_module.LoadSpan, ...]
++    starts: tuple[int, ...]
++
++
++@dataclass(frozen=True, slots=True)
++class _Lower:
++    transport: Mapping[str, int]
++    trace: Mapping[str, int]
++    capture: Mapping[str, int]
++
++
++_U32 = Struct("<I")
++_U64 = Struct("<Q")
++
++
++def _checked_inputs(
++    raw: bytes,
++    expected: ExpectedCollector,
++    profile: layout.ProfileId,
++    limits: elf_module.InspectionLimits,
++) -> tuple[ExpectedCollector, layout.LayoutDefinition, WorkBudget]:
++    _require(
++        type(raw) is bytes
++        and type(expected) is ExpectedCollector
++        and type(profile) is str
++        and type(limits) is elf_module.InspectionLimits,
++        "input_type",
++        "Expected exact immutable input records.",
++    )
++    values: dict[str, int] = {}
++    maximum = elf_module.InspectionLimits()
++    for item in fields(elf_module.InspectionLimits):
++        try:
++            value = getattr(limits, item.name)
++        except AttributeError:
++            _refuse("input_limit", "A limit field is missing.")
++        _require(
++            type(value) is int and 0 < value <= getattr(maximum, item.name),
++            "input_limit",
++            "A limit is outside its installed bounds.",
++        )
++        values[item.name] = value
++    checked = elf_module.InspectionLimits(**values)
++    try:
++        logical = expected.logical_raw
++        renderer = expected.renderer_sha256
++        native = expected.native_source_sha256
++    except AttributeError:
++        _refuse("input_type", "An expected field is missing.")
++    _require(
++        type(logical) is bytes and type(renderer) is str and type(native) is str,
++        "input_type",
++        "Expected exact bytes and digest strings.",
++    )
++    _require(
++        len(raw) <= checked.plugin_bytes and len(logical) <= checked.logical_data_bytes,
++        "input_limit",
++        "An input byte limit is exceeded.",
++    )
++    budget = WorkBudget(checked)
++    for digest in (renderer, native):
++        _require(len(digest) == 64, "source_identity", "Invalid expected digest.")
++        budget.scan(64)
++        _require(
++            all(c in "0123456789abcdef" for c in digest),
++            "source_identity",
++            "Invalid expected digest.",
++        )
++    _require(len(profile) <= 32, "layout_mismatch", "Unknown candidate profile ID.")
++    budget.scan(2 * len(profile))
++    _require(
++        profile in ("linux-x86_64-lp64-le-rela-1", "linux-aarch64-lp64-le-rela-1"),
++        "layout_mismatch",
++        "Unknown candidate profile ID.",
++    )
++    return (
++        ExpectedCollector(logical, renderer, native),
++        layout._definition(profile),
++        budget,
++    )
++
++
++def _read_elf(
++    raw: bytes, definition: layout.LayoutDefinition, budget: WorkBudget
++) -> elf_module.CollectorElf:
++    scans = budget.limits.scanned_bytes - budget.scanned
++    scalars = budget.limits.scalar_visits - budget.scalars
++    _require(scans > 0 and scalars > 0, "work_limit", "No ELF work allowance remains.")
++    result = elf_module.read_collector_elf(
++        raw,
++        machine=definition.machine,
++        limits=replace(budget.limits, scanned_bytes=scans, scalar_visits=scalars),
++    )
++    if isinstance(result, elf_module.InspectionRejected):
++        raise _DecodeRefusal(result)
++    return result
++
++
++def _debit_u1(view: elf_module.CollectorElf, budget: WorkBudget) -> None:
++    scalar = (
++        14
++        + 8 * len(view.programs)
++        + 10 * len(view.sections)
++        + 2 * len(view.dynamic)
++        + 6 * len(view.symbols)
++        + sum(s.size // 2 for s in view.sections if s.type == 0x6FFFFFFF)
++        + sum(s.size // 4 for s in view.sections if s.type == 5)
++        + 3 * len(view.relocations)
++        + 47 * 7
++    )
++    scan = (
++        2 * len(view.raw)
++        + 2 * sum(len(s.name) for s in view.sections)
++        + 3 * sum(len(s.name) for s in view.symbols)
++        + 2 * sum(len(n) for n in view.needed)
++        + 6 * budget.limits.symbol_name_bytes
++    )
++    budget.scalar(scalar)
++    budget.scan(scan)
++
++
++def _index_view(
++    view: elf_module.CollectorElf,
++    definition: layout.LayoutDefinition,
++    budget: WorkBudget,
++) -> _Indexes:
++    sections = {s.index: s for s in view.sections}
++    exports = {}
++    for export in view.exports:
++        budget.scan(len(export.name))
++        _require(export.name not in exports, "symbol_ambiguous", "Duplicate export.")
++        exports[export.name] = export
++    budget.scan(sum(2 * (8 + len(t.name)) for t in definition.tables))
++    required = frozenset(
++        ("phoenix_" + t.name).encode("ascii") for t in definition.tables
++    )
++    symbols = {}
++    for symbol in view.symbols:
++        if sections[symbol.table_section].type == 2:
++            budget.scan(2 * len(symbol.name))
++            if symbol.name in required:
++                _require(
++                    symbol.name not in symbols,
++                    "symbol_ambiguous",
++                    "A fixed symbol is duplicated.",
++                )
++                symbols[symbol.name] = symbol
++    relocations: dict[int, elf_module.Rela] = {
++        int(r.place_va): r for r in view.relocations
++    }
++    loads = tuple(
++        sorted((load for load in view.loads if load.memsz), key=lambda load: load.va)
++    )
++    return _Indexes(
++        MappingProxyType(exports),
++        MappingProxyType(symbols),
++        MappingProxyType(sections),
++        MappingProxyType(relocations),
++        loads,
++        tuple(load.va for load in loads),
++    )
++
++
++def _cell(
++    raw: memoryview, start: int, end: int, position: int, width: int, budget: WorkBudget
++) -> int:
++    _require(
++        start <= position <= end and width <= end - position,
++        "table_bounds",
++        "A cell exceeds its owning row.",
++    )
++    budget.scalar()
++    budget.scan(width)
++    return cast(int, (_U32 if width == 4 else _U64).unpack_from(raw, position)[0])
++
++
++def _check_witness(
++    view: elf_module.CollectorElf,
++    indexes: _Indexes,
++    definition: layout.LayoutDefinition,
++    budget: WorkBudget,
++) -> elf_module.Export:
++    witness = indexes.exports["phoenix_collector_layout_v1"]
++    _require(witness.bytes == 40168, "layout_mismatch", "Invalid witness size.")
++    raw = memoryview(view.raw)
++    for i, expected in enumerate(layout._expected_witness(definition)):
++        actual = _cell(
++            raw,
++            witness.file_offset,
++            witness.file_offset + witness.bytes,
++            witness.file_offset + 8 * i,
++            8,
++            budget,
++        )
++        _require(actual == expected, "layout_mismatch", "A witness word differs.")
++    return witness
++
++
++def _read_directory(
++    view: elf_module.CollectorElf,
++    indexes: _Indexes,
++    definition: layout.LayoutDefinition,
++    budget: WorkBudget,
++) -> DirectoryView:
++    export = indexes.exports["phoenix_collector_data_v1"]
++    raw = memoryview(view.raw)
++    start, end = export.file_offset, export.file_offset + export.bytes
++    _require(export.bytes == 2728, "directory_contract", "Invalid directory size.")
++    budget.scan(96)
++    identities = tuple(
++        bytes(raw[start + i * 32 : start + (i + 1) * 32]) for i in range(3)
++    )
++    dimensions = []
++    physical, rows = 2728 + 40168, 0
++    _require(
++        physical <= budget.limits.physical_data_bytes,
++        "input_limit",
++        "The physical data limit is exceeded.",
++    )
++    for i, table in enumerate(definition.tables):
++        values = tuple(
++            _cell(raw, start, end, start + 96 + i * 56 + j * 8, 8, budget)
++            for j in range(6)
++        )
++        tag, count, logical_element, logical, element, storage = values
++        _require(
++            tag == table.tag
++            and count < 1 << 32
++            and logical_element == table.logical_element_bytes
++            and logical == count * logical_element
++            and element == definition.types[table.element_type - 1].bytes
++            and storage == max(1, count) * element
++            and (tag != 47 or count == 1),
++            "directory_contract",
++            "Invalid independent table dimensions.",
++        )
++        physical += storage
++        rows += count if tag != 1 else 0
++        _require(
++            physical <= budget.limits.physical_data_bytes
++            and rows <= budget.limits.nonbyte_rows,
++            "input_limit",
++            "The physical data or row limit is exceeded.",
++        )
++        dimensions.append(values)
++    tables = []
++    files: list[tuple[int, int]] = [(start, end)]
++    virtual = [(export.va, export.va + export.bytes)]
++    witness = indexes.exports["phoenix_collector_layout_v1"]
++    files.append((witness.file_offset, witness.file_offset + witness.bytes))
++    virtual.append((witness.va, witness.va + witness.bytes))
++    for i, table in enumerate(definition.tables):
++        tag, count, logical_element, logical, element, storage = dimensions[i]
++        budget.scan(2 * (8 + len(table.name)))
++        name = ("phoenix_" + table.name).encode("ascii")
++        symbol = indexes.symbols.get(name)
++        _require(
++            symbol is not None, "symbol_missing", "A fixed table symbol is missing."
++        )
++        assert symbol is not None
++        _require(
++            symbol.binding == 0 and symbol.type == 1 and symbol.bytes == storage,
++            "export_contract",
++            "A local table extent or type differs.",
++        )
++        section = indexes.sections[symbol.section_index]
++        offset = section.offset + symbol.va - section.va
++        load_index = bisect_right(indexes.starts, symbol.va) - 1
++        _require(load_index >= 0, "ambiguous_mapping", "A table has no load.")
++        load = indexes.loads[load_index]
++        _require(
++            section.va <= symbol.va
++            and symbol.va + storage <= section.va + section.size
++            and load.va <= symbol.va
++            and symbol.va + storage <= load.va + load.filesz
++            and offset == load.offset + symbol.va - load.va
++            and 0 <= offset <= len(raw)
++            and storage <= len(raw) - offset,
++            "ambiguous_mapping",
++            "A table mapping differs.",
++        )
++        place = export.va + 144 + i * 56
++        relocation = indexes.relocations.get(place)
++        _require(
++            relocation is not None,
++            "relocation_contract",
++            "A pointer relocation is missing.",
++        )
++        assert relocation is not None
++        _require(
++            relocation.width == 8
++            and relocation.type == (8 if view.machine == 62 else 1027)
++            and relocation.symbol_index == 0
++            and relocation.addend == symbol.va,
++            "relocation_contract",
++            "A directory pointer differs.",
++        )
++        if count == 0:
++            if tag == 1:
++                budget.scalar()
++                budget.scan(1)
++                _require(raw[offset] == 0, "table_bounds", "Empty storage is not zero.")
++            else:
++                for spec in definition.field_specs[i]:
++                    for position, width in layout._leaf_cells(
++                        spec.descriptor, spec.offset
++                    ):
++                        value = _cell(
++                            raw,
++                            offset,
++                            offset + storage,
++                            offset + position,
++                            width,
++                            budget,
++                        )
++                        _require(
++                            value == 0, "table_bounds", "Empty storage is not zero."
++                        )
++        tables.append(
++            TableSpan(
++                tag,
++                table.name,
++                count,
++                logical_element,
++                logical,
++                element,
++                storage,
++                section.index,
++                symbol.index,
++                symbol.va,
++                elf_module.FileOffset(offset),
++                relocation,
++            )
++        )
++        files.append((offset, offset + storage))
++        virtual.append((symbol.va, symbol.va + storage))
++    for spans in (files, virtual):
++        previous = 0
++        for begin, finish in sorted(spans):
++            _require(begin >= previous, "storage_overlap", "Physical objects overlap.")
++            previous = finish
++    return DirectoryView(
++        export, identities[0], identities[1], identities[2], tuple(tables)
++    )
++
++
++@dataclass(frozen=True, slots=True)
++class _Decoder:
++    raw: memoryview
++    definition: layout.LayoutDefinition
++    directory: DirectoryView
++    budget: WorkBudget
++    state: CursorState
++    lower: _Lower
++
++    def row_span(self, tag: int, index: int) -> tuple[int, int]:
++        table = self.directory.tables[tag - 1]
++        _require(
++            0 <= index < table.count, "table_bounds", "A row is outside its table."
++        )
++        start = table.file_offset + index * table.element_bytes
++        return start, start + table.element_bytes
++
++    def integer(self, row: tuple[int, int], offset: int, width: int = 8) -> int:
++        return _cell(self.raw, row[0], row[1], row[0] + offset, width, self.budget)
++
++    def zero(
++        self, row: tuple[int, int], offset: int, descriptor: layout.Descriptor
++    ) -> None:
++        for position, width in layout._leaf_cells(descriptor, offset):
++            _require(
++                self.integer(row, position, width) == 0,
++                "logical_shape",
++                "An inactive semantic cell is not zero.",
++            )
++
++    def claim(
++        self, tag: int, offset: int, count: int, *, record: bool = False
++    ) -> range:
++        table = self.directory.tables[tag - 1]
++        _require(
++            offset <= table.count and count <= table.count - offset,
++            "table_bounds",
++            "A slice is outside its table.",
++        )
++        _require(
++            not record or count == 1,
++            "logical_shape",
++            "A record reference needs one row.",
++        )
++        _require(
++            offset == self.state.cursors[tag - 1],
++            "table_bounds",
++            "A slice does not start at its ownership cursor.",
++        )
++        self.state.cursors[tag - 1] = offset + count
++        return range(offset, offset + count)
++
++    def count_limit(self, tag: int, name: str, count: int) -> None:
++        transport, capture = self.lower.transport, self.lower.capture
++        caps = {
++            (20, "sites"): capture["full_plan_sites"],
++            (20, "gaps"): transport["gap_records"],
++            (23, "users"): transport["users"],
++            (44, "users"): transport["users"],
++            (44, "routes"): transport["routes"],
++            (44, "omitted"): transport["omissions"],
++            (44, "gap_dispositions"): transport["gap_records"],
++            (44, "guard_instructions"): capture["guarded_instructions"],
++            (46, "segments"): transport["elf_segments"],
++            (46, "dynamic"): layout.IMAGE_DYNAMIC_MAXIMUM,
++            (28, "entries"): capture["route_entries"],
++        }
++        cap = caps.get((tag, name))
++        _require(
++            cap is None or count <= cap,
++            "input_limit",
++            "A retained inventory cap is exceeded.",
++        )
++        if (tag, name) == (44, "contracts"):
++            _require(
++                count == 0, "logical_shape", "Main-window contracts must be empty."
++            )
++        if (tag, name) == (28, "instruction_path"):
++            _require(
++                count <= transport["route_path_positions"] - self.state.route_paths,
++                "input_limit",
++                "The route path limit is exceeded.",
++            )
++            self.state.route_paths += count
++        if (tag, name) == (33, "positions"):
++            _require(
++                count <= transport["route_memberships"] - self.state.route_memberships,
++                "input_limit",
++                "The route membership limit is exceeded.",
++            )
++            self.state.route_memberships += count
++
++    def value(
++        self,
++        descriptor: layout.Descriptor,
++        row: tuple[int, int],
++        offset: int,
++        previous: Mapping[str, LogicalValue],
++        depth: int,
++        owner: int,
++        name: str,
++    ) -> LogicalValue:
++        self.budget.depth(depth)
++        match descriptor:
++            case layout.Option(payload=payload):
++                tag = self.integer(row, offset)
++                _require(tag in (0, 1), "logical_shape", "Invalid option tag.")
++                if tag == 0:
++                    self.zero(row, offset + 8, payload)
++                    return None
++                return self.value(
++                    payload, row, offset + 8, previous, depth + 1, owner, name
++                )
++            case layout.Variant(nullable=nullable, target_tags=tags):
++                tag = self.integer(row, offset)
++                _require(
++                    (0 if nullable else 1) <= tag <= len(tags),
++                    "logical_shape",
++                    "Invalid variant tag.",
++                )
++                for i, target in enumerate(tags, 1):
++                    if i != tag:
++                        self.zero(
++                            row, offset + i * 8, layout.TableSlice(target, "record")
++                        )
++                if tag == 0:
++                    return None
++                return self.value(
++                    layout.TableSlice(tags[tag - 1], "record"),
++                    row,
++                    offset + tag * 8,
++                    previous,
++                    depth + 1,
++                    owner,
++                    name,
++                )
++            case layout.TableSlice(target_tag=target, mode=mode):
++                begin = self.integer(row, offset, 4)
++                count = self.integer(row, offset + 4, 4)
++                self.count_limit(owner, name, count)
++                claimed = self.claim(target, begin, count, record=mode == "record")
++                if mode == "record":
++                    return self.decode_row(target, begin, depth + 1)
++                return tuple(
++                    self.decode_row(target, index, depth + 1) for index in claimed
++                )
++            case layout.TextSlice(kind=kind, literals=literals):
++                begin = self.integer(row, offset, 4)
++                count = self.integer(row, offset + 4, 4)
++                self.claim(1, begin, count)
++                _require(
++                    kind != "witness" or 1 <= count <= 15,
++                    "logical_shape",
++                    "Invalid instruction witness length.",
++                )
++                _require(
++                    kind != "digest" or count == 64,
++                    "logical_shape",
++                    "Invalid digest length.",
++                )
++                start = self.directory.tables[0].file_offset + begin
++                raw = self.raw[start : start + count]
++                if kind == "witness":
++                    self.budget.scan(count + count * 2)
++                    return raw.hex()
++                self.budget.scan(count)
++                copied = bytes(raw)
++                self.budget.scan(count)
++                try:
++                    text = copied.decode("utf-8", errors="strict")
++                except UnicodeDecodeError:
++                    _refuse("logical_shape", "Invalid UTF-8 text.")
++                if kind == "digest":
++                    self.budget.scan(count)
++                    _require(
++                        all(c in "0123456789abcdef" for c in text),
++                        "logical_shape",
++                        "Invalid digest text.",
++                    )
++                if kind == "literal":
++                    self.budget.scan(count * len(literals))
++                    _require(text in literals, "logical_shape", "Invalid literal text.")
++                return text
++            case layout.Signed64():
++                sign, magnitude = (
++                    self.integer(row, offset),
++                    self.integer(row, offset + 8),
++                )
++                _require(
++                    sign in (0, 1)
++                    and magnitude <= (1 << 63) - (1 - sign)
++                    and not (sign == 1 and magnitude == 0),
++                    "logical_shape",
++                    "Invalid signed value.",
++                )
++                return -magnitude if sign else magnitude
++            case (
++                layout.UInt64()
++                | layout.Boolean64()
++                | layout.ExactNumber()
++                | layout.EndFrom()
++            ):
++                value = self.integer(row, offset)
++                if isinstance(descriptor, layout.Boolean64):
++                    _require(value in (0, 1), "logical_shape", "Invalid Boolean value.")
++                    return bool(value)
++                if isinstance(descriptor, layout.ExactNumber):
++                    _require(
++                        value == descriptor.value,
++                        "logical_shape",
++                        "Invalid fixed number.",
++                    )
++                if isinstance(descriptor, layout.EndFrom):
++                    value += cast(int, previous[descriptor.prior_name])
++                    _require(
++                        value <= 1 << 64,
++                        "logical_shape",
++                        "An endpoint exceeds unsigned range.",
++                    )
++                return value
++        raise TypeError("Invalid installed descriptor.")
++
++    def decode_row(self, tag: int, index: int, depth: int) -> LogicalValue:
++        self.budget.depth(depth)
++        row = self.row_span(tag, index)
++        output: dict[str, LogicalValue] = {}
++        for spec in self.definition.field_specs[tag - 1]:
++            self.budget.scan(len(spec.logical_name))
++            output[spec.logical_name] = self.value(
++                spec.descriptor,
++                row,
++                spec.offset,
++                output,
++                depth + 1,
++                tag,
++                spec.logical_name,
++            )
++        kind = self.definition.tables[tag - 1].record_kind
++        if kind == "scalar":
++            return output["value"]
++        if kind == "pair":
++            return tuple(output.values())
++        assert kind == "object"
++        return LogicalObject(tuple(sorted(output.items())))
++
++    def root(self) -> LogicalObject:
++        self.claim(47, 0, 1, record=True)
++        root = self.decode_row(47, 0, 1)
++        assert type(root) is LogicalObject
++        for table in self.directory.tables:
++            _require(
++                self.state.cursors[table.tag - 1] == table.count,
++                "table_bounds",
++                "A table has unconsumed logical storage.",
++            )
++        return root
++
++
++def _peek_lower_limits(
++    raw: bytes,
++    directory: DirectoryView,
++    definition: layout.LayoutDefinition,
++    budget: WorkBudget,
++) -> _Lower:
++    view = memoryview(raw)
++
++    def row(tag: int, index: int) -> tuple[int, int]:
++        table = directory.tables[tag - 1]
++        _require(
++            0 <= index < table.count,
++            "table_bounds",
++            "A limit reference is outside its table.",
++        )
++        start = table.file_offset + index * table.element_bytes
++        return start, start + table.element_bytes
++
++    def reference(parent: tuple[int, int], offset: int, target: int) -> tuple[int, int]:
++        begin = _cell(view, *parent, parent[0] + offset, 4, budget)
++        count = _cell(view, *parent, parent[0] + offset + 4, 4, budget)
++        table = directory.tables[target - 1]
++        _require(
++            begin <= table.count and count <= table.count - begin,
++            "table_bounds",
++            "A limit slice is outside its table.",
++        )
++        _require(count == 1, "logical_shape", "A limit reference needs one row.")
++        return row(target, begin)
++
++    root = row(47, 0)
++    transport = reference(root, 104, 11)
++    plan = reference(root, 16, 20)
++    trace = reference(plan, 32, 12)
++    scope = reference(root, 88, 44)
++    capture = reference(scope, 88, 13)
++    results = []
++    for span, tag, maxima in (
++        (transport, 11, layout.TRANSPORT_MAXIMA),
++        (trace, 12, layout.TRACE_MAXIMA),
++        (capture, 13, layout.CAPTURE_MAXIMA),
++    ):
++        values = {}
++        for spec, (name, maximum) in zip(
++            definition.field_specs[tag - 1], maxima, strict=True
++        ):
++            assert spec.logical_name == name
++            value = _cell(view, *span, span[0] + spec.offset, 8, budget)
++            _require(
++                0 < value <= maximum and (name != "snapshot_bytes" or value == 8),
++                "input_limit",
++                "A retained limit is outside its installed bounds.",
++            )
++            values[name] = value
++        results.append(MappingProxyType(values))
++    return _Lower(results[0], results[1], results[2])
++
++
++def _get(record: LogicalValue, name: str, budget: WorkBudget) -> LogicalValue:
++    assert type(record) is LogicalObject
++    for key, value in record.entries:
++        budget.scan(len(key))
++        if key == name:
++            return value
++    raise KeyError(name)
++
++
++def _check_retained_limits(
++    root: LogicalObject, lower: _Lower, budget: WorkBudget
++) -> None:
++    original = _get(root, "original", budget)
++    size = cast(int, _get(original, "bytes", budget))
++    budget.scalar()
++    _require(
++        size <= lower.transport["original_bytes"],
++        "input_limit",
++        "The original byte cap is exceeded.",
++    )
++    scope = _get(root, "scope", budget)
++    guards = cast(tuple[LogicalValue, ...], _get(scope, "guard_instructions", budget))
++    guard_map: dict[int, tuple[int, int]] = {}
++    for guard in guards:
++        address = cast(int, _get(guard, "address", budget))
++        owner = cast(int, _get(guard, "owner", budget))
++        witness = cast(str, _get(guard, "witness_hex", budget))
++        budget.scalar(2)
++        _require(
++            address not in guard_map, "logical_shape", "A guard address is ambiguous."
++        )
++        guard_map[address] = (owner, len(witness) // 2)
++    routes = cast(tuple[LogicalValue, ...], _get(scope, "routes", budget))
++    for route in routes:
++        entries = cast(tuple[int, ...], _get(route, "entries", budget))
++        path = cast(tuple[int, ...], _get(route, "instruction_path", budget))
++        cursor = 0
++        for entry in entries:
++            budget.scalar()
++            _require(
++                cursor < len(path) and path[cursor] == entry,
++                "logical_shape",
++                "A route owner group does not start at its entry.",
++            )
++            count = byte_count = last_size = 0
++            while cursor < len(path):
++                budget.scalar()
++                guard = guard_map.get(path[cursor])
++                _require(
++                    guard is not None, "logical_shape", "A route position has no guard."
++                )
++                assert guard is not None
++                if guard[0] != entry:
++                    break
++                count += 1
++                last_size = guard[1]
++                byte_count += last_size
++                cursor += 1
++                _require(
++                    count - 1 <= lower.capture["thunk_neutral_instructions"],
++                    "input_limit",
++                    "The neutral instruction cap is exceeded.",
++                )
++            _require(count > 0, "logical_shape", "A route owner group is empty.")
++            _require(
++                byte_count - last_size <= lower.capture["thunk_neutral_bytes"],
++                "input_limit",
++                "The neutral byte cap is exceeded.",
++            )
++        _require(
++            cursor == len(path), "logical_shape", "A route path has no owner group."
++        )
++
++
++def _canonical_bytes(root: LogicalObject, lower: _Lower, budget: WorkBudget) -> bytes:
++    output = bytearray()
++    active: list[tuple[int, int]] = []
++    cap = min(budget.limits.logical_data_bytes, lower.transport["data_bytes"])
++
++    def append(token: str) -> None:
++        count = len(token)
++        _require(
++            count + 1 <= cap - len(output),
++            "record_limit",
++            "The logical byte cap is exceeded.",
++        )
++        for begin, maximum in active:
++            _require(
++                len(output) - begin + count + 1 <= maximum,
++                "record_limit",
++                "A subtree byte cap is exceeded.",
++            )
++        budget.scan(count * 2)
++        output.extend(token.encode("ascii"))
++
++    def string(value: str) -> None:
++        append('"')
++        for character in value:
++            budget.scan(16)
++            append(json.dumps(character, ensure_ascii=True)[1:-1])
++        append('"')
++
++    def visit(value: LogicalValue, depth: int, subtree: int | None = None) -> None:
++        budget.depth(depth)
++        budget.scalar()
++        if subtree is not None:
++            active.append((len(output), subtree))
++        if type(value) is LogicalObject:
++            append("{")
++            for i, (key, child) in enumerate(value.entries):
++                if i:
++                    append(",")
++                string(key)
++                append(":")
++                bound = None
++                if value is root and key in ("full_plan", "scope"):
++                    bound = lower.capture[
++                        "full_plan_bytes" if key == "full_plan" else "scope_bytes"
++                    ]
++                visit(child, depth + 1, bound)
++            append("}")
++        elif type(value) is tuple:
++            append("[")
++            for i, child in enumerate(value):
++                if i:
++                    append(",")
++                visit(child, depth + 1)
++            append("]")
++        elif type(value) is str:
++            string(value)
++        elif value is None:
++            append("null")
++        elif type(value) is bool:
++            append("true" if value else "false")
++        elif type(value) is int:
++            budget.scan(21)
++            append(str(value))
++        else:
++            raise TypeError("Invalid internal logical value.")
++        if subtree is not None:
++            active.pop()
++
++    visit(root, 1)
++    _require(len(output) < cap, "record_limit", "No space remains for the final LF.")
++    budget.scan(1)
++    output.append(10)
++    budget.scan(len(output))
++    return bytes(output)
++
++
++def _compare_complete(
++    actual: bytes,
++    expected: ExpectedCollector,
++    directory: DirectoryView,
++    budget: WorkBudget,
++) -> str:
++    budget.scan(max(len(actual), len(expected.logical_raw)))
++    _require(
++        actual == expected.logical_raw,
++        "logical_mismatch",
++        "The complete logical bytes differ.",
++    )
++    budget.scan(len(actual))
++    digest = sha256(actual).digest()
++    budget.scan(32)
++    _require(
++        digest == directory.data_digest,
++        "logical_mismatch",
++        "The directory data digest differs.",
++    )
++    for text, stored in (
++        (expected.renderer_sha256, directory.renderer_digest),
++        (expected.native_source_sha256, directory.native_digest),
++    ):
++        budget.scan(64 + 32 + 32)
++        _require(
++            bytes.fromhex(text) == stored,
++            "source_identity",
++            "A directory source identity differs.",
++        )
++    budget.scan(32 + 64)
++    return digest.hex()
++
++
++def _readback(
++    plugin_raw: bytes,
++    *,
++    expected: ExpectedCollector,
++    profile: layout.ProfileId,
++    limits: elf_module.InspectionLimits = elf_module.InspectionLimits(),
++) -> LogicalReadback | elf_module.InspectionRejected:
++    try:
++        checked, definition, budget = _checked_inputs(
++            plugin_raw, expected, profile, limits
++        )
++        view = _read_elf(plugin_raw, definition, budget)
++        _debit_u1(view, budget)
++        indexes = _index_view(view, definition, budget)
++        witness = _check_witness(view, indexes, definition, budget)
++        directory = _read_directory(view, indexes, definition, budget)
++        lower = _peek_lower_limits(plugin_raw, directory, definition, budget)
++        decoder = _Decoder(
++            memoryview(plugin_raw), definition, directory, budget, CursorState(), lower
++        )
++        root = decoder.root()
++        _check_retained_limits(root, lower, budget)
++        actual = _canonical_bytes(root, lower, budget)
++        digest = _compare_complete(actual, checked, directory, budget)
++        return LogicalReadback(
++            actual,
++            digest,
++            directory,
++            witness,
++            view,
++            budget.limits,
++            WorkUsage(budget.scanned, budget.scalars),
++        )
++    except _DecodeRefusal as refusal:
++        return refusal.result
+diff --git a/phoenix/observe/collector_layout.py b/phoenix/observe/collector_layout.py
+index dbd148597951cfd6702b7b7c8bd159e52b55661c..21d99ac733aec1b8e3c337930802eb5699d6c7d7 100644
+--- a/phoenix/observe/collector_layout.py
++++ b/phoenix/observe/collector_layout.py
+@@ -1475,3 +1475,43 @@ def _definition(profile_id: str) -> LayoutDefinition:
+         if profile_id == definition.id:
+             return definition
+     raise ValueError("Unknown candidate profile ID.")
++
++
++TRANSPORT_MAXIMA = (
++    ("data_bytes", 16777216),
++    ("elf_segments", 1024),
++    ("gap_records", 65536),
++    ("lift_bytes", 67108864),
++    ("mapping_bytes", 67108864),
++    ("omissions", 4096),
++    ("original_bytes", 16777216),
++    ("route_memberships", 1179648),
++    ("route_path_positions", 1179648),
++    ("routes", 4096),
++    ("users", 4096),
++)
++TRACE_MAXIMA = (
++    ("events", 10000),
++    ("execution_callbacks", 1000000),
++    ("frames", 64),
++    ("snapshot_bytes", 8),
++    ("translated_instructions", 1000000),
++    ("wire_bytes", 8388608),
++)
++CAPTURE_MAXIMA = (
++    ("events", 10000),
++    ("execution_callbacks", 1000000),
++    ("frames", 64),
++    ("full_plan_bytes", 524288),
++    ("full_plan_sites", 4096),
++    ("guarded_instructions", 65536),
++    ("receipt_bytes", 65536),
++    ("route_entries", 32),
++    ("scope_bytes", 8388608),
++    ("snapshot_bytes", 8),
++    ("thunk_neutral_bytes", 32),
++    ("thunk_neutral_instructions", 8),
++    ("translated_instructions", 1000000),
++    ("wire_bytes", 8388608),
++)
++IMAGE_DYNAMIC_MAXIMUM = 65536
+diff --git a/tests/test_observe_collector_compiled.py b/tests/test_observe_collector_compiled.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e6885cf797d0d10b19b9fa7c4c70540ad80cb00a
+--- /dev/null
++++ b/tests/test_observe_collector_compiled.py
+@@ -0,0 +1,1750 @@
++"""Synthetic consistency controls. These inputs are not native compiler trials."""
++
++from __future__ import annotations
++
++import ast
++import json
++from dataclasses import FrozenInstanceError, fields, replace
++from hashlib import sha256
++from pathlib import Path
++from struct import pack_into, unpack_from
++from typing import Any, cast
++
++import pytest
++from hypothesis import given, settings
++from hypothesis import strategies as st
++from test_observe_collector_elf import BASE, Fixture, fixture
++from test_observe_collector_layout import _fields, _members, _tables, _types
++
++from phoenix.observe import collector_compiled as compiled
++from phoenix.observe import collector_elf as elf
++from phoenix.observe import collector_layout as layout
++
++PROFILES = {62: "linux-x86_64-lp64-le-rela-1", 183: "linux-aarch64-lp64-le-rela-1"}
++SPECS = {tag: tuple(f for f in _fields() if f[0] == tag) for tag in range(1, 48)}
++NAMES = {name: tag for tag, name, _, _, _ in _tables()}
++SIZES = {tag: size for tag, _, _, size, _ in _tables()}
++KINDS = {tag: kind for tag, _, _, _, kind in _tables()}
++MAXIMA = {
++    11: (
++        16777216,
++        1024,
++        65536,
++        67108864,
++        67108864,
++        4096,
++        16777216,
++        1179648,
++        1179648,
++        4096,
++        4096,
++    ),
++    12: (10000, 1000000, 64, 8, 1000000, 8388608),
++    13: (
++        10000,
++        1000000,
++        64,
++        524288,
++        4096,
++        65536,
++        65536,
++        32,
++        8388608,
++        8,
++        32,
++        8,
++        1000000,
++        8388608,
++    ),
++}
++
++
++def witness(machine: int) -> bytes:
++    words = [0x50484F454E49584C, 1, machine, 8, 8, 1, 100, 653, 47]
++    sizes = {number: size for number, _, size, _ in _types()}
++    for number, _, size, alignment in _types():
++        words.extend((number, size, alignment))
++    for number, owner, _, offset, size, alignment, code, extent in _members():
++        words.extend((owner, number, offset, size, alignment, code, extent))
++    for tag, _, element, _, _ in _tables():
++        words.extend((tag, element, sizes[element]))
++    return b"".join(n.to_bytes(8, "little") for n in words)
++
++
++def sample(tag: int = 47) -> Any:
++    def value(descriptor: str) -> Any:
++        if descriptor.startswith("o:") or descriptor.startswith("v0:"):
++            return None
++        if descriptor.startswith("v:"):
++            return sample(NAMES[descriptor[2:].split(",")[0]])
++        if descriptor.startswith("r:"):
++            return sample(NAMES[descriptor[2:]])
++        if descriptor.startswith("a:"):
++            return []
++        if descriptor.startswith("e:"):
++            return descriptor[2:].split("|")[0]
++        if descriptor.startswith("n:"):
++            return int(descriptor[2:])
++        if descriptor == "h":
++            return "a" * 64
++        if descriptor == "w":
++            return "90"
++        if descriptor == "s":
++            return "f"
++        if descriptor == "b":
++            return False
++        return 0
++
++    record = {name: value(desc) for _, name, _, _, desc in SPECS[tag]}
++    if tag in MAXIMA:
++        record = dict(zip(record, MAXIMA[tag], strict=True))
++    if KINDS[tag] == "scalar":
++        return record["value"]
++    if KINDS[tag] == "pair":
++        return list(record.values())
++    return record
++
++
++class Cells:
++    def __init__(self) -> None:
++        self.rows: dict[int, list[bytearray]] = {tag: [] for tag in range(1, 48)}
++        self.blob = bytearray()
++
++    def reserve(self, tag: int, values: list[Any]) -> tuple[int, int]:
++        begin = len(self.rows[tag])
++        self.rows[tag].extend(bytearray(SIZES[tag]) for _ in values)
++        for index, value in enumerate(values, begin):
++            self.row(tag, index, value)
++        return begin, len(values)
++
++    def row(self, tag: int, index: int, value: Any) -> None:
++        entries = SPECS[tag]
++        if KINDS[tag] == "scalar":
++            value = {"value": value}
++        elif KINDS[tag] == "pair":
++            value = dict(zip((f[1] for f in entries), value, strict=True))
++        for _, name, _, offset, descriptor in entries:
++            self.cell(self.rows[tag][index], offset, descriptor, value[name], value)
++
++    def cell(
++        self, row: bytearray, offset: int, desc: str, value: Any, previous: Any
++    ) -> None:
++        if desc.startswith("o:"):
++            pack_into("<Q", row, offset, int(value is not None))
++            if value is not None:
++                self.cell(row, offset + 8, desc[2:], value, previous)
++        elif desc.startswith(("v:", "v0:")):
++            choices = desc.split(":", 1)[1].split(",")
++            if value is None:
++                return
++            name = value.get(
++                "kind",
++                "exact_signal" if "signal" in value else "exit_from_supported_bits",
++            )
++            if name in ("direct_call", "indirect_call"):
++                name = "call"
++            if name == "indirect_jump":
++                name = "jump"
++            index = choices.index(name)
++            pack_into("<Q", row, offset, index + 1)
++            self.cell(row, offset + 8 * (index + 1), "r:" + name, value, previous)
++        elif desc.startswith(("a:", "r:")):
++            target = NAMES[desc[2:]]
++            begin, count = self.reserve(
++                target, value if desc.startswith("a:") else [value]
++            )
++            pack_into("<II", row, offset, begin, count)
++        elif desc in ("s", "h", "w") or desc.startswith("e:"):
++            raw = bytes.fromhex(value) if desc == "w" else value.encode("utf-8")
++            pack_into("<II", row, offset, len(self.blob), len(raw))
++            self.blob.extend(raw)
++        elif desc == "i":
++            pack_into("<QQ", row, offset, int(value < 0), abs(value))
++        else:
++            if desc.startswith("end:"):
++                value -= previous[desc[4:]]
++            pack_into("<Q", row, offset, value)
++
++
++def built(
++    record: Any = None, machine: elf.Machine = 62, placement: int = 0
++) -> tuple[Fixture, compiled.ExpectedCollector]:
++    record = sample() if record is None else record
++    cells = Cells()
++    cells.reserve(47, [record])
++    f = fixture(machine)
++    f.data[0x2000 : 0x2000 + 40168] = witness(machine)
++    expected_raw = (
++        json.dumps(record, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
++        + "\n"
++    ).encode("ascii")
++    f.data[0x20000:0x20060] = (
++        sha256(expected_raw).digest() + b"\x22" * 32 + b"\x33" * 32
++    )
++    cursor = 0xBD00 + placement
++    offsets = []
++    for tag in range(1, 48):
++        cursor = (cursor + 7) // 8 * 8
++        raw = bytes(cells.blob) if tag == 1 else b"".join(cells.rows[tag])
++        count = len(cells.blob) if tag == 1 else len(cells.rows[tag])
++        storage = raw if count else bytes(SIZES[tag])
++        assert cursor + len(storage) <= 0x10000
++        f.data[cursor : cursor + len(storage)] = storage
++        f.put(
++            0x20060 + (tag - 1) * 56,
++            "6Q",
++            tag,
++            count,
++            SIZES[tag],
++            count * SIZES[tag],
++            SIZES[tag],
++            len(storage),
++        )
++        name = _tables()[tag - 1][1]
++        f.put(f.local_symbols[name] + 8, "QQ", BASE + cursor, len(storage))
++        f.put(0x1000 + (tag - 1) * 24 + 16, "q", BASE + cursor)
++        offsets.append(cursor)
++        cursor += len(storage)
++    f.table_offsets = tuple(offsets)
++    return f, compiled.ExpectedCollector(expected_raw, "22" * 32, "33" * 32)
++
++
++def read(
++    f: Fixture,
++    expected: compiled.ExpectedCollector,
++    limits: elf.InspectionLimits = elf.InspectionLimits(),
++) -> compiled.LogicalReadback | elf.InspectionRejected:
++    return compiled._readback(
++        bytes(f.data),
++        expected=expected,
++        profile=cast(layout.ProfileId, PROFILES[f.machine]),
++        limits=limits,
++    )
++
++
++def good(
++    f: Fixture,
++    expected: compiled.ExpectedCollector,
++    limits: elf.InspectionLimits = elf.InspectionLimits(),
++) -> compiled.LogicalReadback:
++    result = read(f, expected, limits)
++    assert isinstance(result, compiled.LogicalReadback), result
++    assert result.logical_raw == expected.logical_raw
++    assert result.logical_raw is not expected.logical_raw
++    assert result.elf.raw == bytes(f.data)
++    assert result.logical_sha256 == sha256(result.logical_raw).hexdigest()
++    return result
++
++
++def bad(
++    f: Fixture,
++    expected: compiled.ExpectedCollector,
++    reason: str,
++    limits: elf.InspectionLimits = elf.InspectionLimits(),
++) -> None:
++    result = read(f, expected, limits)
++    assert isinstance(result, elf.InspectionRejected), result
++    assert result.reason == reason
++    assert len(result.detail) <= 512
++    assert not hasattr(result, "logical_raw")
++    assert not hasattr(result, "inspection_raw")
++
++
++@pytest.mark.parametrize("machine", (62, 183))
++@pytest.mark.parametrize("placement", (0, 128, 512))
++def test_complete_synthetic(machine: elf.Machine, placement: int) -> None:
++    f, expected = built(machine=machine, placement=placement)
++    result = good(f, expected)
++    assert len(result.directory.tables) == 47
++    assert len(result.elf.dynamic) == 19
++    assert len(result.elf.relocations) == 49
++    assert result.elf.dynamic[-1].tag == result.elf.dynamic[-1].value == 0
++
++
++@pytest.mark.parametrize("machine", (62, 183))
++def test_public_raw_reconstruction(
++    machine: elf.Machine, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    from test_observe_collector_data import accepted, source
++
++    from phoenix.observe import collector_data, collector_header, collector_header_read
++
++    data = accepted(source().prepare())
++    expected_raw = data.to_bytes()
++    f, expected = built(json.loads(expected_raw), machine)
++    assert expected.logical_raw == expected_raw
++
++    def unavailable(*args: Any, **kwargs: Any) -> Any:
++        raise AssertionError("A source helper was called.")
++
++    for module in (collector_data, collector_header, collector_header_read):
++        for name, item in vars(module).copy().items():
++            if callable(item) and not isinstance(item, type):
++                monkeypatch.setattr(module, name, unavailable)
++    good(f, expected)
++
++
++@pytest.mark.parametrize("machine", (62, 183))
++@pytest.mark.parametrize("position", range(5021))
++def test_every_witness_word(machine: elf.Machine, position: int) -> None:
++    f, expected = built(machine=machine)
++    f.data[0x2000 + position * 8] ^= 1
++    bad(f, expected, "layout_mismatch")
++
++
++@pytest.mark.parametrize("machine", (62, 183))
++@pytest.mark.parametrize("tag", range(1, 48))
++@pytest.mark.parametrize("component", (0, 8, 16, 24, 32, 40))
++def test_directory_scalars(machine: elf.Machine, tag: int, component: int) -> None:
++    f, expected = built(machine=machine)
++    offset = 0x20060 + (tag - 1) * 56 + component
++    f.put(offset, "Q", unpack_from("<Q", f.data, offset)[0] + 1)
++    bad(f, expected, "directory_contract")
++
++
++@pytest.mark.parametrize("machine", (62, 183))
++@pytest.mark.parametrize("tag", range(1, 48))
++@pytest.mark.parametrize("component", ("addend", "symbol", "kind", "duplicate"))
++def test_pointer_inventory(machine: elf.Machine, tag: int, component: str) -> None:
++    f, expected = built(machine=machine)
++    offset = 0x1000 + (tag - 1) * 24
++    if component == "addend":
++        f.put(offset + 16, "q", BASE + f.table_offsets[tag - 1] + 1)
++    elif component == "symbol":
++        f.put(offset + 8, "Q", (1 << 32) | (8 if machine == 62 else 1027))
++    elif component == "kind":
++        f.put(offset + 8, "Q", 0)
++    else:
++        f.put(0x1000 + 47 * 24, "Q", BASE + 0x20090 + (tag - 1) * 56)
++    bad(f, expected, "relocation_contract")
++
++
++@pytest.mark.parametrize("tag", range(1, 48))
++def test_pointer_words_are_not_authority(tag: int) -> None:
++    f, expected = built()
++    f.put(0x20090 + (tag - 1) * 56, "Q", 0xDEADBEEF)
++    good(f, expected)
++
++
++@pytest.mark.parametrize("tag", range(1, 48))
++def test_empty_storage_or_symbol_extent(tag: int) -> None:
++    f, expected = built()
++    count = unpack_from("<Q", f.data, 0x20068 + (tag - 1) * 56)[0]
++    if not count:
++        f.data[f.table_offsets[tag - 1]] = 1
++        bad(f, expected, "table_bounds")
++    else:
++        name = _tables()[tag - 1][1]
++        offset = f.local_symbols[name] + 16
++        f.put(offset, "Q", unpack_from("<Q", f.data, offset)[0] + 1)
++        bad(f, expected, "export_contract")
++
++
++@pytest.mark.parametrize("tag", (11, 12, 13))
++@pytest.mark.parametrize("delta", (0, 1))
++def test_all_retained_limit_fields(tag: int, delta: int) -> None:
++    for i, maximum in enumerate(MAXIMA[tag]):
++        f, expected = built()
++        f.put(f.table_offsets[tag - 1] + 8 * i, "Q", 0 if delta == 0 else maximum + 1)
++        bad(f, expected, "input_limit")
++
++
++@pytest.mark.parametrize(
++    "offset,reason",
++    ((0, "logical_mismatch"), (32, "source_identity"), (64, "source_identity")),
++)
++def test_directory_identities(offset: int, reason: str) -> None:
++    f, expected = built()
++    f.data[0x20000 + offset] ^= 1
++    bad(f, expected, reason)
++
++
++@pytest.mark.parametrize("change", ("space", "newline", "float", "extra", "order"))
++def test_noncanonical_expected(change: str) -> None:
++    f, expected = built()
++    raw = expected.logical_raw
++    if change == "space":
++        raw = raw.replace(b":", b": ", 1)
++    elif change == "newline":
++        raw += b"\n"
++    elif change == "float":
++        raw = raw.replace(b":0", b":0.0", 1)
++    elif change == "extra":
++        raw = b'{"extra":0,' + raw[1:]
++    else:
++        raw = json.dumps(json.loads(raw), sort_keys=False, indent=1).encode() + b"\n"
++    bad(f, replace(expected, logical_raw=raw), "logical_mismatch")
++
++
++def test_work_boundaries_and_complete_u1_debit() -> None:
++    f, expected = built()
++    result = good(f, expected)
++    for name, exact in (
++        ("scanned_bytes", result.usage.scanned_upper),
++        ("scalar_visits", result.usage.scalar_upper),
++    ):
++        good(f, expected, replace(elf.InspectionLimits(), **{name: exact}))
++        bad(
++            f,
++            expected,
++            "work_limit",
++            replace(elf.InspectionLimits(), **{name: exact - 1}),
++        )
++    for nesting in range(1, 33):
++        outcome = read(f, expected, replace(elf.InspectionLimits(), nesting=nesting))
++        if isinstance(outcome, compiled.LogicalReadback):
++            assert nesting > 1
++            bad(
++                f,
++                expected,
++                "work_limit",
++                replace(elf.InspectionLimits(), nesting=nesting - 1),
++            )
++            break
++    else:
++        raise AssertionError("No supported nesting limit.")
++
++
++def test_output_cap_counts_final_lf() -> None:
++    f, expected = built()
++    good(
++        f,
++        expected,
++        replace(elf.InspectionLimits(), logical_data_bytes=len(expected.logical_raw)),
++    )
++    bad(
++        f,
++        expected,
++        "input_limit",
++        replace(
++            elf.InspectionLimits(), logical_data_bytes=len(expected.logical_raw) - 1
++        ),
++    )
++
++
++@pytest.mark.parametrize("field_name", ("full_plan_bytes", "scope_bytes", "data_bytes"))
++def test_subtree_caps(field_name: str) -> None:
++    record = sample()
++    target = (
++        record
++        if field_name == "data_bytes"
++        else record["full_plan" if field_name == "full_plan_bytes" else "scope"]
++    )
++    limits = (
++        record["transport_limits"]
++        if field_name == "data_bytes"
++        else record["scope"]["limits"]
++    )
++    for _ in range(5):
++        limits[field_name] = len(
++            (json.dumps(target, sort_keys=True, separators=(",", ":")) + "\n").encode()
++        )
++    f, expected = built(record)
++    good(f, expected)
++    limits[field_name] -= 1
++    f, expected = built(record)
++    bad(f, expected, "record_limit")
++
++
++@pytest.mark.parametrize("fault", (RuntimeError, AssertionError, TypeError, ValueError))
++@pytest.mark.parametrize(
++    "helper", ("_check_witness", "_canonical_bytes", "_compare_complete")
++)
++def test_visible_faults(
++    monkeypatch: pytest.MonkeyPatch, fault: type[Exception], helper: str
++) -> None:
++    f, expected = built()
++
++    def fail(*args: Any, **kwargs: Any) -> Any:
++        raise fault("visible")
++
++    monkeypatch.setattr(compiled, helper, fail)
++    with pytest.raises(fault, match="visible"):
++        read(f, expected)
++
++
++def test_frozen_transaction_and_absent_public_wrapper() -> None:
++    f, expected = built()
++    result = good(f, expected)
++    for value in (
++        result,
++        result.directory,
++        result.directory.tables[0],
++        result.usage,
++        result.elf,
++    ):
++        with pytest.raises(FrozenInstanceError):
++            setattr(value, fields(value)[0].name, None)
++    assert not hasattr(compiled, "inspect_compiled_data")
++    assert not hasattr(compiled, "CompiledDataInspection")
++    assert not hasattr(compiled, "_encode_inspection")
++
++
++def test_input_types_and_missing_fields() -> None:
++    f, expected = built()
++    for raw in (bytearray(f.data), memoryview(bytes(f.data)), object()):
++        result = compiled._readback(
++            cast(bytes, raw), expected=expected, profile="linux-x86_64-lp64-le-rela-1"
++        )
++        assert (
++            isinstance(result, elf.InspectionRejected) and result.reason == "input_type"
++        )
++    for name in ("logical_raw", "renderer_sha256", "native_source_sha256"):
++        changed = replace(expected)
++        object.__delattr__(changed, name)
++        bad(f, changed, "input_type")
++    for item in fields(elf.InspectionLimits):
++        for value in (True, 0, -1, 1.0, getattr(elf.InspectionLimits(), item.name) + 1):
++            bad(
++                f,
++                expected,
++                "input_limit",
++                replace(elf.InspectionLimits(), **{item.name: cast(int, value)}),
++            )
++
++
++def test_import_declarations() -> None:
++    tree = ast.parse(Path(compiled.__file__).read_text())
++    imports = {
++        node.module for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)
++    }
++    assert imports <= {
++        "__future__",
++        "bisect",
++        "collections.abc",
++        "dataclasses",
++        "hashlib",
++        "struct",
++        "types",
++        "typing",
++        "phoenix.observe",
++    }
++    assert {
++        alias.name
++        for node in ast.walk(tree)
++        if isinstance(node, ast.Import)
++        for alias in node.names
++    } == {"json"}
++
++
++def test_u1_positive_is_u2_negative() -> None:
++    f = fixture()
++    assert isinstance(f.inspect(), elf.CollectorElf)
++    bad(f, compiled.ExpectedCollector(b"{}\n", "22" * 32, "33" * 32), "layout_mismatch")
++
++
++def thaw(value: compiled.LogicalValue) -> Any:
++    if type(value) is compiled.LogicalObject:
++        return {key: thaw(child) for key, child in value.entries}
++    if type(value) is tuple:
++        return [thaw(child) for child in value]
++    return value
++
++
++def private_rows(tag: int, value: Any) -> compiled._Decoder:
++    cells = Cells()
++    cells.reserve(tag, [value])
++    raw = bytearray()
++    tables = []
++    for number, name, _, size, _ in _tables():
++        content = bytes(cells.blob) if number == 1 else b"".join(cells.rows[number])
++        count = len(content) // size
++        storage = content or bytes(size)
++        offset = len(raw)
++        raw.extend(storage)
++        tables.append(
++            compiled.TableSpan(
++                number,
++                name,
++                count,
++                size,
++                count * size,
++                size,
++                len(storage),
++                0,
++                0,
++                elf.ElfVa(offset),
++                elf.FileOffset(offset),
++                elf.Rela(0, 0, elf.FileOffset(0), elf.ElfVa(0), 8, 0, offset),
++            )
++        )
++    export = elf.Export("private", 0, 0, 0, elf.ElfVa(0), elf.FileOffset(0), 0, 0, 1, 0)
++    directory = compiled.DirectoryView(
++        export, bytes(32), bytes(32), bytes(32), tuple(tables)
++    )
++    lower = compiled._Lower(
++        *(
++            dict(zip((f[1] for f in SPECS[t]), MAXIMA[t], strict=True))
++            for t in (11, 12, 13)
++        )
++    )
++    decoder = compiled._Decoder(
++        memoryview(bytes(raw)),
++        layout._definition(PROFILES[62]),
++        directory,
++        compiled.WorkBudget(elf.InspectionLimits()),
++        compiled.CursorState(),
++        lower,
++    )
++    decoder.claim(tag, 0, 1, record=True)
++    return decoder
++
++
++def decode_private(tag: int, value: Any) -> Any:
++    decoder = private_rows(tag, value)
++    actual = decoder.decode_row(tag, 0, 1)
++    assert [t.count for t in decoder.directory.tables] == decoder.state.cursors
++    return thaw(actual)
++
++
++@pytest.mark.parametrize("tag", range(2, 48))
++def test_every_logical_row_kind(tag: int) -> None:
++    assert decode_private(tag, sample(tag)) == sample(tag)
++
++
++def active(desc: str) -> Any:
++    if desc.startswith("o:"):
++        return active(desc[2:])
++    if desc.startswith(("v:", "v0:")):
++        return sample(NAMES[desc.split(":", 1)[1].split(",")[0]])
++    if desc.startswith("r:"):
++        return sample(NAMES[desc[2:]])
++    if desc.startswith("a:"):
++        return [sample(NAMES[desc[2:]])]
++    if desc.startswith("e:"):
++        return desc[2:].split("|")[-1]
++    if desc.startswith("n:"):
++        return int(desc[2:])
++    return {"s": '\0"\\\nÿé𝄞', "h": "c" * 64, "w": "00ff80", "i": -1, "b": True}.get(
++        desc, 7
++    )
++
++
++def changed_field(tag: int, name: str, value: Any) -> Any:
++    record = sample(tag)
++    if KINDS[tag] == "scalar":
++        return value
++    if KINDS[tag] == "pair":
++        record[next(i for i, f in enumerate(SPECS[tag]) if f[1] == name)] = value
++    else:
++        record[name] = value
++        if tag == 10 and name.endswith("_start"):
++            record[name.removesuffix("_start") + "_end_exclusive"] = value
++    return record
++
++
++@pytest.mark.parametrize("tag,name,native,offset,desc", _fields())
++def test_every_field_active(
++    tag: int, name: str, native: str, offset: int, desc: str
++) -> None:
++    if (tag, name) == (44, "contracts"):
++        record = changed_field(tag, name, active(desc))
++        decoder = private_rows(tag, record)
++        with pytest.raises(compiled._DecodeRefusal) as error:
++            decoder.decode_row(tag, 0, 1)
++        assert error.value.result.reason == "logical_shape"
++        return
++    record = changed_field(tag, name, active(desc))
++    assert decode_private(tag, record) == record
++
++
++_VARIANTS = [
++    (tag, name, desc, choice)
++    for tag, name, _, _, desc in _fields()
++    if desc.startswith(("v:", "v0:"))
++    for choice in desc.split(":", 1)[1].split(",")
++]
++
++
++@pytest.mark.parametrize("tag,name,desc,choice", _VARIANTS)
++def test_all_active_variants(tag: int, name: str, desc: str, choice: str) -> None:
++    record = changed_field(tag, name, sample(NAMES[choice]))
++    assert decode_private(tag, record) == record
++
++
++@pytest.mark.parametrize(
++    "tag,name,native,offset,desc",
++    [f for f in _fields() if f[4].startswith(("o:", "v:", "v0:"))],
++)
++def test_all_tag_and_inactive_cells(
++    tag: int, name: str, native: str, offset: int, desc: str
++) -> None:
++    value = sample(tag)
++    decoder = private_rows(tag, value)
++    start, _ = decoder.row_span(tag, 0)
++    raw = bytearray(decoder.raw)
++    pack_into("<Q", raw, start + offset, 100)
++    invalid = replace(decoder, raw=memoryview(bytes(raw)), state=compiled.CursorState())
++    invalid.claim(tag, 0, 1, record=True)
++    with pytest.raises(compiled._DecodeRefusal) as error:
++        invalid.decode_row(tag, 0, 1)
++    assert error.value.result.reason == "logical_shape"
++    if desc.startswith("o:"):
++        widths = (
++            [(8, 4), (12, 4)]
++            if desc[2:] in ("s", "h") or desc[2:].startswith("r:")
++            else [(8, 8)]
++        )
++    else:
++        choices = desc.split(":", 1)[1].split(",")
++        first = 0 if desc.startswith("v0:") else 1
++        widths = [
++            (8 + i * 8 + j, 4) for i in range(first, len(choices)) for j in (0, 4)
++        ]
++    for relative, width in widths:
++        raw = bytearray(decoder.raw)
++        pack_into("<I" if width == 4 else "<Q", raw, start + offset + relative, 1)
++        invalid = replace(
++            decoder, raw=memoryview(bytes(raw)), state=compiled.CursorState()
++        )
++        invalid.claim(tag, 0, 1, record=True)
++        with pytest.raises(compiled._DecodeRefusal) as error:
++            invalid.decode_row(tag, 0, 1)
++        assert error.value.result.reason == "logical_shape"
++
++
++@pytest.mark.parametrize(
++    "sign,magnitude,result",
++    [
++        (0, 0, 0),
++        (1, 1, -1),
++        (0, (1 << 63) - 1, (1 << 63) - 1),
++        (1, 1 << 63, -(1 << 63)),
++        (1, 0, None),
++        (2, 1, None),
++        (0, 1 << 63, None),
++        (1, (1 << 63) + 1, None),
++    ],
++)
++def test_signed_literal_edges(sign: int, magnitude: int, result: int | None) -> None:
++    decoder = private_rows(8, [0, 18446744073709551615])
++    start, _ = decoder.row_span(8, 0)
++    raw = bytearray(decoder.raw)
++    raw[start : start + 16] = sign.to_bytes(8, "little") + magnitude.to_bytes(
++        8, "little"
++    )
++    decoder = replace(decoder, raw=memoryview(bytes(raw)))
++    if result is None:
++        with pytest.raises(compiled._DecodeRefusal) as error:
++            decoder.decode_row(8, 0, 1)
++        assert error.value.result.reason == "logical_shape"
++    else:
++        assert thaw(decoder.decode_row(8, 0, 1)) == [result, 18446744073709551615]
++
++
++def test_endpoint_exact_upper_bound() -> None:
++    value = {
++        "executable_file_start": (1 << 64) - 16,
++        "executable_file_end_exclusive": 1 << 64,
++        "load_memory_start": 0,
++        "load_memory_end_exclusive": 0,
++    }
++    assert decode_private(10, value) == value
++    decoder = private_rows(10, value)
++    raw = bytearray(decoder.raw)
++    raw[decoder.row_span(10, 0)[0] + 8] = 17
++    with pytest.raises(compiled._DecodeRefusal) as error:
++        replace(decoder, raw=memoryview(bytes(raw))).decode_row(10, 0, 1)
++    assert error.value.result.reason == "logical_shape"
++
++
++@pytest.mark.parametrize(
++    "raw", (b"\xff", b"\xc0\x80", b"\xed\xa0\x80", b"\xf4\x90\x80\x80", b"\xc3")
++)
++def test_utf8_rejections(raw: bytes) -> None:
++    decoder = private_rows(3, "x" * len(raw))
++    changed = bytearray(decoder.raw)
++    changed[: len(raw)] = raw
++    with pytest.raises(compiled._DecodeRefusal) as error:
++        replace(decoder, raw=memoryview(bytes(changed))).decode_row(3, 0, 1)
++    assert error.value.result.reason == "logical_shape"
++
++
++def test_literal_import_id_and_text_encoding() -> None:
++    record = {
++        "needed_library": None,
++        "symbol": "f",
++        "version": "",
++        "version_hidden": True,
++    }
++    decoder = private_rows(14, record)
++    start, end = decoder.row_span(14, 0)
++    assert decoder.raw[start:end].tobytes() == bytes.fromhex(
++        "00000000000000000000000000000000"
++        "00000000010000000100000000000000"
++        "01000000000000000100000000000000"
++    )
++    logical = decoder.decode_row(14, 0, 1)
++    actual = compiled._canonical_bytes(
++        cast(compiled.LogicalObject, logical), decoder.lower, decoder.budget
++    )
++    assert (
++        actual
++        == b'{"needed_library":null,"symbol":"f","version":"","version_hidden":true}\n'
++    )
++    text = compiled.LogicalObject((("text", '\0"\\\nÿé𝄞'),))
++    assert (
++        compiled._canonical_bytes(text, decoder.lower, decoder.budget)
++        == b'{"text":"\\u0000\\"\\\\\\n\\u00ff\\u00e9\\ud834\\udd1e"}\n'
++    )
++    empty = compiled.LogicalObject(
++        (("array", ()), ("bool", True), ("object", compiled.LogicalObject(())))
++    )
++    assert (
++        compiled._canonical_bytes(empty, decoder.lower, decoder.budget)
++        == b'{"array":[],"bool":true,"object":{}}\n'
++    )
++
++
++@pytest.mark.parametrize("change", ("reuse", "gap", "empty", "trailing", "extra_row"))
++def test_cursor_exhaustion_controls(change: str) -> None:
++    record = sample()
++    record["full_plan"]["scope"] = [3, 4]
++    f, expected = built(record)
++    root = f.table_offsets[46]
++    if change in ("reuse", "gap"):
++        original = unpack_from("<I", f.data, root + 24)[0]
++        f.put(root + 24, "I", original - 1 if change == "reuse" else original + 1)
++    elif change == "empty":
++        f.put(f.table_offsets[43] + 176, "I", 0)
++    else:
++        tag = 1 if change == "trailing" else 2
++        offset = 0x20060 + (tag - 1) * 56
++        count = unpack_from("<Q", f.data, offset + 8)[0] + 1
++        size = SIZES[tag]
++        f.put(offset + 8, "5Q", count, size, count * size, size, count * size)
++        f.put(f.local_symbols[_tables()[tag - 1][1]] + 16, "Q", count * size)
++        if change == "extra_row":
++            old = f.table_offsets[1]
++            new = 0xF800
++            f.data[new : new + count * size] = f.data[
++                old : old + (count - 1) * size
++            ] + bytes(size)
++            f.put(f.local_symbols["uints"] + 8, "Q", BASE + new)
++            f.put(0x1000 + 24 + 16, "q", BASE + new)
++    bad(f, expected, "table_bounds")
++
++
++@pytest.mark.parametrize("tag,name,native,offset,desc", _fields())
++def test_every_field_size_preserving_mutation(
++    tag: int, name: str, native: str, offset: int, desc: str
++) -> None:
++    decoder = private_rows(tag, sample(tag))
++    row = decoder.row_span(tag, 0)
++    changed = bytearray(decoder.raw)
++    reason: str | None
++    if desc.startswith(("o:", "v:", "v0:")) or desc == "b":
++        pack_into("<Q", changed, row[0] + offset, 100)
++        reason = "logical_shape"
++    elif desc in ("u", "i") or desc.startswith(("n:", "end:")):
++        current = unpack_from("<Q", changed, row[0] + offset)[0]
++        pack_into("<Q", changed, row[0] + offset, current + 1)
++        reason = "logical_shape" if desc == "i" or desc.startswith("n:") else None
++    else:
++        pack_into("<I", changed, row[0] + offset, 0xFFFFFFFF)
++        reason = "table_bounds"
++    mutated = replace(decoder, raw=memoryview(bytes(changed)))
++    if reason is not None:
++        with pytest.raises(compiled._DecodeRefusal) as error:
++            mutated.decode_row(tag, 0, 1)
++        assert error.value.result.reason == reason
++    else:
++        assert thaw(mutated.decode_row(tag, 0, 1)) != sample(tag)
++
++
++@pytest.mark.parametrize(
++    "tag,name,native,offset,desc", [f for f in _fields() if f[4].startswith("r:")]
++)
++@pytest.mark.parametrize("count", (0, 2))
++def test_record_reference_counts(
++    tag: int, name: str, native: str, offset: int, desc: str, count: int
++) -> None:
++    decoder = private_rows(tag, sample(tag))
++    row = decoder.row_span(tag, 0)
++    raw = bytearray(decoder.raw)
++    pack_into("<I", raw, row[0] + offset + 4, count)
++    with pytest.raises(compiled._DecodeRefusal) as error:
++        replace(decoder, raw=memoryview(bytes(raw))).decode_row(tag, 0, 1)
++    assert error.value.result.reason == (
++        "logical_shape" if count == 0 else "table_bounds"
++    )
++
++
++@pytest.mark.parametrize("value", ("A" * 64, "a" * 63, "a" * 65, "a" * 63 + "\0"))
++def test_digest_text_shape(value: str) -> None:
++    decoder = private_rows(9, {"bytes": 0, "sha256": value})
++    with pytest.raises(compiled._DecodeRefusal) as error:
++        decoder.decode_row(9, 0, 1)
++    assert error.value.result.reason == "logical_shape"
++
++
++@pytest.mark.parametrize("value", ("", "00" * 16))
++def test_witness_text_length(value: str) -> None:
++    record = sample(19)
++    record["witness_hex"] = value
++    decoder = private_rows(19, record)
++    with pytest.raises(compiled._DecodeRefusal) as error:
++        decoder.decode_row(19, 0, 1)
++    assert error.value.result.reason == "logical_shape"
++
++
++@pytest.mark.parametrize("value", ("Return", "ret", "return\0"))
++def test_exact_literal(value: str) -> None:
++    decoder = private_rows(18, {"kind": value})
++    with pytest.raises(compiled._DecodeRefusal) as error:
++        decoder.decode_row(18, 0, 1)
++    assert error.value.result.reason == "logical_shape"
++
++
++def test_absent_and_present_empty_option_after_byte_cursor() -> None:
++    for version in (None, ""):
++        record = {
++            "needed_library": None,
++            "symbol": "abcdefg",
++            "version": version,
++            "version_hidden": False,
++        }
++        decoder = private_rows(14, record)
++        row = decoder.row_span(14, 0)
++        assert unpack_from("<II", decoder.raw, row[0] + 32) == (
++            (0, 0) if version is None else (7, 0)
++        )
++        assert thaw(decoder.decode_row(14, 0, 1)) == record
++        assert decoder.state.cursors[0] == 7
++
++
++def test_complete_comparison_detects_unused_metadata_and_order() -> None:
++    record = sample()
++    record["full_plan"]["scope"] = [1, 2]
++    record["scope"]["gap_dispositions"] = [sample(40)]
++    record["scope"]["gap_dispositions"][0]["disposition"] = {
++        "kind": "metadata_only",
++        "reason": "old",
++    }
++    _, expected = built(record)
++    record["scope"]["gap_dispositions"][0]["disposition"]["reason"] = "new"
++    f, _ = built(record)
++    bad(f, expected, "logical_mismatch")
++    record["scope"]["gap_dispositions"][0]["disposition"]["reason"] = "old"
++    record["full_plan"]["scope"].reverse()
++    f, _ = built(record)
++    bad(f, expected, "logical_mismatch")
++
++
++def test_witness_and_u1_refusal_order(monkeypatch: pytest.MonkeyPatch) -> None:
++    f, expected = built()
++    f.data[0x2000] ^= 1
++    f.put(0x20060, "Q", 0)
++    bad(f, expected, "directory_contract")
++    f, expected = built()
++    f.data[0x2000] ^= 1
++
++    def forbidden(*args: Any, **kwargs: Any) -> Any:
++        raise AssertionError("Logical traversal started.")
++
++    monkeypatch.setattr(compiled._Decoder, "root", forbidden)
++    bad(f, expected, "layout_mismatch")
++
++
++def test_profile_and_zero_allowance_precede_u1(monkeypatch: pytest.MonkeyPatch) -> None:
++    f, expected = built()
++
++    def forbidden(*args: Any, **kwargs: Any) -> Any:
++        raise AssertionError("U1 started.")
++
++    monkeypatch.setattr(elf, "read_collector_elf", forbidden)
++    for profile, reason in ((object(), "input_type"), ("unknown", "layout_mismatch")):
++        result = compiled._readback(
++            bytes(f.data), expected=expected, profile=cast(layout.ProfileId, profile)
++        )
++        assert isinstance(result, elf.InspectionRejected) and result.reason == reason
++    bad(
++        f,
++        expected,
++        "work_limit",
++        replace(elf.InspectionLimits(), scanned_bytes=128 + 2 * len(PROFILES[62])),
++    )
++
++
++def test_preflight_limit_failure_before_rows(monkeypatch: pytest.MonkeyPatch) -> None:
++    f, expected = built()
++    f.put(f.table_offsets[10], "Q", 0)
++
++    def forbidden(*args: Any, **kwargs: Any) -> Any:
++        raise AssertionError("A row was allocated before preflight.")
++
++    monkeypatch.setattr(compiled._Decoder, "decode_row", forbidden)
++    bad(f, expected, "input_limit")
++
++
++def test_shared_uint_table_has_no_route_specific_cap() -> None:
++    record = sample()
++    record["full_plan"]["scope"] = list(range(50))
++    record["scope"]["limits"]["route_entries"] = 1
++    record["transport_limits"]["route_path_positions"] = 1
++    record["transport_limits"]["route_memberships"] = 1
++    good(*built(record))
++
++
++def test_pure_readback_external_operations_disabled(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    import builtins
++    import io
++    import os
++    import socket
++    import subprocess
++    import time
++
++    f, expected = built()
++
++    def forbidden(*args: Any, **kwargs: Any) -> Any:
++        raise AssertionError("External operation during readback.")
++
++    with monkeypatch.context() as guard:
++        for owner, name in (
++            (builtins, "open"),
++            (io, "open"),
++            (os, "open"),
++            (os, "getenv"),
++            (os, "getpid"),
++            (socket, "socket"),
++            (subprocess, "Popen"),
++            (time, "time"),
++            (time, "monotonic"),
++        ):
++            guard.setattr(owner, name, forbidden)
++        result = read(f, expected)
++    assert isinstance(result, compiled.LogicalReadback)
++
++
++def test_actual_import_closure(tmp_path: Path) -> None:
++    import subprocess
++    import sys
++
++    f, expected = built()
++    binary = tmp_path / "input.bin"
++    logical = tmp_path / "expected.json"
++    binary.write_bytes(bytes(f.data))
++    logical.write_bytes(expected.logical_raw)
++    prefix = tmp_path / "absent-bytecode"
++    root = Path(__file__).resolve().parents[1]
++    script = r"""
++import builtins, hashlib, importlib, json, pathlib, sys
++raw = pathlib.Path(sys.argv[1]).read_bytes()
++expected_raw = pathlib.Path(sys.argv[2]).read_bytes()
++original = builtins.__import__
++allowed = {'phoenix', 'phoenix.observe', 'phoenix.observe.collector_elf',
++           'phoenix.observe.collector_layout', 'phoenix.observe.collector_compiled'}
++def checked(name, globals=None, locals=None, fromlist=(), level=0):
++    if name.split('.')[0] in {'ctypes', 'subprocess', 'socket'}:
++        raise AssertionError('Forbidden dependency')
++    if name.startswith('phoenix') and name not in allowed:
++        raise AssertionError('Forbidden product import')
++    return original(name, globals, locals, fromlist, level)
++builtins.__import__ = checked
++module = importlib.import_module('phoenix.observe.collector_compiled')
++expectation = module.ExpectedCollector(expected_raw, '22'*32, '33'*32)
++result = module._readback(raw, expected=expectation,
++                          profile='linux-x86_64-lp64-le-rela-1')
++assert isinstance(result, module.LogicalReadback), result
++assert result.logical_raw == expected_raw
++closure = {}
++for name, loaded in tuple(sys.modules.items()):
++    if name == 'phoenix' or name.startswith('phoenix.'):
++        path = pathlib.Path(loaded.__file__).resolve()
++        closure[name] = [str(path), hashlib.sha256(path.read_bytes()).hexdigest()]
++assert set(closure) == allowed
++print(json.dumps(closure))
++"""
++    result = subprocess.run(
++        [sys.executable, "-B", "-S", "-c", script, str(binary), str(logical)],
++        cwd=root,
++        env={
++            "PYTHONPATH": str(root),
++            "PYTHONDONTWRITEBYTECODE": "1",
++            "PYTHONPYCACHEPREFIX": str(prefix),
++            "TMPDIR": str(tmp_path),
++        },
++        capture_output=True,
++        text=True,
++        check=False,
++        timeout=30,
++    )
++    assert result.returncode == 0, result.stderr
++    for name, (path, digest) in json.loads(result.stdout).items():
++        expected_path = root.joinpath(*name.split("."))
++        expected_path = (
++            expected_path / "__init__.py"
++            if name in ("phoenix", "phoenix.observe")
++            else expected_path.with_suffix(".py")
++        )
++        assert path == str(expected_path)
++        assert digest == sha256(expected_path.read_bytes()).hexdigest()
++    assert not prefix.exists()
++
++
++def routed_record() -> Any:
++    record = sample()
++    scope = record["scope"]
++    route_a, route_b = sample(28), sample(28)
++    route_a.update(
++        entries=[0x140, 0x148], instruction_path=[0x140, 0x148], terminal=0x148
++    )
++    route_b.update(entries=[0x148], instruction_path=[0x148], terminal=0x148)
++    route_b["binding_sha256"] = "b" * 64
++    guards = [sample(35), sample(35)]
++    for i, address in enumerate((0x140, 0x148)):
++        guards[i].update(
++            address=address,
++            owner=address,
++            rule={
++                "kind": "transit_instruction",
++                "positions": [["a" * 64, 0]]
++                if i == 0
++                else [["a" * 64, 1], ["b" * 64, 0]],
++            },
++        )
++    scope.update(routes=[route_a, route_b], guard_instructions=guards)
++    return record
++
++
++def test_shared_route_suffix_and_positions() -> None:
++    record = routed_record()
++    result = good(*built(record))
++    actual = json.loads(result.logical_raw)
++    assert actual["scope"]["guard_instructions"][1]["rule"]["positions"] == [
++        ["a" * 64, 1],
++        ["b" * 64, 0],
++    ]
++    assert actual["scope"]["routes"][1]["instruction_path"] == [0x148]
++
++
++@pytest.mark.parametrize(
++    "limit,exact",
++    (("route_path_positions", 3), ("route_memberships", 3), ("routes", 2)),
++)
++def test_call_wide_route_limits(limit: str, exact: int) -> None:
++    record = routed_record()
++    record["transport_limits"][limit] = exact
++    good(*built(record))
++    record["transport_limits"][limit] -= 1
++    bad(*built(record), "input_limit")
++
++
++@pytest.mark.parametrize(
++    "limit,exact",
++    (
++        ("thunk_neutral_instructions", 2),
++        ("thunk_neutral_bytes", 5),
++        ("route_entries", 1),
++    ),
++)
++def test_neutral_groups_and_lower_caps(limit: str, exact: int) -> None:
++    record = sample()
++    guards = [sample(35) for _ in range(3)]
++    for i, size in enumerate((3, 2, 1)):
++        guards[i].update(address=0x140 + 8 * i, owner=0x140, witness_hex="90" * size)
++    route = sample(28)
++    route.update(
++        entries=[0x140], instruction_path=[0x140, 0x148, 0x150], terminal=0x150
++    )
++    record["scope"].update(routes=[route], guard_instructions=guards)
++    record["scope"]["limits"][limit] = exact
++    good(*built(record))
++    if exact > 1:
++        record["scope"]["limits"][limit] -= 1
++        bad(*built(record), "input_limit")
++
++
++@pytest.mark.parametrize(
++    "change", ("missing", "duplicate", "empty", "start", "trailing")
++)
++def test_route_owner_group_refusals(change: str) -> None:
++    record = routed_record()
++    scope = record["scope"]
++    if change == "missing":
++        scope["guard_instructions"].pop()
++    elif change == "duplicate":
++        scope["guard_instructions"][1]["address"] = 0x140
++    elif change == "empty":
++        scope["guard_instructions"][0]["owner"] = 0
++    elif change == "start":
++        scope["routes"][0]["entries"][0] = 0
++    else:
++        scope["routes"][0]["entries"].pop()
++    bad(*built(record), "logical_shape")
++
++
++@pytest.mark.parametrize(
++    "where,field,cap_path",
++    (
++        ("full_plan", "sites", ("scope", "limits", "full_plan_sites")),
++        ("full_plan", "gaps", ("transport_limits", "gap_records")),
++        ("scope", "users", ("transport_limits", "users")),
++        ("scope", "omitted", ("transport_limits", "omissions")),
++        ("scope", "gap_dispositions", ("transport_limits", "gap_records")),
++        ("scope", "guard_instructions", ("scope", "limits", "guarded_instructions")),
++        ("image", "segments", ("transport_limits", "elf_segments")),
++    ),
++)
++def test_lower_inventory_caps(
++    where: str, field: str, cap_path: tuple[str, ...]
++) -> None:
++    record = sample()
++    owner = {"full_plan": 20, "scope": 44, "image": 46}[where]
++    descriptor = next(f[4] for f in SPECS[owner] if f[1] == field)
++    target = NAMES[descriptor[2:]]
++    record[where][field] = [sample(target), sample(target)]
++    if target == 35:
++        record[where][field][1]["address"] = 1
++    cap = record
++    for key in cap_path[:-1]:
++        cap = cap[key]
++    cap[cap_path[-1]] = 2
++    good(*built(record))
++    cap[cap_path[-1]] = 1
++    bad(*built(record), "input_limit")
++
++
++@pytest.mark.parametrize("part", ("root", "full_plan", "scope"))
++def test_caps_stop_before_large_string_escape(
++    part: str, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    decoder = private_rows(47, sample())
++    leaf = compiled.LogicalObject((("a", "Z" * 10000),))
++    root = leaf if part == "root" else compiled.LogicalObject(((part, leaf),))
++    lower = decoder.lower
++    if part == "root":
++        lower = replace(lower, transport={**lower.transport, "data_bytes": 30})
++    else:
++        lower = replace(
++            lower,
++            capture={
++                **lower.capture,
++                "full_plan_bytes" if part == "full_plan" else "scope_bytes": 30,
++            },
++        )
++    original = json.dumps
++    visits = 0
++
++    def checked(value: Any, **kwargs: Any) -> str:
++        nonlocal visits
++        if value == "Z":
++            visits += 1
++            assert visits <= 30
++        return original(value, **kwargs)
++
++    monkeypatch.setattr(json, "dumps", checked)
++    with pytest.raises(compiled._DecodeRefusal) as error:
++        compiled._canonical_bytes(root, lower, decoder.budget)
++    assert error.value.result.reason == "record_limit"
++    assert 0 < visits < 30
++
++
++@pytest.mark.parametrize("machine", (62, 183))
++@pytest.mark.parametrize("placement", (0, 128))
++@pytest.mark.parametrize("versions", (False, True))
++def test_u1_debit_formula(
++    machine: elf.Machine,
++    placement: int,
++    versions: bool,
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    f, _ = built(machine=machine, placement=placement)
++    if not versions:
++        f.section(".gnu.version", 4, "I", 1)
++        f.put(f.dynamic_slots[0x6FFFFFF0][0], "qQ", 100, 0)
++    observed = []
++    original = elf._Reader.read
++
++    def counted(reader: elf._Reader) -> elf.CollectorElf:
++        result = original(reader)
++        observed.append((reader.budget.scanned, reader.budget.scalars))
++        return result
++
++    monkeypatch.setattr(elf._Reader, "read", counted)
++    view = f.inspect()
++    assert isinstance(view, elf.CollectorElf)
++    budget = compiled.WorkBudget(elf.InspectionLimits())
++    compiled._debit_u1(view, budget)
++    assert budget.scalars == observed[0][1]
++    assert budget.scanned >= observed[0][0]
++    assert isinstance(
++        f.inspect(
++            replace(
++                elf.InspectionLimits(),
++                scanned_bytes=observed[0][0],
++                scalar_visits=observed[0][1],
++            )
++        ),
++        elf.CollectorElf,
++    )
++
++
++@pytest.mark.parametrize(
++    "kind,reason",
++    (
++        ("format", "unsupported_elf"),
++        ("truncated", "malformed_elf"),
++        ("mapping", "ambiguous_mapping"),
++        ("missing", "symbol_missing"),
++        ("duplicate", "symbol_ambiguous"),
++        ("dynamic", "dynamic_contract"),
++        ("overlap", "storage_overlap"),
++    ),
++)
++def test_u1_refusals_pass_through(kind: str, reason: str) -> None:
++    f, expected = built()
++    if kind == "format":
++        f.data[4] = 1
++    elif kind == "truncated":
++        del f.data[-4096:]
++    elif kind == "mapping":
++        f.program(0, 4, 5)
++    elif kind == "missing":
++        f.put(f.local_symbols["uints"], "I", 0)
++    elif kind == "duplicate":
++        name = unpack_from("<I", f.data, f.local_symbols["uints"])[0]
++        f.put(f.local_symbols["strings"], "I", name)
++    elif kind == "dynamic":
++        f.dynamic(4, 0)
++    else:
++        f.put(f.local_symbols["strings"] + 8, "Q", BASE + f.table_offsets[1])
++        f.put(0x1000 + 2 * 24 + 16, "q", BASE + f.table_offsets[1])
++    bad(f, expected, reason)
++
++
++@pytest.mark.parametrize("machine", (62, 183))
++@pytest.mark.parametrize(
++    "family", ("shared", "omitted", "explicit", "guards", "neutral")
++)
++def test_public_complete_families(machine: elf.Machine, family: str) -> None:
++    from test_observe_collector_data import accepted, extra_users, shared, source
++    from test_observe_scope import control
++    from test_transfer_evidence import thunk_case
++
++    if family == "shared":
++        prepared = source(*shared())
++    elif family == "omitted":
++        prepared = source(*extra_users())
++    elif family == "explicit":
++        prepared = source(explicit=True)
++    elif family == "guards":
++        prepared = source(*control(b"\x75\x03", "CBRANCH"))
++    else:
++        binary, document = thunk_case(("f30f1efa", "90", "6690"))
++        prepared = source(bytes(binary), document)
++    data = accepted(prepared.prepare())
++    record = json.loads(data.to_bytes())
++    result = good(*built(record, machine))
++    actual = json.loads(result.logical_raw)
++    for key, raw in (
++        ("full_plan", data.full_plan.to_bytes()),
++        ("scope", data.scope.to_bytes()),
++    ):
++        assert (
++            json.dumps(actual[key], sort_keys=True, separators=(",", ":")) + "\n"
++        ).encode() == raw
++
++
++@pytest.mark.parametrize("machine", (62, 183))
++@pytest.mark.parametrize("tag", range(1, 48))
++@pytest.mark.parametrize(
++    "component", ("name", "duplicate", "value", "short", "long", "type", "binding")
++)
++def test_all_local_symbol_contracts(
++    machine: elf.Machine, tag: int, component: str
++) -> None:
++    f, expected = built(machine=machine)
++    name = _tables()[tag - 1][1]
++    symbol = f.local_symbols[name]
++    if component == "name":
++        f.put(symbol, "I", 0)
++        reason = "symbol_missing"
++    elif component == "duplicate":
++        f.put(
++            f.static_symbols["external_function"],
++            "I",
++            unpack_from("<I", f.data, symbol)[0],
++        )
++        reason = "symbol_ambiguous"
++    elif component == "value":
++        shifted = f.table_offsets[tag - 1] + 8
++        f.put(symbol + 8, "Q", BASE + shifted)
++        count = unpack_from("<Q", f.data, 0x20068 + (tag - 1) * 56)[0]
++        reason = (
++            "table_bounds"
++            if count == 0 and any(f.data[shifted : shifted + SIZES[tag]])
++            else "relocation_contract"
++        )
++    elif component in ("short", "long"):
++        size = unpack_from("<Q", f.data, symbol + 16)[0]
++        f.put(symbol + 16, "Q", size + (1 if component == "long" else -1))
++        reason = "export_contract"
++    elif component == "type":
++        f.put(symbol + 4, "B", 2)
++        reason = "export_contract"
++    else:
++        f.put(symbol + 4, "B", 17)
++        reason = "malformed_elf"
++    bad(f, expected, reason)
++
++
++@pytest.mark.parametrize("machine", (62, 183))
++@pytest.mark.parametrize("tag", range(1, 48))
++@pytest.mark.parametrize("component", ("missing", "end", "shifted"))
++def test_remaining_pointer_contracts(
++    machine: elf.Machine, tag: int, component: str
++) -> None:
++    f, expected = built(machine=machine)
++    offset = 0x1000 + (tag - 1) * 24
++    if component == "missing":
++        f.put(offset, "Q", BASE + 0x30008)
++    elif component == "shifted":
++        f.put(offset, "Q", BASE + 0x20091 + (tag - 1) * 56)
++    else:
++        storage = unpack_from("<Q", f.data, 0x20060 + (tag - 1) * 56 + 40)[0]
++        f.put(offset + 16, "q", BASE + f.table_offsets[tag - 1] + storage)
++    bad(f, expected, "relocation_contract")
++
++
++def test_unused_static_names_do_not_define_tables() -> None:
++    f, expected = built()
++    static = f.static_symbols["external_function"]
++    name_offset = unpack_from("<I", f.data, static)[0]
++    f.data[0x31000 + name_offset : 0x31000 + name_offset + 17] = b"phoenix_unrelated"
++    good(f, expected)
++
++
++def test_physical_row_and_inspection_reductions() -> None:
++    f, expected = built()
++    result = good(f, expected)
++    physical = 2728 + 40168 + sum(t.storage_bytes for t in result.directory.tables)
++    rows = sum(t.count for t in result.directory.tables[1:])
++    for name, minimum in (
++        ("physical_data_bytes", physical),
++        ("nonbyte_rows", rows),
++        ("plugin_bytes", len(f.data)),
++        ("program_headers", 6),
++        ("sections", 16),
++        ("symbols", 59),
++        ("dynamic_entries", 19),
++        ("relocations", 49),
++        ("hash_words", 9),
++    ):
++        good(f, expected, replace(elf.InspectionLimits(), **{name: minimum}))
++        bad(
++            f,
++            expected,
++            "input_limit",
++            replace(elf.InspectionLimits(), **{name: minimum - 1}),
++        )
++    limits = replace(elf.InspectionLimits(), inspection_bytes=1)
++    assert good(f, expected, limits).limits == limits
++
++
++def test_preflight_does_not_claim_ownership() -> None:
++    f, expected = built()
++    result = good(f, expected)
++    budget = compiled.WorkBudget(elf.InspectionLimits())
++    lower = compiled._peek_lower_limits(
++        bytes(f.data), result.directory, layout._definition(PROFILES[62]), budget
++    )
++    state = compiled.CursorState()
++    decoder = compiled._Decoder(
++        memoryview(bytes(f.data)),
++        layout._definition(PROFILES[62]),
++        result.directory,
++        budget,
++        state,
++        lower,
++    )
++    used = budget.scalars
++    decoder.root()
++    assert used == 41
++    assert budget.scalars > used
++    assert state.cursors == [t.count for t in result.directory.tables]
++
++
++def test_each_scalar_fits_owning_row() -> None:
++    budget = compiled.WorkBudget(elf.InspectionLimits())
++    with pytest.raises(compiled._DecodeRefusal) as error:
++        compiled._cell(memoryview(bytes(32)), 0, 4, 0, 8, budget)
++    assert error.value.result.reason == "table_bounds"
++    assert budget.scanned == budget.scalars == 0
++
++
++def test_hash_does_not_start_after_budget_exhaustion(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    f, expected = built()
++    result = good(f, expected)
++    budget = compiled.WorkBudget(
++        replace(elf.InspectionLimits(), scanned_bytes=len(result.logical_raw))
++    )
++
++    def forbidden(*args: Any, **kwargs: Any) -> Any:
++        raise AssertionError("Hash started after exhausted comparison allowance.")
++
++    monkeypatch.setattr(compiled, "sha256", forbidden)
++    with pytest.raises(compiled._DecodeRefusal) as error:
++        compiled._compare_complete(
++            result.logical_raw, expected, result.directory, budget
++        )
++    assert error.value.result.reason == "work_limit"
++
++
++def test_f1_and_o1_are_still_applied() -> None:
++    from test_observe_collector_elf import (
++        executable_section_fixture,
++        unsectioned_destination_fixture,
++    )
++
++    for machine in (62, 183):
++        expected = compiled.ExpectedCollector(b"{}\n", "22" * 32, "33" * 32)
++        for kind in ("file", "execute", "zero", "installer_page"):
++            bad(
++                unsectioned_destination_fixture(machine, kind),
++                expected,
++                "ambiguous_mapping",
++            )
++        bad(
++            executable_section_fixture(machine, 0, 8, 6, 8),
++            expected,
++            "relocation_contract",
++        )
++
++
++def test_empty_load_does_not_hide_file_backed_table() -> None:
++    f, expected = built()
++    f.put(56, "H", 7)
++    offset = f.table_offsets[0]
++    pack_into("<IIQQQQQQ", f.data, 64 + 6 * 56, 1, 4, offset, BASE + offset, 0, 0, 0, 8)
++    assert isinstance(f.inspect(), elf.CollectorElf)
++    good(f, expected)
++
++
++@given(st.text(max_size=80))
++@settings(max_examples=75, deadline=None)
++def test_text_round_trip_property(text: str) -> None:
++    assert decode_private(3, text) == text
++    decoder = private_rows(3, text)
++    value = compiled.LogicalObject((("text", text),))
++    actual = compiled._canonical_bytes(value, decoder.lower, decoder.budget)
++    assert (
++        actual
++        == (
++            json.dumps({"text": text}, ensure_ascii=True, separators=(",", ":")) + "\n"
++        ).encode()
++    )
++
++
++@given(st.binary(max_size=4096))
++@settings(max_examples=75, deadline=None)
++def test_bounded_arbitrary_plugin_bytes(raw: bytes) -> None:
++    result = compiled._readback(
++        raw,
++        expected=compiled.ExpectedCollector(b"{}\n", "22" * 32, "33" * 32),
++        profile="linux-x86_64-lp64-le-rela-1",
++    )
++    assert isinstance(result, elf.InspectionRejected)
++    assert len(result.detail) <= 512
++
++
++@given(st.lists(st.integers(min_value=0, max_value=(1 << 64) - 1), max_size=10))
++@settings(max_examples=50, deadline=None)
++def test_ordered_uint_slice_property(values: list[int]) -> None:
++    value = sample(19)
++    value["continuation_of"] = values
++    assert decode_private(19, value) == value
++
++
++def test_one_immutable_input_and_one_public_parse(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    f, expected = built()
++    raw = bytes(f.data)
++    original = elf.read_collector_elf
++    seen = []
++
++    def checked(
++        actual: bytes, *, machine: elf.Machine, limits: elf.InspectionLimits
++    ) -> elf.CollectorElf | elf.InspectionRejected:
++        assert actual is raw
++        seen.append(limits)
++        return original(actual, machine=machine, limits=limits)
++
++    monkeypatch.setattr(elf, "read_collector_elf", checked)
++    limits = replace(elf.InspectionLimits(), symbol_name_bytes=64, inspection_bytes=1)
++    result = compiled._readback(
++        raw, expected=expected, profile="linux-x86_64-lp64-le-rela-1", limits=limits
++    )
++    assert isinstance(result, compiled.LogicalReadback)
++    assert result.elf.raw is raw
++    assert len(seen) == 1
++    assert seen[0].scanned_bytes < limits.scanned_bytes
++    assert seen[0].symbol_name_bytes == 64 and seen[0].inspection_bytes == 1
++    assert result.limits == limits
++    fake = replace(result.elf, raw=b"fabricated")
++    rejection = compiled._readback(
++        cast(bytes, fake), expected=expected, profile="linux-x86_64-lp64-le-rela-1"
++    )
++    assert (
++        isinstance(rejection, elf.InspectionRejected)
++        and rejection.reason == "input_type"
++    )
++    assert len(seen) == 1
++
++
++@pytest.mark.parametrize("machine", (62, 183))
++def test_all_lower_values_are_retained(machine: elf.Machine) -> None:
++    record = sample()
++    for limits in (
++        record["transport_limits"],
++        record["full_plan"]["limits"],
++        record["scope"]["limits"],
++    ):
++        for name, value in limits.items():
++            if name != "snapshot_bytes":
++                limits[name] = value - 1
++    good(*built(record, machine))
++
++
++@pytest.mark.parametrize("part", ("full_plan", "scope"))
++def test_snapshot_width_cannot_be_lowered(part: str) -> None:
++    record = sample()
++    record[part]["limits"]["snapshot_bytes"] = 7
++    bad(*built(record), "input_limit")
++
++
++def test_request_users_and_route_entries_lower_bounds() -> None:
++    record = routed_record()
++    record["scope"]["request"]["users"] = [0x140, 0x148]
++    record["transport_limits"]["users"] = 2
++    record["scope"]["limits"]["route_entries"] = 2
++    good(*built(record))
++    record["transport_limits"]["users"] = 1
++    bad(*built(record), "input_limit")
++    record["transport_limits"]["users"] = 2
++    record["scope"]["limits"]["route_entries"] = 1
++    bad(*built(record), "input_limit")
++
++
++@pytest.mark.parametrize(
++    "owner,offset,child,limit_group,limit_name,cap",
++    (
++        (20, 64, 19, "capture", "full_plan_sites", 1),
++        (23, 40, 2, "transport", "users", 1),
++        (28, 16, 2, "capture", "route_entries", 1),
++        (46, 0, 8, None, None, 65536),
++    ),
++)
++def test_count_refusal_precedes_child_rows(
++    owner: int,
++    offset: int,
++    child: int,
++    limit_group: str | None,
++    limit_name: str | None,
++    cap: int,
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    decoder = private_rows(owner, sample(owner))
++    lower = decoder.lower
++    if limit_group is not None:
++        assert limit_name is not None
++        lower = replace(
++            lower,
++            **{limit_group: {**getattr(lower, limit_group), limit_name: cap}},
++        )
++    raw = bytearray(decoder.raw)
++    row = decoder.row_span(owner, 0)
++    pack_into("<I", raw, row[0] + offset + 4, cap + 1)
++    decoder = replace(decoder, raw=memoryview(bytes(raw)), lower=lower)
++    original = compiled._Decoder.decode_row
++
++    def checked(
++        reader: compiled._Decoder, tag: int, index: int, depth: int
++    ) -> compiled.LogicalValue:
++        assert tag != child, "A child row was decoded before its count limit."
++        return original(reader, tag, index, depth)
++
++    monkeypatch.setattr(compiled._Decoder, "decode_row", checked)
++    with pytest.raises(compiled._DecodeRefusal) as error:
++        decoder.decode_row(owner, 0, 1)
++    assert error.value.result.reason == "input_limit"
++
++
++@pytest.mark.parametrize("machine", (62, 183))
++def test_same_width_geometry_size_swap(machine: elf.Machine) -> None:
++    record = sample()
++    record["geometry"] = {
++        "executable_file_start": 10,
++        "executable_file_end_exclusive": 13,
++        "load_memory_start": 20,
++        "load_memory_end_exclusive": 25,
++    }
++    f, expected = built(record, machine)
++    offset = f.table_offsets[9]
++    f.data[offset + 8 : offset + 16], f.data[offset + 24 : offset + 32] = (
++        f.data[offset + 24 : offset + 32],
++        f.data[offset + 8 : offset + 16],
++    )
++    bad(f, expected, "logical_mismatch")
++
++
++def test_same_width_directory_length_swap() -> None:
++    f, expected = built()
++    entry = 0x20060 + 56
++    assert unpack_from("<Q", f.data, entry + 24)[0] == 0
++    assert unpack_from("<Q", f.data, entry + 40)[0] == 8
++    f.data[entry + 24 : entry + 32], f.data[entry + 40 : entry + 48] = (
++        f.data[entry + 40 : entry + 48],
++        f.data[entry + 24 : entry + 32],
++    )
++    bad(f, expected, "directory_contract")
++
++
++@pytest.mark.parametrize("kind", ("memberships", "users"))
++def test_same_width_ordered_record_swap(kind: str) -> None:
++    record = routed_record()
++    site = sample(19)
++    site["continuation_of"] = [0x140, 0x148]
++    record["full_plan"]["sites"] = [site]
++    _, expected = built(record)
++    if kind == "memberships":
++        record["scope"]["guard_instructions"][1]["rule"]["positions"].reverse()
++    else:
++        site["continuation_of"].reverse()
++    f, _ = built(record)
++    bad(f, expected, "logical_mismatch")
++
++
++def test_unconsumed_alignment_gap_is_not_logical_state() -> None:
++    f, expected = built()
++    before = good(f, expected)
++    assert f.table_offsets[0] >= 0xBD00
++    assert 0x2000 + 40168 < 0xBCFF < f.table_offsets[0]
++    f.data[0xBCFF] ^= 1
++    after = good(f, expected)
++    assert before.logical_raw == after.logical_raw
++    assert before.elf.raw != after.elf.raw
++    assert sha256(before.elf.raw).digest() != sha256(after.elf.raw).digest()
++
++
++def test_shared_string_table_has_no_route_specific_cap() -> None:
++    decoder = private_rows(25, {"kind": "transit", "route_ids": ["a" * 64, "b" * 64]})
++    lower = replace(
++        decoder.lower,
++        transport={**decoder.lower.transport, "route_memberships": 1, "routes": 1},
++    )
++    actual = replace(decoder, lower=lower).decode_row(25, 0, 1)
++    assert thaw(actual) == {"kind": "transit", "route_ids": ["a" * 64, "b" * 64]}
++
++
++def test_image_dynamic_installed_count_boundary() -> None:
++    decoder = private_rows(46, sample(46))
++    decoder.count_limit(46, "dynamic", 65536)
++    with pytest.raises(compiled._DecodeRefusal) as error:
++        decoder.count_limit(46, "dynamic", 65537)
++    assert error.value.result.reason == "input_limit"
+diff --git a/tests/test_observe_collector_layout.py b/tests/test_observe_collector_layout.py
+index 1016d994ab316d546856d032ef4c963115b1892d..a3b6264ec200c45c9bdba6b1c3c6d33d3d77b4c0 100644
+--- a/tests/test_observe_collector_layout.py
++++ b/tests/test_observe_collector_layout.py
+@@ -1903,3 +1903,44 @@ local_branch_guard,metadata_only
+ 47 scope_sha256 f_scope_sha256 96 h
+ 47 transport_limits f_transport_limits 104 r:transport_limits
+ """
++
++
++def test_independent_retained_limit_literals() -> None:
++    assert layout.TRANSPORT_MAXIMA == (
++        ("data_bytes", 16777216),
++        ("elf_segments", 1024),
++        ("gap_records", 65536),
++        ("lift_bytes", 67108864),
++        ("mapping_bytes", 67108864),
++        ("omissions", 4096),
++        ("original_bytes", 16777216),
++        ("route_memberships", 1179648),
++        ("route_path_positions", 1179648),
++        ("routes", 4096),
++        ("users", 4096),
++    )
++    assert layout.TRACE_MAXIMA == (
++        ("events", 10000),
++        ("execution_callbacks", 1000000),
++        ("frames", 64),
++        ("snapshot_bytes", 8),
++        ("translated_instructions", 1000000),
++        ("wire_bytes", 8388608),
++    )
++    assert layout.CAPTURE_MAXIMA == (
++        ("events", 10000),
++        ("execution_callbacks", 1000000),
++        ("frames", 64),
++        ("full_plan_bytes", 524288),
++        ("full_plan_sites", 4096),
++        ("guarded_instructions", 65536),
++        ("receipt_bytes", 65536),
++        ("route_entries", 32),
++        ("scope_bytes", 8388608),
++        ("snapshot_bytes", 8),
++        ("thunk_neutral_bytes", 32),
++        ("thunk_neutral_instructions", 8),
++        ("translated_instructions", 1000000),
++        ("wire_bytes", 8388608),
++    )
++    assert layout.IMAGE_DYNAMIC_MAXIMUM == 65536

@@ -1,0 +1,132 @@
+{
+  "schema": "phoenix-public-checkpoint-manifest-1",
+  "prepared_at_utc": "2026-11-13T16:02:02.561576+00:00",
+  "scope": "Explicit public reviews, safe proofs and an unaccepted exact Core backup. No sealed corpus material.",
+  "files": [
+    {
+      "path": "accepted-review-summary.json",
+      "bytes": 674,
+      "sha256": "b95f7124f5cbc1eea76492288894ae53acabd6051c311ca7a53844a6baa4e987"
+    },
+    {
+      "path": "comparator-astra-pass.md.txt",
+      "bytes": 19267,
+      "sha256": "8d28708e2d61314d58672a760a36e6e93b668db92253abcb2fb657f7c6b08b2a"
+    },
+    {
+      "path": "comparator-sol-pass.md.txt",
+      "bytes": 19281,
+      "sha256": "bd2fc769ca7ad70ad8987dd3a9f9d84b0a344585f8067002a6f9f5e923b827b4"
+    },
+    {
+      "path": "core-original-pending-manifest.json",
+      "bytes": 1512,
+      "sha256": "9ed4a4c8f9c3d2a86de07548adfcf963447d50b1f4d35b77cfaa94157725848d"
+    },
+    {
+      "path": "core-pending.patch.txt",
+      "bytes": 112906,
+      "sha256": "1c15fb22f8b24bc8021e827a02850f6aab9858a0e0909140f09435907a128dda"
+    },
+    {
+      "path": "core-root-pending-manifest.json",
+      "bytes": 1862,
+      "sha256": "6a934351c3de042c1c8b1371f4acfc5a52cfaf8ea96816c5f79c42ba51e90dbf"
+    },
+    {
+      "path": "core-writer-unaccepted.md.txt",
+      "bytes": 14271,
+      "sha256": "8cc7c3682a88d878b5e3a8cf54656e56e473a18f1a1e37bd41ef967f0d77fb4c"
+    },
+    {
+      "path": "diagnostic-id-property-main-after-push.json",
+      "bytes": 611,
+      "sha256": "e969a0222b584b3e5a03f2ea00b95429566609447eab2f43408f1b6a46c36e9b"
+    },
+    {
+      "path": "diagnostic-id-property-parent-green.json",
+      "bytes": 244,
+      "sha256": "f09d5f506c1a6eb6c3a444bb156eb8b88d3590056ef7e8350ffe1bab06a0986d"
+    },
+    {
+      "path": "diagnostic-id-property-parent-red.json",
+      "bytes": 345,
+      "sha256": "876e0d2dfee30fd6fc83616806299274fce39d73702bfd1e1718124cd5da691e"
+    },
+    {
+      "path": "docs-stale-state-hold.md.txt",
+      "bytes": 20526,
+      "sha256": "de88ab44ba9a2a44fa00f01585c3584acf0d638c8b003c4b74877f4bc335a9c8"
+    },
+    {
+      "path": "graph-f1-f2-source-after-push.json",
+      "bytes": 796,
+      "sha256": "8432b5751e495ac240f6f4645be2621075a4385768fb7add1a942ffa3a258ebe"
+    },
+    {
+      "path": "graph-main-integration-pass.md.txt",
+      "bytes": 17062,
+      "sha256": "fd062d4505a793ee862581f19de5d39c6f8e5ed5f107d7dbfaac1b3229dcb42d"
+    },
+    {
+      "path": "graph-repair-full-pass.md.txt",
+      "bytes": 20213,
+      "sha256": "ac0f2c14254cb21b24c98855b500f553b9cb2fb3d292ed0910cdd19b85180fb7"
+    },
+    {
+      "path": "graph-repair-main-after-push.json",
+      "bytes": 952,
+      "sha256": "eb97ac4a690e4e2b859ebcea0bd2799d94e3ceb6d2d3e2053d9d59a09ce7a117"
+    },
+    {
+      "path": "graph-repair-source-accepted.json",
+      "bytes": 836,
+      "sha256": "9bb1227ab744a7ce5ef9dfe68a7db6b69800070810487c9f38e5a3418ed6a95d"
+    },
+    {
+      "path": "graph-repair-writer.md.txt",
+      "bytes": 9588,
+      "sha256": "5c5985364e0c644d01227ae9308101c43bb5d353e9eb499ad0811f60238b7938"
+    },
+    {
+      "path": "layout-integration-pass.md.txt",
+      "bytes": 19449,
+      "sha256": "27932d52d1f39ce4f8b15ca736cb81c71eb885207dbb9a464ee301d0ed64de5c"
+    },
+    {
+      "path": "layout-main-after-push.json",
+      "bytes": 1086,
+      "sha256": "0801378e9b63a7afaa50ae9587986fbebd461199b9f87bdc154a9acd79828598"
+    },
+    {
+      "path": "layout-main-integration-accepted.json",
+      "bytes": 390,
+      "sha256": "fc61769121b1ddf24ac32fb1d41d1c76b77c23ee207a88de2c5cda79d94d4514"
+    },
+    {
+      "path": "private-u2-core-source-failure.json",
+      "bytes": 233,
+      "sha256": "5a79a80c2fba582b5ab61655c017fde292e952475232da84722b12630ee5066d"
+    },
+    {
+      "path": "public-comparator-independent-result.json",
+      "bytes": 805,
+      "sha256": "508aed616ada42d17d1fecf5065e153baf725399228bd9fdeacd658a2149e82c"
+    },
+    {
+      "path": "public-comparator-source-after-push.json",
+      "bytes": 798,
+      "sha256": "86981908abe4164233482dd83dabe63cd23bae06fc5b72aba52ac772286dc11a"
+    },
+    {
+      "path": "t3-assertions-main-after-push.json",
+      "bytes": 508,
+      "sha256": "18655f85fb9e5ed45d2764d7cdb2850af1aa2368b868283cc381cd5f16cf0f40"
+    },
+    {
+      "path": "t3-safe-integration-pass.md.txt",
+      "bytes": 15872,
+      "sha256": "ec8349ed3079b3dea2c23a6171b594f032f86d1696c0b03c7001b054488963df"
+    }
+  ]
+}

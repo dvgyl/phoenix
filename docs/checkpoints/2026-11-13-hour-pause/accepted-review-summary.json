@@ -1,0 +1,13 @@
+{
+  "complete_full_reports_read_by_root": true,
+  "comparator_source": "7ee3a1d23ddf5ff0d46df1b133373d78bab31fea",
+  "comparator_astra_verdict": "PASS for exact repair only",
+  "comparator_sol_verdict": "PASS for exact repair only",
+  "comparator_main_integration": "PENDING",
+  "broader_report_validator": "OPEN. Track all five Astra findings and four overlapping Sol findings.",
+  "t3_safe_main": "26f672cf0de658f20f9aba6ac2cb3b3ca6b8d315",
+  "t3_safe_integration_verdict": "PASS",
+  "t3_first_publication": "HOLD",
+  "core_main_or_source_commit": "No Core commit. Full hook failed in the unchanged diagnostic identity property.",
+  "source_or_runtime_authority": false
+}

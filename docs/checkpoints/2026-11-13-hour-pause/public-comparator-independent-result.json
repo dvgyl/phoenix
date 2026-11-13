@@ -1,0 +1,16 @@
+{
+  "positive_comparisons": 2,
+  "contradictory_or_missing_self_match_refusals": 54,
+  "input_hashes": {
+    "native-amd64-m0.json": "201ea10af098a666892621a71d45a6f37c0829b76c1c789f3c41bee575e8ce34",
+    "native-arm64-m0.json": "2774c96ef0a0e5ee620cac096a38fdc091c5dfd5d499b31d4a5b8932162bf664",
+    "mac-m0.json": "405ba283c70335418c1b2dce2327bbb4069e190eda16873c04bd4be6acdfaf03"
+  },
+  "source_path": "/Volumes/PhoenixWork/worktrees/m1-measured-review-ce6a34d/phoenix_eval/reports.py",
+  "source_sha256": "14576c15afdf9221006625b9e70be9ac564035c88329b9c9014cda25ae17db27",
+  "old_public_reports_unchanged": true,
+  "historical_control_unchanged": true,
+  "scope": "Only exact program self_match evidence. No full report certification.",
+  "private_material_read": false,
+  "target_execution": false
+}

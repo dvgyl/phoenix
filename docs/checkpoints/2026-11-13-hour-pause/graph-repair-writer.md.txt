@@ -1,0 +1,142 @@
+The task supports Phoenix through SPEC section 9. This delegate corrected only
+Unit A defects F1 and F2 and provenance comment C5. The changes are verified by
+local controls. Root retains integration and the fresh FULL independent Sol review.
+This report does not close the functional review gate or any milestone.
+
+F1 came from the wrong API representation. The reader recognized six Java constant
+identifiers. The ordinary exporter stores PcodeOp.getMnemonic() strings.
+The fix replaces FLOAT_INT2FLOAT, FLOAT_FLOAT2FLOAT, FLOAT_TRUNC, FLOAT_CEIL,
+FLOAT_FLOOR, and FLOAT_ROUND with INT2FLOAT, FLOAT2FLOAT, TRUNC, CEIL, FLOOR, and ROUND.
+The complete pinned method was read. Its source SHA-256 is
+28254c46b0f6744c3ad8ca0757a6d46d5922b743857121cada7b559af18d2d8b.
+The recognized set now equals all 74 named-case return strings.
+The default INVALID_OP result remains an unknown observation.
+The misleading C5 comment was deleted. ADR0042 now names the actual API representation.
+
+F2 came from Python equality before exact-type validation. True and 1.0 can compare
+equal to integer 1 and select its dictionary slot. The reader now checks every
+supplied roster key with the existing unsigned 64-bit integer validator before
+roster comparison or lookup. It checks the selected Function.entry before comparing
+that entry. Malformed scalars raise ByteGraphV2FormatError. Valid mismatches retain
+ByteGraphV2BindingError. There is no coercion, broad exception handler, type
+suppression, signature change, schema change, or new architecture.
+
+The test file adds 204 behavioral cases. These cover all 74 recognized mnemonic
+strings in both raw and analyzed domains. They cover the six aliases, INVALID_OP,
+a future name, and case sensitivity. An unknown name requires its exact
+unsupported_opcode gap. A gap for the other domain does not suffice.
+The identity cases use valid ordinary parsed lifts at entries 1 and 4096.
+Each malformed input starts from a passing control. Invalid roster keys occur at
+the selected slot and before and after it. Boolean, float, negative, and overflowing
+keys and selected entries refuse. Exact integer mismatches remain binding errors.
+All 73 original test and helper function ASTs remain unchanged.
+The final appended test ASTs equal the corrected regressions that ran before the fix.
+Root must commit these tests with the fix. This delegate made no Git mutation.
+
+The focused-fix exception applies. The complete Sol report and the root red log
+established both causes in one subsystem. This delegate repeated the failures.
+Local checks exercise the public parser. Interfaces, state semantics, ownership,
+and authority remain unchanged. No competing evidence required a new design.
+Fix Root Causes changed the repair location to the recognized API strings and the
+supplied-object validation boundary. Model the Domain kept the existing mnemonic
+set and exact integer validator. No new abstraction was required.
+The copied playbook steps and task exceptions are in todo.md.
+
+The retained check results are as follows. Counts are host unit results.
+They are not phoenix-eval scores.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Unchanged independent suite before fix | 28 failed, 38 passed | red.log |
+| Initial regression helper | 59 failed, 145 passed | new-red.log |
+| Corrected regressions before fix | 56 failed, 148 passed | new-red-fixed.log |
+| Product fix with original repository test file | 66 passed | product66.log |
+| Added repository regressions | 204 passed, 560 deselected | new.log |
+| Current graph, source, and evidence suites | 1299 passed, 1 live test deselected | current.log |
+| Final unchanged behavioral controls | 65 passed, 1 deselected | behavior65.log |
+| Historical test-file hash control | 1 failed, 65 deselected | history.log |
+| Unchanged relevant index and mapping controls | 15 passed | index.log |
+| Initial quality checks | Ruff and format failed, strict mypy passed | quality.log |
+| Final quality checks | Ruff, format, and strict mypy passed | quality-final.log |
+| Imports, primary names, old function ASTs, unchanged dependencies | Passed | boundary.log and tmp identity.json |
+| Git diff whitespace check | Passed | Final identity check |
+
+The original independent failures include “DID NOT RAISE ByteGraphV2FormatError”
+and “A required observation gap is absent.” After the product fix, the same file
+reports “66 passed”. The independent test file was never edited.
+The historical test-file SHA precondition was not changed. It passed in product66
+before the repository test file changed. It later failed because the file gained
+the regressions. history.log preserves the exact expected and observed hashes.
+This historical failure supplies no behavioral pass and is not an xfail.
+The earlier 105-control history does not close this new review gate.
+
+The initial regression helper omitted the new raw instruction site at entry 1.
+Nineteen cases failed at that helper precondition. Forty other cases failed on the
+product. The original helper is retained as test_regressions-initial.py.
+The corrected helper updates the raw instruction site. Its positive entry controls
+pass before corruption. The corrected red batch has 24 opcode failures and
+32 malformed-identity failures. No expected result was weakened.
+Ruff then found two 89-character lines. The formatter also changed one assertion
+layout. These failures remain in quality.log. Final checks pass after formatting.
+
+One surrounding boundary finding remains for root review. _bound_function counts
+supplied listing edges with edge.caller == function.entry. It does not validate
+StaticEdge.caller before that comparison. Eight direct controls accepted Boolean,
+float, negative, or overflowing caller values at the two valid function entries.
+The accepted canonical graph bytes were unchanged. At entry 1, True and 1.0
+participate in the same equality pattern. At entry 4096, 4096.0 also compares equal.
+The existing scan claims an edge count, not listing-edge semantic certification.
+This finding is separate from the requested function-roster repair. It does not
+demonstrate new semantic authority. No old edge schema or source was edited.
+Root must decide the scope and follow-up. boundary.py and identity.json retain
+the exact observations.
+
+Every shell sourced the required task-env.sh. The known guarded VM metadata mkdir
+warning occurred. It was recorded and not investigated. Initial PAUSED and DRAINING
+probes used /Volumes/PhoenixWork/continue-v1 and reported absent paths.
+The required markers are under /Volumes/PhoenixWork/audit/continue-v1.
+Every subsequent batch checked that exact directory. Neither marker was present.
+A design-path read in this branch failed because the checkpoint is not in this
+older worktree. All four complete final records were read from the named checkpoint
+under /Volumes/PhoenixWork/phoenix/docs. Truncated displays received bounded
+follow-up reads. These inspection errors remain recorded here.
+
+The exact command arrays and exit codes are in each stage's JSON file.
+run_checks.py uses an explicit minimal child environment. It does not copy inherited
+environment variables. It sets exact repository and temporary roots, seed 20261113,
+-B, disabled bytecode, disabled pytest plugin autoload, and scoped cache paths.
+The only explicit test plugin is the existing Hypothesis plugin.
+Actual imports for byte_graph_v2, byte_graph, byte_source, index, mapping, and evidence
+resolve inside the assigned checkout. Python is 3.12.13.
+The bytecode prefix remains absent. No dependency was installed.
+The created-file manifest is an explicit allowlist. Cache directories are confined
+to the matching temporary root. No audit-tree or process scan occurred.
+
+Each stage JSON file contains the exact command and its explicit minimal environment.
+For an independent repeat, use those arguments with a fresh basetemp under the
+assigned temporary root. The local runner's completed stage logs are immutable.
+It refuses to overwrite an existing log. Do not change or replace those logs.
+The required shell setup remains the supplied task-env.sh.
+
+The runner runs each check with subprocess.run and records its actual exit.
+No failed child exit is reported as a pass. All invoked checks have completion
+records. No owned background process or continuation remains.
+
+Only the three permitted product paths changed. STATUS and LOG remain exact.
+The base and branch remain unchanged. The staged diff is empty.
+No Git mutation, network, credential access, compiler, linker, target, Ghidra job,
+native plugin, Docker, Colima, Lima, or VM action occurred.
+No private source, held-out input, private run, Author material, source archive,
+Codex session, archived session, or dispatcher data was accessed.
+No installed guard was inspected, probed, modified, relaxed, or nested.
+No nested model, agent, API, model CLI, session dispatch, or continuation occurred.
+No service setting changed and Fast mode was not enabled.
+Permitted local evidence cannot independently attest provider routing or service tier.
+
+The full capture review remains OPEN after provider screening.
+It was not retried, replaced, rephrased, bypassed, or sent to another provider.
+All native, entry, memory, source, interface, pointer, producer, semantic, emission,
+and runtime gates remain open. Root must preserve the pending files, review the
+diff, run the full hook, commit, push, and obtain fresh FULL independent Sol review.
+There is no producer admission, corpus score, milestone acceptance, M4 completion,
+or SPEC section 9 completion in this report.

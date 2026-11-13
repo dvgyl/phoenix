@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "/Volumes/PhoenixWork/worktrees/m1-public-profile/.venv/bin/python",
+    "-B",
+    "-m",
+    "pytest",
+    "-q",
+    "--tb=short",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp=/Volumes/PhoenixWork/tmp/graph-repair-parent-review-repeat-20261113/pytest",
+    "--rootdir=/Volumes/PhoenixWork/tmp/m2-byte-graph-v2-repair-full-review-sol-20261113",
+    "--confcutdir=/Volumes/PhoenixWork/tmp/m2-byte-graph-v2-repair-full-review-sol-20261113",
+    "/Volumes/PhoenixWork/tmp/m2-byte-graph-v2-repair-full-review-sol-20261113/test_repair_controls.py"
+  ],
+  "exit_code": 0,
+  "tests": 476,
+  "report_sha256": "ac0f2c14254cb21b24c98855b500f553b9cb2fb3d292ed0910cdd19b85180fb7",
+  "source": "59266a9e949234f6d455726cc9238d65e79d74f4",
+  "scope": "Pure Unit A schema2 only. No authority.",
+  "bytecode_prefix_absent": true
+}

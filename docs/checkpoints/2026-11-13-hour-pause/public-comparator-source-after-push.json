@@ -1,0 +1,18 @@
+{
+  "base": "7cc2c49304f5fb2f32479338521d170ee643c73f",
+  "head": "7ee3a1d23ddf5ff0d46df1b133373d78bab31fea",
+  "remote": "7ee3a1d23ddf5ff0d46df1b133373d78bab31fea",
+  "clean": true,
+  "full_hook_passed": true,
+  "focused_tests": 28,
+  "parent_red_failures": 24,
+  "actual_public_report_refusals": 54,
+  "actual_public_positive_comparisons": 2,
+  "source_files": {
+    "docs/issues/0001-public-report-self-check.md": "4ea07292eb3efb28f785cf131a202b5085d2f747fcaedbd50870eee2a0c2c6a8",
+    "phoenix_eval/reports.py": "14576c15afdf9221006625b9e70be9ac564035c88329b9c9014cda25ae17db27",
+    "tests/test_reports.py": "1b9fa5a003bbcef08550f1e6cbb6ff962bff48f7b7cc563e234bb93533a43b36"
+  },
+  "old_public_reports_and_historical_controls_unchanged": true,
+  "fresh_Sol_and_Astra_reviews_required": true
+}

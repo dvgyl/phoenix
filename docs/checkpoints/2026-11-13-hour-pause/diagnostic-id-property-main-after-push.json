@@ -1,0 +1,26 @@
+{
+  "base": "7761d835eef59eae2b48910d87c37f8df6ba679a",
+  "head": "8f1c394de34d79c09ae01c65b4bb1ae60daa0bc3",
+  "remote": "8f1c394de34d79c09ae01c65b4bb1ae60daa0bc3",
+  "clean": true,
+  "full_hook_passed": true,
+  "diagnostic_tests": 223,
+  "literal_property_ids_checked": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "test_sha256": "f33e4c3dd7174df32ddcf890c847370ba3c327d71902580b5ea3684b5a29f81b",
+  "product_code_changed": false,
+  "old_reader_refusal_preserved": true,
+  "Core_full_gate_still_HOLD_until_port_and_repeat": true,
+  "fresh_Sol_review_required": true
+}

@@ -1,0 +1,10 @@
+{
+  "argv": [
+    "git",
+    "commit",
+    "-m",
+    "feat: add complete private compiled-data readback"
+  ],
+  "exit_code": 1,
+  "log": "/Volumes/PhoenixWork/audit/resume-20261113/private-u2-core-source-full-hook-commit-push.log"
+}

@@ -1,165 +1,132 @@
-# Phoenix continuation handoff
+# Phoenix timed-pause handoff
 
-## Active resume
+This handoff is prepared for the user-requested pause at 16:15:25 London time
+on 13 November 2026. The full SPEC section 9 goal is incomplete. Implementation
+is stopped. Only the final read-only handoff audit may finish before the deadline.
+The shared checkpoint records final worker, queue, VM and goal-stop state.
+After the deadline, keep PAUSED until a new explicit user resume instruction.
+The old three-hour timer is historical. Do not restart any old queue.
 
-The user explicitly resumed the complete SPEC section 9 goal on 13 November.
-The goal is ACTIVE until the new user-requested pause deadline. The user said,
-"Please pause after an hour of work." Pause all work at 16:15:25 London time
-on 13 November 2026. Begin draining and the handoff at 16:00:25. The one-time
-heartbeat and local marker watchdog are armed. Read the live deadline record.
-The old three-hour deadline is historical. Do not restart old queues. At the
-new deadline, stop all workers, preserve files, finish the handoff and set the
-existing goal to paused. Do not mark it complete or resume without instruction.
+## Start after explicit resume
 
-The exact old handoff is preserved at
-[the timed-pause archive](checkpoints/2026-11-13-resume/HANDOFF-paused.md).
-Its paused-state instructions are historical. The current status and shared
-checkpoint control this continuation. M0 and M1 tags remain immutable.
-No intermediate checkpoint defines completion.
+Source /Volumes/Extreme Pro/Phoenix/env.sh in every shell. Work in
+/Volumes/PhoenixWork/phoenix. Read AGENTS.md and SPEC.md in full. Read installed
+pstack:poteto-mode 0.9.138. Fetch origin and read the remote handoff. Read the
+shared checkpoint with this command.
 
-## Start after a session change
+```sh
+node /Users/devg/.codex/plugins/cache/pstack-claude/pstack/0.9.138/skills/poteto-mode/scripts/resume.mjs read --project /Volumes/PhoenixWork/phoenix
+```
 
-1. Source `/Volumes/Extreme Pro/Phoenix/env.sh` in every shell. Work in
-   `/Volumes/PhoenixWork/phoenix`.
-2. Read AGENTS.md and SPEC.md in full, including after every compaction.
-3. Read installed Poteto 0.9.138 and the shared checkpoint with its helper.
+Read current state fields and actual end markers before acting. Verify HEAD,
+origin, branch tips, pending file hashes, processes, free space and the VM lease.
+Retire this expired timer and remove PAUSED/DRAINING only after explicit resume.
+Use Standard everywhere. Native explicit-model delegates expose Priority, so
+use the established guarded Standard CLI exception. Disable Fast and nested
+models. Four active or reserved slots include root. Use required Astra design
+and critical reviews. Obtain fresh full Sol review after every major block.
 
-   ```sh
-   node /Users/devg/.codex/plugins/cache/pstack-claude/pstack/0.9.138/skills/poteto-mode/scripts/resume.mjs read --project /Volumes/PhoenixWork/phoenix
-   ```
+## Verified commits and reviews
 
-4. Read STATUS, the last LOG entries, and 20 commits. Read the live
-   `audit/continue-v1/state.json` field `current_run_20261113`. Older pause
-   fields are historical. Check actual files, branches and role end markers.
-5. Preserve every pending source file before changes. A report or exit zero
-   alone is insufficient. Required independent reviews stay closed until
-   their actual full verdicts pass.
-6. Check the VM lease before any Linux action. The dedicated private Corpus
-   Author released its T3 lease after qualification. Do not inspect private
-   logs, sources, held-out inputs or archives. Read only approved aggregates.
+The last test correction is 8f1c394de34d79c09ae01c65b4bb1ae60daa0bc3. Its full
+hook and main push pass. This handoff commit follows it. Verify actual HEAD and
+remote instead of assuming that the test commit is still the branch tip.
+The correction changes tests and progress text only. It handles every occupied
+fixture identity and adds explicit zero and nine examples. Root repeats all
+223 diagnostic controls and direct identities zero through ten. Strict product
+refusals remain exact. The final audit must independently check this correction.
 
-Use ASD-STE100 Issue 9. Write for clear human understanding. Do not ask
-questions. Use Standard service. Native explicit-model delegates advertise
-Priority. Use the established guarded Standard CLI exception with Fast and
-nested models disabled. At most four active or reserved model slots include
-root. Use Astra for the required architecture and critical review work.
-Obtain fresh full independent Sol review after every major block.
+Layout integration 2046688d77d65ed8677b6435e6e5b96b4aef828e and graph integration
+7761d835eef59eae2b48910d87c37f8df6ba679a pass full hooks, pushes and fresh full
+Sol integration reviews. Root reads both complete reports. Layout source e721885
+is approved only as candidate definitions. Graph source 59266a9 is approved only
+as a pure structural reader. Root repeats all 476 new graph controls. Earlier 1, 311
+focused controls and 65 behavior controls overlap. Preserve the unchanged historical
+file-hash assertion and failure. No new native fact or semantic authority follows.
 
-## Verified public work
+Safe T3 assertion integration 26f672c passes fresh Sol. Underlying publication
+review stays HOLD. Both comparator source reviews pass exact 7ee3a1d. Its main
+integration is pending. Read all scopes and process exceptions in
+[the pause record archive](checkpoints/2026-11-13-hour-pause/README.md).
+No review count is a Phoenix evaluation score.
 
-Main source `293477f` includes exact reviewed byte and passive ELF imports.
-Both main integrations passed full hooks and fresh Sol reviews. The test
-fixture correction passed its hook and independent red/green review.
-Older failed CI and review evidence remain preserved.
+## Pending Core source
 
-Native workflow `43431817090` passed both CPU jobs and comparison at exact
-`293477f`. Both complete artifact ZIP hashes and extracted reports match.
-Mac run `m0-ea89531416274da5b4df008f7a219d06` agrees on revision, worker source,
-seed, case counts and outcome hashes. Fresh Sol review and the root repeat
-of nine check groups and four pure controls pass this bounded evidence.
-The archives do not retain every raw M0 trial outcome or probe transcript.
+Worktree: /Volumes/PhoenixWork/worktrees/m1-ledger-identity.
+Branch: agent/m2-private-compiled-readback-20261113.
+Base: e7218853a0f47f5470bea597e1d57f98231cc66c. No Core commit or push exists.
+Seven files remain staged, including ADR0043. The writer ended at 15:19:19UTC.
+Root preserved its original five files, then the complete seven-file Root state.
+Root reads the 1, 012-line module, 1, 749 original test lines, ADR and all additions.
+All 14, 451 affected controls pass. Root encodes one narration comment as two asserts.
 
-Public switch run `public-switch-293477f-20261113` has two complete original
-compiler rows. Eight positive builds match 56/56 cases each. Eight negative
-builds compile and fail all three unvisited cases by stdout. Source replay
-snapshots match. Warnings remain reported. Separate pair checks retain
-aggregates and executable identities, not every rebuilt case output.
-These are public fixture checks. They do not supply sealed scores or M2.
+The full source hook fails the unchanged diagnostic property at local_id9.
+It records 18, 351 passes, 26 skips and 93.46 percent evaluator coverage. The fixture
+already owns 9. The strict reader correctly rejects the duplicate. Main 8f1c394
+fixes this test. Port only the exact test correction after preserving pending
+files, then repeat the full Core hook. Never weaken the reader or skip the gate.
+The queued Astra critical review was stopped before any model started. Both
+review briefs are prepared, but neither Core review ran.
 
-Exact public records are in
-[the resume evidence archive](checkpoints/2026-11-13-resume/README.md).
-Its manifest binds every archived byte. No raw model, Author, environment or
-credential log is included. Keep the private material outside the repository.
+Local current backup: audit/resume-20261113/private-u2-core-root-pending-backup.
+Original writer backup: audit/resume-20261113/private-u2-core-pending-backup.
+The public archive also preserves core-pending.patch.txt and both manifests.
+Its current patch reconstructs all seven files from base e721885. These are
+unaccepted backup bytes. Do not treat a backup as code or native approval.
+After the full gate passes, commit, push and obtain fresh full Sol and independent
+Astra critical reviews. Final identity_inputs, immutable metadata evidence, U3, U4,
+U5, actual compiler retention, native use, issuance and calibration remain open.
+Here private U2 means an internal API. It has no private corpus access.
 
-## Open implementation units
+## Comparator and report validation
 
-The repaired graph source is `59266a9` in
-`worktrees/m1-public-profile` on `agent/m2-byte-graph-v2-20261113`.
-The prior `23e05e9` full review is preserved as HOLD. Astra corrected F1, F2 and comment C5 under
-`audit/m2-byte-graph-v2-f1-f2-writer-astra-20261113`. It ended at 14:39:09 UTC.
-Root read the complete report and preserved its three pending files with exact
-patch reconstruction. Root corrected the related listing-edge caller equality
-defect after ten failing controls. All twelve new caller controls pass. Root
-also repeated 1,311 focused and 65 independent controls. The old test-file hash
-assertion still fails after the added regressions. Its expectation is unchanged.
-The full source hook and push passed. Fresh FULL Sol review passed under
-`audit/m2-byte-graph-v2-repair-full-review-sol-20261113`. Root read its full report
-and repeated all 476 new independent controls. F1, F2 and the caller defect are
-closed for the pure reader. Main imports only its exact module, tests and ADR0042.
-Run the full main hook and obtain fresh Sol integration review. Preserve all
-later files. The first comment-only review supplies no functional approval.
+Source worktree: /Volumes/PhoenixWork/worktrees/m1-measured-review-ce6a34d.
+Source branch: agent/m2-public-report-self-check-20261113.
+Commit:7ee3a1d23ddf5ff0d46df1b133373d78bab31fea. It is clean and pushed.
+Root 24 red controls, 28 final tests, 54 actual-report refusals and two positive
+comparisons are retained. Fresh full Sol and Astra pass the exact repair.
+Integrate only reports.py, test_reports.py and issue0001. Preserve later main.
+Run the full hook, push and obtain fresh Sol integration review. Issue0001 stays
+open until then. Issue0003 tracks broader certification and finite-input gaps.
+Do not change the historical review's old-limit assertion.
 
-Layout source `e721885` passed its full hook, push and fresh full Sol review at
-`audit/m2-collector-layout-full-review-sol-20261113`. Root repeated 1,744 focused
-controls. The reviewer added 2,020 independent mutation refusals. Root read all
-product source and executable test code. Main imports only the exact three
-source paths from that immutable commit at main `2046688`. Its full hook and
-push passed. Fresh full Sol integration review passed under
-`audit/m2-layout-main-integration-review-sol-20261113` in frozen
-`worktrees/m1-follow-up-review-e07ec17`. Do not move that checkout. The review also
-closed the stale layout instructions found by the prior docs review. Root read
-the full integration report. Complete private U2 and both native profiles remain open.
-Literal vectors bind the independently checked proposed-layout
-digest. The writer's initial raw import-guard failure log
-printed part of an inherited environment. Keep that log local. Do not read
-or publish it. The corrected child uses an explicit minimal environment.
+Current main workers retain source digest f2ae5cdece588e795c60c3c45f630027cc3f4d954738b6801a842b1cc2f391a1.
+Comparator integration changes that digest to a52b1803bb430af420705f5ffd4cd3521aacce06f607eabd92d53f2739d08f06.
+Verify the actual source digest before rebuilding or using workers. Preserve
+accepted M1 images and tags. No current image was retagged for the repair.
 
-The old layout worktree `worktrees/m1-ledger-identity` contains the returned
-Astra source for complete private U2 readback. Its branch is
-`agent/m2-private-compiled-readback-20261113`, based on `e721885`. Do not edit or
-move it. The role is `audit/m2-private-compiled-readback-writer-astra-20261113`.
-It ended at 15:19:19 UTC. Root preserved all five returned files with exact
-reconstruction, read the complete product and tests, and repeated 14,451 controls.
-The full source hook failed one unchanged property test at local_id9. The
-remaining 18,351 tests passed and 26 were skipped. Identity 9 already exists in
-that synthetic fixture. The strict graph reader correctly refuses the duplicate.
-Root preserves the full failure log and all seven staged files in
-`audit/resume-20261113/private-u2-core-root-pending-backup`. The earlier five-file
-writer-return backup also remains exact. No Core commit or push exists.
-Port the separately verified fixture correction before repeating the full hook.
-The queued Astra review was stopped before any model started. Both review briefs
-are prepared. Obtain fresh full Sol and independent Astra
-critical reviews. Retained limits need independent numeric literals.
-Final identity_inputs and one immutable metadata-evidence
-transaction remain separate public-success gates. Preserve the accepted U1
-source and its refusal order. Actual compiler retention and both Linux
-profile approvals remain open.
+## Corpus and execution boundaries
 
-Implement the remaining byte adapter units separately. Preserve actual
-flags, complete banks, ordered and empty source items, and all proof gaps.
-Do not weaken old schemas or publications. Full capture review remains
-OPEN after provider screening. Do not retry, rephrase, replace or bypass
-that task or change providers or settings. No pure or public fixture PASS
-closes producer, semantic, emission, capture or production authority.
+Only a dedicated Corpus Author may read private sources, held-out inputs,
+private archives, outcomes, Author logs or the private resume checkpoint. Root
+reads only approved aggregates. The last Author ended at 14:49:05UTC, released
+its lease and stopped Colima. Root confirmed stopped Colima. No new private
+continuation ran. Keep all T0, T1, T2 and new T3 commitments exact.
 
-## Private Corpus Author
+T3 has five programs and 20 variants as Author assertions. Keep the two publication
+labels on HOLD and issue0002 open. A later dedicated Author must verify private
+archive and runtime claims. The official 2026-04-30 knowledge cutoff is not proof
+of training completion. Source adequacy is not a Phoenix reconstruction score.
+Keep survivors, inconclusive results, invalid mutations, setup failures and interrupted
+attempts. Agent sealing is an honor system. No native x86 result is supplied.
 
-The dedicated Standard Astra role uses public control metadata under
-`audit/t3-author-resume-control-20261113`. Its root-readable files belong
-only in the `approved` child directory. Its private dispatch and work logs
-remain under the protected Author roots. Root must never read those files.
-The Author ended at 14:49:05 UTC. Root read only its approved `status.json`,
-`handoff.md` and `commitment-addition.md`. It reports qualification and sealing
-for five programs and 20 variants. Its approved release says Colima is stopped
-and no owned container or child remains. Root confirmed stopped Colima and
-released the live lease record. Keep accepted M1 images and T0-T2 batches exact.
+The public reader currently supports T0/T1. T2 needs 9, 216 cases and 30, 700, 244 encoded
+bytes per program. Do not reduce these sets to fit 4, 096 cases or 8 MiB. Review bounded
+T2/T3 admission first. T3 has an object manifest with schema, tier, variants and
+licences metadata. Use separate synthetic fixtures for parser work. Never open
+held-out inputs in Root or the pipeline.
 
-Fresh Sol PUBLIC RECORD review ended at 15:11:56 UTC with HOLD under
-`audit/t3-approved-record-review-sol-20261113`. Root read the full report.
-All 34 record checks pass. Two publication labels remain unverified. Safe
-archive commitments are recorded as Author assertions. Root repeated aggregate
-arithmetic and preserved every old commitment byte. Read the complete public
-review and tracked issue before resolving those labels. The old review checkout
-is `worktrees/m1-ci-reliable` at `293477f`; no role now owns it.
-No private runtime evidence is approved by that review. Root reads only
-categories, identities, dates, licences, commitments and aggregate adequacy.
-The Author replaced two selections with insufficient publication evidence.
-Keep all publication and training-date limits, mutation survivors and
-inconclusive results. No private input or source crosses into the principal
-or pipeline context. No Phoenix reconstruction score was produced.
+## Continue the full goal
 
-Continue through M2, M3, M4, every baseline, publication and every headline
-replay. Preserve corpus sealing and all prior failures. Keep frequent green
-commits and pushes. Update this handoff and the atomic shared checkpoint as
-work advances. Never mark the goal complete before every SPEC section 9
-condition is verified.
+Implement source schema 2 and its complete positive view after the accepted graph.
+Keep Java same-call capture, conversion, process supervision and admission separate.
+Continue indirect calls, byte idioms, fault localization, types, modules and the
+required Astra readability review. Full capture stays OPEN after provider
+screening. Do not retry, rephrase, replace, change provider/settings or bypass it.
+No parser-only, layout, representation or public-fixture PASS closes that gate.
+
+M0 remains 4ef231a1bbdc8d572e06dd5a44efff620dda0e97. M1 remains 6897e4753d8acedfae57af63e6426faf116bed2e.
+The latest verified native workflow remains 43431817090 at 293477f. Accepted M1
+original and replay counts remain unchanged. No later code inherits a score.
+Complete M2, M3, M4, every baseline and ablation, costs, failures, publication and every
+headline replay. Do not redefine completion around this pause or another checkpoint.

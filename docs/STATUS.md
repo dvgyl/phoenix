@@ -1,125 +1,84 @@
 # Phoenix status
 
-The complete SPEC section 9 goal is active. M0 and M1 are accepted.
-M2 through M4, publication and every headline replay remain incomplete.
-The user resumed work on 13 November, then requested a one-hour pause.
-Pause all work at 16:15:25 London time on 13 November 2026. Begin the handoff
-at 16:00:25. The old three-hour timer is historical. Use Standard service
-and preserve corpus sealing.
+The full SPEC section 9 goal is incomplete. M0 and M1 are accepted. The user
+requested a one-hour pause at 16:15:25 London time on 13 November 2026.
+Implementation is stopped for the handoff. The shared checkpoint records final
+pause confirmation. Keep PAUSED after the deadline until explicit user resume.
+Use Standard service and preserve corpus sealing. The old timer is historical.
 
 ## Accepted measured results
 
-M0 is `4ef231a1bbdc8d572e06dd5a44efff620dda0e97`.
-M1 is `6897e4753d8acedfae57af63e6426faf116bed2e`.
-Original `m1-t0-6897e47` and replay `m1-t0-replay-6897e47` agree in all
-stable fields. Phoenix passed behavior for 19/20 variants, integrity for
-18/20, and all success conditions for 17/20. Ghidra-raw passed 8/20 in
-all three categories. Phoenix has two embedded-text failures and one
-behavior failure. Raw has 12 variants with compiler errors. Both methods
-have 792 eligible variant-case pairs and no emulator disagreement or
-evaluation error. Coverage is 790/1,079 recovered block entries. This is
-not source branch coverage. Later code does not inherit these scores.
+M0 is 4ef231a1bbdc8d572e06dd5a44efff620dda0e97.
+M1 is 6897e4753d8acedfae57af63e6426faf116bed2e.
+Original m1-t0-6897e47 and replay m1-t0-replay-6897e47 agree in stable fields.
+Phoenix passes behavior for 19/20 variants, integrity for 18/20, and all success
+conditions for 17/20. Raw passes 8/20 in each category. Phoenix retains two
+embedded-text failures and one behavior failure. Raw retains 12 compiler-error
+variants. Each method has 792 eligible variant-case pairs and zero emulator
+or evaluation errors. Coverage is 790/1,079 recovered block entries, not source
+branch coverage. Later code inherits no score.
 
-## Current engineering state
+## Verified engineering state
 
-Main includes the reviewed scope, frames, collector data, schema 1 byte
-graph/source readers, typed header, project-profile reader, byte diagnostic
-and passive ELF reader. The exact byte and ELF integrations passed full
-hooks and fresh Sol integration reviews. The fixture correction at
-`293477f` also passed its full hook and fresh independent red/green review.
-It fixes eight setup failures in both earlier native CPU jobs. All 223
-diagnostic controls pass with ambient PHOENIX_ROOT absent.
+Exact candidate layout integration 2046688 and graph integration 7761d83 pass
+full hooks, pushes and fresh full Sol integration reviews. The layout review
+closes the earlier stale-docs finding. Graph F1, F2 and listing-caller defects
+are closed for its pure reader. Source schema 2, capture, semantics and native
+approvals remain open. Preserve the historical test-file hash failure.
 
-The latest verified passing native workflow is `43431817090` at exact
-`293477f`. Both CPU jobs and their comparison passed. Root checked both
-complete ZIP digests and reports. Mac run
-`m0-ea89531416274da5b4df008f7a219d06` agrees with both native runs on revision,
-worker source, seed, cases and outcomes. Fresh Sol evidence review passed.
-Root repeated all nine pure check groups and four independent controls.
-The public reports retain aggregate-only execution limits.
+Last test correction 8f1c394 passes the full hook and push. All 223 diagnostic
+tests and direct identity controls zero through ten pass. Existing collisions
+now require refusal instead of being skipped. Product readers stay exact.
+Fresh Sol review of this correction is part of the final handoff audit.
 
-Public switch run `public-switch-293477f-20261113` passed both GCC and Clang
-inputs. Its eight positive builds match 56/56 cases each. All eight negative
-builds fail the three unvisited selector-11 cases by stdout. Exact source
-replay snapshots match. Positive GCC builds retain two warnings each.
-Positive Clang builds have zero warnings. Negative builds retain three each.
-These public fixture checks are not sealed reconstruction scores.
+Core readback remains uncommitted in its isolated branch at e721885. Root reads
+all source and tests and repeats 14,451 affected controls. The full hook fails
+one old property fixture; 18,351 tests pass and 26 are skipped. Identity 9 collides
+with an existing fixture identity. Port the verified test correction and repeat
+the gate. Seven staged files have exact local and public patch backups. Both
+fresh full Sol and independent Astra Core reviews remain open.
 
-Schema 2 graph source `59266a9` passed its full hook, push and fresh full Sol
-review. F1, F2 and the listing-edge caller defect are closed for this pure reader.
-Root repeated 1,311 focused controls, 65 older independent controls and all
-476 new review controls. The historical test-file hash assertion still fails
-after the new regressions. Its original expectation is unchanged. Main imports
-only the exact graph module, tests and ADR0042. The integration needs its full
-hook and fresh Sol review. Source schema 2, Java capture and producer admission
-remain separate work. No native fact or semantic proof follows from this PASS.
+Comparator source 7ee3a1d passes its full hook, push, fresh Sol review and Astra
+harness review. Its main integration remains pending. Issue 0001 stays open.
+Issue 0003 tracks five broader validator limits. Old reports and historical
+controls remain exact. Future comparator integration changes worker identity.
 
-Candidate layout source `e721885` passed its full hook, push and fresh full
-Sol implementation review. Root repeated 1,744 layout, ELF, data and header
-controls. The reviewer added 2,020 independent mutation refusals. Main imports
-only its exact module, tests and ADR0043 at `2046688`. Its full hook and push
-passed. Fresh Sol integration review passed and closed the prior stale-docs
-finding. Both candidate definitions
-remain test-only. No decoder or native layout approval is supplied.
+The latest verified native workflow is 43431817090 at exact 293477f. Both CPU
+jobs and comparison pass. Complete Mac/native M0 and public switch evidence
+passes fresh Sol and root repeats, with aggregate-only limits. Public fixtures
+are not sealed reconstruction scores. No newer native result is assumed.
 
-Astra returned complete private U2 readback in the old layout worktree. Root
-preserved its five files, read the complete source and tests, and repeated
-14,451 affected controls. The full source hook is HOLD: one old property test
-failed, while 18,351 passed and 26 were skipped. Its generated identity 9
-collides with an existing fixture identity. The reader correctly refuses the
-duplicate. Root corrects the test separately. Preserve all seven staged Core
-files and both exact backups. Port the verified fixture correction and repeat
-the full hook. Fresh full Sol and independent Astra critical reviews remain
-required. Final identity inputs,
-immutable metadata retention and native approval remain separate gates.
+## Corpus and open gates
 
-Full capture review remains OPEN after provider screening. Parser-only PASS,
-representation checks and public switch checks do not replace it. Complete
-producer admission, native facts, compiled retention, trusted issuance,
-operational table use, calibration, capture and production remain open.
+T1 has 15 programs and 90 variants. Its narrow source range is 304 to 316 lines.
+T2 has ten programs and 60 variants. Its approved adequacy is 18,590/21,685 source
+branches and 305/310 mutant kills. Five non-equivalent mutants survive. Separate
+witnesses do not count as held-out kills. One confirmation uses a declared
+emulator diagnostic rule. All 60 final rebuilds match. These are source counts.
 
-## Corpus and execution
+T3 has five programs and 20 variants under Author assertions. Its safe public
+record integration passes Sol review; first-publication review remains HOLD.
+Issue 0002 tracks two labels. Branch counts are 2,340/3,211. The small mutation
+sample has 36 kills, four survivors and two inconclusive results among 42 compiled
+mutants. Keep 16 invalid mutants, 40 setup failures and two interruptions.
+Archive hashes are commitments, not private-byte verification. No Phoenix score,
+native x86 validation or numerical T3 adequacy pass is supplied. Only a dedicated
+Corpus Author may read private material. Root reads approved aggregates.
 
-T1 is sealed with 15 programs and 90 variants. Its source range is only
-304 to 316 C lines. T2 is sealed with ten programs and 60 variants. Approved
-T2 adequacy is 18,590/21,685 source branches and 305/310 mutant kills.
-Five non-equivalent mutants survive. Separate witnesses do not count as
-held-out kills. One confirmation uses a declared emulator diagnostic rule.
-All 60 final rebuilds match. These are source adequacy counts, not Phoenix
-scores. Accepted T0 and T1 commitments remain exact.
+Full capture review remains OPEN after provider screening. Do not retry,
+rephrase, replace, change provider/settings or bypass it. Parser-only and public
+PASSs close no capture, producer, semantic, emission or production gate.
+Colima is stopped and the private lease is released. Check the live stop record.
+Accepted M0/M1 tags and images remain exact. All storage stays on external APFS.
+Internal baseline is 14,432,616 KiB. Investigate below 12,479,491 KiB.
 
-A dedicated Standard Astra Corpus Author completed T3 qualification and sealing
-for five programs and 20 variants. Root read only its three approved aggregate
-records. Fresh Sol public-record review returns HOLD for two publication
-labels. The safe archive commitments remain Author assertions. Root repeated
-aggregate arithmetic. Private runtime and archive verification remain open.
-The Author reports 11,264
-variant-case pairs and 45,056 original executions with no oracle disagreement.
-Source coverage is 2,340/3,211 branch counters. The small mutation sample has
-36 confirmed kills, four survivors and two inconclusive results among 42
-compiled mutants. Keep invalid mutations, setup failures and interruptions.
-T3 has no numerical adequacy gate in SPEC. No Phoenix score was produced.
-Publication evidence retains first-public-snapshot and training-date limits.
-Track the two publication labels in `docs/issues/0002-t3-first-publication-evidence.md`.
-The Author released its VM lease and stopped Colima. Root confirmed that Colima
-is stopped. Accepted M1 image identities remain preserved.
-Current worker and checker source labels were verified for the public runs.
-Keep tools, caches, temporary files and VM disks on external APFS.
-The internal free-space baseline is 14,432,616 KiB. Investigate values below
-12,479,491 KiB. Read the live lease and checkpoint before further execution.
+## Next actions after explicit resume
 
-## Next actions
-
-1. Check and review the exact graph integration. Preserve later main bytes.
-2. Review the complete private
-   U2 readback after its writer ends. Keep native and public-success gates open.
-3. Complete the separate source adapter, indirect calls, byte idioms and
-   fault localization. Keep all authority and full capture gates explicit.
-4. Verify the T3 publication labels through a separate Author. Complete and replay M2
-   and M3, including types, modules and the Astra readability review.
-5. Freeze M4 with every baseline and ablation. Publish failures, costs,
-   limitations and required artifacts. Reproduce every headline result.
-
-The report-comparator self-check gap is tracked in
-`docs/issues/0001-public-report-self-check.md`. Current complete assertions
-detect it. It does not invalidate the accepted bounded public records.
+1. Read the shared checkpoint and handoff. Verify files, processes, VM and timer.
+2. Port the exact fixture fix to Core, repeat its full hook, push and obtain both
+   required reviews. Preserve every pending file and staged ADR first.
+3. Integrate the three exact comparator files with full checks and fresh review.
+   Then design the separate validator. Refresh current worker labels before use.
+4. Resolve T3 labels and private validation through a separate Author. Add T2/T3
+   admission without reducing held-out sets. Continue byte source and adapter work.
+5. Complete M2, M3, M4, every baseline, publication and every headline replay.

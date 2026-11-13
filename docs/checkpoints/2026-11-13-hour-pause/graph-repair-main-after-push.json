@@ -1,0 +1,28 @@
+{
+  "base": "26f672cf0de658f20f9aba6ac2cb3b3ca6b8d315",
+  "head": "7761d835eef59eae2b48910d87c37f8df6ba679a",
+  "remote": "7761d835eef59eae2b48910d87c37f8df6ba679a",
+  "clean": true,
+  "full_hook_passed": true,
+  "exact_source_files": [
+    {
+      "path": "docs/adr/0042-ordinary-byte-adapter-v1.md",
+      "bytes": 8625,
+      "sha256": "56b588d2fd8d194c2b11981097031fa2c27e28d7ddc4213493955d6165c9ab51"
+    },
+    {
+      "path": "phoenix/lift/byte_graph_v2.py",
+      "bytes": 36160,
+      "sha256": "1de24d3ccdd8d3322144ef260137996189c898faece0fa80f447ed756cd373b3"
+    },
+    {
+      "path": "tests/test_byte_graph_v2.py",
+      "bytes": 70374,
+      "sha256": "e6836b29c5cc73dd4a5d301e99fb6eaf3987f7f4f2cc43946aa5685f47e89c81"
+    }
+  ],
+  "source": "59266a9e949234f6d455726cc9238d65e79d74f4",
+  "old_tracked_files_unchanged_before_progress": 340,
+  "fresh_full_Sol_integration_review_required": true,
+  "semantic_or_capture_authority": false
+}

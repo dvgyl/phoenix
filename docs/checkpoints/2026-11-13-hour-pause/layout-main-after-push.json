@@ -1,0 +1,32 @@
+{
+  "base": "7cc2c49304f5fb2f32479338521d170ee643c73f",
+  "head": "2046688d77d65ed8677b6435e6e5b96b4aef828e",
+  "remote": "2046688d77d65ed8677b6435e6e5b96b4aef828e",
+  "clean": true,
+  "full_hook_passed": true,
+  "source": "e7218853a0f47f5470bea597e1d57f98231cc66c",
+  "exact_source_files": [
+    {
+      "path": "phoenix/observe/collector_layout.py",
+      "bytes": 46854,
+      "sha256": "2179189c102f72826fe3d4c0d2a777fd51d58b8b59b3bf013325cfc3232972c2",
+      "executable": false
+    },
+    {
+      "path": "tests/test_observe_collector_layout.py",
+      "bytes": 67028,
+      "sha256": "f9e9b828546a328393dfe7ada059aba51b1d2fba95cc2f5aebcaa7750668ec97",
+      "executable": false
+    },
+    {
+      "path": "docs/adr/0043-independent-compiled-readback.md",
+      "bytes": 9466,
+      "sha256": "3852f08f429496841a1c66e3d320c0090b7e160fc261c1cb98a23f36529b2c68",
+      "executable": false
+    }
+  ],
+  "old_tracked_files_unchanged_before_progress": 332,
+  "fresh_full_Sol_integration_review_required": true,
+  "candidate_profiles_test_only": true,
+  "full_capture_review": "OPEN"
+}

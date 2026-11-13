@@ -1,0 +1,14 @@
+{
+  "base": "2046688d77d65ed8677b6435e6e5b96b4aef828e",
+  "head": "26f672cf0de658f20f9aba6ac2cb3b3ca6b8d315",
+  "remote": "26f672cf0de658f20f9aba6ac2cb3b3ca6b8d315",
+  "clean": true,
+  "full_hook_passed": true,
+  "docs_only": true,
+  "old_commitments_byte_prefix_preserved": true,
+  "public_record_HOLD_preserved": true,
+  "private_material_read_or_published": false,
+  "root_aggregate_arithmetic_repeated": true,
+  "pause_at_utc": "2026-11-13T16:15:25Z",
+  "fresh_Sol_documentation_review_required": true
+}

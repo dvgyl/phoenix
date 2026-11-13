@@ -1,0 +1,10 @@
+{
+  "reviewed_main": "2046688d77d65ed8677b6435e6e5b96b4aef828e",
+  "source": "e7218853a0f47f5470bea597e1d57f98231cc66c",
+  "verdict": "PASS for exact candidate layout integration",
+  "docs_F1": "CLOSED",
+  "report_sha256": "27932d52d1f39ce4f8b15ca736cb81c71eb885207dbb9a464ee301d0ed64de5c",
+  "root_read_complete_report": true,
+  "full_capture_review": "OPEN",
+  "native_approval": false
+}

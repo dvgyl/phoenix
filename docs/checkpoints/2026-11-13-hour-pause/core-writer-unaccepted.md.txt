@@ -1,0 +1,216 @@
+Private U2 logical readback is implemented for root review. The complete affected
+suite passes 14,451 tests. Ruff, format checks, strict mypy, and `git diff --check`
+pass. These are local software checks. They are not Phoenix evaluation results.
+
+The branch is `agent/m2-private-compiled-readback-20261113`. HEAD remains
+`e7218853a0f47f5470bea597e1d57f98231cc66c`. No Git mutation was performed.
+Root owns integration, full hooks, commits, pushes, and independent reviews.
+The public wrapper remains absent. No final inspection or issuance is supplied.
+
+The five product files are exactly these paths.
+
+| File | Change |
+| --- | --- |
+| `phoenix/observe/collector_layout.py` | Append independent transport, trace, capture, and image-dynamic numeric maxima. Preserve the complete old prefix. |
+| `phoenix/observe/collector_compiled.py` | Add the private complete logical reader and its frozen staging records. |
+| `tests/test_observe_collector_layout.py` | Append literal checks for the independent maxima. Preserve the complete old prefix. |
+| `tests/test_observe_collector_compiled.py` | Add independent synthetic, public reconstruction, mutation, limit, import, and fault controls. |
+| `docs/adr/0043-independent-compiled-readback.md` | Record the private implementation, trade-offs, evidence limits, and remaining gates. Update the status to distinguish it from the first layout subunit. |
+
+`identities.json` records exact byte counts and SHA-256 values for all five files.
+It also records the unchanged protected source hashes, actual imported paths,
+package initializers, branch, HEAD, and inventory counts. `field-matrix.json`
+contains 214 rows from the independent literal test inventory. It identifies
+active-field, mutation, variant, and inactive-cell controls. Termination fields
+are marked private. The public contracts field is marked as empty, with private
+target controls. A public nonempty contracts success is not claimed.
+
+`plan.md` was written before implementation. The accepted contract and API were
+used. All four final compiled design records, the U2 design report and three
+supporting records, the fresh Sol architecture review, and the fresh full Sol
+layout report and final check were read. AGENTS.md, SPEC.md, ADR0041, ADR0043,
+current layout and ELF modules and tests, and the relevant stable sources were
+read. The poteto-mode skill and its how, architect, and domain guidance were used.
+The task prohibits nested design agents. That restriction took precedence over
+nested workflow suggestions. No nested dispatch was used.
+
+The implementation retains these accepted choices.
+
+- `ExpectedCollector` supplies comparison bytes and two source digest claims.
+  It does not supply actual logical state. `_readback` accepts exact immutable
+  bytes, one exact installed profile string, and existing `InspectionLimits`.
+- The reader calls public `read_collector_elf` once on those same bytes. It keeps
+  the exact immutable result in `LogicalReadback`. Complete dynamic rows and
+  relocations therefore remain available from the same parse.
+- Profile selection precedes U1. The remaining work allowance is passed to U1.
+  Zero remaining allowance refuses before a zero-limit U1 call. The reviewed
+  exact scalar formula and conservative scan bound are debited before witness
+  work. One budget covers all later work. There is no retry or budget reset.
+- All 5021 witness words are compared. Each of 47 directory entries is bound
+  independently to its scalar dimensions, fixed local symbol, checked section
+  and load span, and exact relative relocation. Physical byte and row limits
+  are reserved before logical row allocation.
+- Forty-seven call-local cursors enforce complete consumption. Whole slices
+  are reserved before descent. Active empty slices use the current cursor.
+  Inactive semantic leaves are zero and consume nothing. Count-zero physical
+  storage produces zero logical rows. Record references require count one.
+- `LogicalObject` distinguishes objects from tuples. Exact null, Boolean,
+  integer, string, and tuple values retain every field and ordered pair.
+  Decoding uses explicit little-endian cells and strict UTF-8. Signed extremes,
+  negative-zero refusal, digest syntax, literal text, witness text, and restored
+  endpoints through `2**64` are handled explicitly.
+- Five singleton references and 31 limit scalars are read before traversal.
+  These 41 scalar reads do not establish ownership. Traversal charges and
+  checks them again. All lower-limit values are retained. Route path and
+  membership totals are reserved before allocation. Shared scalar and string
+  tables do not receive route-specific limits automatically.
+- One guard-address map supports neutral owner-group checks. Stored route
+  positions are traversed directly. There is no routes-by-guards product,
+  scope selection, or provider-identity assertion.
+- Canonical output uses sorted keys, compact ASCII JSON, and a final LF.
+  Each append checks root and active plan or scope caps first. Each cap
+  includes its final LF. Character escaping bounds each temporary. Complete
+  actual bytes are compared before D and directory R/N checks. The returned
+  bytes are independently emitted actual bytes.
+- Only the private decode-refusal exception is caught at the transaction
+  boundary. Exact external record boundaries handle missing attributes.
+  Known malformed input produces existing finite reasons. Unrelated
+  RuntimeError, AssertionError, TypeError, and ValueError remain visible.
+
+The trade-offs remain those in the reviewed design. Conservative U1 charging
+can refuse an input that exact work counters might permit. It avoids changing
+U1. Independent descriptors and literal test offsets require more code. They
+avoid using the writer as the reader's schema oracle. Preflight repeats reads
+so limits can be checked before allocation without changing ownership rules.
+Character emission performs more calls than whole-string encoding. It permits
+byte-cap checks before every append. No total-memory, latency, throughput, or
+native approval claim follows from these finite limits.
+
+One product defect was found during implementation. A zero-length PT_LOAD could
+hide the file-backed load in U2's lookup. U1 accepted that input. The regression
+failed before the fix. U2 now excludes zero-length loads from this lookup. U1
+and its F1 write-mapping and O1 executable-section checks remain unchanged.
+The complete required-name index also excludes unrelated static names.
+
+The final test matrix includes both machine IDs and several physical placements.
+It mutates every witness position on both machines. It covers all 47 directory
+scalar inventories, pointer components, and local symbol contracts. It tests
+all logical row kinds, all 214 fields, all variant choices, option distinctions,
+inactive cells, record counts, slice ownership, byte exhaustion, UTF-8 and numeric
+edges, and complete comparison of unused metadata and ordered values.
+Dedicated tests cover geometry-size swaps, directory-length swaps, ordered route
+memberships and continuation users, and changes in an unconsumed alignment gap.
+
+Lower-limit controls include exact and one-below inventories and byte caps,
+all represented maxima and zero refusals, retained lower values, fixed snapshot
+widths, request users, routes, route entries, path positions, memberships, and
+neutral instructions and bytes. Child decoding is blocked when an array count
+exceeds its cap. The image dynamic cap has an explicit 65536/65537 boundary.
+Shared string and scalar tables have positive controls. Complete U1 scalar and
+conservative scan charging is checked against observed counters for both machines,
+two placements, and version metadata present or absent. This finite matrix is
+not a formal proof of the bound.
+
+Public raw reconstruction prepares complete expected bytes before source helper
+functions are disabled. Full-plan and scope canonical bytes are also compared.
+A fresh `-B -S` child imports and decodes with forbidden imports blocked. Its
+explicit environment has only PYTHONPATH, PYTHONDONTWRITEBYTECODE,
+PYTHONPYCACHEPREFIX, and TMPDIR. Actual paths and hashes are checked. A separate
+fresh minimal-environment identity check records the five-module product closure.
+Pure-operation controls block file, environment, clock, network, and process
+operations. Frozen results, visible programming faults, before-work refusals,
+exact work budgets, nesting limits, and absence of the final API are tested.
+Hypothesis uses bounded text, raw bytes, and ordered integer slices.
+
+All test runs use `run_tests.py` in the owned temporary root. The runner uses
+seed 20261113, disables plugin autoload and the cache provider, disables the
+Hypothesis database, sets exact test roots, and sets an owned pytest base path.
+Every Python invocation uses `-B`. Fresh absent bytecode prefixes are used.
+No dependency was installed or changed.
+
+The final commands were run after sourcing the task environment and checking
+`continue-v1/PAUSED` and `continue-v1/DRAINING`.
+
+```sh
+export PYTHONPYCACHEPREFIX="$TMPDIR/absent-bytecode-completion"
+.venv/bin/python -B "$TMPDIR/run_tests.py" completion \
+  tests/test_observe_collector_compiled.py \
+  tests/test_observe_collector_layout.py \
+  tests/test_observe_collector_elf.py \
+  tests/test_observe_collector_data.py \
+  tests/test_observe_collector_header.py
+.venv/bin/ruff check phoenix/observe/collector_compiled.py \
+  phoenix/observe/collector_layout.py tests/test_observe_collector_compiled.py \
+  tests/test_observe_collector_layout.py
+.venv/bin/ruff format --check phoenix/observe/collector_compiled.py \
+  phoenix/observe/collector_layout.py tests/test_observe_collector_compiled.py \
+  tests/test_observe_collector_layout.py
+.venv/bin/python -B -m mypy --strict phoenix/observe/collector_compiled.py \
+  phoenix/observe/collector_layout.py tests/test_observe_collector_compiled.py \
+  tests/test_observe_collector_layout.py
+git diff --check
+```
+
+`pytest-completion.log` records 14,451 passed in 74.71 seconds. This is test-run
+wall time, not decoder latency. `ruff-completion.log`, `format-completion.log`,
+`mypy-completion.log`, and `diff-check.log` retain the final quality results.
+`tool-versions.json` records pytest 9.2.0, Hypothesis 6.170.15, Ruff 0.17.4,
+and mypy 2.4.1. `identities.json` records the Python version.
+
+Every failed test run remains retained.
+
+| Log | Result and correction |
+| --- | --- |
+| `pytest-second.log` | 457 failed, 1 passed. A mechanical module-alias replacement also changed `self.` references. Restore those references. |
+| `pytest-third.log` | 2 failed, 456 passed. A test helper changed a geometry start without its endpoint. Correct the helper so unsigned encoded sizes remain valid. |
+| `pytest-sixth.log` | 1 failed, 1701 passed. The new preflight assertion expected 45 scalar reads. Five two-cell references plus 31 scalars require 41. Correct the new assertion. |
+| `pytest-zero-load-before.log` | 1 failed. U1 accepted the zero-length-load control; U2 refused it. Fix the U2 load index and retain the regression. |
+
+The first Ruff and mypy attempts also failed. Their logs remain. Corrections
+covered import order, long lines, an ELF module alias shadowed by a record field,
+NewType arithmetic annotations, test annotations, explicit JSON imports, and
+redundant casts. No old test expectation was weakened. `pytest-eighth.log` passed
+15 added controls. Review then found that its dynamic-count control used the
+segment offset. Correct that new test to literal offset zero. Add a separate
+exact dynamic-count boundary. The final complete run includes both corrections.
+A read-only lookup for a top-level `native` directory failed because the public
+header is under `phoenix/observe/native/`. No product decision relied on it.
+
+Earlier successful complete runs remain in `pytest-full-first.log` (13,435 tests)
+and `pytest-full-final.log` (14,434 tests). These counts reflect earlier test
+sets. The final count is 14,451. Other focused runs and all quality logs remain
+in the explicit created-file manifest. No raw inherited-environment log from
+the layout writer was read or copied.
+
+The U1 SHA-256 remains
+`dae95a30f96c556a1731a59edada95e4622991889ffcfdfa576bf773a17929eb`.
+Both candidate inventories remain exactly 214 fields, 100 types, 653 members,
+47 tables, 5021 words, and 40168 bytes. Stable header, data, source-reader,
+and native declaration hashes match the supplied baseline identities.
+
+The task environment was sourced in every shell. It repeatedly reported the
+known `mkdir: /Volumes/PhoenixWork/vm: Operation not permitted` warning.
+The installed restriction was not inspected or changed. All caches, data,
+bytecode prefixes, test artifacts, and temporary files were scoped to the task
+roots. Sentinel checks stayed clear. No deadline was inferred. No network,
+credentials, compiler, linker, target execution, native loading, Ghidra, container,
+VM action, private corpus input, Author material, or archived session was used.
+There was no process scan, audit-tree scan, model API, CLI dispatch, or nested
+agent. All owned command children completed. No continuation is scheduled.
+
+The task requested fresh Astra on Standard. This implementation did not change
+model or service settings and did not enable Fast. This report does not claim
+an independent attestation of the provider's routing or service tier.
+
+Root must preserve the pending bytes, read the diff, repeat controls, and run
+full hooks. Fresh full Sol implementation review and fresh independent Astra
+critical review remain required. The writer's checks are not either review.
+Final public F1/F2 integration, profile and source-manifest parsing, inspection
+encoding, real U3 source identities, native compiler retention, trusted issuance,
+operational table use, native closure, calibration, capture, and production remain
+open. Final metadata-evidence and inspection encoders are absent by contract;
+their append-bound tests belong to that later gate. Synthetic inputs are only
+consistency controls and never enter a native compiler-trial approval schema.
+Full capture review remains OPEN after provider screening. It was not retried,
+replaced, or bypassed. No corpus score, milestone, or SPEC section 9 completion
+is claimed.

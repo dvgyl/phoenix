@@ -1,0 +1,19 @@
+{
+  "literal_local_id": 9,
+  "fixture_ids": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "exception": "ByteExportError",
+  "cause": "Renaming0to9collides with a retained fixture identity.",
+  "expected_pre_fix_failure": true,
+  "test_sha256": "c00197c1dcfd2171fccc677f841c6ecab9bf2fd5129620ab05fa6694ad7fb88d"
+}

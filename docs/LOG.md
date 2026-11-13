@@ -1373,3 +1373,25 @@
   T3 safe assertion review and both comparator reviews are separate records.
   Full capture remains OPEN after provider screening. The pause deadline stays
   16:15:25 UTC. Start draining at 16:00:25 and preserve every unfinished gate.
+
+
+## 2026-11-13. Prepare the one-hour pause
+
+- Stop implementation for the 16:15:25 UTC user deadline. Preserve all pending
+  files, review failures and open gates. Only a bounded final read-only audit
+  may finish during draining. The goal remains incomplete.
+- Fresh Sol passes graph integration 7761d83 and safe T3 record 26f672c. Root
+  reads complete reports. Layout integration 2046688 also passes and closes
+  the stale-docs finding. Both comparator source reviews pass 7ee3a1d. Main
+  comparator integration and complete validator work remain open.
+- Main test correction 8f1c394 passes the full hook and push. All 223 diagnostic
+  controls and literal identities zero through ten pass. Preserve the failed
+  Core full hook. Its seven files remain staged and uncommitted. Preserve an
+  exact public patch backup and local original/current reconstruction backups.
+- Archive only explicit complete public reports, safe proofs and the unaccepted
+  public Core patch. No private source, input, archive, Author log, raw model log or
+  prohibited initial layout log is included. Record broader validator defects.
+- Run the final full hook and handoff audit. Verify all workers and queues are
+  stopped, Colima is stopped, and pending hashes still match. Publish and read
+  the shared resume checkpoint. Set the existing goal to paused at the deadline.
+  Do not mark it complete. Full capture remains OPEN after screening.

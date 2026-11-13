@@ -1,0 +1,105 @@
+The goal is to support Phoenix through every SPEC section 9 condition. This review checks the full graph integration at exact main `7761d835eef59eae2b48910d87c37f8df6ba679a` against `26f672cf0de658f20f9aba6ac2cb3b3ca6b8d315`. The frozen checkout is `/Volumes/PhoenixWork/worktrees/m1-follow-up-review-e07ec17`. Root retains Git, source and the remaining project work.
+
+**Full integration verdict. PASS for this exact pure Unit A integration.** There is no open functional integration finding. This is a full integration review, not a comment-only review. The historical hash assertion still fails. It supplies no behavioral pass. SPEC section 9 remains incomplete.
+
+**Separate comment verdict. PASS.** There is no open comment finding. No source or comment changed during this review.
+
+The complete 1,023-line graph module, 1,978-line test file, ADR0042, AGENTS.md and SPEC.md were read. The complete progress delta and HANDOFF were read. All four final adapter design documents were read under `docs/checkpoints/2026-11-13-pause/byte-adapter-design`. Truncated displays were covered by smaller reads. Their exact identities are in `evidence-data.json`.
+
+The complete fresh source PASS was read from `/Volumes/PhoenixWork/audit/m2-byte-graph-v2-repair-full-review-sol-20261113/report.md`. Its 20,213 bytes hash to `ac0f2c14254cb21b24c98855b500f553b9cb2fb3d292ed0910cdd19b85180fb7`. Its approval is for source `59266a9e949234f6d455726cc9238d65e79d74f4`. This review independently checks the actual integration bytes and imports. The earlier comment-only and functional HOLD states do not replace the fresh source approval.
+
+The requested root exact-copy, after-push, source-accepted and parent-repeat JSON records were read. Their object shapes were inspected before field selection. Both requested logs were read in full. The main log records `Phoenix quality checks...Passed`, commit `7761d83`, and push `26f672c..7761d83`. It does not expose individual full-hook test counts. No such count is inferred. This reviewer did not run the full repository hook because it can reach prohibited runtime gates.
+
+**Exact integration and preservation.**
+
+Only six paths changed. Three are the exact source module, tests and ADR below. The other three are STATUS, HANDOFF and LOG. All 340 base tracked paths remain present. All 337 paths outside those progress files retain exact Git objects and modes. LOG retains its complete old byte prefix. The root record establishes that all 340 old paths matched before progress edits. The final tree confirms the allowed progress-only exceptions. The exact integration commit has the requested base as its direct parent. No old source branch was merged as a whole.
+
+| Imported path | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `phoenix/lift/byte_graph_v2.py` | 36160 | `1de24d3ccdd8d3322144ef260137996189c898faece0fa80f447ed756cd373b3` |
+| `tests/test_byte_graph_v2.py` | 70374 | `e6836b29c5cc73dd4a5d301e99fb6eaf3987f7f4f2cc43946aa5685f47e89c81` |
+| `docs/adr/0042-ordinary-byte-adapter-v1.md` | 8625 | `56b588d2fd8d194c2b11981097031fa2c27e28d7ddc4213493955d6165c9ab51` |
+
+Each imported file equals its exact `59266a9` Git bytes and its frozen main bytes. The preservation check includes later layout, byte, ELF, fixture, archive, corpus commitment, workflow and quality files. Actual imports of the graph, old graph, old source, index, mapping, evidence, collector layout and collector ELF resolve to this frozen checkout. Their bytes equal exact HEAD. The worktree remains clean.
+
+Progress documents describe preparation-time review states. Their requests for a later main hook and review are consistent with their preparation time. They do not claim that those checks had already run. The separate layout integration PASS stays separate. T3 public-record HOLD and safe Author hash assertions stay separate.
+
+The user reports that a later Core hook failed in an unchanged property fixture at generated `local_id=9`. That identity collides with an existing fixture value. This review did not inspect private Core source or logs. It does not call that source committed or fully checked. Root owns the separate test-only fixture correction. This does not change the recorded graph main hook PASS. No production reader was weakened here.
+
+**Ranked functional findings.**
+
+There are no open P1, P2 or P3 functional findings in the reviewed integration. These prior defects are closed for this exact unit.
+
+| Prior finding | Frozen location | Review evidence |
+| --- | --- | --- |
+| F1, mnemonic spelling | `phoenix/lift/byte_graph_v2.py:46`, `:892`, `:899` | The recognized set equals all 74 return strings in the pinned primary method. Both domains pass actual-name controls. Constant aliases require their exact unsupported-opcode gaps. |
+| F2, equality before integer validation | `phoenix/lift/byte_graph_v2.py:670`, `:683` | Every roster key and the selected function entry receive exact unsigned 64-bit integer validation before equality or lookup. Boolean, float, negative and overflow controls refuse. Valid integer mismatches remain binding errors. |
+| Listing-edge caller equality | `phoenix/lift/byte_graph_v2.py:692` | Every non-null caller receives integer validation before the selected-edge count. Valid null and integer callers remain valid. |
+
+The pinned primary `PcodeOp.java` has SHA-256 `28254c46b0f6744c3ad8ca0757a6d46d5922b743857121cada7b559af18d2d8b`. Its static method begins at line 552. Its named cases return 74 distinct strings. Its default returns `INVALID_OP`. The six disputed returns are `INT2FLOAT`, `FLOAT2FLOAT`, `TRUNC`, `CEIL`, `FLOOR` and `ROUND`. Their `FLOAT_` Java constant names are not returned strings. Frozen `ghidra_scripts/ExportLift.java:575` uses `op.getMnemonic()`.
+
+The 476 repeated independent controls extract these return strings from the hash-checked primary. Actual names pass separately in raw and analyzed domains. Aliases, default, future and lowercase names need exact domain-specific gaps. A gap for the other domain cannot replace the required gap. Additional controls in this review assert exact set equality. They also use an integer subclass whose equality method raises. Roster keys, function entries and listing callers all refuse before that equality method runs.
+
+**Complete reader behavior.**
+
+The analyzed bank matches the complete supplied ordinary roster in order, sequences, opcodes, outputs, widths, ordered operands and definition projection. Raw instructions and operations match their complete supplied rosters. Zero-operation instructions remain present. Equal sequence locations do not join raw and analyzed identities. Parent references, bank records and block operation lists must agree. Missing rows, duplicate identities, null holes, foreign references and contradictory definitions refuse.
+
+Java flags remain exact Boolean observations. The saved primary `PcodeOpAST.java:35` constructor starts with `bDead=true`. `PcodeBlockBasic.java:89` inserts an operation and sets its parent and iterator without clearing that flag. Block-owned true flags are therefore retained. No native-state claim follows. Empty entry blocks and unreachable blocks remain present. Cover extrema remain separate from the ordinary entry. Native entry remains null.
+
+Reciprocal edge checks run in both directions at `byte_graph_v2.py:814`. Parallel edges and self-loops retain distinct slots. Phi operands retain incoming-slot order. A count mismatch needs its exact `phi_binding_unproved` gap. It does not trim or reorder arrays. Distinct values with equal storage remain distinct. Repeated operands, unused values and value-bank order remain intact. The supplied ordinary lift cannot independently authenticate unused values or their order.
+
+Closed JSON shapes, exact scalar types, strict UTF-8, duplicate keys, canonical unsigned hex, hashes, pass constants and scope are checked. Canonical bytes use sorted keys, compact separators, ASCII escapes and one final LF. Unicode is not normalized. Canonical output has its own byte-cap check. Frozen slotted records and tuple arrays prevent ordinary nested mutation. Serialized records are detached.
+
+The focused and repeated controls cover exact and next-count bounds for graph and pass bytes, source bytes, depth, functions, blocks, both operation domains, raw instructions, inputs, references, edges, gaps and listing records. Source text counts UTF-8 bytes. Limits reject invalid types, zero, negative and above-maximum values. The full value inventory can hit the graph byte cap first. No full-cap value success or total process-memory bound is claimed. Checked malformed data has finite format, limit, pin or binding errors. Unexpected implementation faults are not converted into accepted observations.
+
+All four native inventory fields stay `not_exported`. All five global native, entry-effect and memory-effect gaps are mandatory. Equal entry and cover addresses do not remove them. Unowned operations, ambiguous value flags, free nonconstant values, unsupported opcodes and unbound phi arrays need exact record-specific gaps. Extra references cannot replace those gaps.
+
+Public constructors and coherent fabricated records can supply observations. They cannot grant producer, source, native, semantic or emission authority. The module imports only the standard library and stable index and mapping modules. It has no file, process, environment, provider, publication or emission operation. There is no schema 2 conversion that weakens schema 1.
+
+**Executed checks and preserved failures.**
+
+| Check | Actual result | Artifact |
+| --- | --- | --- |
+| Exact source, base preservation, LOG prefix and initial imports | Passed | `identity.log`, `identity-data.json` |
+| Repeated independent source controls against frozen integration imports | 476 passed | `independent476.log` |
+| Frozen graph v2, old graph, old source and lift evidence tests | 1,311 passed, 1 live test deselected | `focused-scoped.log` |
+| Unchanged independent behavior controls | 65 passed, historical identity test deselected | `behavior65.log` |
+| Unchanged historical identity assertion | 1 failed, 65 deselected | `historical.log` |
+| New integration controls | 13 passed | `integration-controls.log` |
+| Ruff, format and strict mypy | Each passed | `ruff.log`, `format.log`, `mypy.log` |
+| Root proof identities, historical control hash and absent bytecode | Passed | `evidence.log`, `evidence-data.json` |
+| Initial focused collection | Exit 4, collection permission error | `focused.log` |
+
+These are host unit checks. They are not phoenix-eval results or reconstruction scores. The groups overlap. They are not added into a unique coverage claim. No new line-coverage percentage is claimed. The excluded `test_public_phase_grid_storage` requires prohibited live Ghidra work.
+
+`test_repair_controls.py` is a copy of the prior independent file with only its ROOT path changed to the frozen integration checkout. All assertions remain exact. `control-copy.json` records both identities. The 13 new controls are independent integration checks for exact import bytes, old Git objects and modes, the primary mnemonic set and validation before equality.
+
+The historical file remains unchanged at `/Volumes/PhoenixWork/tmp/m2-byte-graph-v2-full-review-sol-20261113/test_full_controls.py`, SHA-256 `e3491b7f1331d1f6638b5b6a05e55532a327ea56ddff409a7ba53902dfeb1680`. Its line 183 expects `de6f8374c491bd508296ac108f371ce8e294f993f29d6efdf8fc127140a2f139`. The test file now hashes to `e6836b29c5cc73dd4a5d301e99fb6eaf3987f7f4f2cc43946aa5685f47e89c81`. The original assertion failed with that exact difference. Its hardcoded source path was retained. Independent byte checks establish that the source and frozen integration test files are identical. No assertion was edited, skipped with a marker, or changed to xfail. The 65 behavior cases ran separately.
+
+Each executed check has a JSON record with its exact command array, working directory, minimal child environment and exit code. `run.py` is the repeatable runner. Checks use Python 3.12.13, `-B`, disabled bytecode writes, an absent bytecode prefix, disabled plugin discovery and scoped caches. Focused property tests use seed 20261113. Every pytest batch has explicit rootdir, confcutdir and a fresh basetemp.
+
+**Separate comment review.**
+
+The installed Poteto 0.9.138, No Comments and Comment Sicko rules were read. Both new Python files have zero comment tokens or typing suppressions. The eight module, error and parser docstrings define public contracts. They meet the public API contract exception. There is no unresolved comment HOLD or MUST KILL flag. Deletions, restorations, source edits, encoding offers and encoding changes are all zero. No comment rerun or architecture change is needed. The direct no-dispatch instruction replaced the skill's nested reviewer step.
+
+**Process limits and exceptions.**
+
+The initial three bootstrap shells did not source the task environment. They read the required instructions and found the exact output root and task environment. The first two did not check the correct absolute stop-marker paths. This is a process deviation. Every later shell sourced `/Volumes/PhoenixWork/audit/m2-graph-main-integration-review-sol-20261113/task-env.sh` and checked both exact PAUSED and DRAINING markers before work. Both were absent during completed work. The environment repeatedly reported a denied `/Volumes/PhoenixWork/vm` mkdir. That warning was not investigated. No guard was inspected or changed.
+
+The first focused pytest batch put its root outside the frozen test tree. Pytest attempted ancestor collection and received a permission error while checking `/Volumes/PhoenixWork/worktrees/m1-corpus-author`. No Author content was returned. The full failure remains in `focused.log`. The corrected batch used the frozen checkout as rootdir and confcutdir. It passed. No guard was relaxed. This denied path check prevents a claim of strict process assurance.
+
+Two other read/setup failures occurred. A zsh glob assumed layout and ELF modules were under `phoenix/lift`. It had no matches. They are under `phoenix/observe`, and actual integration imports pass. A guessed `primary-sources.json` checkpoint path did not exist and raised FileNotFoundError. No alternate manifest was searched. The required primary source was already named by the source report and its hash passed. Bootstrap exceptions are recorded separately as reconstructed summaries, not original command transcripts. No failure log was deleted. Exit 0 is not PASS by itself.
+
+All successful review writes are in the two permitted output roots. The source and Git state remain unchanged. No target, compiler, linker, Ghidra job, native plugin, Docker, Colima, Lima, VM command, network, credential or upload operation ran. No sealed source, held-out input, private archive or run, Author content or history, Codex session or archived session was read. No dispatcher events, stderr or summary was read. The excluded layout writer log was not read. No audit-tree walk or process scan was requested. The unintended pytest path check is disclosed above. No installed guard was inspected, probed, changed, relaxed or nested. No nested model, agent, API, model CLI, session or continuation was used.
+
+Fast mode was not enabled. Service settings were not changed. No routing attestation is available. All owned test and check children completed. No background child remains. The direct task limits replaced repository writes, nested skill dispatch and general project execution. The installed How, Investigation, Unslop, technical-writing and Prove It Works guidance was also read. Prove It Works changed the evidence choice to exact frozen bytes, actual imports and independently repeated behavior.
+
+**Remaining gates.**
+
+Source schema 2, same-call Java capture, conversion, selector integration, producer admission and source/tool attestation remain open. Native inventory and flags, entry relations, raw/analyzed effects, memory effects, source grammar, callable interfaces, pointer proofs, active deterministic emission, compiled retention, trusted issuance, operational table use, calibration, Linux controls and native profile approval remain open.
+
+Full capture remains OPEN after provider screening. It was not retried, rephrased, replaced or bypassed. This PASS does not close that gate. T3 publication-label HOLD and private archive/runtime verification remain separate. The later Core fixture failure remains separate.
+
+SPEC section 9 remains incomplete. Phoenix must complete M4, publish T0 through T3 results against every baseline with costs and failures, publish the required harness and benchmark artifacts, and reproduce every headline through `phoenix-eval --replay`. This report supplies no milestone acceptance or new headline score.
+
+`final-check.json` records the report path, byte length and SHA-256. It lists review artifacts explicitly and excludes dispatch data. It also records the final frozen identity, stop-marker state, completed commands, failures and open gates.
