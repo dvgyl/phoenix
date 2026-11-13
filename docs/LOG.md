@@ -1237,3 +1237,29 @@
 - Required Astra advises structural separation of operational dispatcher
   outputs from reviewer artifacts. Existing guards remain immutable.
   This addresses a repeated manifest failure without a screening change.
+
+
+## 2026-11-13. Preserve the independent candidate layout
+
+- Astra completed only the first U2 layout subunit. Root read its complete
+  report, the complete module, ADR0043 and all executable test code. Root
+  verified the three pending file identities and their reconstruction backup.
+- The focused layout, ELF, data and header suite passes 1,744 tests. Its
+  literal evidence checks all 100 types, 653 members, 47 tables, 214 fields
+  and 5,021 witness words per machine against fixed independent evidence.
+- The first import-guard failure printed part of its inherited environment.
+  Keep that raw failure log local. Do not publish it. The corrected child
+  has an explicit four-variable environment. No raw audit log is staged.
+- Keep every earlier source byte exact. The two candidate definitions grant
+  no Linux approval. Complete readback, final identity inputs, metadata
+  retention and all native gates remain open. The next decoder unit must
+  add the independent retained-limit literals before it enforces those limits.
+- Run the full source hook and obtain fresh full Sol implementation review.
+  No decoder may rely on the layout before that review. Full capture review
+  remains OPEN after provider screening. No milestone or corpus score follows.
+
+- The first root hook attempt passed Ruff, format and strict mypy. Pytest
+  then refused its coverage arguments before tests started. Root had passed
+  the focused-test environment with plugin autoload disabled. Preserve that
+  setup failure. Rerun the unchanged hook with normal plugin loading. No
+  product code, quality setting or expected result changes for this retry.

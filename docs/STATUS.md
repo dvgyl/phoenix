@@ -89,3 +89,13 @@ The Phoenix VM is stopped. Its lease is released. It uses four CPUs and
    replay M2 and M3, including the five-project Astra readability review.
 5. Freeze M4 with every baseline and ablation. Publish failures, costs,
    limitations and required artifacts. Reproduce every headline result.
+
+
+## 2026-11-13. Candidate layout subunit
+
+The independent candidate layout and its three new source files are preserved.
+Root repeated 1,744 layout and unchanged representation controls. All pass.
+The complete literal vectors retain their independent proposed-layout identity.
+The full hook and fresh full Sol implementation review remain required.
+No decoder, final profile, inspection success or Linux approval is supplied.
+Full capture review stays OPEN after provider screening.
