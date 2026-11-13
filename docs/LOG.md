@@ -975,3 +975,17 @@
   STATUS and LOG retain their complete original byte prefixes. The base
   commit and empty staged diff remain unchanged. Only the five permitted
   source paths changed. No owned background process was started.
+
+
+## 2026-11-13. Correct the Unit A test comment gate
+
+- Fresh Sol repeated 1,095 current controls, 15 index controls and 105 new
+  independent controls. Root repeated all 105 new controls. The report gives
+  a comment-only HOLD. It does not provide full functional approval.
+- Remove the test module and fixture narration. Name the fixture operation
+  that removes aliases. Preserve its exact JSON copy behavior.
+- Replace one argument-type suppression with an explicit malformed frozen
+  record. Keep every original behavioral assertion and the required refusal.
+- Keep the product reader, ADR0042, old readers and all other source exact.
+  Run the full hook and obtain fresh full independent Sol review before
+  integration. Full capture review stays OPEN after provider screening.

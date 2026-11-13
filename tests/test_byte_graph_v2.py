@@ -1,5 +1,3 @@
-"""Literal observation controls. Accepted structure grants no emission authority."""
-
 import json
 from copy import deepcopy
 from dataclasses import FrozenInstanceError, fields, replace
@@ -44,8 +42,13 @@ def operand(
     return {"address": address(offset, space), "size": size, "definition": definition}
 
 
+def detached_fixture_record(value: dict[str, Any]) -> dict[str, Any]:
+    result = json.loads(wire(value))
+    assert isinstance(result, dict)
+    return result
+
+
 def sample() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
-    """Declare the ordinary projection and graph independently of the reader."""
     function = {
         "binary_sha256": sha256(b"synthetic observation").hexdigest(),
         "ghidra_entry": "0x1000",
@@ -298,11 +301,10 @@ def sample() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
             },
         ],
     }
-    # JSON removes fixture aliases so mutations affect only their named path.
     return (
-        json.loads(wire(document)),
-        json.loads(wire(graph)),
-        json.loads(wire(pass_record)),
+        detached_fixture_record(document),
+        detached_fixture_record(graph),
+        detached_fixture_record(pass_record),
     )
 
 
@@ -1010,11 +1012,13 @@ def test_pass_constructor_does_not_bypass_checks() -> None:
     parsed = parse_pass_record(wire(record))
     assert parsed.to_bytes() == wire(record)
     assert parsed.sha256 == graph["pass_id"]
+    forged = replace(parsed)
+    object.__setattr__(forged, "timeout_seconds", True)
     with pytest.raises(ByteGraphV2Error):
         parse_byte_graph_v2(
             wire(graph),
             lift=bind(document, graph),
-            pass_record=replace(parsed, timeout_seconds=True),  # type: ignore[arg-type]
+            pass_record=forged,
         )
 
 

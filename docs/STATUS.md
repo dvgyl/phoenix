@@ -161,3 +161,12 @@ and evidence suite passed 1,095 tests. One live Ghidra test was excluded.
 The separate index and mapping controls passed 15 tests. Ruff format,
 Ruff lint, and strict mypy passed. The new module has 98 percent line
 coverage. These are host unit checks, not Phoenix evaluation results.
+
+
+## 2026-11-13. Unit A review correction
+
+The first fresh Sol report holds the comment gate. It supplies no full
+functional approval. Four test-only corrections remove narration and one
+typing suppression. Root repeated all 105 independent controls before these
+changes. The product reader remains exact. A full hook and fresh full Sol
+review are required. Producer admission and full capture remain open.
