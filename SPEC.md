@@ -111,6 +111,7 @@ Each metric uses the numerator and the denominator in this table. Errors, budget
 | Edit-task pass rate (each arm) | Edit tasks that the arm passes | All edit tasks of all committed programs |
 | Branch coverage (adequacy) | Source branches that the held-out cases execute | All branches that `gcov` reports for the program |
 | Mutation score (adequacy) | Killed mutants plus timed-out mutants | Sampled mutants minus uncompilable mutants minus mutants triaged as equivalent |
+| Dev-set mutation score (technique N13) | Mutants of the reconstruction that the dev set kills | Sampled mutants of the reconstruction that compile |
 | Integrity failures | Binaries with at least one integrity category | (reported as a count) |
 | Cost per binary | US dollars of all LLM calls of one cold pipeline run, failed attempts included | (reported as median and interquartile range for each tier) |
 | Time per binary | Machine minutes of one cold pipeline run | (reported as median and interquartile range for each tier) |
@@ -261,6 +262,8 @@ For each input binary `foo`, Phoenix writes `out/foo/` with these files:
 
 `-std=c11 -O2 -Wall -Wextra -ffp-contract=off -fno-strict-aliasing -fwrapv -fsigned-char`
 
+The template also keeps the hardening flags of `docs/DECISIONS.md` entry 10: `-fstack-protector-all`, full RELRO and immediate binding. R0 uses the M1 build profile. The canonical template starts in R1.
+
 The template links with `-lm`. The evaluator builds each submission with this template and ignores the submitted `CMakeLists.txt`. The report states that the build uses `-fsigned-char`.
 
 ### 7.3 Source rules
@@ -406,7 +409,7 @@ Edit tasks: each T1 and T2 program has 3 edit tasks (section 10.8).
 | Path | `pipeline` | `engineer` (workers) | `dev-author` | `corpus-author` | `evaluator` |
 |---|---|---|---|---|---|
 | `$PHOENIX_ROOT/sealed`, `holdout`, `sealed_b`, `holdout_b`, and the paths of each later sealed set | denied | denied | denied | read and write | read |
-| `$PHOENIX_ROOT/sealed_runs`, and the earlier sealed T0 records `$PHOENIX_ROOT/runs/m1-t0-*` | denied | denied | denied | denied | write |
+| `$PHOENIX_ROOT/sealed_runs`, and the earlier sealed T0 records `$PHOENIX_ROOT/runs/m1-t0-*` | denied, except the run directory of its own binary, `sealed_runs/<run_id>/<binary_sha256>/` (read and write) | denied | denied | denied | write |
 | `corpus_dev/*/src`, `corpus_dev/*/holdout`, `corpus_dev/*/tasks`, unstripped twins | denied | read | read and write | denied | read |
 | `phoenix/analyze`, `phoenix/devset`, `phoenix/generate/prompts` (dev-set code and prompts) | read | read and write | denied | denied | read |
 | other files in `phoenix/` | read | read and write | read | read | read |
@@ -429,7 +432,7 @@ Rules for each held-out set:
 
 The author of the corpus (Dev Author or Corpus Author) validates each held-out case:
 
-1. Build the true source with GCC and Clang on x86-64 and on ARM64. Add one ARM64 build with `-fsanitize=address,undefined`.
+1. Build the true source with the canonical flags of section 7.2, with GCC and Clang, on x86-64 and on ARM64. Add one ARM64 build with `-fsanitize=address,undefined`.
 2. Run the case on each build and on the original binary under each x86-64 runner, three times.
 3. Exclude the case if any two outcomes differ, or if a sanitizer reports an error.
 4. Record the count of excluded cases for each binary. If more than 5% of the cases of a binary are excluded, the binary counts as failed.
@@ -443,7 +446,7 @@ Adequacy procedure (`tools/adequacy.py`):
 3. Sample at most 300 mutants for each program with a recorded seed.
 4. Run each mutant on the valid held-out cases. The time limit of a case is 10 times the run time of the original on that case. A difference in outcome kills the mutant. A timeout counts as a kill.
 5. Report the counts of killed, survived, timed-out, uncompilable and unresolved mutants. An unresolved mutant counts as survived.
-6. Triage at most 20 surviving mutants of each program for equivalence. Count the other survivors as survived.
+6. The author of the corpus triages at most 20 surviving mutants of each program. A mutant is equivalent only if 1,000 more generated cases do not kill it and the author writes the reason in `adequacy.json`. Count the other survivors as survived.
 7. Write `adequacy.json` for each program. Only aggregate numbers go into the repository for a sealed program.
 
 Thresholds:

@@ -73,12 +73,13 @@ def run(ctx: StageContext) -> StageResult
 
 ```
 phoenix run <binary> --run-id <id> --cost-cap-usd <usd> --exec-budget <runs> [--mode compile_only|transplant]
+            [--runs-root <dir>] [--cache-root <dir>]
 phoenix run --resume <run_id>
 phoenix run --replay <run_id>
 phoenix kb export <kb.sqlite>
 ```
 
-The evaluator gives the cost cap (`SPEC.md` section 12.3) and the execution budget (section 5.3) for the tier. The default mode is the value `draft_mode` in `phoenix/config.py`.
+The evaluator gives the cost cap (`SPEC.md` section 12.3) and the execution budget (section 5.3) for the tier. The default mode is the value `draft_mode` in `phoenix/config.py`. In a sealed run, the evaluator gives a runs root and an empty cache root under `sealed_runs/<run_id>/`.
 
 Each pipeline run writes `runs/<run_id>/<binary_sha256>/run.json`. It holds: the binary SHA-256, the run settings, the mode, each model used with its effort settings, the protection probe result (section 6.3), the stage list, the cost and the machine minutes.
 
@@ -162,7 +163,7 @@ phoenix/                    # pipeline; may import phoenix_eval; never imports t
   ingest/      elf.py  contract.py
   lift/        ghidra.py  relocs.py  imports.py  fragments.py
   trace/       plugin_driver.py  coverage.py  funcio.py (R3)  libc_events.py (R3)  heap.py (R4)
-  devset/      cli_surface.py  seeds.py  mutate.py  loop.py  minimize.py  llm_generators.py (R3)
+  devset/      cli_surface.py  seeds.py  mutate.py  loop.py  minimize.py  llm_generators.py (R3)  mutants.py (R3)
   recover/     signatures.py  globals.py  idioms.py  structs.py (R4)
   generate/    context.py  function.py  regions.py  data.py  project.py  raw.py  runtime/  prompts/
   transplant/  bind.py  build.py  run.py  theseus.py  shim/phx_shim.c  shim/phx_thunk.S  (R2)
@@ -383,6 +384,7 @@ Rules for the tracer:
 4. **Targeted generation** (`llm_generators.py`, from R3). Select the uncovered functions and branches. Give the LLM the Ghidra C of the branch, the path from `main`, the `CliSurface` and 3 near-miss cases. The LLM returns a Python generator function `gen(rng) -> Case`. Run the generator in an isolated container with no network for 200 cases. Keep the cases that add edges. Do at most 3 rounds for each uncovered region.
 5. **Oracle.** Run each kept case on the x86-64 runners of the host (section 13). Keep a case only if the runners agree and three repeated runs agree. On a single-runner host, set `binary.oracle` to `single_runner`.
 6. **Minimize** (`minimize.py`). Keep a set of cases that preserves the edge coverage, with at most 400 cases. Always keep one case for each exit status and each terminating signal.
+7. **Mutant adequacy** (`mutants.py`, from R3, technique N13). After the project matches the full dev set, add the cases that separate surviving mutants of the reconstruction from the reconstruction (section 15.2, N13).
 
 Stop rule: `dev_edge_coverage` reaches 95%, or the execution budget ends. The execution budget is a count of runs of the original:
 
@@ -599,7 +601,9 @@ A change to the launcher or the profile needs the review of AGENTS.md section 8 
 
 ```python
 PROFILES: dict[str, Profile]      # "pipeline", "engineer", "dev-author", "corpus-author", "evaluator"
-def guarded_command(workspace: Path, repo: Path, command: tuple[str, ...], profile: str) -> tuple[str, ...]
+def guarded_command(workspace: Path, repo: Path, command: tuple[str, ...], profile: str,
+                    allow: tuple[Path, ...] = ()) -> tuple[str, ...]
+# allow: paths that the profile permits in a denied class, for example the sealed run directory of one binary
 def inherited_guard(workspace: Path) -> bool
 ```
 
@@ -658,9 +662,12 @@ GCC at `-O2` can let a caller of a local function keep values in caller-saved re
 
 Each replaced function has its own thunk entry. The thunk entry does these steps:
 
-1. Push a frame onto the shadow stack of the shim: the real return address, the stack pointer value after the return (`rsp + 8` at entry), and all caller-saved registers: `rax`, `rcx`, `rdx`, `rsi`, `rdi`, `r8`, `r9`, `r10`, `r11` and `xmm0` to `xmm15`.
-2. Replace the return address on the machine stack with the address of the return stub. The stack arguments stay in position. The thunk uses no machine stack, so the 16-byte stack alignment at the replacement entry is the same as at the original entry.
-3. Jump to the replacement.
+1. Discard dead shadow frames. If the return address on the machine stack is not the address of the return stub, discard each frame whose saved stack pointer value is `rsp + 8` or below. If it is the address of the return stub (a tail call from a replaced function), discard only each frame whose saved value is below `rsp + 8`. A discarded frame belongs to a call that `longjmp` left.
+2. Push a frame onto the shadow stack of the shim: the real return address, the stack pointer value after the return (`rsp + 8` at entry), and all caller-saved registers: `rax`, `rcx`, `rdx`, `rsi`, `rdi`, `r8`, `r9`, `r10`, `r11` and `xmm0` to `xmm15`.
+3. Replace the return address on the machine stack with the address of the return stub. The stack arguments stay in position. The thunk uses no machine stack, so the 16-byte stack alignment at the replacement entry is the same as at the original entry.
+4. Jump to the replacement.
+
+The two cases of step 1 are necessary. A tail call from a replaced function enters with the same `rsp` as its live caller frame, and that frame must stay.
 
 The return stub does these steps:
 
@@ -678,6 +685,8 @@ The return stub does these steps:
 | `MEMORY` class aggregate | `rax` (the hidden pointer) |
 
 3. Pop the frame and jump to the real return address.
+
+From R3, the return stub also writes the return registers of the resolved return type to `/phx/out`, for each (case, `call_index`) that has an `obs_funcio` row. `check` compares them with the row. Compare only a return slot whose `obs_argclass` class is `small_int`, `bool`, `wide_int` or `float`. A difference fails the check. The feedback is the call, its arguments, the expected value and the actual value.
 
 The shadow stack is one global array, because v1 programs have one thread. It holds 65,536 frames. On overflow, the shim writes `phx: shadow stack overflow` to file descriptor 2 and calls `_exit(125)`. The case is then untestable for that set.
 
@@ -705,7 +714,8 @@ These functions get whole-program checks only, and N8 when N8 is active.
 - tail calls into a replaced function and from it;
 - `.isra` and `.constprop` clones, where the replacement implements the actual machine interface of the clone;
 - `setjmp` and `longjmp` across a replaced function;
-- calls through a function pointer, and a variadic function.
+- calls through a function pointer, and a variadic function;
+- 100,000 `longjmp` recoveries across a replaced function.
 
 Gate: 100% of the fixtures pass.
 
@@ -893,7 +903,8 @@ The evaluator is sound. Change only the items in this table. Each change needs t
 |---|---|---|
 | Window rule (`SPEC.md` section 9, rule 1a and 1b): check source literals and initializers, and the non-executable data sections of the built executables without the C runtime ranges. Do not check the built code sections. Add an honest fixture where machine code from the same compiler equals the original. | `phoenix_eval/integrity.py`, `tests/test_integrity.py` | R0 |
 | Protected path list and role profiles (section 6.3). | `phoenix_eval/protection.py` | R0 |
-| `phoenix_eval/run.py` replaces `m1.py` and `m2.py`. It evaluates `corpus_dev` and sealed sets and writes `scoreboard.json`. It writes sealed runs only to `sealed_runs/` and exports only the aggregate scoreboard of a sealed run. After the selection is fixed, it records each selected binary and writes a scoreboard even if the execution stops. It restores archived runs for `--replay`. `phoenix-eval probe` runs the real-directory protection checks. | `phoenix_eval/run.py`, `phoenix_eval/__main__.py` | R0 |
+| `phoenix_eval/run.py` replaces `m1.py` and `m2.py`. It evaluates `corpus_dev` and writes `scoreboard.json`. After the selection is fixed, it records each selected binary and writes a scoreboard even if the execution stops. It restores archived runs for `--replay`. `phoenix-eval probe` runs the real-directory protection checks. | `phoenix_eval/run.py`, `phoenix_eval/__main__.py` | R0 |
+| The sealed corpus mode of `phoenix_eval/run.py`: it writes sealed runs only to `sealed_runs/` and exports only the aggregate scoreboard of a sealed run. `scripts/loop sealed-pre` and `scripts/loop sealed-import`. Before Sealed-A run 1. | `phoenix_eval/run.py`, `scripts/loop` | R2 |
 | Remove the function-name roster rule, the control-flow count limit, the ban on indirect calls, the single translation unit rule and the rule that rejects each literal that is absent from the original data. | `phoenix_eval/integrity.py`, `containers/c-integrity.cc` | R1 (first) |
 | Accept `src/*.c` and `include/*.h` with the canonical CMake template (`canonical_cmake(files)`). | `phoenix_eval/submission.py`, `phoenix_eval/build.py` | R1 (first) |
 | Typed storage evidence for structures, unions, pointer initializers (target and offset) and function pointer tables. The constant-table rule compares only non-pointer bytes. | `containers/c-integrity.cc`, `phoenix_eval/integrity.py` | R1 (first) |
@@ -989,8 +1000,9 @@ All experiments run on `corpus_dev`. "Baseline" is the scoreboard row before the
 - H: An in-process check of one function against the original gives an exact oracle for each function at each optimization level.
 - E: The thunk fixture suite. Then the truth transplant on `corpus_dev` at `-O0`, `-O2` and `-Os`. Then the draft loop in `transplant` mode against `compile_only` mode on D1 `-O2`.
 - M: Truth transplant rate. Binary success rate on D1 `-O2`. Repair rounds for each binary.
-- K: A truth transplant rate below 80% at `-O2` after 3 acceptance attempts of the mechanism enabling item (instrumentation mode and thunk, `docs/ROADMAP.md` R2), and after the pivot item if it runs. Or a success gain below 10 points on D1 `-O2` against `compile_only` mode after 3 experiments.
-- Pivot before the kill: if the truth transplant rate is below 50% at `-O0` after the 3 acceptance attempts, start the ELF-copy pivot as a separate enabling item: patch a copy of the ELF file before the run (a static jump at each entry and a slot table that the shim fills). Limit: 3 acceptance attempts.
+- K: A success gain below 10 points on D1 `-O2` against `compile_only` mode after 3 experiments. Or a truth transplant rate below 50% at `-O2` after 3 acceptance attempts of the mechanism enabling item (instrumentation mode and thunk, `docs/ROADMAP.md` R2) and 3 of the pivot item.
+- Pivot before the kill: if the truth transplant rate is below 50% at `-O0` or at `-O2` after the 3 acceptance attempts of the mechanism item, start the ELF-copy pivot as a separate enabling item: patch a copy of the ELF file before the run (a static jump at each entry and a slot table that the shim fills). Limit: 3 acceptance attempts.
+- Restrict before the kill: if the truth transplant rate at `-O2` is 50% or more and below 80% after the 3 acceptance attempts, give each function of a failing class the status `unsupported_interface`, write the classes in `docs/LOG.md`, and continue with N1 for the other functions.
 - F: `compile_only` stays the mode. Repair uses the decision table rows 1, 4, 5 and 6, and N7. The Theseus fraction is not reported. Function reachability and `integrated_pass` counts replace it. Delete the shim and the thunk unless N8 is active. Keep instrumentation mode while N5, N7, N8 or N9 is active.
 
 **N2. Theseus bisection and the Theseus fraction.**
@@ -1007,6 +1019,14 @@ All experiments run on `corpus_dev`. "Baseline" is the scoreboard row before the
 - K for step 4: a gain below 5 points of `dev_edge_coverage` on D1 after 3 experiments.
 - Pivot for the technique: an escape rate above 15% on D1 at the end of R3 starts AFL++ in QEMU mode as a second generator (limit: 3 experiments, image below 1.5 GiB) and starts N8.
 - F: Steps 1 to 3 stay. Delete step 4.
+
+**N13. Mutant-adequate dev set.**
+- H: A surviving mutant of the reconstruction marks behavior that the dev set does not check. An input that separates the mutant from the reconstruction is a case of the kind that the hidden set holds. The original decides which behavior is correct.
+- E: After the project matches the full dev set, `devset/mutants.py` applies the fixed operator set of `SPEC.md` section 10.6 to the functions that the dev set executes (at most 300 mutants for each binary, recorded seed). Build the reconstruction and each mutant natively for ARM64. Run the dev set on each mutant. For each surviving mutant, search for a separating input: run `mutate.py` on the native builds (at most 20,000 native runs for each mutant), then one LLM generator call with the mutant diff. Run each separating input on the original (step 5 of section 5.3). If the reconstruction matches, add the case to the dev set. If it does not match, the case is a counterexample for `repair` (decision table row 4).
+- The native runs stay inside the Linux containers (AGENTS.md section 4 Hard rules). The technique uses only the binary and the project of the same run (principle 5).
+- M: Escape rate on D1 and D2. Counterexamples found for each binary. Mutation score of the dev set against the reconstruction.
+- K: A decrease of the escape rate below 5 points on D1 after 3 experiments.
+- F: Delete `devset/mutants.py`. Dev-set steps 1 to 4 stay.
 
 **N5. Function input and output examples from the original.**
 - H: Argument and return values from the original improve signature recovery and the first-attempt success of drafts.
@@ -1082,4 +1102,4 @@ These items have no kill criterion. They are requirements.
 
 ### 15.5 Rank
 
-Rank by expected effect on the headline numbers: N1, N4, N2, N6, N5, N9, N7, N11, N8. N3, N10 and N12 are requirements and have no rank.
+Rank by expected effect on the headline numbers: N1, N4, N13, N2, N6, N5, N9, N7, N11, N8. N3, N10 and N12 are requirements and have no rank.

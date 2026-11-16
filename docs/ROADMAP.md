@@ -6,7 +6,7 @@ This document gives the milestones R0 to R7 from the current state to the v1 exp
 - `docs/ARCHITECTURE.md` gives the design of each deliverable.
 - AGENTS.md section 9 Anti-stall rules gives the effort limits, the work-item limits and the rules for enabling items.
 - AGENTS.md section 10 Milestones and ExecPlans gives the rule to write one ExecPlan for each milestone.
-- AGENTS.md section 11 Measurement and status gives when to run each loop and how to report status.
+- AGENTS.md section 9, rule 3 gives when to run each loop. AGENTS.md section 11 Measurement and status gives how to report status.
 
 If two documents conflict, apply AGENTS.md section 2 Precedence.
 
@@ -22,7 +22,7 @@ This roadmap has no dates and no calendar durations. Each limit is a count of ex
 | Experiment budget | The maximum count of experiments of a milestone. |
 | Main metric | The one metric that the milestone must move. It is the first condition of the milestone gate. The budget-exhausted rule (section 7) uses it. |
 | Gate | `scripts/gate R<n>`. It checks each condition of the milestone. It exits 0 and prints `R<n> gate: PASS` when all conditions are true. |
-| Enabling item | Infrastructure that cannot move a success rate in the next loop. Each enabling item below has a scripted acceptance test and an intermediate metric. An acceptance attempt of an enabling item is not a full-loop row. The two-flat-rows rule of AGENTS.md section 9 Anti-stall rules does not count it. |
+| Enabling item | Infrastructure that cannot move a success rate in the next loop. Each enabling item below has a scripted acceptance test and an intermediate metric. An acceptance attempt of an enabling item is not a full-loop row. The two-flat-rows rule of AGENTS.md section 9 Anti-stall rules does not count it. An acceptance attempt is one declared design. Before the attempt, write one line in `docs/LOG.md`: `attempt <n> of 3: <design>`. Test runs during the work on that design are not attempts. The attempt fails when the lead declares the design complete and the acceptance test fails. A new attempt needs a changed design. |
 | Dev tiers | D0, D1, D2 and D3 (`SPEC.md` section 10.1). "Success" means the binary success rate with the `corpus_dev` held-out cases. |
 
 ---
@@ -55,7 +55,7 @@ Each milestone runs in this sequence. Start a milestone only after the previous 
 
 **Deliverables**, in this sequence (`docs/plans/R0-reset.md` gives the steps):
 
-1. Workspace storage cleanup, `scripts/gc`, and one test of the resize procedure.
+1. Workspace storage cleanup, `scripts/gc`, and one dry run of the resize procedure.
 2. The protected path list, the role profiles, the protection test and `phoenix-eval probe`.
 3. The salvage of the repository: keep, change and delete lists.
 4. The M1 path runs end to end.
@@ -83,7 +83,7 @@ Experiment 1 runs immediately after the bootstrap acceptance.
 4. `scripts/check` exits 0. Performance requirement: it ends in less than 5 minutes.
 5. `scripts/loop --probe --tier D0 --opt O0` with a warm cache exits 0. Performance requirement: it ends in less than 30 minutes. `scripts/loop --probe --quick` with a warm cache ends in less than 20 minutes (performance requirement).
 6. `uv run --locked pytest -q tests/test_protection.py tests/test_integrity.py` passes. It includes the honest fixture where machine code from the same compiler equals the original, and the cheat fixtures.
-7. The workspace image has 15 GiB or more free. `$PHOENIX_ROOT/runs/r0-resize.json` exists with the status `ok` or `blocked_on_owner`.
+7. The workspace image has 15 GiB or more free. `$PHOENIX_ROOT/runs/r0-resize.json` exists with the status `dry_run_ok`, `ok` or `blocked_on_owner`.
 8. The pipeline and evaluator source has fewer than 9,000 lines. No file refers to a deleted module.
 9. `corpus_dev` has 22 programs. Each has `meta.json`, a validated held-out set, 8 builds with twins, and an `adequacy.json` that meets the thresholds of `SPEC.md` section 10.6. The gate reports the count of invalid twins.
 
@@ -95,16 +95,16 @@ Experiment 1 runs immediately after the bootstrap acceptance.
 
 **Deliverables**, in this sequence:
 
-1. Evaluator compatibility (the "R1 (first)" rows of `docs/ARCHITECTURE.md` section 12), with fixtures.
-2. The minimal KB (`docs/ARCHITECTURE.md` section 4.2) with the JSON export.
-3. The stage runner: `pipeline.py`, `cli.py`, checkpoints, resume and replay (`docs/ARCHITECTURE.md` section 2.3).
-4. The target forms of `ingest` and `lift`.
-5. Dev-set steps 1 to 3 (CLI surface, seeds, coverage loop) with edge coverage.
-6. Static signatures, the data model and the data emitter (N3) with the byte check, and the import table with the arithmetic helpers (N10).
-7. Per-function drafts in `compile_only` mode, with literal mode and region drafting.
-8. The repair decision table, rows 1, 4, 5 and 6.
-9. The rewritten LLM ledger, and the R1 metrics of `phoenix_eval/quality.py`.
-10. Platform capabilities, the Linux protection profile, and the CI replay job (`docs/ARCHITECTURE.md` section 13).
+1. Evaluator compatibility (the "R1 (first)" rows of `docs/ARCHITECTURE.md` section 12), with fixtures. Enabling item.
+2. The thin per-function path. Enabling item. It has only: the minimal KB (`docs/ARCHITECTURE.md` section 4.2) filled from the M1 `lift.json` and the M1 dev set, the stage runner with checkpoints, resume and replay (`docs/ARCHITECTURE.md` section 2.3), and per-function idiomatic drafts in `compile_only` mode with the M1 data handling. Acceptance: `uv run --locked pytest -q tests/test_replay.py` passes, and `scripts/loop --probe --quick` in mode `compile_only` writes a probe row.
+3. Experiment 1: the full loop of the thin path on D0 and D1. This row is the R1 baseline.
+4. The data model and the data emitter (N3) with the byte check. Measured work item.
+5. The import table with the arithmetic helpers (N10). Measured work item.
+6. The rewritten LLM ledger, the R1 metrics of `phoenix_eval/quality.py`, platform capabilities, the Linux protection profile and the CI replay job (`docs/ARCHITECTURE.md` section 13). Enabling item with the tests of each part as acceptance.
+7. The target forms of `ingest` and `lift`, static signatures, and dev-set steps 1 to 3 with edge coverage. Measured work item.
+8. Literal mode, region drafting, and the repair decision table rows 1, 4, 5 and 6. Measured work item.
+
+Until item 3, the M1 path stays the default mode, and the quick loop measures it. A worker item that runs in parallel does not count for the limit of two enabling items in sequence.
 
 In parallel, a worker builds the R2 enabling item: `tools/truth.py`, the truth-transplant harness, the thunk fixture suite and the tracer image.
 
@@ -113,7 +113,8 @@ In parallel, a worker builds the R2 enabling item: `tools/truth.py`, the truth-t
 | Item | Acceptance test | Intermediate metric |
 |---|---|---|
 | Evaluator compatibility | `uv run --locked pytest -q tests/test_integrity.py tests/test_submission.py tests/test_compiler_integrity.py`: cheat suite 100% rejected, honest suite 100% accepted, end-to-end fixtures with multiple source files, helpers, structures, pointer initializers and indirect calls pass | fixture pass rate |
-| KB and stage runner | `uv run --locked pytest -q tests/test_replay.py`: a replay from an empty run directory, with one interrupted stage, gives a byte-identical project | replay identity |
+| Thin per-function path (minimal KB, stage runner, `compile_only` drafts) | `uv run --locked pytest -q tests/test_replay.py`: a replay from an empty run directory, with one interrupted stage, gives a byte-identical project; and `scripts/loop --probe --quick` in mode `compile_only` writes a probe row | replay identity |
+| Ledger, quality metrics, platforms, Linux protection, CI replay | the tests of each part | tests passed |
 | Truth-transplant harness (worker) | `uv run --locked pytest -q tests/transplant/` runs the thunk fixture suite | fixture pass rate, truth transplant rate |
 
 **Gate** (`scripts/gate R1`):
@@ -140,8 +141,9 @@ In parallel, a worker builds the R2 enabling item: `tools/truth.py`, the truth-t
 2. The shim, the thunk, the binding, `transplant.check` and `transplant.theseus` (N1, N2).
 3. The draft loop with transplant feedback, and repair decision table rows 2 and 3.
 4. Negative transplants and the 30 injected faults of N2.
-5. Sealed-A run 1 on T0 and T1 (section 6.4).
-6. The R7 budget reservation (section 8), recorded as one line in `docs/LOG.md`.
+5. The sealed corpus mode of `phoenix_eval/run.py`, `scripts/loop sealed-pre` and `scripts/loop sealed-import`, before Sealed-A run 1.
+6. Sealed-A run 1 on T0 and T1 (section 6.4).
+7. The R7 budget reservation (section 8), recorded as one line in `docs/LOG.md`.
 
 The Dev Author writes `corpus_dev` batch 2 in parallel: 8 D2 programs with held-out sets and twins.
 
@@ -179,6 +181,7 @@ If N1 is killed, apply its fallback (`docs/ARCHITECTURE.md` section 15.2). Condi
 5. The ARM64 sanitizer check (N11).
 6. Batch 2 (D2) in the full loop. Quick set version 2 and a new noise row.
 7. The N8 start decision: the share of `corpus_dev` held-out failures that `static_only` functions cause.
+8. The mutant-adequate dev set (N13).
 
 **Enabling items.**
 
@@ -195,6 +198,7 @@ If N1 is killed, apply its fallback (`docs/ARCHITECTURE.md` section 15.2). Condi
 4. The median `dev_edge_coverage` is 90% or more on D1 and 80% or more on D2.
 5. The escape rate is 10% or less on D1.
 6. The N8 start decision is recorded in `docs/LOG.md`.
+7. The median mutation score of the dev set against the reconstruction is reported.
 
 If the escape rate on D1 is above 15% at the end of R3, start the N4 pivot (section 9).
 
@@ -346,21 +350,22 @@ These items run in parallel and do not block the lead model. AGENTS.md section 6
 ```
 scripts/loop [--tier D0,D1,D2,D3] [--opt O0,O2,Os,O3] [--quick] [--probe] [--llm-cache on|off] [--label <text>]
 scripts/loop noise
-scripts/loop sealed-pre --corpus <set> --tag <tag> --cells <list> --budget-usd <amount>
-scripts/loop sealed-import <run_id>
+scripts/loop sealed-pre --corpus <set> --tag <tag> --cells <list> --budget-usd <amount>   # from R2
+scripts/loop sealed-import <run_id>                                                       # from R2
 ```
 
 `scripts/loop` does these steps:
 
-1. Select the binaries from `$PHOENIX_ROOT/dev_bin/manifest.json`, or from `corpus_dev/quick.txt` with `--quick`. The selection is then fixed.
-2. Run `phoenix-eval run --corpus corpus_dev` on them. The evaluator runs `phoenix run` under the `pipeline` profile for each binary, through the global concurrency budget, then scores the project with the `corpus_dev` held-out cases.
-3. Write `$PHOENIX_ROOT/runs/<run_id>/scoreboard.json`. Add one row to `docs/SCOREBOARD.md`.
+1. Refuse to run if `phoenix/` or `phoenix_eval/` has an uncommitted change. Record `HEAD` as the commit of the row. Thus the sequence is: commit the code, run the loop, commit the row.
+2. Select the binaries from `$PHOENIX_ROOT/dev_bin/manifest.json`, or from `corpus_dev/quick.txt` with `--quick`. The selection is then fixed.
+3. Run `phoenix-eval run --corpus corpus_dev` on them. The evaluator runs `phoenix run` under the `pipeline` profile for each binary, through the global concurrency budget, then scores the project with the `corpus_dev` held-out cases.
+4. Write `$PHOENIX_ROOT/runs/<run_id>/scoreboard.json`. Add one row to `docs/SCOREBOARD.md`.
 
 `scripts/loop` and its subcommands are the only writers of `docs/SCOREBOARD.md`. Nobody writes a row by hand.
 
 - `scripts/loop noise` runs the quick loop two times with `--llm-cache off` and writes one noise row that aggregates the two runs (section 6.1).
-- `scripts/loop sealed-pre` writes the preregistration row of a sealed run (section 6.4).
-- `scripts/loop sealed-import <run_id>` imports the aggregate scoreboard that `phoenix-eval` exported for a sealed run, and writes its row.
+- `scripts/loop sealed-pre` (from R2) writes the preregistration row of a sealed run (section 6.4).
+- `scripts/loop sealed-import <run_id>` (from R2) imports the aggregate scoreboard that `phoenix-eval` exported for a sealed run, and writes its row.
 - `--probe` writes a row with `loop` = `probe` and `experiment` = `null`. Use it for smoke runs, acceptance runs and performance runs.
 
 Failed and stopped loops:
@@ -384,8 +389,8 @@ The full-loop levels are `-O0`, `-O2` and `-Os`. R6 adds `-O3`.
 
 The quick set:
 
-- Version 1 (R0): 12 binaries. For each of D0 and D1, for each of `-O0`, `-O2` and `-Os`, and for each compiler, take the binary with the lowest SHA-256.
-- Version 2 (R3): 18 binaries, with the same rule for D0, D1 and D2.
+- Version 1 (R0): 24 binaries. For each of D0 and D1, each of `-O0`, `-O2` and `-Os`, and each compiler, take the two binaries with the lowest SHA-256.
+- Version 2 (R3): 36 binaries, with the same rule for D0, D1 and D2.
 - Each new version needs a new noise row.
 - After each change of the corpus (a program, a build or a held-out case), rebuild the quick set and run `scripts/loop noise` again before any comparison.
 
@@ -397,16 +402,16 @@ Performance requirements: the quick loop with a warm cache ends in less than 20 
 
 ### 6.1 Comparison and noise
 
-1. **Noise measurement.** `scripts/loop noise` runs the quick loop two times on one commit with `--llm-cache off`. For each cell, the flips are the binaries whose fully successful result differs between the two runs. The flip rate of a cell is flips divided by the binaries of the cell. Measure the noise again when the runtime model, an effort setting, the quick set or the corpus changes.
+1. **Noise measurement.** `scripts/loop noise` runs the quick loop two times on one commit with `--llm-cache off`. The flips of a tier are the quick-set binaries of the tier whose fully successful result differs between the two runs. The flip rate of a tier is (flips + 0.5) / (binaries + 1). Do not compute a flip rate for one cell. Measure the noise again when the runtime model, an effort setting, the quick set or the corpus changes.
 2. **Same binaries.** Compare two rows only on the binaries that both rows contain with the same binary SHA-256 and the same held-out hash.
-3. **Threshold.** The threshold `T` of a comparison is the sum over cells of (flip rate of the cell x compared binaries of the cell), rounded up. For a cell without a measured flip rate, use the largest measured flip rate.
+3. **Threshold.** The threshold `T` of a comparison is the sum over tiers of (flip rate of the tier x compared binaries of the tier), rounded up. For a tier without a measured flip rate, use the largest measured flip rate.
 4. **Decision.** Let `d` be the count of fully successful binaries in the new row minus the count in the old row, on the compared binaries.
    - If `d > T`, the new row is a gain.
    - If `d < -T`, the new row is a loss.
    - Otherwise, the result is a tie in the success metric. Report a change in held-out cases passed separately. Such a change is not a gain for the 3-experiment rule, the two-flat-rows rule or a budget extension.
 5. **Other metrics.** Apply the same rule to the maintainable counts. For each other metric, compare the values on the same binaries directly.
 6. **Replays.** A cached replay is deterministic. Use cached replays for regression checks. A replay of an earlier run must reproduce its success numbers exactly.
-7. **Commitment shortfall** (R6, R8). A gain is a decrease of the shortfall on the same binaries. The success count of the cell that set the old shortfall must also rise by more than the threshold of that cell.
+7. **Commitment shortfall** (R6, R8). A gain is a decrease of the shortfall on the same binaries. The success count of the cell that set the old shortfall must also rise by more than the threshold of rule 3 for the binaries of that cell.
 
 ### 6.2 Scoreboard fields
 
@@ -432,6 +437,7 @@ Performance requirements: the quick loop with a warm cache ends in less than 20 
 | `integrity_failures`, `glibc_internal_symbols`, `register_named_locals` | Counts |
 | `arm_gap_points` | For each tier |
 | `dev_edge_coverage_median`, `function_reachability_median` | For each tier |
+| `dev_mutation_score_median` | For each tier: the median mutation score of the dev set against the reconstruction (from R3, N13) |
 | `escape_rate` | For each tier, as `[n, N]` (`corpus_dev` only) |
 | `truth_transplant_rate`, `transformed_interface_rate` | For each level, as `[n, N]` |
 | `theseus_fraction_median` | For each tier (`transplant` mode) |
@@ -442,7 +448,7 @@ Performance requirements: the quick loop with a warm cache ends in less than 20 
 | `cost_usd`, `binary_minutes` | For each tier: median, first quartile, third quartile |
 | `loop_minutes`, `peak_memory_gib`, `peak_storage_gib`, `free_storage_gib` | Machine minutes of the loop; resource peaks; free space after the loop |
 | `source_lines`, `test_lines` | Lines of `phoenix/**/*.py` and `phoenix_eval/**/*.py`; lines of `tests/**/*.py` |
-| `noise` | For each tier and level, `[flips, N]` (noise rows only) |
+| `noise` | For each tier, `[flips, N]` (noise rows only) |
 | `dev_set_hashes`, `binaries` | For each binary: SHA-256, held-out hash, dev-set hash, tier, level, compiler, result, categories (`corpus_dev` only) |
 
 A sealed row holds only aggregate fields. It never holds `dev_set_hashes`, `binaries` or `escape_rate`.
@@ -462,7 +468,7 @@ Cell rules:
 - `data hash`: the first 8 characters of `corpus_hash` and of `heldout_hash`, as `<corpus>/<held-out>`.
 - `exp`: `n/budget`, or `-` for a row that is not an experiment.
 - `main metric`: `<metric> = <value> (gate <value>)`.
-- `tier 0` to `tier 3`: D0 to D3 for `corpus_dev`, T0 to T3 for a sealed set. Format: `O0 a/b; O2 c/d; Os e/f`, and `; O3 g/h` when `-O3` ran. A noise row gives the flips in the same format.
+- `tier 0` to `tier 3`: D0 to D3 for `corpus_dev`, T0 to T3 for a sealed set. Format: `O0 a/b; O2 c/d; Os e/f`, and `; O3 g/h` when `-O3` ran. A noise row gives the flips of each tier as `flips/N`.
 - `maintainable`: `1: a/b; 2: c/d` for tiers 1 and 2.
 - `edge cov`, `escape` and `cost median`: one value for each tier that ran, as `D1 88; D2 79`.
 - `literal %` and `goto/100`: one value over all tiers.
@@ -486,7 +492,7 @@ Cell rules:
 | `phoenix/cli.py` | 80 lines |
 | `phoenix/pipeline.py` | 200 lines |
 | `phoenix/llm/ledger.py` | 250 lines |
-| `phoenix_eval/run.py` | 250 lines |
+| `phoenix_eval/run.py` | 400 lines |
 | The import table in `phoenix/lift/imports.py` | 200 lines |
 
 The R0 gate has its own salvage limit (R0, condition 8). Test lines have no limit. AGENTS.md section 13 Code and test quality gives the test rules.
@@ -502,6 +508,7 @@ When the experiment budget of a milestone is used and the gate did not pass:
 3. If the gap is larger, apply the kill criterion and the fallback of the technique that failed (`docs/ARCHITECTURE.md` section 15), or the pivot in section 9. Then continue to the next milestone.
 4. A failed gate condition other than the main metric becomes a work item of the next milestone. An enabling item follows AGENTS.md section 9 Anti-stall rules.
 5. Never lower a gate value, a commitment or the definition of success. The R6 gate still requires each commitment value. Never stop to wait for a person (AGENTS.md section 3 Autonomy).
+6. R0 has no technique. If the R0 main metric is below its gate value after the budget, do not repair the M1 path. Record the gap in `docs/STATUS.md`, tag `r0`, and start R1. Each other R0 gate condition must still pass.
 
 ---
 
@@ -532,8 +539,8 @@ Apply these steps in sequence when the LLM budget decreases (a notice from the o
 
 | Risk | Signal | Action |
 |---|---|---|
-| Code patching fails under QEMU user mode | Truth transplant rate below 50% at `-O0` after the 3 acceptance attempts of the R2 mechanism item | The ELF-copy pivot of N1 (`docs/ARCHITECTURE.md` section 15.2), a separate enabling item. Limit: 3 acceptance attempts. |
-| Transplant fails at `-O2` | The kill criterion of N1 | The fallback of N1 (`compile_only` mode). No target changes. |
+| Code patching fails under QEMU user mode | Truth transplant rate below 50% at `-O0` after the 3 acceptance attempts of the R2 mechanism item | The pivot and the kill rule of N1 (`docs/ARCHITECTURE.md` section 15.2). |
+| Transplant fails at `-O2` | The kill criterion of N1 | The pivot and the kill rule of N1 (`docs/ARCHITECTURE.md` section 15.2). |
 | The dev set misses behavior that the hidden tests reach | Escape rate above 15% on D1 at the end of R3 | The N4 pivot: AFL++ in QEMU mode as a second generator (limit: 3 experiments, image below 1.5 GiB). Start N8. |
 | Large optimized functions fail | `draft_failed` with the reason `too_large` causes more than 20% of the failures | Halve the region size limit for one experiment. If the share stays above 20%, record X2 for after v1. |
 | ARM64-only failures | ARM gap above 3 points | Find the root cause of each ARM64-only failure on `corpus_dev`. Add a rule to `docs/ARCHITECTURE.md` section 10 or to the lint. |

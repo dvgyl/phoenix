@@ -16,17 +16,17 @@ Experiment budget: 3 experiments. Only steps 14 and 16 make experiments. Step 16
 - [ ] Step 0: Record the start commit (check: `git rev-parse HEAD` -> a hash; write it in this line)
 - [x] Step 1: Storage cleanup (done before this plan; evidence in "Surprises and Discoveries": 31 GiB free of 60 GiB)
 - [ ] Step 2: Write `scripts/gc` without run archiving (check: `scripts/gc --dry-run` -> exit 0, a list of candidates, free space unchanged)
-- [ ] Step 3: Test the resize procedure one time (check: `cat "$PHOENIX_ROOT/runs/r0-resize.json"` -> `"status": "ok"` or `"status": "blocked_on_owner"` with a reason; `docker info` -> exit 0)
+- [ ] Step 3: Write the resize procedure and run its dry run (check: `cat "$PHOENIX_ROOT/runs/r0-resize.json"` -> `"status": "dry_run_ok"` or `"status": "blocked_on_owner"` with a reason)
 - [ ] Step 4: Protected path list, role profiles, caller migration, `scripts/launch-role`, `phoenix-eval probe` (check: `uv run --locked pytest -q tests/test_protection.py` -> all pass; `uv run --locked phoenix-eval probe` -> each boolean `true`)
 - [ ] Step 5: Commit the instruction documents and the protection change on `main` (check: `git show main:docs/plans/R0-reset.md` and `git show main:phoenix_eval/protection.py` -> exit 0)
-- [ ] Step 6: Start the Dev Author on batch 1 (check: the worker runs in `$PHOENIX_ROOT/worktrees/dev-author`)
+- [ ] Step 6: Build the worker images and start the Dev Author on batch 1 (check: `docker image inspect phoenix-worker:amd64` -> exit 0; the worker runs in `$PHOENIX_ROOT/worktrees/dev-author`)
 - [ ] Step 7: Salvage: restore, change and delete (check: `uv run --locked python -c "import phoenix.pipeline, phoenix.__main__, phoenix_eval.__main__"` -> exit 0; `./scripts/check` -> exit 0)
 - [ ] Step 8: Create `phoenix/config.py` (check: the two model identifiers of AGENTS.md section 6.1 occur in `phoenix/` only in `phoenix/config.py`)
 - [ ] Step 9: Smoke run of the M1 path on `corpus_public/bitstats.c` (check: `cat "$PHOENIX_ROOT/runs/r0-smoke.json"` -> dev pass rate 1.0 and `"replay_identical": true`)
 - [ ] Step 10: `scripts/build-dev-corpus` with the `linux/amd64` compilers (check: the manifest has 176 binaries)
 - [ ] Step 11: `phoenix_eval/run.py`, `scripts/loop`, `docs/SCOREBOARD.md`, `scripts/gate`, replay restore (check: `scripts/loop --probe --tier D0 --opt O0` -> exit 0 and one row with `loop` = `probe` and `exp` = `-`)
 - [ ] Step 12: Corpus acceptance: held-out validation and adequacy pilot (check: `scripts/build-dev-corpus --check` -> exit 0; `uv run --locked python tools/adequacy.py --summary` -> 22 programs at or above both thresholds; `corpus_dev/accepted.json` exists)
-- [ ] Step 13: R0 bootstrap acceptance (check: `scripts/gate R0-bootstrap` -> `R0-bootstrap: PASS`; attempts used: <n> of 3)
+- [ ] Step 13: R0 bootstrap acceptance (check: `scripts/gate R0-bootstrap` -> `R0-bootstrap: PASS`; declared attempts used: <n> of 3)
 - [ ] Step 14: Experiment 1: the M1 path baseline on D0 and D1, immediately after step 13 (check: a row with `exp` = `1/3`)
 - [ ] Step 15: Noise measurement on the commit of experiment 1 (check: `scripts/loop noise` -> one row with `loop` = `noise`)
 - [ ] Step 16: Integrity window fix, fixtures, review, experiment 2 (check: `uv run --locked pytest -q tests/test_integrity.py` -> all pass; a row with `exp` = `2/3`)
@@ -104,7 +104,7 @@ Critical code in this plan needs the review of AGENTS.md section 8 Review before
 
 ## Concrete Steps
 
-Run each command from `$PHOENIX_ROOT/phoenix` after `source "/Volumes/Extreme Pro/Phoenix/env.sh"`, unless a step says otherwise.
+Run each command from `$PHOENIX_ROOT/phoenix` after `source "/Volumes/Extreme Pro/Phoenix/env.sh"`, unless a step says otherwise. After each change in `phoenix_eval/` or `containers/`, rebuild the worker images with the command of step 6 before the next loop, because the images contain a copy of `phoenix_eval/`.
 
 ### Step 2: `scripts/gc`
 
@@ -120,14 +120,16 @@ Write `scripts/gc [--dry-run]` as a POSIX shell script. It prints the free space
 
 ### Step 3: resize procedure
 
-Write `scripts/resize-workspace` as a POSIX shell script. The workspace image must be detached during the resize. Thus run the script text from memory, with the working directory outside the image:
+Write `scripts/resize-workspace [--dry-run]` as a POSIX shell script. In R0, run only `scripts/resize-workspace --dry-run`. The dry run computes `allocated`, `host_free` and `size` (step 4 below), prints each command of the procedure, changes nothing, and writes `$PHOENIX_ROOT/runs/r0-resize.json` with the status `dry_run_ok` or `blocked_on_owner`. Run the real procedure only when the storage rule of `docs/ROADMAP.md` section 9 requires it.
+
+The real procedure detaches the workspace image. Thus run the script text from memory, with the working directory outside the image:
 
 ```sh
 script_text=$(cat scripts/resize-workspace)
 cd / && sh -c "$script_text"
 ```
 
-The script does these steps:
+The real procedure does these steps:
 
 1. Record the VM file system free space with `colima ssh -- df -Pk /var/lib/docker`. Then run `colima stop`.
 2. Run `hdiutil detach /Volumes/PhoenixWork`. If it fails, run `lsof /Volumes/PhoenixWork`. If each listed entry has the descriptor type `cwd` or `txt`, run `hdiutil detach -force /Volumes/PhoenixWork`. Otherwise stop the listed processes other than the current session and try one more time. If it still fails, go to step 7 with the status `blocked_on_owner`.
@@ -142,11 +144,11 @@ The script does these steps:
 
 Keep the Colima disk limit at 32 GiB. Increase it only when `colima ssh -- df -Pk /var/lib/docker` shows less than 5 GiB free, and only by an amount that the free space of the image covers with 10 GiB to spare.
 
-Check: `df -h /Volumes/PhoenixWork` shows the new size, `docker info` exits 0, and `r0-resize.json` has the status `ok`. If the status is `blocked_on_owner`, write the item under `BLOCKED ON OWNER` in `docs/STATUS.md` (AGENTS.md section 3 Autonomy) and continue.
+Check (R0, dry run): `r0-resize.json` has the status `dry_run_ok`, and `df -h /Volumes/PhoenixWork` shows an unchanged size. If the status is `blocked_on_owner`, write the item under `BLOCKED ON OWNER` in `docs/STATUS.md` (AGENTS.md section 3 Autonomy) and continue. Check (real procedure, later): `df -h /Volumes/PhoenixWork` shows the new size, `docker info` exits 0, and the status is `ok`.
 
 ### Step 4: protection
 
-Change `phoenix_eval/protection.py` to the interface in "Interfaces and Dependencies". The protected paths:
+Change `phoenix_eval/protection.py` to the interface in "Interfaces and Dependencies". The protected paths are in this table. `SPEC.md` section 10.5 is the source. If this table differs, follow `SPEC.md`.
 
 | Class | Paths | Profiles that deny the class |
 |---|---|---|
@@ -156,7 +158,7 @@ Change `phoenix_eval/protection.py` to the interface in "Interfaces and Dependen
 | dev-set code and prompts | `<checkout>/phoenix/analyze`, `<checkout>/phoenix/devset`, `<checkout>/phoenix/generate/prompts` | `dev-author`, `corpus-author` |
 | corpus sources | `<checkout>/corpus_dev` | `corpus-author` |
 
-`<checkout>` is the main checkout `$PHOENIX_ROOT/phoenix` and each registered worktree under `$PHOENIX_ROOT/worktrees/` (from `git worktree list --porcelain`). Generate one rule for each copy, at each launch. The `evaluator` profile denies nothing. Remove the macOS-only check for the policy generation, but keep `sandbox-exec` as the only mechanism in R0. R1 adds `bwrap` for Linux.
+`<checkout>` is the main checkout `$PHOENIX_ROOT/phoenix` and each registered worktree under `$PHOENIX_ROOT/worktrees/` (from `git worktree list --porcelain`). Generate one rule for each copy, at each launch. The `allow` argument of `guarded_command` permits named paths inside a denied class. A sealed run (from R2) uses it to give the `pipeline` profile its own run directory `sealed_runs/<run_id>/<binary_sha256>/`. The `evaluator` profile denies nothing. Remove the macOS-only check for the policy generation, but keep `sandbox-exec` as the only mechanism in R0. R1 adds `bwrap` for Linux.
 
 Migrate each caller of `guarded_command` and its tests in the same change:
 
@@ -178,17 +180,27 @@ Commit the instruction documents (`AGENTS.md`, `SPEC.md`, `docs/ARCHITECTURE.md`
 
 Check: `git show main:docs/plans/R0-reset.md > /dev/null` and `git show main:phoenix_eval/protection.py > /dev/null` exit 0.
 
-### Step 6: Dev Author brief and launch
+### Step 6: worker images, Dev Author brief and launch
+
+Before `scripts/launch-role` exists (steps 0 to 4), do not delegate.
+
+Build the worker images. The Dev Author needs `phoenix-worker:amd64` to build and run its programs:
+
+```sh
+./scripts/build-worker amd64 && ./scripts/build-worker arm64
+```
 
 Create the worktree and start the Dev Author with the lead model identifier from AGENTS.md section 6.1:
 
 ```sh
 git worktree add -b dev-corpus-1 "$PHOENIX_ROOT/worktrees/dev-author" main
 scripts/launch-role dev-author -- codex exec -m <lead model> \
-  -c model_reasoning_effort=high -c service_tier=default \
+  -c model_reasoning_effort=high -c service_tier=default --sandbox danger-full-access \
   -C "$PHOENIX_ROOT/worktrees/dev-author" \
   "Read docs/plans/R0-reset.md, section 'Dev Author brief'. Do that work. Commit on branch dev-corpus-1."
 ```
+
+The role profile is the sandbox of the worker. Never use `danger-full-access` without `scripts/launch-role`.
 
 #### Dev Author brief
 
@@ -208,6 +220,17 @@ Rules for each program:
 - It obeys the input contract (`SPEC.md` section 5): deterministic, single-threaded, no network, no `fork`, no `exec`, no time or random values.
 - It is a new design, not a port or a copy of a known tool. Its name is lower case, unique, and not the name of a known tool.
 - It reports errors with messages on stderr and non-zero exit statuses.
+- Write each program so that a case can reach each branch. Use one allocation helper that exits on failure. Do not write a defensive branch that no input can reach.
+
+Build and run each program only in the container:
+
+```sh
+docker run --rm --platform linux/amd64 --network none -v "$PWD/corpus_dev/<name>":/w -w /w \
+  --entrypoint /bin/sh phoenix-worker:amd64 \
+  -c 'gcc -std=c11 -O0 --coverage -o /tmp/p src/*.c -lm && <run the cases> && gcov -b -c src/*.c'
+```
+
+Reach 90% of the branches before you commit a program.
 
 Files for each program `<name>`:
 
@@ -216,7 +239,7 @@ Files for each program `<name>`:
 - At least 100 cases for D0 and 200 cases for D1. Include error cases: bad options, missing files and malformed input.
 - `corpus_dev/<name>/meta.json`: `name`, `tier`, `lines`, `files`, `category`, `features`, `heldout_cases`, `heldout_seed`.
 
-Acceptance (step 12): `scripts/build-dev-corpus --check <name>` passes for each program, and `tools/adequacy.py <name>` meets the thresholds of `SPEC.md` section 10.6. If a program fails, fix the program or the generator. Do at most 2 rounds of fixes for each program. Then replace the program.
+Acceptance (step 12): `scripts/build-dev-corpus --check <name>` passes for each program, and `tools/adequacy.py <name>` meets the thresholds of `SPEC.md` section 10.6. If a program fails, fix the program or the generator. Do at most 2 rounds of fixes for each program. Then replace the program (step 12 gives the limit).
 
 The lead reads the diff and runs the acceptance commands before the merge (AGENTS.md section 7 Delegation).
 
@@ -288,7 +311,6 @@ Check: `grep -rn -e '<runtime model id>' -e '<strongest model id>' phoenix` list
 
 ```sh
 ./scripts/build-ghidra-native
-./scripts/build-worker amd64 && ./scripts/build-worker arm64
 ./scripts/build-integrity amd64 && ./scripts/build-integrity arm64
 uv run --locked phoenix-eval m0 --mode apple-silicon --runs "$PHOENIX_ROOT/runs"
 smoke="r0-smoke-$(uuidgen | tr '[:upper:]' '[:lower:]')"
@@ -301,7 +323,7 @@ Expected: `phoenix-eval m0` prints the path of its report and exits 0. `phoenix 
 
 ### Step 10: `scripts/build-dev-corpus`
 
-The corpus builds use `phoenix-worker:amd64` from step 9. It holds the pinned `linux/amd64` compilers. Check the image first:
+The corpus builds use `phoenix-worker:amd64` from step 6. It holds the pinned `linux/amd64` compilers. Check the image first:
 
 ```sh
 docker image inspect --format '{{.Architecture}}' phoenix-worker:amd64
@@ -319,7 +341,7 @@ Write `scripts/build-dev-corpus [--check] [<program> ...]`. For each program and
 4. Write the files to `$PHOENIX_ROOT/dev_bin/<name>/<compiler>-<level>/<name>` and `<name>.twin`.
 5. Add an entry to `$PHOENIX_ROOT/dev_bin/manifest.json`: `name`, `tier`, `compiler`, `flags`, `sha256`, `category`, `twin_valid`.
 
-With `--check`, also validate each held-out case with the procedure of `SPEC.md` section 10.6, through the evaluator worker. Write the excluded case numbers to `corpus_dev/<name>/holdout/excluded.json`. Exit non-zero if more than 5% of the cases of a binary are excluded.
+With `--check`, also validate each held-out case with the procedure of `SPEC.md` section 10.6, through the evaluator worker. Build the true source for this validation with the canonical flags of `SPEC.md` section 7.2. Write the excluded case numbers to `corpus_dev/<name>/holdout/excluded.json`. Exit non-zero if more than 5% of the cases of a binary are excluded.
 
 Check: `uv run --locked python -c "import json,os; m=json.load(open(os.environ['PHOENIX_ROOT']+'/dev_bin/manifest.json')); print(len(m['binaries']), sum(not b['twin_valid'] for b in m['binaries']))"` prints `176` and the count of invalid twins.
 
@@ -343,11 +365,11 @@ git rm -q phoenix_eval/m1.py phoenix_eval/m2.py phoenix_eval/capture_binding.py 
   tests/test_m2_replay_validation.py tests/test_capture_rejection.py tests/test_evaluation_freeze.py
 ```
 
-Write `scripts/loop` with the interface of `docs/ROADMAP.md` section 5: the loop options, `--probe`, and the subcommands `noise`, `sealed-pre` and `sealed-import`. It samples the peak memory and the free storage after each binary. It appends one row to `docs/SCOREBOARD.md` in the format of `docs/ROADMAP.md` section 6.3, and creates the file with its header if the file does not exist. Nobody writes a row by hand.
+Write `scripts/loop` with the interface of `docs/ROADMAP.md` section 5. In R0, it has the loop options, `--probe` and `noise`. R2 adds `sealed-pre`, `sealed-import` and the sealed corpus mode of `phoenix_eval/run.py`, before Sealed-A run 1. `scripts/loop` refuses to run when `phoenix/` or `phoenix_eval/` has an uncommitted change, and it records `HEAD`. Thus the sequence is: commit the code, run the loop, commit the row. It samples the peak memory and the free storage after each binary. It appends one row to `docs/SCOREBOARD.md` in the format of `docs/ROADMAP.md` section 6.3, and creates the file with its header if the file does not exist. Nobody writes a row by hand.
 
 Add run archiving to `scripts/gc` after the restore works: archive a run directory as `<run>.tar.gz`, record its SHA-256 in `$PHOENIX_ROOT/runs/archive-index.json`, restore it one time to a temporary directory and compare, and only then delete the directory. Keep the run directories of the newest 4 full-loop rows, of the noise row in force, and `runs/m1-t0-*`.
 
-Write `scripts/gate R<n>` and `scripts/gate R0-bootstrap`. Each prints one line for each condition (see "Validation and Acceptance").
+Write `scripts/gate` with the targets `R0-bootstrap`, `R0` and `--enabling <name>` only. Each later milestone adds its gate in its ExecPlan. Each target prints one line for each condition (see "Validation and Acceptance").
 
 Write `tests/test_run.py`: a fixture project that passes, one that fails one case on ARM64 only, one with an integrity failure, a stopped run that still writes its row, and a replay that restores an archived run.
 
@@ -359,7 +381,7 @@ Merge the batch of the Dev Author after its acceptance (AGENTS.md section 7 Dele
 
 1. Run `scripts/build-dev-corpus` and `scripts/build-dev-corpus --check`.
 2. Write `tools/adequacy.py <program> [--seed N]` with the procedure of `SPEC.md` section 10.6. Run it in `phoenix-worker:amd64`. First try `mull` for the Clang version of `tools.lock` one time. If it does not run, use the project source mutator: find the operator locations with `clang -Xclang -ast-dump=json`, and apply the fixed operator set as text replacements. Record the selected mutator in `docs/DECISIONS.md` (a tool decision). The tool writes `corpus_dev/<program>/adequacy.json`.
-3. Run it on the 22 programs. For each program below a threshold, the Dev Author adds held-out cases or replaces the program, within the rounds of the brief. Repeat items 1 and 2 for each changed program.
+3. Run it on the 22 programs. For each program below a threshold, start a fix round: a new Dev Author session with the command of step 6 and the prompt `Read corpus_dev/<name>/adequacy.json. Add held-out cases or fix the program. Commit on branch dev-corpus-1.` Do at most 2 fix rounds for each program. Then replace the program, at most one time. If the replacement also fails after 2 rounds, write the kind of the program in `docs/LOG.md` and write a program of a different kind. Repeat items 1 and 2 for each changed program.
 4. Write `corpus_dev/quick.txt` with quick set version 1 (`docs/ROADMAP.md` section 5).
 5. Write `corpus_dev/accepted.json` with `corpus_hash` and `heldout_hash`. Each later row records the same two hashes. After any later change of the corpus, repeat items 1 to 5 and `scripts/loop noise` before a comparison (`docs/ROADMAP.md` section 6.1).
 
@@ -371,7 +393,7 @@ Check: `scripts/build-dev-corpus --check` exits 0. `uv run --locked python tools
 scripts/gate R0-bootstrap
 ```
 
-The bootstrap item has 3 acceptance attempts. Each failed run of this command is one attempt. Write the count in the "Progress" line. If the third attempt fails, write each failing check that only the owner can fix under `BLOCKED ON OWNER` in `docs/STATUS.md`. For each other failing check, revert the code of that part (AGENTS.md section 9 Anti-stall rules), write one line in the Decision Log, and rebuild that part with a new design. The new design gets 3 new acceptance attempts.
+The bootstrap item has 3 acceptance attempts. An attempt is one declared design (`docs/ROADMAP.md` section 1). Before each attempt, write `attempt <n> of 3: <design>` in `docs/LOG.md`. Each declared attempt that fails is one attempt. Test runs during the work are not attempts. Write the count in the "Progress" line. If the third attempt fails, write each failing check that only the owner can fix under `BLOCKED ON OWNER` in `docs/STATUS.md`. For each other failing check, revert the code of that part (AGENTS.md section 9 Anti-stall rules), write one line in the Decision Log, and rebuild that part with a new design. The new design gets 3 new acceptance attempts.
 
 ### Step 14: experiment 1
 
@@ -406,7 +428,7 @@ Add fixtures:
 - `tests/test_integrity.py`, unit level with synthetic ELF files: a built `.text` that equals the original passes; a window in a built `.rodata` fails with `embedded_text`; a window in a storage record fails with `embedded_text`.
 - `tests/test_compiler_integrity.py`, end to end with the pinned compilers: the original is a fixture C program built with GCC at `-O0` and stripped. The honest reconstruction is the same source with renamed functions. It passes. A cheat that holds 64 original `.text` bytes in a `static const unsigned char` array fails. A cheat that holds them in a writable array fails.
 
-Get the review of AGENTS.md section 8 Review. After the merge, run experiment 2:
+Start the review with the review command of AGENTS.md section 8 Review. After the merge, run experiment 2:
 
 ```sh
 scripts/loop --tier D0,D1 --opt O0,O2,Os --label "integrity window fix"
@@ -418,8 +440,8 @@ Compare rows 1 and 2 with the rule of `docs/ROADMAP.md` section 6.1. Expected: t
 
 Write `scripts/check_gates.py`. `scripts/check` runs it after the existing commands. It checks:
 
-1. **Stale row** (AGENTS.md section 9 Anti-stall rules, rule 3). Find the commit of the newest full-loop row in `docs/SCOREBOARD.md`. Let `N` be the count of commits after it, including the commit under check. Fail if `N` is above 10 and the commit under check changes a file under `phoenix/`. In the pre-commit hook, the commit under check is the staged change. In CI, it is `HEAD`.
-2. **Enabling items.** `docs/plans/enabling.json` lists at most 2 active enabling items: `name`, `paths`, `acceptance` and `last_acceptance_commit`. `scripts/gate --enabling <name>` runs the acceptance command and writes the commit to `last_acceptance_commit`. For a change whose files are all inside the paths of one item, count `N` from the newer of the row commit and `last_acceptance_commit`.
+1. **Stale row** (AGENTS.md section 9 Anti-stall rules, rule 3). Find the commit of the newest full-loop or quick-loop row in `docs/SCOREBOARD.md`. Let `N` be the count of commits after it, including the commit under check. Fail if `N` is above 10 and the commit under check changes a file under `phoenix/`. In the pre-commit hook, the commit under check is the staged change. In CI, it is `HEAD`.
+2. **Enabling items.** `docs/plans/enabling.json` lists at most 2 active enabling items: `name`, `paths`, `acceptance` and `last_acceptance_commit`. `scripts/gate --enabling <name>` runs the acceptance command. Only when the acceptance passes, it writes the commit to `last_acceptance_commit`. For a change whose files are all inside the paths of one item, count `N` from the newer of the row commit and `last_acceptance_commit`.
 3. **Code size**: the limits of `docs/ROADMAP.md` section 6.5.
 4. **Status length**: `docs/STATUS.md` has 60 lines or less (AGENTS.md section 11 Measurement and status).
 5. **Banned terms**: the two process terms of AGENTS.md section 8 Review, matched case-sensitively as whole words, in `README.md` and the files under `docs/`. The three report terms of AGENTS.md section 14 Writing, as whole words without case, in `docs/REPORT.md` when it exists. Keep both lists in `scripts/check_gates.py`.
@@ -468,7 +490,7 @@ R0-bootstrap: PASS
 [pass] 4 scripts/check exit 0 in <minutes> min (limit 5)
 [pass] 5 probe loop D0 O0 warm in <minutes> min (limit 30); probe quick loop <minutes> min (limit 20)
 [pass] 6 protection and integrity tests
-[pass] 7 free <GiB> GiB (limit 15); resize record <status>
+[pass] 7 free <GiB> GiB (limit 15); resize record <status: dry_run_ok, ok or blocked_on_owner>
 [pass] 8 source lines <n> (limit 9000); no reference to a deleted module
 [pass] 9 corpus_dev 22 programs: meta, held-out validation, 8 builds, twins (<n> invalid), adequacy
 R0 gate: PASS
@@ -481,7 +503,7 @@ Read the scoreboard row this way: `tier 0` holds D0 as `O0 a/b; O2 c/d; Os e/f`.
 ## Idempotence and Recovery
 
 - `scripts/gc` is safe to run again. It deletes only the candidates of its rules. It deletes a run directory only after a verified archive exists.
-- `scripts/resize-workspace` computes the size again. If the image already has that size, `hdiutil resize` changes nothing. Each exit path attaches the image and restarts Colima. If the image still does not attach, run `hdiutil attach -nobrowse -mountpoint /Volumes/PhoenixWork "/Volumes/Extreme Pro/Phoenix/phoenix-work.sparsebundle"`, then `colima start`.
+- `scripts/resize-workspace --dry-run` changes nothing. The real procedure computes the size again. If the image already has that size, `hdiutil resize` changes nothing. Each exit path attaches the image and restarts Colima. If the image still does not attach, run `hdiutil attach -nobrowse -mountpoint /Volumes/PhoenixWork "/Volumes/Extreme Pro/Phoenix/phoenix-work.sparsebundle"`, then `colima start`.
 - The protection tests create only temporary files. `phoenix-eval probe` reads nothing that a profile permits.
 - Each salvage step is a set of git operations. To return to the state before a step, run `git checkout <start commit> -- <paths>` with the commit of step 0. The tag `archive/pre-restart` holds each deleted file. The tags `archive/branch/<name>` hold the old branch tips.
 - `scripts/build-dev-corpus` writes the same bytes for the same source and `tools.lock`. Run it again after each change of a program.
@@ -495,8 +517,10 @@ Interfaces that this plan implements or changes:
 ```python
 # phoenix_eval/protection.py
 PROFILES: dict[str, Profile]   # "pipeline", "engineer", "dev-author", "corpus-author", "evaluator"
-def guarded_command(workspace: Path, repo: Path, command: tuple[str, ...], profile: str) -> tuple[str, ...]
+def guarded_command(workspace: Path, repo: Path, command: tuple[str, ...], profile: str,
+                    allow: tuple[Path, ...] = ()) -> tuple[str, ...]
 #   repo: the main checkout; the function also covers each registered worktree
+#   allow: paths that the profile permits inside a denied class
 def inherited_guard(workspace: Path) -> bool
 
 # phoenix_eval/run.py
@@ -523,15 +547,15 @@ Command interfaces:
 ```
 scripts/launch-role <role> -- <command...>
 scripts/gc [--dry-run]
-scripts/resize-workspace                       # run from memory, see step 3
+scripts/resize-workspace [--dry-run]           # the real procedure runs from memory, see step 3
 scripts/build-dev-corpus [--check] [<program> ...]
 phoenix-eval probe
 phoenix-eval run --corpus corpus_dev --tier <tiers> --opt <levels> [--quick] [--probe] [--llm-cache on|off] --run-id <id>
 phoenix-eval run --resume <run_id>
 phoenix-eval --replay <run_id>
 scripts/loop [--tier ...] [--opt ...] [--quick] [--probe] [--llm-cache on|off] [--label <text>]
-scripts/loop noise | sealed-pre ... | sealed-import <run_id>
-scripts/gate R<n> | scripts/gate R0-bootstrap | scripts/gate --enabling <name>
+scripts/loop noise                             # sealed-pre and sealed-import come in R2
+scripts/gate R0-bootstrap | scripts/gate R0 | scripts/gate --enabling <name>
 uv run --locked python tools/adequacy.py <program> [--seed N] | --summary
 ```
 

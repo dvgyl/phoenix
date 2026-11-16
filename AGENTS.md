@@ -82,8 +82,9 @@ The owner is away. Nobody will answer a question.
 6. **Execution.** Run target binaries and reconstructions only inside the
    Linux containers. Never run them on the macOS host.
 7. **Repository content.** The GitHub repository is public. Never commit
-   secrets, sealed material, held-out inputs, run directories or large
-   binaries.
+   secrets, sealed material, held-out inputs of a sealed set, run
+   directories or large binaries. The `corpus_dev` held-out sets are in the
+   repository.
 8. **Honest numbers.** A number counts only if `phoenix-eval` produced it
    with a run ID that reproduces it. Report failures as clearly as successes.
 
@@ -96,6 +97,11 @@ Do these steps at the start of each session and after each context compaction:
 2. `cd "$PHOENIX_ROOT/phoenix"`.
 3. Read `docs/STATUS.md`, the last 10 rows of `docs/SCOREBOARD.md`, the last
    30 lines of `docs/LOG.md`, and the current ExecPlan in `docs/plans/`.
+   Read `SPEC.md`, `docs/ARCHITECTURE.md` and `docs/ROADMAP.md` completely one
+   time, at the start of the project. After that, read the sections that the
+   current ExecPlan names. For R0: `SPEC.md` sections 2, 9 and 10;
+   `docs/ARCHITECTURE.md` sections 6.3, 12 and 14; `docs/ROADMAP.md`
+   sections 3 (R0), 5, 6 and 7.
 4. Run `git status` and `git log --oneline -10`.
 5. Run `df -h "$PHOENIX_ROOT"`. If free space is below 10 GiB, run
    `scripts/gc` before other work.
@@ -113,12 +119,14 @@ R0 creates that file). Then run one quick loop before other work.
 | Role name | Current model | Access |
 |---|---|---|
 | lead model | `gpt-6.1-sol` | Codex CLI |
-| strongest available model | `gpt-6-astra` (on standby) | Codex CLI |
+| strongest available model | `gpt-6-astra` | Codex CLI |
 | runtime model (inside the pipeline) | `gpt-6.1-sol` | `codex exec` or the OpenAI Responses API |
 
-If the strongest available model is not available, the lead model does its
-work at `xhigh` effort. Write one line in `docs/LOG.md`. Do not change the
-runtime model after the tag `v1-freeze`.
+A model is available when a `codex exec` call with that model returns a
+response. Test this one time in each session. If the strongest available
+model is not available, the lead model does its work at `xhigh` effort in a
+new session. Write one line in `docs/LOG.md`. Do not change the runtime
+model after the tag `v1-freeze`.
 
 ### 6.2 Roles
 
@@ -141,6 +149,7 @@ Select the effort from the task. Do not use the maximum effort by default.
 | Normal engineering work (default) | `medium` |
 | `phoenix_eval`, sandbox, protection, integrity checker, transplant shim and thunk, data emitter | `high` |
 | Architect questions, a design that failed one time, root cause of a failure that resisted two fixes | `xhigh` |
+| Reviewer | `high` |
 | Corpus Author | `high` |
 
 The runtime model effort inside the pipeline is set per task in
@@ -161,9 +170,13 @@ changing now.
 - Run at most 4 workers at the same time.
 - Do not delegate a decision. Ask the Architect one time, then decide.
 - Before you use a worker's result, read its diff and run its acceptance command.
-- To start a separate process with a set model and effort, use:
-  `codex exec -m <model> -c model_reasoning_effort=<effort> -c service_tier=default -C <worktree> "<prompt>"`.
-  Put the model name in the command from the table in section 6.1.
+- To start a worker process with a set model and effort, use:
+  `scripts/launch-role <role> -- codex exec -m <model> -c model_reasoning_effort=<effort> -c service_tier=default --sandbox danger-full-access -C <worktree> "<prompt>"`.
+  The role is `engineer`, `dev-author` or `corpus-author`. The role profile
+  is the sandbox of the worker. Never use `danger-full-access` without
+  `scripts/launch-role`. Put the model name from section 6.1 in the command.
+- Before `scripts/launch-role` exists (R0 ExecPlan, protection step), do not
+  delegate.
 - The Corpus Author always runs in a separate fresh session. Its prompt never
   contains pipeline prompts or `corpus_dev` content.
 
@@ -179,9 +192,13 @@ changing now.
 - A reviewer blocks a change only with a failing test or a command that
   shows the defect. An opinion does not block.
 - A review is one response. If it has no blocking item, merge.
-- If the Reviewer is not available, a critical change (first row of the
-  table) stays on its branch. It never merges without review. Continue with
-  other work.
+- Start a review with this command (put the model of section 6.1 in it):
+  `git diff main...<branch> | codex exec -m <strongest available model> -c model_reasoning_effort=high -c service_tier=default --sandbox read-only "Review this diff of Phoenix critical code. Report only defects that you show with a failing test or a command. One response."`
+  If the strongest available model is not available, use the lead model at
+  `xhigh` in a new session.
+- The Reviewer is not available only when no `codex exec` session starts.
+  Then a critical change (first row of the table) stays on its branch. It
+  never merges without review. Continue with other work.
 - A defect found after a merge gets a fix or a revert, not a new review cycle.
 - Never use the words "HOLD" or "fresh complete review" in this project.
   After the permitted rounds, merge or revert.
@@ -205,14 +222,20 @@ prevent a repeat.
    test still fails after 3 attempts. In R0, the bootstrap enabling item of
    the R0 ExecPlan counts as one enabling item. Acceptance attempts of an
    enabling item are not full-loop rows for rule 4.
-3. **Measure before you build more.** `scripts/check` refuses a commit that
-   changes `phoenix/` when the newest full-loop row in `docs/SCOREBOARD.md` is
-   more than 10 commits old. Run the loop, then commit. For an active
-   enabling item, a pass of its acceptance test counts as the measurement
-   (`docs/plans/enabling.json`, defined in the R0 ExecPlan).
+3. **Measure before you build more.** Run the quick loop at least one time
+   for each 10 commits that change `phoenix/`. Run the full loop when a work
+   item is complete. `scripts/check` refuses a commit that changes `phoenix/`
+   when the newest full-loop or quick-loop row in `docs/SCOREBOARD.md` is
+   more than 10 commits old. `scripts/loop` runs only when `phoenix/` and
+   `phoenix_eval/` have no uncommitted change, and it records `HEAD`. Thus
+   the sequence is: commit the code, run the loop, commit the row. A
+   quick-loop row is not an experiment, and rule 4 does not count it. For an
+   active enabling item, a pass of its acceptance test counts as the
+   measurement (`docs/plans/enabling.json`, defined in the R0 ExecPlan).
 4. **Two flat rows.** If two full-loop rows in sequence show no gain in the
-   milestone's main metric, stop the current approach. Revert the code that
-   did not help. Start the next technique in the rank list of
+   metric of the current work item, revert the two changes. If the work item
+   has an experiment left (rule 1), use it for a different variant.
+   Otherwise cut the item and start the next technique in the rank list of
    `docs/ARCHITECTURE.md`.
 5. **Noise.** A gain counts only if it is larger than the noise that R0
    measured, on the same binaries. See `docs/ROADMAP.md`.
