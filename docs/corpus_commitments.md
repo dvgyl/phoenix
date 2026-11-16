@@ -26,7 +26,7 @@ The corpus is agent-sealed on the honor system.
 
 The dedicated Corpus Author supplied these archive hashes. They are hash
 commitments, not independent verification of the private archive bytes.
-Root has not read either archive. Preserve every earlier commitment.
+The lead has not read either archive. Preserve every earlier commitment.
 
 | Archive | SHA-256 |
 | --- | --- |
@@ -39,13 +39,12 @@ adequacy is 2,340/3,211 branch counters and 36 confirmed mutant kills among
 42 compiled mutants. Four mutants survive. Two results are inconclusive.
 Sixteen invalid mutations remain outside that denominator. Forty initial setup
 failures and two interrupted attempts remain recorded. These are Author adequacy
-assertions. They are not Phoenix reconstruction scores. SPEC sets no numerical
-T3 adequacy gate.
+assertions. They are not Phoenix reconstruction scores. Compare them with the
+T3 adequacy threshold in `SPEC.md` before a sealed run.
 
-Fresh independent public-record review is HOLD for two first-publication labels.
-The August date and first npm date remain Author assertions. The review confirms
-later release metadata. Earlier undisclosed copies cannot be excluded. The
-2026-04-30 knowledge cutoff does not prove training completion. The full review
-and safe aggregate record are in the [T3 record archive](checkpoints/2026-11-13-t3-approved/README.md).
-Private verification and M4 publication remain required. Agent sealing uses an
-honor system. No native x86 validation or Phoenix milestone acceptance follows.
+Two T3 programs have first-publication dates that only the Author asserts.
+Public release metadata confirms later releases. Earlier copies cannot be
+excluded. Report these two programs separately (`SPEC.md`, Phoenix-Bench).
+A model knowledge cutoff does not prove the end of training. Agent sealing
+uses an honor system. Publication and verification of the archives remain
+required before any headline claim.

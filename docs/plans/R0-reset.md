@@ -1,0 +1,538 @@
+# R0: Reset the repository and measure the M1 path on corpus_dev
+
+## Purpose
+
+When this plan is complete, Phoenix has an honest and fast measurement loop. One command (`scripts/loop`) runs the pipeline on the development corpus, scores each binary on hidden cases, and adds one row to `docs/SCOREBOARD.md`. Hidden data is protected by a tested sandbox profile. The repository holds only the code that the measured path uses. The workspace has room for the next milestones.
+
+Main metric: the D0 `-O0` binary success rate (`SPEC.md` section 2.3) with the M1 path.
+
+- Value now: not measured. `corpus_dev` does not exist yet.
+- Gate value: 80% or more (`docs/ROADMAP.md`, R0).
+
+Experiment budget: 3 experiments. Only steps 14 and 16 make experiments. Step 16 has the third experiment as its reserve. A plan never extends a budget (AGENTS.md section 10 Milestones and ExecPlans).
+
+## Progress
+
+- [ ] Step 0: Record the start commit (check: `git rev-parse HEAD` -> a hash; write it in this line)
+- [x] Step 1: Storage cleanup (done before this plan; evidence in "Surprises and Discoveries": 31 GiB free of 60 GiB)
+- [ ] Step 2: Write `scripts/gc` without run archiving (check: `scripts/gc --dry-run` -> exit 0, a list of candidates, free space unchanged)
+- [ ] Step 3: Test the resize procedure one time (check: `cat "$PHOENIX_ROOT/runs/r0-resize.json"` -> `"status": "ok"` or `"status": "blocked_on_owner"` with a reason; `docker info` -> exit 0)
+- [ ] Step 4: Protected path list, role profiles, caller migration, `scripts/launch-role`, `phoenix-eval probe` (check: `uv run --locked pytest -q tests/test_protection.py` -> all pass; `uv run --locked phoenix-eval probe` -> each boolean `true`)
+- [ ] Step 5: Commit the instruction documents and the protection change on `main` (check: `git show main:docs/plans/R0-reset.md` and `git show main:phoenix_eval/protection.py` -> exit 0)
+- [ ] Step 6: Start the Dev Author on batch 1 (check: the worker runs in `$PHOENIX_ROOT/worktrees/dev-author`)
+- [ ] Step 7: Salvage: restore, change and delete (check: `uv run --locked python -c "import phoenix.pipeline, phoenix.__main__, phoenix_eval.__main__"` -> exit 0; `./scripts/check` -> exit 0)
+- [ ] Step 8: Create `phoenix/config.py` (check: the two model identifiers of AGENTS.md section 6.1 occur in `phoenix/` only in `phoenix/config.py`)
+- [ ] Step 9: Smoke run of the M1 path on `corpus_public/bitstats.c` (check: `cat "$PHOENIX_ROOT/runs/r0-smoke.json"` -> dev pass rate 1.0 and `"replay_identical": true`)
+- [ ] Step 10: `scripts/build-dev-corpus` with the `linux/amd64` compilers (check: the manifest has 176 binaries)
+- [ ] Step 11: `phoenix_eval/run.py`, `scripts/loop`, `docs/SCOREBOARD.md`, `scripts/gate`, replay restore (check: `scripts/loop --probe --tier D0 --opt O0` -> exit 0 and one row with `loop` = `probe` and `exp` = `-`)
+- [ ] Step 12: Corpus acceptance: held-out validation and adequacy pilot (check: `scripts/build-dev-corpus --check` -> exit 0; `uv run --locked python tools/adequacy.py --summary` -> 22 programs at or above both thresholds; `corpus_dev/accepted.json` exists)
+- [ ] Step 13: R0 bootstrap acceptance (check: `scripts/gate R0-bootstrap` -> `R0-bootstrap: PASS`; attempts used: <n> of 3)
+- [ ] Step 14: Experiment 1: the M1 path baseline on D0 and D1, immediately after step 13 (check: a row with `exp` = `1/3`)
+- [ ] Step 15: Noise measurement on the commit of experiment 1 (check: `scripts/loop noise` -> one row with `loop` = `noise`)
+- [ ] Step 16: Integrity window fix, fixtures, review, experiment 2 (check: `uv run --locked pytest -q tests/test_integrity.py` -> all pass; a row with `exp` = `2/3`)
+- [ ] Step 17: Mechanical gates of `scripts/check` (check: `uv run --locked pytest -q tests/test_check_gates.py` -> all pass)
+- [ ] Step 18: R0 gate and tag (check: `scripts/gate R0` -> `R0 gate: PASS`; `git tag -l r0` -> `r0`)
+
+## Surprises and Discoveries
+
+- The first storage cleanup is done. Evidence: `df -h /Volumes/PhoenixWork` shows 31 GiB free of 60 GiB. The cleanup deleted the entries of `$PHOENIX_ROOT/tmp` that were older than the cleanup (22 GiB of old review artifacts), `$PHOENIX_ROOT/audit` (413 MiB), and the two host package caches `cache/pip-host-cache-*` and `cache/homebrew-host-cache-*`.
+- Old worktrees and all local agent branches are removed. Each branch tip is kept as a tag `archive/branch/<name>`.
+- Remaining large users of the image: `vm/colima` 17 GiB, `sealed` 6.9 GiB, `cache` about 1.5 GiB, `tools` 1.2 GiB, `runs` 429 MiB.
+- `docs/adr/` and `docs/QUESTIONS.md` are deleted. `docs/DECISIONS.md` replaces them.
+- `$PHOENIX_ROOT/vm/colima/default/colima.yaml` sets a VM disk limit of 32 GiB. The VM disk is inside the workspace image.
+- `.gitignore` ignores `/tools/`. Thus a new `tools/` directory in the repository is not committed until step 7 removes that line.
+- `$PHOENIX_ROOT/runs/m1-t0-*` hold the evaluator records of the sealed T0 run at M1. Treat them as sealed records (step 4).
+- `docs/corpus_commitments.md` had a link to a deleted T3 record archive and a banned process term. That note was replaced before R0. No hash line changed.
+- `scripts/build-worker` builds `phoenix-toolchain` only for the native architecture (`arm64` on this host). `phoenix-worker:amd64` is built from the same `toolchain` stage of `containers/Dockerfile` for `linux/amd64`, and contains `gcc`, `clang` and the binutils. Step 10 uses it.
+
+## Decision Log
+
+- Keep `corpus_public/` as the harness self-test corpus of `phoenix-eval m0`. Reason: `runprobe.c` is a sandbox probe, not a reconstruction target, and `m0.py` reads this layout. Alternative not selected: move the three programs into `corpus_dev/`.
+- Protect `$PHOENIX_ROOT/runs/m1-t0-*` in place with the `sealed_runs` rule. Reason: a move would write into a sealed directory. Alternative not selected: move them to `sealed_runs/`.
+- Keep `phoenix_eval/model_ledger.py`, `phoenix_eval/development.py` and `phoenix_eval/submission.py` in R0. Reason: the M1 path imports them. R1 rewrites the ledger and the submission rules. Alternative not selected: rewrite them in R0 before the first row.
+- Restore `phoenix/lift`, `phoenix/generate` (except `raw.py`), `ghidra_scripts/ExportLift.java` and `schemas/lift.schema.json` from commit `6897e47`. Reason: that commit holds the accepted M1 lift and generation. Alternative not selected: remove the switch code from the current versions.
+- Accept the corpus before experiment 1, and measure the noise before the integrity fix. Reason: a baseline and a noise value are valid only for a fixed corpus, and the comparison of experiments 1 and 2 needs the noise threshold.
+- Bundle the R0 prerequisites into one bootstrap enabling item (step 13). Reason: no success number exists before the protection, the salvage, the corpus and the loop are ready. AGENTS.md section 9 Anti-stall rules counts this bootstrap as one enabling item.
+- Use `phoenix-worker:amd64` for the corpus builds. Reason: it holds the pinned `linux/amd64` compilers. Alternative not selected: a second `linux/amd64` build of the `toolchain` stage.
+- The evaluator copies each release binary into the pipeline run directory. Reason: the `pipeline` profile then denies each sealed path without an exception. Alternative not selected: keep the `release` exception of the current `guarded_command`.
+- The stale-row gate counts an enabling item's acceptance run as its measurement. Reason: `docs/ROADMAP.md` gives enabling items their own acceptance test instead of a scoreboard row. If AGENTS.md section 9 Anti-stall rules gives another mechanism, use that mechanism and add one line here.
+
+## Outcomes and Retrospective
+
+None yet.
+
+## Context and Orientation
+
+The repository is `$PHOENIX_ROOT/phoenix` (`/Volumes/PhoenixWork/phoenix`) on the branch `main`. The tag `archive/pre-restart` holds the state before the restart. The restart commit `e591d41` deleted the unreachable code. These items are already deleted: `phoenix/observe`, `phoenix/public_checks`, `phoenix/lift/byte_*`, `phoenix_eval/project_profile.py`, `scripts/check-m2-public`, `corpus_public/mechanisms`, their tests and the old process documents. `tests/conftest.py` already disables Hypothesis deadlines.
+
+The workspace is a case-sensitive APFS sparse bundle, `"/Volumes/Extreme Pro/Phoenix/phoenix-work.sparsebundle"`, mounted at `/Volumes/PhoenixWork` by `"/Volumes/Extreme Pro/Phoenix/env.sh"`. The image has 60 GiB with 31 GiB free. The external drive had about 60 GiB free at the restart. The host is an Apple Silicon Mac (`docs/DECISIONS.md`, entry 1). Linux execution uses Colima (`docs/DECISIONS.md`, entry 2).
+
+The M1 path (`phoenix run` without flags) is: `ingest`, `analyze` (dev set), `lift` (Ghidra), `recover`, `generate` (one whole-program prompt), `verify` (four builds and dev cases), `repair` (up to 20 rounds), `package`. Its modules are `phoenix/__main__.py`, `phoenix/pipeline.py`, `phoenix/ingest`, `phoenix/analyze`, `phoenix/lift`, `phoenix/recover/__init__.py`, `phoenix/generate`, `phoenix/verify`, `phoenix/repair`, `phoenix/package` and `phoenix/llm`. M1 reached 17 of 20 fully successful binaries on sealed T0 `-O0`. Two failures were false positives of the embedded-text rule. One was a behavior failure.
+
+Import facts that the salvage must respect:
+
+- `phoenix/pipeline.py` imports `phoenix.generate.switch_plan` and `phoenix.lift.mapping`.
+- `phoenix/generate/__init__.py` imports `phoenix.generate.protected_switch`. `phoenix/lift/__init__.py` imports `phoenix.lift.mapping`.
+- `phoenix/llm/provider.py` and `phoenix/llm/ledger.py` import `phoenix_eval.model_ledger`.
+- `phoenix_eval/m1.py` imports `phoenix_eval.m2`, `phoenix_eval.capture_binding`, `phoenix_eval.development` and `phoenix_eval.model_ledger`. `phoenix_eval/submission.py` imports `phoenix_eval.development`.
+- `guarded_command` has two callers: `phoenix/llm/codex.py` (`guarded_command(self.workspace, command)`, after `inherited_guard`) and `phoenix_eval/submission.py` (`guarded_command(workspace, ..., release=True, probe=probe)`, with the probe file and `PHOENIX_PIPELINE_GUARD`). `tests/test_submission_recovery.py` replaces it with a stub.
+- The model identifiers are in `phoenix/llm/provider.py` (enum `Model`) and in the price table of `phoenix_eval/model_ledger.py`.
+- The integrity entry point is `phoenix_eval.integrity.check_integrity`.
+
+Terms that this plan uses beyond `docs/ARCHITECTURE.md`:
+
+- "M1 path" is the pipeline as it was at commit `6897e47`.
+- "Reference worktree" is a worktree of that commit at `$PHOENIX_ROOT/worktrees/m1-reference`.
+- "Bootstrap item" is the R0 enabling item of steps 4 to 12. Its acceptance command is `scripts/gate R0-bootstrap`.
+
+## Plan of Work
+
+The sequence follows `docs/ROADMAP.md`, R0. Storage and protection come first. The salvage comes next. The Dev Author writes batch 1 in parallel from step 6. The corpus is accepted before experiment 1. Then the M1 path gives the first row before any new subsystem.
+
+| Item | Steps | Metric | Expected result | Limit |
+|---|---|---|---|---|
+| Storage | 1 to 3 | free GiB | 15 GiB or more free; resize record | 3 attempts |
+| Bootstrap item (enabling): protection, salvage, corpus build, batch 1 with validation and adequacy, evaluation loop | 4 to 13 | bootstrap checks passed | `scripts/gate R0-bootstrap` -> PASS | 3 acceptance attempts |
+| Baseline | 14 | D0 `-O0` success | measured (M1 reached 85% on sealed T0 `-O0`) | experiment 1 |
+| Noise | 15 | flip rate for each cell | recorded | no experiment |
+| Integrity fix | 16 | D0 `-O0` success | a gain of up to the count of experiment-1 binaries whose only integrity category is `embedded_text` | experiments 2 and 3 |
+| Mechanical gates | 17 | gate tests | all pass | 3 attempts |
+
+Inside the bootstrap item, each program of batch 1 has at most 2 rounds of fixes. Then the Dev Author replaces it.
+
+Critical code in this plan needs the review of AGENTS.md section 8 Review before it merges: `phoenix_eval/protection.py`, `phoenix_eval/submission.py`, `phoenix_eval/run.py`, `phoenix_eval/integrity.py`, `phoenix_eval/quality.py`, `scripts/launch-role` and the scoring part of `scripts/loop`. Start the review when each change is ready. Continue with other steps while the review runs.
+
+## Concrete Steps
+
+Run each command from `$PHOENIX_ROOT/phoenix` after `source "/Volumes/Extreme Pro/Phoenix/env.sh"`, unless a step says otherwise.
+
+### Step 2: `scripts/gc`
+
+Write `scripts/gc [--dry-run]` as a POSIX shell script. It prints the free space before and after. In R0 it does only these actions:
+
+1. Delete each Ghidra project directory under `$PHOENIX_ROOT/runs`.
+2. Delete each entry of `$PHOENIX_ROOT/tmp` that is not newer than `$PHOENIX_ROOT/tmp/.gc-mark`. At the end, write a new `.gc-mark`.
+3. Run `docker builder prune --all --force` and `docker image prune --force`. Remove each image whose repository does not start with `phoenix-`.
+4. Run `colima ssh -- sudo fstrim -av`. This returns the freed VM blocks to the image.
+5. Print each run directory above 2 GiB.
+
+`scripts/gc` never deletes a run directory until step 11 adds run archiving. `scripts/gc` never touches `sealed`, `holdout`, `sealed_b`, `holdout_b`, `sealed_runs`, `runs/m1-t0-*`, `dev_bin` or `cache/phoenix/llm`. With `--dry-run`, it prints the actions and changes nothing.
+
+### Step 3: resize procedure
+
+Write `scripts/resize-workspace` as a POSIX shell script. The workspace image must be detached during the resize. Thus run the script text from memory, with the working directory outside the image:
+
+```sh
+script_text=$(cat scripts/resize-workspace)
+cd / && sh -c "$script_text"
+```
+
+The script does these steps:
+
+1. Record the VM file system free space with `colima ssh -- df -Pk /var/lib/docker`. Then run `colima stop`.
+2. Run `hdiutil detach /Volumes/PhoenixWork`. If it fails, run `lsof /Volumes/PhoenixWork`. If each listed entry has the descriptor type `cwd` or `txt`, run `hdiutil detach -force /Volumes/PhoenixWork`. Otherwise stop the listed processes other than the current session and try one more time. If it still fails, go to step 7 with the status `blocked_on_owner`.
+3. Run `hdiutil compact "/Volumes/Extreme Pro/Phoenix/phoenix-work.sparsebundle"`.
+4. Compute `allocated` (GiB, rounded up) with `du -sk` on the bundle, and `host_free` (GiB, rounded down) with `df -k "/Volumes/Extreme Pro"`. Compute `size = min(100, allocated + host_free - 20)`. If `size` is not above the current image size, go to step 7 with the status `blocked_on_owner` and the reason `external drive free space`.
+5. Run `hdiutil resize -size "${size}g" "/Volumes/Extreme Pro/Phoenix/phoenix-work.sparsebundle"`.
+6. Attach the image with `. "/Volumes/Extreme Pro/Phoenix/env.sh"`. Find the store with `diskutil info /Volumes/PhoenixWork | awk -F': *' '/APFS Physical Store/ {print $2}'`. Run `diskutil apfs resizeContainer <store> 0`.
+7. Exit path. Each path after `colima stop` ends here, also after an error:
+   1. Attach the image if it is not attached: `hdiutil attach -nobrowse -mountpoint /Volumes/PhoenixWork "/Volumes/Extreme Pro/Phoenix/phoenix-work.sparsebundle"`.
+   2. Run `colima start`. Check with `docker info`.
+   3. Write `$PHOENIX_ROOT/runs/r0-resize.json` with `status`, `reason`, `size_before_gib`, `size_after_gib`, `host_free_before_gib`, `host_free_after_gib` and `vm_free_gib`.
+
+Keep the Colima disk limit at 32 GiB. Increase it only when `colima ssh -- df -Pk /var/lib/docker` shows less than 5 GiB free, and only by an amount that the free space of the image covers with 10 GiB to spare.
+
+Check: `df -h /Volumes/PhoenixWork` shows the new size, `docker info` exits 0, and `r0-resize.json` has the status `ok`. If the status is `blocked_on_owner`, write the item under `BLOCKED ON OWNER` in `docs/STATUS.md` (AGENTS.md section 3 Autonomy) and continue.
+
+### Step 4: protection
+
+Change `phoenix_eval/protection.py` to the interface in "Interfaces and Dependencies". The protected paths:
+
+| Class | Paths | Profiles that deny the class |
+|---|---|---|
+| sealed | `$PHOENIX_ROOT/sealed`, `holdout`, `sealed_b`, `holdout_b` | `pipeline`, `engineer`, `dev-author` |
+| sealed records | `$PHOENIX_ROOT/sealed_runs`, `$PHOENIX_ROOT/runs/m1-t0-*` | `pipeline`, `engineer`, `dev-author`, `corpus-author` |
+| development hidden data | `<checkout>/corpus_dev/*/src`, `<checkout>/corpus_dev/*/holdout`, `<checkout>/corpus_dev/*/tasks`, `$PHOENIX_ROOT/dev_bin/*/*/*.twin` | `pipeline`, `corpus-author` |
+| dev-set code and prompts | `<checkout>/phoenix/analyze`, `<checkout>/phoenix/devset`, `<checkout>/phoenix/generate/prompts` | `dev-author`, `corpus-author` |
+| corpus sources | `<checkout>/corpus_dev` | `corpus-author` |
+
+`<checkout>` is the main checkout `$PHOENIX_ROOT/phoenix` and each registered worktree under `$PHOENIX_ROOT/worktrees/` (from `git worktree list --porcelain`). Generate one rule for each copy, at each launch. The `evaluator` profile denies nothing. Remove the macOS-only check for the policy generation, but keep `sandbox-exec` as the only mechanism in R0. R1 adds `bwrap` for Linux.
+
+Migrate each caller of `guarded_command` and its tests in the same change:
+
+- `phoenix/llm/codex.py`: call `guarded_command(workspace, repo, command, "pipeline")`. Keep the `inherited_guard` check before the call.
+- `phoenix_eval/submission.py`: call `guarded_command(workspace, repo, command, "pipeline")`. Keep the probe file and `PHOENIX_PIPELINE_GUARD`. Copy the release binary into the pipeline run directory before the launch, and give the pipeline that copy. This replaces the `release` option.
+- `tests/test_submission_recovery.py` and each other test that stubs `guarded_command`: use the new signature.
+
+Write `scripts/launch-role <role> -- <command...>`. It calls `uv run --locked python -m phoenix_eval.protection launch <role> -- <command...>`. For the `pipeline` role, it creates the probe file and sets `PHOENIX_PIPELINE_GUARD`.
+
+Add `phoenix-eval probe`. For each profile and each existing protected path of this host, it attempts one read under the profile. It prints one line for each check, `<profile> <class> <checkout> denied=true|false`, and nothing else. The lead model never runs `ls` or `cat` on a sealed path.
+
+Extend `tests/test_protection.py`. For each profile, build a temporary layout with a main checkout, a worker checkout under a temporary `worktrees/` directory, each protected path and one allowed path. Run `cat` on a probe file in each path under the generated profile. Each protected probe is denied in both checkouts. Each allowed probe is readable.
+
+Check: `uv run --locked pytest -q tests/test_protection.py tests/test_submission.py tests/test_submission_recovery.py tests/test_llm.py` passes. `uv run --locked phoenix-eval probe` prints only `denied=true`.
+
+### Step 5: documents and protection on `main`
+
+Commit the instruction documents (`AGENTS.md`, `SPEC.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, this plan) and the reviewed protection change on `main` before you create the worker worktree.
+
+Check: `git show main:docs/plans/R0-reset.md > /dev/null` and `git show main:phoenix_eval/protection.py > /dev/null` exit 0.
+
+### Step 6: Dev Author brief and launch
+
+Create the worktree and start the Dev Author with the lead model identifier from AGENTS.md section 6.1:
+
+```sh
+git worktree add -b dev-corpus-1 "$PHOENIX_ROOT/worktrees/dev-author" main
+scripts/launch-role dev-author -- codex exec -m <lead model> \
+  -c model_reasoning_effort=high -c service_tier=default \
+  -C "$PHOENIX_ROOT/worktrees/dev-author" \
+  "Read docs/plans/R0-reset.md, section 'Dev Author brief'. Do that work. Commit on branch dev-corpus-1."
+```
+
+#### Dev Author brief
+
+Write 22 new C11 command-line programs in `corpus_dev/`. Do not read `$PHOENIX_ROOT/sealed*`, `$PHOENIX_ROOT/holdout*`, `phoenix/analyze`, `phoenix/devset` or `phoenix/generate/prompts`.
+
+Sizes and kinds (lines as defined in `SPEC.md` section 2.1):
+
+| Tier | Programs | Lines | Kinds |
+|---|---|---|---|
+| D0 | 10: two in each of 40 to 100, 101 to 160, 161 to 220, 221 to 260 and 261 to 300 lines | 300 or less, one source file | statistics, checksums, encoders |
+| D1 | 12: three in each of 301 to 600, 601 to 900, 901 to 1,200 and 1,201 to 1,500 lines | 1 to 3 source files | configuration and CSV transformers, calculators, codecs, image filters |
+
+The D1 programs together contain: structs in each program; function pointer tables in 4 or more; a `switch` with 8 or more cases in 6 or more; recursion in 4 or more; `getopt` or `getopt_long` in 8 or more; floating-point output in 3 or more; a directory tree as input or output in 3 or more; static local variables in 3 or more; `qsort` with a comparator in 3 or more.
+
+Rules for each program:
+
+- It obeys the input contract (`SPEC.md` section 5): deterministic, single-threaded, no network, no `fork`, no `exec`, no time or random values.
+- It is a new design, not a port or a copy of a known tool. Its name is lower case, unique, and not the name of a known tool.
+- It reports errors with messages on stderr and non-zero exit statuses.
+
+Files for each program `<name>`:
+
+- `corpus_dev/<name>/src/*.c` (and `*.h` if needed).
+- `corpus_dev/<name>/holdout/gen.py`: a held-out generator with a fixed seed. It uses knowledge of the source. It writes `corpus_dev/<name>/holdout/cases.jsonl`: one JSON object for each line with the fields `args`, `stdin`, `tree` and `environment`, in the format that `phoenix_eval.corpus` reads.
+- At least 100 cases for D0 and 200 cases for D1. Include error cases: bad options, missing files and malformed input.
+- `corpus_dev/<name>/meta.json`: `name`, `tier`, `lines`, `files`, `category`, `features`, `heldout_cases`, `heldout_seed`.
+
+Acceptance (step 12): `scripts/build-dev-corpus --check <name>` passes for each program, and `tools/adequacy.py <name>` meets the thresholds of `SPEC.md` section 10.6. If a program fails, fix the program or the generator. Do at most 2 rounds of fixes for each program. Then replace the program.
+
+The lead reads the diff and runs the acceptance commands before the merge (AGENTS.md section 7 Delegation).
+
+### Step 7: salvage
+
+Restore the M1 lift and generation:
+
+```sh
+git rm -r -q phoenix/lift
+git checkout 6897e47 -- phoenix/lift ghidra_scripts/ExportLift.java schemas/lift.schema.json
+for f in $(git ls-tree -r --name-only 6897e47 -- phoenix/generate | grep -v '/raw\.py$'); do
+  git checkout 6897e47 -- "$f"
+done
+for t in tests/test_lift.py tests/test_generate.py; do
+  if git cat-file -e "6897e47:$t" 2>/dev/null; then git checkout 6897e47 -- "$t"; fi
+done
+```
+
+Delete:
+
+```sh
+git rm -q phoenix/generate/checked_switch.py phoenix/generate/protected_switch.py \
+  phoenix/generate/switch_binding.py phoenix/generate/switch_plan.py phoenix/generate/switch_source.py
+git rm -q phoenix/recover/addresses.py phoenix/recover/imports.py phoenix/recover/plan.py \
+  phoenix/recover/switches.py phoenix/recover/transfers.py
+git rm -q ghidra_scripts/ExportMapping.java ghidra_scripts/ExportSwitchGraphs.java \
+  ghidra_scripts/OrdinaryByteEvidence.java ghidra_scripts/OrdinarySwitchEvidence.java
+git rm -q tests/test_checked_switch_emission.py tests/test_ordinary_switch_evidence.py \
+  tests/test_protected_switch.py tests/test_recovery_switches.py tests/test_recovery_u1.py \
+  tests/test_switch_artifacts.py tests/test_switch_binding.py tests/test_switch_pipeline.py \
+  tests/test_switch_source.py tests/test_switch_source_generation.py tests/test_lift_evidence.py
+```
+
+A command can report that a file is already absent, because the restore replaced `phoenix/lift`. That is the expected result.
+
+Change:
+
+| Path | Change |
+|---|---|
+| `phoenix/pipeline.py` | Remove the checked-switch path: the `checked_switches` setting and each use of `plan_switches` and `read_selected_generation`. R1 rewrites this file as the stage runner. |
+| `phoenix/__main__.py` | Remove `--checked-switches`. Rename the repair-escalation option and its setting, whose names contain a model name, to `--strongest-repair` and `strongest_repair`. Add `--cost-cap-usd`, passed to the per-binary budget. R1 replaces this file with `phoenix/cli.py`. |
+| `.gitignore` | Remove the line `/tools/`. |
+
+Keep without change in R0: `containers/*`; `phoenix_eval/` except the files that this plan changes or deletes; `phoenix/ingest`, `phoenix/analyze`, `phoenix/recover/__init__.py`, `phoenix/generate/raw.py`, `phoenix/repair`, `phoenix/verify`, `phoenix/package`, `phoenix/llm` (except the changes of steps 4 and 8); `scripts/build-worker`, `scripts/build-integrity`, `scripts/build-ghidra-native`; `corpus_public/`; the tests of each kept module.
+
+Rule for tests: delete a test file that imports a deleted module. If a kept test fails only because it tests removed behavior, delete that test function and add one line to the Decision Log.
+
+Rule for interface drift: if an import or the smoke run (step 9) fails because a restored module and a kept module disagree, take the `6897e47` version of the kept module too. Add one line to the Decision Log. The reference worktree shows the working combination:
+
+```sh
+git worktree add --detach "$PHOENIX_ROOT/worktrees/m1-reference" 6897e47
+```
+
+`phoenix_eval/m1.py`, `phoenix_eval/m2.py` and `phoenix_eval/capture_binding.py` stay until step 11 replaces them.
+
+Checks:
+
+- `uv run --locked python -c "import phoenix.pipeline, phoenix.__main__, phoenix_eval.__main__"` exits 0.
+- `grep -rnE 'checked_switch|protected_switch|switch_plan|switch_source|switch_binding|lift\.mapping|lift\.index|lift\.evidence|recover\.(addresses|imports|plan|switches|transfers)|ExportMapping|ExportSwitchGraphs|Ordinary(Byte|Switch)Evidence' phoenix phoenix_eval tests scripts` prints nothing.
+- `./scripts/check` exits 0.
+
+### Step 8: `phoenix/config.py`
+
+Create `phoenix/config.py` with `ROLE_MODELS: dict[str, str]`. The keys are `runtime` and `strongest`. The values are the identifiers in the "Current model" column of AGENTS.md section 6.1. Add `PRICES`, the price of each model, from the table in `phoenix_eval/model_ledger.py`. Change `phoenix/llm/provider.py` and `phoenix/pipeline.py` to use the role keys instead of the `Model` enum members that carry model names. `phoenix_eval/model_ledger.py` keeps its own table until the R1 ledger rewrite deletes it.
+
+Check: `grep -rn -e '<runtime model id>' -e '<strongest model id>' phoenix` lists only `phoenix/config.py`.
+
+### Step 9: smoke run of the M1 path
+
+```sh
+./scripts/build-ghidra-native
+./scripts/build-worker amd64 && ./scripts/build-worker arm64
+./scripts/build-integrity amd64 && ./scripts/build-integrity arm64
+uv run --locked phoenix-eval m0 --mode apple-silicon --runs "$PHOENIX_ROOT/runs"
+smoke="r0-smoke-$(uuidgen | tr '[:upper:]' '[:lower:]')"
+scripts/launch-role pipeline -- uv run --locked phoenix run \
+  "$PHOENIX_ROOT/runs/<m0 run id>/bitstats-original.elf" --run-id "$smoke"
+uv run --locked phoenix run --replay "$smoke"
+```
+
+Expected: `phoenix-eval m0` prints the path of its report and exits 0. `phoenix run` exits 0 and prints the project path. The report shows a dev-set pass rate of 100%. `diff -r` between the project of the run and the project of the replay prints nothing. Write `$PHOENIX_ROOT/runs/r0-smoke.json` with `run_id`, `dev_pass_rate` and `replay_identical`.
+
+### Step 10: `scripts/build-dev-corpus`
+
+The corpus builds use `phoenix-worker:amd64` from step 9. It holds the pinned `linux/amd64` compilers. Check the image first:
+
+```sh
+docker image inspect --format '{{.Architecture}}' phoenix-worker:amd64
+docker run --rm --platform linux/amd64 --network none --entrypoint /bin/sh phoenix-worker:amd64 \
+  -c 'gcc --version && clang --version && objcopy --version && gcov --version'
+```
+
+Expected: `amd64`, then four version banners.
+
+Write `scripts/build-dev-corpus [--check] [<program> ...]`. For each program and each build of {`gcc`, `clang`} x {`-O0`, `-O2`, `-Os`, `-O3`}, in `phoenix-worker:amd64` with `--entrypoint /bin/sh`, `--network none` and `SOURCE_DATE_EPOCH` from `tools.lock`:
+
+1. Build `<cc> -std=c11 -<level> -o <name> src/*.c -lm`. Then run `strip --strip-all`.
+2. Build the twin with the same command plus `-g`, without `strip`.
+3. Compare the `.text` bytes of the two files (`objcopy -O binary --only-section=.text`). Record `twin_valid`.
+4. Write the files to `$PHOENIX_ROOT/dev_bin/<name>/<compiler>-<level>/<name>` and `<name>.twin`.
+5. Add an entry to `$PHOENIX_ROOT/dev_bin/manifest.json`: `name`, `tier`, `compiler`, `flags`, `sha256`, `category`, `twin_valid`.
+
+With `--check`, also validate each held-out case with the procedure of `SPEC.md` section 10.6, through the evaluator worker. Write the excluded case numbers to `corpus_dev/<name>/holdout/excluded.json`. Exit non-zero if more than 5% of the cases of a binary are excluded.
+
+Check: `uv run --locked python -c "import json,os; m=json.load(open(os.environ['PHOENIX_ROOT']+'/dev_bin/manifest.json')); print(len(m['binaries']), sum(not b['twin_valid'] for b in m['binaries']))"` prints `176` and the count of invalid twins.
+
+### Step 11: evaluation loop
+
+Write `phoenix_eval/run.py` within the size limit of `docs/ROADMAP.md` section 6.5. Use `phoenix_eval/m1.py` as the reference for capture, builds, pairs and integrity. After the selection is fixed, it records each selected binary. For each binary, it:
+
+1. Runs `scripts/launch-role pipeline -- uv run --locked phoenix run <copy of the binary> --run-id <id> --cost-cap-usd <cap>` with the cap of the tier (`SPEC.md` section 12.3), through the slots of `docs/ARCHITECTURE.md` section 14.1.
+2. Captures the project with `phoenix_eval/submission.py`.
+3. Builds it four ways, runs the valid held-out cases on both architectures, and runs `check_integrity`.
+4. Computes `register_named_locals` and `goto_per_100_lines` with the new `phoenix_eval/quality.py`.
+5. Records the result, the failure categories, the integrity sub-categories, the binary SHA-256 and the held-out hash of each binary.
+
+It writes `$PHOENIX_ROOT/runs/<run_id>/scoreboard.json` with the fields of `docs/ROADMAP.md` section 6.2, also when the execution stops (`run_state` = `stopped`; each binary that did not complete is a failure). A field without a source in R0 is `null`. `phoenix-eval run --resume <run_id>` continues a stopped run. A retry keeps the recorded failures and cost. `phoenix-eval --replay <run_id>` repeats the evaluation with the recorded LLM responses. If the run directory is archived, it first restores the archive and verifies its SHA-256 (`docs/ARCHITECTURE.md` section 2.3).
+
+Change `phoenix_eval/__main__.py`: replace the commands `m1` and `m2` with `run`, and add `probe` (step 4). Then delete:
+
+```sh
+git rm -q phoenix_eval/m1.py phoenix_eval/m2.py phoenix_eval/capture_binding.py \
+  tests/test_m1.py tests/test_m2.py tests/test_m2_capture_binding.py \
+  tests/test_m2_replay_validation.py tests/test_capture_rejection.py tests/test_evaluation_freeze.py
+```
+
+Write `scripts/loop` with the interface of `docs/ROADMAP.md` section 5: the loop options, `--probe`, and the subcommands `noise`, `sealed-pre` and `sealed-import`. It samples the peak memory and the free storage after each binary. It appends one row to `docs/SCOREBOARD.md` in the format of `docs/ROADMAP.md` section 6.3, and creates the file with its header if the file does not exist. Nobody writes a row by hand.
+
+Add run archiving to `scripts/gc` after the restore works: archive a run directory as `<run>.tar.gz`, record its SHA-256 in `$PHOENIX_ROOT/runs/archive-index.json`, restore it one time to a temporary directory and compare, and only then delete the directory. Keep the run directories of the newest 4 full-loop rows, of the noise row in force, and `runs/m1-t0-*`.
+
+Write `scripts/gate R<n>` and `scripts/gate R0-bootstrap`. Each prints one line for each condition (see "Validation and Acceptance").
+
+Write `tests/test_run.py`: a fixture project that passes, one that fails one case on ARM64 only, one with an integrity failure, a stopped run that still writes its row, and a replay that restores an archived run.
+
+Check: `scripts/loop --probe --tier D0 --opt O0` exits 0. `tail -1 docs/SCOREBOARD.md` shows a row with `loop` = `probe` and `exp` = `-`. `uv run --locked pytest -q tests/test_run.py` passes.
+
+### Step 12: corpus acceptance
+
+Merge the batch of the Dev Author after its acceptance (AGENTS.md section 7 Delegation). Then:
+
+1. Run `scripts/build-dev-corpus` and `scripts/build-dev-corpus --check`.
+2. Write `tools/adequacy.py <program> [--seed N]` with the procedure of `SPEC.md` section 10.6. Run it in `phoenix-worker:amd64`. First try `mull` for the Clang version of `tools.lock` one time. If it does not run, use the project source mutator: find the operator locations with `clang -Xclang -ast-dump=json`, and apply the fixed operator set as text replacements. Record the selected mutator in `docs/DECISIONS.md` (a tool decision). The tool writes `corpus_dev/<program>/adequacy.json`.
+3. Run it on the 22 programs. For each program below a threshold, the Dev Author adds held-out cases or replaces the program, within the rounds of the brief. Repeat items 1 and 2 for each changed program.
+4. Write `corpus_dev/quick.txt` with quick set version 1 (`docs/ROADMAP.md` section 5).
+5. Write `corpus_dev/accepted.json` with `corpus_hash` and `heldout_hash`. Each later row records the same two hashes. After any later change of the corpus, repeat items 1 to 5 and `scripts/loop noise` before a comparison (`docs/ROADMAP.md` section 6.1).
+
+Check: `scripts/build-dev-corpus --check` exits 0. `uv run --locked python tools/adequacy.py --summary` prints 22 programs at or above both thresholds.
+
+### Step 13: bootstrap acceptance
+
+```sh
+scripts/gate R0-bootstrap
+```
+
+The bootstrap item has 3 acceptance attempts. Each failed run of this command is one attempt. Write the count in the "Progress" line. If the third attempt fails, write each failing check that only the owner can fix under `BLOCKED ON OWNER` in `docs/STATUS.md`. For each other failing check, revert the code of that part (AGENTS.md section 9 Anti-stall rules), write one line in the Decision Log, and rebuild that part with a new design. The new design gets 3 new acceptance attempts.
+
+### Step 14: experiment 1
+
+Run this step immediately after the bootstrap acceptance. Before the run, write the work-item line in `docs/LOG.md` (AGENTS.md section 9 Anti-stall rules).
+
+```sh
+scripts/loop --tier D0,D1 --opt O0,O2,Os --label "M1 path baseline"
+```
+
+Expected: a row with `exp` = `1/3`, `mode` = `m1`, the hashes of `corpus_dev/accepted.json`, and D0 and D1 values at each level. Create `docs/STATUS.md` in the form of AGENTS.md section 11 Measurement and status.
+
+### Step 15: noise measurement
+
+On the same commit as experiment 1:
+
+```sh
+scripts/loop noise
+```
+
+Expected: one row with `loop` = `noise` and the flips of each cell. Later rows set `noise_ref` to this row.
+
+### Step 16: integrity window fix
+
+Change `phoenix_eval/integrity.py`, function `check_integrity`. Its name and signature stay the same:
+
+1. Remove the built executables from the 64-byte window check of whole files.
+2. Keep the window check of the source files and of each storage record (literals and initializers).
+3. Add the window check of the non-executable data sections of each built executable: `.rodata`, `.data` and `.data.rel.ro`. Remove the ranges of the C runtime start-up symbols (`_IO_stdin_used`, `__dso_handle`, `data_start`, `__data_start`, `completed.0`, `__TMC_END__`) and the sections `.init_array` and `.fini_array`.
+
+Add fixtures:
+
+- `tests/test_integrity.py`, unit level with synthetic ELF files: a built `.text` that equals the original passes; a window in a built `.rodata` fails with `embedded_text`; a window in a storage record fails with `embedded_text`.
+- `tests/test_compiler_integrity.py`, end to end with the pinned compilers: the original is a fixture C program built with GCC at `-O0` and stripped. The honest reconstruction is the same source with renamed functions. It passes. A cheat that holds 64 original `.text` bytes in a `static const unsigned char` array fails. A cheat that holds them in a writable array fails.
+
+Get the review of AGENTS.md section 8 Review. After the merge, run experiment 2:
+
+```sh
+scripts/loop --tier D0,D1 --opt O0,O2,Os --label "integrity window fix"
+```
+
+Compare rows 1 and 2 with the rule of `docs/ROADMAP.md` section 6.1. Expected: the D0 `-O0` value increases by up to the count of experiment-1 binaries whose only integrity category was `embedded_text`. Experiment 3 is the reserve for a fix of this item.
+
+### Step 17: mechanical gates
+
+Write `scripts/check_gates.py`. `scripts/check` runs it after the existing commands. It checks:
+
+1. **Stale row** (AGENTS.md section 9 Anti-stall rules, rule 3). Find the commit of the newest full-loop row in `docs/SCOREBOARD.md`. Let `N` be the count of commits after it, including the commit under check. Fail if `N` is above 10 and the commit under check changes a file under `phoenix/`. In the pre-commit hook, the commit under check is the staged change. In CI, it is `HEAD`.
+2. **Enabling items.** `docs/plans/enabling.json` lists at most 2 active enabling items: `name`, `paths`, `acceptance` and `last_acceptance_commit`. `scripts/gate --enabling <name>` runs the acceptance command and writes the commit to `last_acceptance_commit`. For a change whose files are all inside the paths of one item, count `N` from the newer of the row commit and `last_acceptance_commit`.
+3. **Code size**: the limits of `docs/ROADMAP.md` section 6.5.
+4. **Status length**: `docs/STATUS.md` has 60 lines or less (AGENTS.md section 11 Measurement and status).
+5. **Banned terms**: the two process terms of AGENTS.md section 8 Review, matched case-sensitively as whole words, in `README.md` and the files under `docs/`. The three report terms of AGENTS.md section 14 Writing, as whole words without case, in `docs/REPORT.md` when it exists. Keep both lists in `scripts/check_gates.py`.
+6. **Program names**: no name of a `corpus_dev` program, and no string literal of 12 or more characters from `corpus_dev/*/src`, occurs in `phoenix/`.
+7. **Import direction**: `phoenix_eval` never imports `phoenix`. `phoenix` never imports `tools`.
+8. **Deleted modules**: reject each import, dynamic load and executable reference to a module of the deleted list of step 7 and step 11 in `phoenix/`, `phoenix_eval/`, `scripts/` and `tests/`. Permit the names in the prohibition registry of `scripts/check_gates.py` and in synthetic negative-test fixtures. Never permit a production import or a dynamic load.
+
+Change `.github/workflows/public-tests.yml`: set `fetch-depth: 0` in each checkout step, so that the stale-row check can count commits.
+
+Write `tests/test_check_gates.py` with a temporary git repository for gates 1 and 2, and small files for gates 3 to 8.
+
+Check: `uv run --locked pytest -q tests/test_check_gates.py` passes. `time ./scripts/check` shows less than 5 minutes (performance requirement).
+
+### Step 18: gate and tag
+
+```sh
+scripts/loop --probe --tier D0 --opt O0 --label "R0 performance"
+scripts/loop --probe --quick --label "R0 quick performance"
+scripts/gate R0
+git tag -a r0 -m "$(tail -1 docs/SCOREBOARD.md)"
+```
+
+Then push as AGENTS.md section 12 Git states.
+
+## Validation and Acceptance
+
+`scripts/gate R0-bootstrap` prints one line for each check:
+
+```
+[pass] protection tests (main checkout and worker checkout)
+[pass] phoenix-eval probe: <n> checks, each denied=true
+[pass] instruction documents and protection on main
+[pass] salvage: imports, reference grep, scripts/check
+[pass] M1 smoke run: dev pass 1.0, replay identical
+[pass] corpus: 176 binaries, held-out validation, 22 programs at the adequacy thresholds, accepted.json
+[pass] evaluation loop: probe row, tests/test_run.py
+R0-bootstrap: PASS
+```
+
+`scripts/gate R0` checks the conditions of `docs/ROADMAP.md`, R0, and prints one line for each:
+
+```
+[pass] 1 main metric: success D0 O0 = <value> (gate 0.80)
+[pass] 2 newest full-loop row covers D0 and D1 at O0, O2, Os
+[pass] 3 noise row for quick set 1
+[pass] 4 scripts/check exit 0 in <minutes> min (limit 5)
+[pass] 5 probe loop D0 O0 warm in <minutes> min (limit 30); probe quick loop <minutes> min (limit 20)
+[pass] 6 protection and integrity tests
+[pass] 7 free <GiB> GiB (limit 15); resize record <status>
+[pass] 8 source lines <n> (limit 9000); no reference to a deleted module
+[pass] 9 corpus_dev 22 programs: meta, held-out validation, 8 builds, twins (<n> invalid), adequacy
+R0 gate: PASS
+```
+
+Each gate exits 0 only when each line is `[pass]`. The time limits in lines 4 and 5 are performance requirements of scripts.
+
+Read the scoreboard row this way: `tier 0` holds D0 as `O0 a/b; O2 c/d; Os e/f`. The main metric cell states the value and the gate. `exp` shows the experiment count of 3, or `-` for a probe, quick or noise row. `data hash` shows the corpus and held-out hashes. If the budget is used and the gate fails, apply `docs/ROADMAP.md` section 7.
+
+## Idempotence and Recovery
+
+- `scripts/gc` is safe to run again. It deletes only the candidates of its rules. It deletes a run directory only after a verified archive exists.
+- `scripts/resize-workspace` computes the size again. If the image already has that size, `hdiutil resize` changes nothing. Each exit path attaches the image and restarts Colima. If the image still does not attach, run `hdiutil attach -nobrowse -mountpoint /Volumes/PhoenixWork "/Volumes/Extreme Pro/Phoenix/phoenix-work.sparsebundle"`, then `colima start`.
+- The protection tests create only temporary files. `phoenix-eval probe` reads nothing that a profile permits.
+- Each salvage step is a set of git operations. To return to the state before a step, run `git checkout <start commit> -- <paths>` with the commit of step 0. The tag `archive/pre-restart` holds each deleted file. The tags `archive/branch/<name>` hold the old branch tips.
+- `scripts/build-dev-corpus` writes the same bytes for the same source and `tools.lock`. Run it again after each change of a program.
+- After the selection is fixed, the evaluator records each selected binary and writes a row even if the execution stops. Each binary that did not complete stays a failure in the denominator. An experiment counts one time. Resume the same run where possible. A retry never erases its failures or its cost.
+- The Dev Author works on the branch `dev-corpus-1`. A failed round changes nothing on `main`.
+
+## Interfaces and Dependencies
+
+Interfaces that this plan implements or changes:
+
+```python
+# phoenix_eval/protection.py
+PROFILES: dict[str, Profile]   # "pipeline", "engineer", "dev-author", "corpus-author", "evaluator"
+def guarded_command(workspace: Path, repo: Path, command: tuple[str, ...], profile: str) -> tuple[str, ...]
+#   repo: the main checkout; the function also covers each registered worktree
+def inherited_guard(workspace: Path) -> bool
+
+# phoenix_eval/run.py
+def evaluate(workspace: Path, run_id: str, selection: Selection, llm_cache: bool) -> Scoreboard
+#   Selection: corpus, tiers, levels, quick (bool), probe (bool)
+#   Scoreboard: the fields of docs/ROADMAP.md section 6.2
+
+# phoenix_eval/quality.py
+def register_named_locals(source: dict[str, bytes]) -> int      # SPEC.md section 2.5
+def goto_density(source: dict[str, bytes]) -> float             # SPEC.md section 2.3
+
+# phoenix_eval/integrity.py (name and signature unchanged, window rule changed)
+def check_integrity(original: bytes, source: dict[str, bytes], executables: tuple[bytes, ...],
+                    evidence: tuple[CompilerEvidence, ...], dev_outputs: frozenset[bytes],
+                    origin: tuple[FunctionShape, ...]) -> IntegrityReport
+
+# phoenix/config.py
+ROLE_MODELS: dict[str, str]    # keys "runtime" and "strongest"
+PRICES: dict[str, tuple[int, int, int]]
+```
+
+Command interfaces:
+
+```
+scripts/launch-role <role> -- <command...>
+scripts/gc [--dry-run]
+scripts/resize-workspace                       # run from memory, see step 3
+scripts/build-dev-corpus [--check] [<program> ...]
+phoenix-eval probe
+phoenix-eval run --corpus corpus_dev --tier <tiers> --opt <levels> [--quick] [--probe] [--llm-cache on|off] --run-id <id>
+phoenix-eval run --resume <run_id>
+phoenix-eval --replay <run_id>
+scripts/loop [--tier ...] [--opt ...] [--quick] [--probe] [--llm-cache on|off] [--label <text>]
+scripts/loop noise | sealed-pre ... | sealed-import <run_id>
+scripts/gate R<n> | scripts/gate R0-bootstrap | scripts/gate --enabling <name>
+uv run --locked python tools/adequacy.py <program> [--seed N] | --summary
+```
+
+External tools, pinned in `tools.lock`: Python 3.12.13, uv 0.12.3, Colima 0.10.3, Lima 2.2.1, Docker CLI 29.7.2, Docker Engine 29.5.2, Buildx 0.38.2, Ubuntu 24.04 base image and package snapshot, Clang 18.1.3, GCC from the pinned snapshot (with `gcov`), QEMU 8.2.2 (oracle and coverage plugin), Ghidra 12.2 with the pinned Temurin JDK. `mull`, if step 12 selects it, gets a pin in `tools.lock` in the same commit.

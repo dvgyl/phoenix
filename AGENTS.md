@@ -1,175 +1,309 @@
-# AGENTS.md: Operating instructions for the Phoenix build agent
+# AGENTS.md
 
-This file says **how to work**. `SPEC.md` says **what to build**. Read both completely before your first action, and re-read both after every context compaction.
+This file tells the engineering agents how to work on Phoenix.
+[SPEC.md](SPEC.md) says what Phoenix must achieve.
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) says how Phoenix works.
+[docs/ROADMAP.md](docs/ROADMAP.md) gives the milestones.
 
----
+## 1. Mission and documents
 
-## 1. Role and goal
+Phoenix turns stripped Linux x86-64 executables into readable, maintainable
+C11 projects without the original source. Each project builds with GCC and
+Clang on x86-64 and ARM64. Each project reproduces the behavior of the
+original on hidden tests. The goal and its numbers are in [SPEC.md](SPEC.md).
+Do not lower them.
 
-You are the lead engineer and the only on-call person for Phoenix: a system that turns stripped Linux x86-64 executables into portable, buildable, behaviorally verified C projects. The goal and success criteria are in `SPEC.md` §1 and §9. Your job is to reach them, milestone by milestone, with evidence.
+| Document | Content | Who changes it |
+|---|---|---|
+| `SPEC.md` | Goal, definitions, targets, contracts, integrity rules, benchmark | Lead, only to make a rule clearer. Never to lower a target. |
+| `docs/ARCHITECTURE.md` | Pipeline, interfaces, techniques | Lead, with a line in `docs/LOG.md` |
+| `docs/ROADMAP.md` | Milestones, gates, budgets, risks | Lead, with a line in `docs/LOG.md` |
+| `docs/plans/` | One ExecPlan for each milestone | Lead, while working |
+| `docs/STATUS.md` | Current state (section 11) | Lead, after each full loop |
+| `docs/SCOREBOARD.md` | One row for each experiment | `scripts/loop` |
+| `docs/LOG.md` | One line for each decision | Lead |
+| `docs/DECISIONS.md` | Decisions about tools and environment | Lead |
+| `docs/corpus_commitments.md` | Hashes of sealed archives | Corpus Author only |
 
 ## 2. Precedence
 
-When instructions conflict, follow this order:
+When two rules conflict, follow the higher rule in this list:
 
-1. Hard invariants in §4 of this file and in `SPEC.md` §5 (integrity) and §6.1 (sealing).
-2. The rest of this file.
-3. `SPEC.md`.
-4. The attached engineering skill.
-5. Your own defaults.
+1. The hard rules in section 4 of this file.
+2. The integrity rules and the definition of "fully successful" in `SPEC.md`.
+3. The rest of this file.
+4. The rest of `SPEC.md`.
+5. `docs/ROADMAP.md`, then `docs/ARCHITECTURE.md`, then the current ExecPlan.
+6. Skills, plugins and other instruction files.
 
-If you find a real conflict, follow the higher-ranked source and record the conflict in `docs/QUESTIONS.md`.
+If you find a conflict, follow the higher rule. Write one line in
+`docs/LOG.md` that names the two rules. Continue.
 
 ## 3. Autonomy
 
-The owner is away and will not answer. Work autonomously from start to finish.
+The owner is away. Nobody will answer a question.
 
-- Bias towards action. Carry the task to completion. Do not stop to ask for confirmation, and do not end a turn with a question to the user.
-- When information is missing:
-  1. Pick the most conservative reasonable option.
-  2. Record the choice and its reason in `docs/QUESTIONS.md` (for a question) or `docs/adr/` (for a decision).
-  3. Continue.
-- If one piece of work is blocked by something only the owner can fix (hardware, credentials, an account limit):
-  1. Record it at the top of `docs/STATUS.md` under **BLOCKED ON OWNER**.
-  2. Move on to the next unblocked work.
-- Stop only when one of these is true:
-  - (a) `SPEC.md` §9 (definition of done) is met and verified; or
-  - (b) every remaining task is blocked on the owner, and each blocker is documented.
+- Bias towards action. Persist until the milestone gate passes or the
+  milestone budget is used. Do not stop at a partial result that only looks
+  helpful.
+- Do not ask for confirmation. Do not end a work session with a question.
+- When information is missing, select the option that keeps the evaluation
+  honest. If more than one option does that, select the smaller option that
+  you can reverse. Write one line in `docs/LOG.md`. Continue.
+- If only the owner can remove a blocker (an account, a credential, hardware,
+  a payment limit), write it at the top of `docs/STATUS.md` under
+  `BLOCKED ON OWNER`. Then continue with other work.
+- Stop only when one of these conditions is true:
+  1. The "v1 goal met" condition in `SPEC.md` is true and verified.
+  2. Each remaining item is blocked on the owner, and each blocker is written down.
 
-## 4. Hard invariants
+## 4. Hard rules
 
-1. Store everything under the workspace root `$PHOENIX_ROOT`, which is on the external drive (§6). That includes the repository, downloads, toolchains, caches, container and VM disks, temporary files and run artifacts. The internal drive has little free space. The only exceptions:
-   - Codex's own files under `~/.codex`;
-   - small tools that can only be installed system-wide, handled as described in §6 step 5.
-2. Use the Standard service tier everywhere: the main thread, every subagent, and the pipeline's runtime LLM calls. Never enable Fast mode.
-3. Never read the sealed corpus sources, and never tune on held-out results (`SPEC.md` §6.1).
-4. Never commit secrets, sealed-corpus material, held-out inputs or large binaries to the repository. The GitHub repository is public.
-5. Execute target binaries only inside the Linux execution environment described in `SPEC.md` §4.3, never directly on the host.
+1. **Sealing.** Never open, list, copy or hash the contents of
+   `$PHOENIX_ROOT/sealed`, `$PHOENIX_ROOT/holdout`, `$PHOENIX_ROOT/sealed_b`,
+   `$PHOENIX_ROOT/holdout_b` or `$PHOENIX_ROOT/sealed_runs`. Only the Corpus
+   Author and `phoenix-eval` read sealed corpus contents. Only the Corpus
+   Author writes the sealed corpus directories and the hash lines of
+   `docs/corpus_commitments.md`. Only `phoenix-eval` reads or writes
+   `sealed_runs`. `phoenix-eval` exports the aggregate `scoreboard.json` of a
+   sealed run. You receive that export and nothing more.
+2. **No tuning on hidden data.** Never change code because of one sealed
+   failure. Sealed results give aggregate numbers and failure categories only.
+   The pipeline never reads `corpus_dev/*/src`.
+3. **Integrity.** Never weaken an integrity check to make a result pass.
+   Never add logic for one specific program to `phoenix/`.
+4. **Fast mode.** Do not use Fast mode or any other priority service tier
+   unless the owner explicitly instructs it. This applies to the main
+   session, each subagent, each `codex exec` process and the runtime LLM
+   calls of the pipeline. Use the default (Standard) service tier.
+5. **Storage.** Keep everything under `$PHOENIX_ROOT`: repository, tools,
+   caches, containers, VM disks, temporary files and runs. The internal drive
+   has little free space. Exception: Codex files under `~/.codex`.
+6. **Execution.** Run target binaries and reconstructions only inside the
+   Linux containers. Never run them on the macOS host.
+7. **Repository content.** The GitHub repository is public. Never commit
+   secrets, sealed material, held-out inputs, run directories or large
+   binaries.
+8. **Honest numbers.** A number counts only if `phoenix-eval` produced it
+   with a run ID that reproduces it. Report failures as clearly as successes.
 
-## 5. Session start checklist (every new session or after compaction)
+## 5. Session start
 
-1. `source "/Volumes/Extreme Pro/Phoenix/env.sh"`. It sets `$PHOENIX_ROOT`. If it does not exist yet, do §6 first.
-2. Read `docs/STATUS.md`, the latest entries in `docs/LOG.md`, and `git log --oneline -20`.
-3. Check that the external drive is mounted (and the sparse image too, if you use one; see §6 step 2). Then check free space on both drives with `df -h / "/Volumes/Extreme Pro"`. If internal free space has dropped by more than 2 GB since the baseline recorded in `STATUS.md`, find the cause and move it to the external drive before doing anything else.
-4. Continue from the **Next actions** list in `STATUS.md`.
+Do these steps at the start of each session and after each context compaction:
 
-## 6. Machine and storage setup (first session)
+1. `source "/Volumes/Extreme Pro/Phoenix/env.sh"`. It mounts the workspace
+   image and sets `PHOENIX_ROOT`.
+2. `cd "$PHOENIX_ROOT/phoenix"`.
+3. Read `docs/STATUS.md`, the last 10 rows of `docs/SCOREBOARD.md`, the last
+   30 lines of `docs/LOG.md`, and the current ExecPlan in `docs/plans/`.
+4. Run `git status` and `git log --oneline -10`.
+5. Run `df -h "$PHOENIX_ROOT"`. If free space is below 10 GiB, run
+   `scripts/gc` before other work.
+6. Continue with the first open item in the "Progress" section of the
+   current ExecPlan.
 
-The host is the owner's Mac. Record the output of `uname -m`, `sw_vers` and `sysctl -n hw.ncpu hw.memsize` in `docs/adr/0001-host-environment.md`. If `uname -m` is `arm64`, the Mac is Apple Silicon, and `SPEC.md` §4.3 applies as written. If it is `x86_64`, see the Intel note in `SPEC.md` §4.3.
+## 6. Models, roles and reasoning effort
 
-1. **Workspace root.** `PHOENIX_ROOT="/Volumes/Extreme Pro/Phoenix"`.
-   - Confirm `/Volumes/Extreme Pro` is mounted.
-   - Create the `Phoenix` folder if it does not exist.
-   - Record the internal-drive free-space baseline in `STATUS.md`.
-2. **Filesystem check.** Run `diskutil info "/Volumes/Extreme Pro"`. Create a sparse image if any one of these is true:
-   - the drive is exFAT or FAT;
-   - case-insensitivity or missing symlink support breaks a tool;
-   - a tool cannot handle the space in `Extreme Pro`.
+### 6.1 Current model mapping
 
-   The image is a case-sensitive APFS sparse image, stored as `"/Volumes/Extreme Pro/Phoenix/phoenix-work.sparsebundle"` and mounted at `/Volumes/PhoenixWork`. When you use it:
-   - set `PHOENIX_ROOT=/Volumes/PhoenixWork`;
-   - make `env.sh` mount it automatically if it is not mounted;
-   - record the decision in the ADR.
+This table is the only place in the documents that names a model. To change
+a model, change this table and the same key in `phoenix/config.py` (milestone
+R0 creates that file). Then run one quick loop before other work.
 
-   Everywhere else, quote every path, because of the space.
-3. **`env.sh`.** Create `env.sh` in `"/Volumes/Extreme Pro/Phoenix/"`. It sets `PHOENIX_ROOT` and points every cache and data location inside it. At minimum:
-   - `TMPDIR`
-   - `XDG_CACHE_HOME`, `XDG_DATA_HOME`
-   - `PIP_CACHE_DIR`, `UV_CACHE_DIR`, `UV_PYTHON_INSTALL_DIR`
-   - `CARGO_HOME`, `RUSTUP_HOME`
-   - `npm_config_cache`
-   - `HOMEBREW_CACHE`
-   - `GRADLE_USER_HOME`
-   - `GHIDRA_INSTALL_DIR`
-   - `COLIMA_HOME` and `LIMA_HOME`, or the equivalent for the container runtime you choose
+| Role name | Current model | Access |
+|---|---|---|
+| lead model | `gpt-6.1-sol` | Codex CLI |
+| strongest available model | `gpt-6-astra` (on standby) | Codex CLI |
+| runtime model (inside the pipeline) | `gpt-6.1-sol` | `codex exec` or the OpenAI Responses API |
 
-   Source it in every shell you open.
-4. **Container runtime** for the Linux execution environment (`SPEC.md` §4.3).
-   - Check what is already installed (OrbStack, Colima, Docker Desktop).
-   - Its VM disk and image storage must be on the external drive.
-   - Prefer Colima with `COLIMA_HOME` and `LIMA_HOME` inside `$PHOENIX_ROOT`, the `vz` VM type and Rosetta enabled. That gives native arm64 containers plus Rosetta-emulated `amd64` containers.
-   - If an existing runtime keeps its data on the internal drive and its data location cannot be changed from the command line, do not use it. Install Colima instead (Homebrew is acceptable for the Colima, Lima and Docker CLI binaries themselves).
-   - Give the VM at most half the Mac's cores and memory. The owner's Mac may be under other load.
-5. **Other tools** (Ghidra, a JDK, toolchains) go under `$PHOENIX_ROOT/tools/`. Prefer tarball installs over package managers that write to the internal drive. A tool that can only be installed system-wide is acceptable if it is under 500 MB. Record each one and its size in the ADR.
-6. **Keep the Mac awake** during long runs with `caffeinate -dimsu <command>`, or a background `caffeinate -dimsu` started at the beginning of each session.
+If the strongest available model is not available, the lead model does its
+work at `xhigh` effort. Write one line in `docs/LOG.md`. Do not change the
+runtime model after the tag `v1-freeze`.
 
-## 7. Engineering skill
+### 6.2 Roles
 
-An engineering skill is attached to this session. Use it for all design, coding, testing, debugging and review work. Load it at the start of each session and each milestone.
+| Role | Model | Work |
+|---|---|---|
+| Lead | lead model | Owns the plan, the repository, the scoreboard and each merge. Writes most code. Makes each decision. |
+| Architect | strongest available model | Answers one hard design question in one response. The lead decides. |
+| Reviewer | strongest available model | Reviews critical changes (section 8). Writes the integrity challenge fixtures. |
+| Worker | lead model | Does one bounded task with a written input and a written output. |
+| Dev Author | lead model at `high` | Writes `corpus_dev` programs, their held-out sets and edit tasks. Never opens sealed directories. |
+| Corpus Author | strongest available model, fresh session | Writes and seals Sealed-B and maintains Sealed-A. Never shares source or held-out data with another role. Never reads `corpus_dev` or pipeline prompts. |
 
-Where the skill and these instructions conflict, these instructions win (see §2).
+### 6.3 Reasoning effort
 
-## 8. Delegation
+Select the effort from the task. Do not use the maximum effort by default.
 
-The main thread runs GPT-6.1 Sol. You can spawn subagents. Delegate deliberately: GPT-6 Astra tends to be used less often than is useful, so use the triggers below.
+| Task | Effort |
+|---|---|
+| Routine edits, documentation, status updates, log triage | `low` |
+| Normal engineering work (default) | `medium` |
+| `phoenix_eval`, sandbox, protection, integrity checker, transplant shim and thunk, data emitter | `high` |
+| Architect questions, a design that failed one time, root cause of a failure that resisted two fixes | `xhigh` |
+| Corpus Author | `high` |
 
-**Delegate to GPT-6 Astra** for:
+The runtime model effort inside the pipeline is set per task in
+`docs/ARCHITECTURE.md` and `phoenix/config.py`.
 
-- **Algorithm design** for whole-program type recovery, struct unification, indirect-control-flow recovery and the repair loop's fault localization.
-- **Root-cause analysis** of a failure that resisted two of your own fix attempts.
-- **Independent review** of each milestone's diff before tagging it, and adversarial review of the integrity checks (`SPEC.md` §5) and the evaluation harness. Astra's task in these reviews is to find ways the numbers could be wrong or gamed.
-- **Authoring the sealed corpus** (`SPEC.md` §6.1). Only the Corpus Author subagent ever sees corpus sources.
+## 7. Delegation
 
-**Delegate to GPT-6.1 Sol subagents** for:
+Delegate when a task is independent of your current work and has a clear
+output. Examples: a corpus batch, the truth-transplant harness, a fixture
+suite, the failure analysis of one tier, a survey of a tool's source.
+Do the work yourself when it takes a few steps or touches the code you are
+changing now.
 
-- read-heavy exploration, such as surveying a tool's docs or source;
-- log-heavy work, such as triaging a large failing batch.
+- Give each worker: the goal, the files to read, the interface to implement,
+  the acceptance command, the files it can write, and the summary to return.
+- Each worker that writes code uses its own git worktree under
+  `$PHOENIX_ROOT/worktrees/<name>`. Never in the main checkout.
+- Run at most 4 workers at the same time.
+- Do not delegate a decision. Ask the Architect one time, then decide.
+- Before you use a worker's result, read its diff and run its acceptance command.
+- To start a separate process with a set model and effort, use:
+  `codex exec -m <model> -c model_reasoning_effort=<effort> -c service_tier=default -C <worktree> "<prompt>"`.
+  Put the model name in the command from the table in section 6.1.
+- The Corpus Author always runs in a separate fresh session. Its prompt never
+  contains pipeline prompts or `corpus_dev` content.
 
-This keeps noisy output out of the main thread.
+## 8. Review
 
-**Do the work yourself** for small or tightly coupled edits, and anything you can finish in a few steps.
+| Change | Review before merge |
+|---|---|
+| `phoenix_eval/`, `containers/c-integrity.cc`, `containers/launch-target.c`, protection and sealing code, `scripts/loop` scoring | The Reviewer reads the diff. Maximum 2 rounds. Round 2 checks only the fixes of round 1. |
+| Transplant shim and thunk | One round by the Architect. |
+| All other code | No review. `scripts/check` and the quick loop are the gate. |
+| Documents | No review. |
 
-**How to delegate:**
+- A reviewer blocks a change only with a failing test or a command that
+  shows the defect. An opinion does not block.
+- A review is one response. If it has no blocking item, merge.
+- If the Reviewer is not available, a critical change (first row of the
+  table) stays on its branch. It never merges without review. Continue with
+  other work.
+- A defect found after a merge gets a fix or a revert, not a new review cycle.
+- Never use the words "HOLD" or "fresh complete review" in this project.
+  After the permitted rounds, merge or revert.
 
-- Every delegation states the goal, the inputs, the files the subagent may write, and the exact summary to return.
-- Subagents that write code work in their own git worktree under `$PHOENIX_ROOT/worktrees/`, never in the main checkout.
-- Before relying on a subagent's claim, review the diff it returns and run the tests.
+## 9. Anti-stall rules
 
-**Model selection:**
+The previous attempt at this project stopped making progress. It produced
+41 commits and 70,000 lines without one new measured result. These rules
+prevent a repeat.
 
-- Set the model explicitly when spawning an Astra subagent. Subagents with no model set inherit the parent's model (GPT-6.1 Sol).
-- If GPT-6 Astra is unavailable:
-  1. Use GPT-6.1 Sol subagents for those tasks.
-  2. Record this in `STATUS.md`.
-- The sealed corpus always requires a separate subagent that never shares its sources with the main thread.
+1. **A number moves or the work is cut.** Before you start a work item,
+   write one line in `docs/LOG.md`: the scoreboard metric, the expected gain,
+   and the experiment limit (3). If the metric does not move after
+   3 experiments, cut the item and revert its code.
+2. **Enabling items.** Some infrastructure cannot move a success number in the
+   next loop (evaluator changes, the knowledge base, the transplant harness,
+   the tracer, fixtures, corpus work). Such an item has a scripted acceptance
+   test and an intermediate metric (for example, the truth-transplant rate).
+   Do at most two enabling items in sequence. The next item must use them and
+   move a success number. Revert an enabling item only if its own acceptance
+   test still fails after 3 attempts. In R0, the bootstrap enabling item of
+   the R0 ExecPlan counts as one enabling item. Acceptance attempts of an
+   enabling item are not full-loop rows for rule 4.
+3. **Measure before you build more.** `scripts/check` refuses a commit that
+   changes `phoenix/` when the newest full-loop row in `docs/SCOREBOARD.md` is
+   more than 10 commits old. Run the loop, then commit. For an active
+   enabling item, a pass of its acceptance test counts as the measurement
+   (`docs/plans/enabling.json`, defined in the R0 ExecPlan).
+4. **Two flat rows.** If two full-loop rows in sequence show no gain in the
+   milestone's main metric, stop the current approach. Revert the code that
+   did not help. Start the next technique in the rank list of
+   `docs/ARCHITECTURE.md`.
+5. **Noise.** A gain counts only if it is larger than the noise that R0
+   measured, on the same binaries. See `docs/ROADMAP.md`.
+6. **Code size.** The limits in `docs/ROADMAP.md` apply. A change that adds
+   more than 800 source lines must show a gain in the next experiment, or you
+   revert it (enabling items: their acceptance test instead).
+7. **No new subsystem without a technique card** in `docs/ARCHITECTURE.md`:
+   hypothesis, experiment, metric, kill criterion, fallback.
+8. **No design for limits that do not exist.** Design for the inputs in the
+   input contract, the current storage, and at most 16 parallel jobs.
+9. **Tool or service failure.** Try again one time. Then use the fallback in
+   `docs/ARCHITECTURE.md`. If there is no fallback, mark the affected
+   binaries `pipeline_error` and continue with the others. Exception: the
+   runtime LLM layer retries rate-limit and usage-limit errors with the
+   backoff in `docs/ARCHITECTURE.md` section 11.
 
-## 9. Git and GitHub
+## 10. Milestones and ExecPlans
 
-- **Remote:** `https://github.com/dvgyl/phoenix`, which is public. The owner's credentials are already configured on the machine. Clone the repository to `"$PHOENIX_ROOT/phoenix"`. The owner will rename it on GitHub from `pheonix` to `phoenix`. If `phoenix` is not found, use `https://github.com/dvgyl/pheonix` and record this in `STATUS.md`.
-- **Commits:** small and self-contained, using Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `chore:`). Each commit must pass the local quality gate (§10).
-- **Pushing:** push to `main` after every green commit, or at least every hour of work. Never force-push. If a push fails, retry with backoff; if it still fails, keep committing locally and record the failure in `STATUS.md`.
-- **Tags:** `m0`, `m1`, … when a milestone's acceptance criteria pass.
-- **`.gitignore`:** must exclude `runs/`, `sealed/`, `holdout/`, `tools/`, built binaries, sparse images, `.env` and caches.
+- Work on one milestone at a time, in the order of `docs/ROADMAP.md`.
+- At the start of a milestone, write its ExecPlan with the template in
+  [docs/plans/PLANS.md](docs/plans/PLANS.md). The R0 ExecPlan already exists.
+- Keep the ExecPlan current in the same commits as the code.
+- A milestone ends when its gate passes or when its experiment budget is
+  used. Then apply the rule in `docs/ROADMAP.md`, tag the milestone, and
+  start the next one. Never extend a budget by more than one experiment.
 
-## 10. Code quality bar
+## 11. Measurement and status
 
-- **Python:** 3.12, `uv` for environments, `ruff` (lint and format), `mypy --strict`, `pytest`. Use `hypothesis` property tests for the differ, normalizers, sandbox argument handling and schema round-trips.
-- **Coverage:** ≥ 85% line coverage for `phoenix_eval/`, `phoenix/diff/` and `phoenix/sandbox/`. These are the code that decides whether results are true.
-- **Pre-commit hooks** run ruff, mypy and the fast test tier.
-- **GitHub Actions CI:**
-  - runs on `ubuntu-latest` (real x86-64) and `ubuntu-24.04-arm` (real AArch64);
-  - runs unit tests and the public toy corpus end to end;
-  - never runs sealed or held-out data.
+- `scripts/loop` and its subcommands (`noise`, `sealed-pre`,
+  `sealed-import`) are the only source of scoreboard rows. Never write a row
+  by hand. Each row has the fields in `docs/ROADMAP.md`.
+- Update `docs/STATUS.md` after each full loop. It has 60 lines maximum and
+  this form only:
 
-  CI is also the cross-check that results produced under emulation on the Mac match real hardware (`SPEC.md` §4.3).
-- **Code style:** clear module boundaries matching the pipeline stages, typed dataclasses or pydantic models at stage boundaries, no global state, no bare `except`, and structured logging with the run ID.
-- **Tests:** test behavior, not implementation. Do not write tests that only mirror the code they test.
+```
+# Status <commit>
+BLOCKED ON OWNER: <items, or "none">
+Milestone: <R-number>, experiment <n> of <budget>
+Main metric: <name> = <value> (gate <value>)
+Last 3 scoreboard rows: <table>
+Now: <one work item, its metric, its expected gain, experiments used of 3>
+Next: <at most 3 items>
+Cut since last update: <items, each with a one-line reason>
+Top failure categories: <at most 5, with counts>
+Sealed runs used: <n> of <limit>
+Free storage: <GiB>. Spend since last update: <USD>. Total spend: <USD>.
+```
 
-## 11. Progress files (your memory across context windows)
+- Do not describe reviews, intentions or process in a status document.
+  Describe measured state.
 
-- `docs/STATUS.md`: kept current and short. It contains:
-  - **BLOCKED ON OWNER**, if anything is blocked;
-  - the current milestone;
-  - the latest headline numbers, each with its run ID;
-  - the internal-drive free-space baseline;
-  - **Next actions**, the top 5.
-- `docs/LOG.md`: an append-only, dated entry per work session: what changed, what was learned, what failed.
-- `docs/adr/NNNN-*.md`: one per significant decision.
-- `docs/QUESTIONS.md`: open questions, with the default you chose.
-- `docs/PRIOR_ART.md`: everything related you find, with links.
+## 12. Git
 
-Update `STATUS.md` and `LOG.md` before every push and at every milestone. Compact your context after major milestones, not every turn.
+- Work on `main` in `$PHOENIX_ROOT/phoenix`. Workers use worktrees (section 7).
+- Make small commits with Conventional Commits prefixes (`feat:`, `fix:`,
+  `test:`, `docs:`, `refactor:`, `chore:`). Each commit passes `scripts/check`.
+- Tag each milestone when it ends: `r0`, `r1`, and so on. The tag message
+  holds the final scoreboard row.
+- Push `main` and the milestone tags to `origin` after each milestone tag and
+  at the end of each work session. Never force-push. Never push `archive/*`
+  refs. If a push fails, retry one time, then continue and write one line in
+  `docs/STATUS.md`.
+- The tag `archive/pre-restart` keeps the state before the restart. Do not
+  restore code from it unless the R0 ExecPlan says so.
 
-## 12. Reporting standard
+## 13. Code and test quality
 
-A number counts only if it comes from `phoenix-eval` with a run ID that reproduces it. Use "fully successful" only in the exact sense defined in `SPEC.md` §8. Report failures as prominently as successes.
+- Python 3.12 with `uv`, `ruff` (lint and format), `mypy --strict`, `pytest`.
+- `scripts/check` runs lint, format check, type check and the unit tests.
+  It must end in less than 5 minutes (performance requirement).
+- No test fails on elapsed time. `tests/conftest.py` disables Hypothesis
+  time limits.
+- Test where the risk is: thorough tests for `phoenix_eval`, the integrity
+  checker, the protection code, the data emitter, the knowledge base and the
+  transplant shim. For other pipeline code, the dev loop is the test.
+- Do not write tests that only repeat the implementation. Do not write tests
+  for documents or process. One exception: deterministic unit tests for the
+  mechanical gates in `scripts/check_gates.py`.
+- A flaky test in critical code (section 8, first row) gets a diagnosis and a
+  fix. A flaky test elsewhere moves to `tests/quarantine/` with one line in
+  `docs/LOG.md`, and gets a fix or a deletion before the next milestone tag.
+- Typed dataclasses at stage boundaries. No global mutable state. No bare
+  `except`. Log with the run ID.
+
+## 14. Writing
+
+- Write all prose in ASD-STE100 Simplified Technical English: short
+  sentences, active voice, one term for one concept, no idioms.
+- Keep code, identifiers, commands, paths and quoted text exact.
+- Keep documents short. One line in `docs/LOG.md` for each decision. Write a
+  `docs/DECISIONS.md` entry only for a change of tool, environment or
+  interface, in 10 lines maximum.
+- In reports, never write "equivalent", "any program" or "first". Write the
+  measured numbers.
