@@ -11,10 +11,11 @@ import pytest
 
 from phoenix import pipeline, verify
 from phoenix.analyze import Analysis, DevelopmentCase
+from phoenix.config import ROLE_MODELS
 from phoenix.generate import Candidate, Definition, write_project
 from phoenix.ingest import BinaryMetadata
 from phoenix.llm.ledger import Ledger
-from phoenix.llm.provider import Completion, Model, Usage
+from phoenix.llm.provider import Completion, Usage
 from phoenix.package import package_project
 from phoenix.recover import Function, Program
 from phoenix.verify import BUILD_CONFIGURATIONS, Check, Verification
@@ -177,7 +178,7 @@ def test_delivered_line_sensitive_source_is_the_tested_artifact(
                 }
             ),
             usage,
-            Model.SOL,
+            ROLE_MODELS["runtime"],
         )
         for body in ("return __LINE__;", "return __LINE__ + 1;")
     ]

@@ -1,13 +1,8 @@
 from dataclasses import dataclass
-from enum import StrEnum
 from typing import Protocol
 
+from phoenix.config import ROLE_MODELS
 from phoenix_eval.model_ledger import TokenUsage, completion_charge
-
-
-class Model(StrEnum):
-    SOL = "gpt-6.1-sol"
-    ASTRA = "gpt-6-astra"
 
 
 @dataclass(frozen=True)
@@ -27,7 +22,7 @@ class Usage:
 @dataclass(frozen=True)
 class Request:
     prompt: str
-    model: Model = Model.SOL
+    model: str = ROLE_MODELS["runtime"]
     max_output_tokens: int = 16_384
 
     def __post_init__(self) -> None:
@@ -72,7 +67,7 @@ class Provider(Protocol):
     def complete(self, request: Request) -> Completion: ...
 
 
-def cost_nanodollars(model: Model, usage: Usage) -> int:
+def cost_nanodollars(model: str, usage: Usage) -> int:
     return completion_charge(
         model,
         TokenUsage(usage.input_tokens, usage.cached_input_tokens, usage.output_tokens),

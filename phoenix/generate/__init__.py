@@ -4,8 +4,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from textwrap import dedent, indent
 
-from phoenix.generate.protected_switch import ProtectedDefinition, protected_prefix
-from phoenix.llm.provider import Model, Request
+from phoenix.config import ROLE_MODELS
+from phoenix.llm.provider import Request
 from phoenix.recover import Program
 from phoenix_eval.build import PROJECT_CMAKE
 
@@ -52,7 +52,7 @@ class Definition:
 @dataclass(frozen=True, slots=True)
 class Candidate:
     declarations: str
-    functions: tuple[Definition | ProtectedDefinition, ...]
+    functions: tuple[Definition, ...]
 
 
 def request_candidate(
@@ -61,11 +61,9 @@ def request_candidate(
     previous: Candidate | None = None,
     difference: str = "",
     round_number: int = 0,
-    model: Model = Model.SOL,
-    protected: tuple[ProtectedDefinition, ...] = (),
+    model: str = ROLE_MODELS["runtime"],
 ) -> Request:
-    protected_entries = {definition.entry for definition in protected}
-    evidence: dict[str, object] = {
+    evidence = {
         "main_startup_evidence": {
             "startup": hex(program.startup),
             "setup": hex(program.main_setup),
@@ -79,7 +77,6 @@ def request_candidate(
                 "ghidra_signature": function.ghidra_signature,
             }
             for function in program.functions
-            if function.entry not in protected_entries
         },
         "imports": program.imports,
         "strings": {hex(address): value for address, value in program.strings},
@@ -92,39 +89,15 @@ def request_candidate(
             for item in program.data
         },
     }
-    instructions = _INSTRUCTIONS
-    if protected:
-        evidence["protected_functions"] = {
-            hex(item.entry): {
-                "signature": item.signature,
-                "source": item.source,
-                "data": [global_.declaration for global_ in item.globals],
-            }
-            for item in protected
-        }
-        instructions += (
-            "\nPhoenix writes the protected functions and their data before your code. "
-            "Keep their names and types in calls. Do not define them again. "
-            "Return definitions only for the entries under functions.\n"
-        )
     payload = json.dumps(evidence, ensure_ascii=True)
-    prompt = f"{instructions}\nBinary evidence\n{payload}"
+    prompt = f"{_INSTRUCTIONS}\nBinary evidence\n{payload}"
     if difference:
         prompt += (
             f"\nRepair round {round_number}. Revise the previous reconstruction "
             "to address this development failure."
         )
         if previous is not None:
-            prompt += "\nPrevious reconstruction\n" + json.dumps(
-                {
-                    "declarations": previous.declarations,
-                    "functions": [
-                        asdict(item)
-                        for item in previous.functions
-                        if isinstance(item, Definition)
-                    ],
-                }
-            )
+            prompt += "\nPrevious reconstruction\n" + json.dumps(asdict(previous))
         prompt += "\nFailure\n" + difference
     return Request(prompt, model)
 
@@ -141,9 +114,7 @@ def _text(value: object) -> str:
     return value
 
 
-def parse_candidate(
-    response: str, program: Program, *, protected: tuple[ProtectedDefinition, ...] = ()
-) -> Candidate:
+def parse_candidate(response: str, program: Program) -> Candidate:
     try:
         document = _object(json.loads(response))
     except json.JSONDecodeError as exc:
@@ -151,21 +122,10 @@ def parse_candidate(
     if set(document) != {"declarations", "functions"}:
         raise InvalidCandidate("The model response has unexpected fields.")
     definitions = _object(document["functions"])
-    entries = {function.entry for function in program.functions}
-    retained = {item.entry: item for item in protected}
-    if len(retained) != len(protected) or not retained.keys() <= entries:
-        raise InvalidCandidate("The protected function roster is invalid.")
-    if set(definitions) != {hex(entry) for entry in entries - retained.keys()}:
-        if retained:
-            raise InvalidCandidate(
-                "The response must define each unprotected function."
-            )
+    if set(definitions) != {hex(function.entry) for function in program.functions}:
         raise InvalidCandidate("The response must define each recovered function.")
-    functions: list[Definition | ProtectedDefinition] = []
+    functions = []
     for function in program.functions:
-        if function.entry in retained:
-            functions.append(retained[function.entry])
-            continue
         definition = _object(definitions[hex(function.entry)])
         if set(definition) != {"signature", "body", "evidence"}:
             raise InvalidCandidate("The function definition has unexpected fields.")
@@ -192,30 +152,14 @@ def write_project(project: Path, candidate: Candidate) -> None:
     (project / "include").mkdir(exist_ok=True)
     (project / "CMakeLists.txt").write_text(PROJECT_CMAKE, encoding="utf-8")
     declarations = candidate.declarations.strip()
-    prototypes = "\n".join(
-        f"{item.signature};"
-        for item in candidate.functions
-        if isinstance(item, Definition)
-    )
+    prototypes = "\n".join(f"{item.signature};" for item in candidate.functions)
     definitions = []
-    protected = []
-    marker = (
-        "/* PHOENIX-UNVERIFIED: Pending tests at generation. "
-        "See phoenix_report.json for final confidence. */\n"
-    )
     for item in candidate.functions:
-        if isinstance(item, ProtectedDefinition):
-            protected.append(item)
-            continue
+        marker = (
+            "/* PHOENIX-UNVERIFIED: Pending tests at generation. "
+            "See phoenix_report.json for final confidence. */\n"
+        )
         body = indent(dedent(item.body).strip(), "    ")
         definitions.append(f"{marker}{item.signature}\n{{\n{body}\n}}")
-    prefix = (
-        (
-            protected_prefix(tuple(protected)),
-            *(marker + item.source for item in protected),
-        )
-        if protected
-        else ()
-    )
-    source = "\n\n".join((*prefix, declarations, prototypes, *definitions)) + "\n"
+    source = "\n\n".join((declarations, prototypes, *definitions)) + "\n"
     (project / "src/program.c").write_text(source, encoding="utf-8")

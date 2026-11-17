@@ -6,8 +6,9 @@ from typing import cast
 
 import pytest
 
+from phoenix.config import ROLE_MODELS
 from phoenix.llm.ledger import Ledger
-from phoenix.llm.provider import Completion, Model, ProviderError, Request, Usage
+from phoenix.llm.provider import Completion, ProviderError, Request, Usage
 from phoenix_eval import m1
 from phoenix_eval.build import PROJECT_CMAKE
 from phoenix_eval.corpus import Variant
@@ -48,7 +49,7 @@ def test_completed_attempt_cannot_be_retried(tmp_path: Path, operation: str) -> 
 def test_live_model_mismatch_keeps_reservation(tmp_path: Path) -> None:
     class WrongModel(Provider):
         def complete(self, request: Request) -> Completion:
-            return Completion("answer", Usage(5, 2, 3), Model.ASTRA)
+            return Completion("answer", Usage(5, 2, 3), ROLE_MODELS["strongest"])
 
     ledger = Ledger(tmp_path)
     with pytest.raises(ProviderError):
@@ -196,9 +197,9 @@ def test_crash_and_failed_attempts_keep_budget_reservations(tmp_path: Path) -> N
     assert bound_summary(tmp_path, run, "case-ghidra-raw").cost_nanodollars == 0
 
 
-@pytest.mark.parametrize("model", list(Model))
+@pytest.mark.parametrize("model", list(ROLE_MODELS.values()))
 @pytest.mark.parametrize("inputs", [0, 272_000, 272_001])
-def test_shared_charges_match_provider_contract(model: Model, inputs: int) -> None:
+def test_shared_charges_match_provider_contract(model: str, inputs: int) -> None:
     from phoenix.llm.provider import cost_nanodollars
     from phoenix_eval.model_ledger import TokenUsage, completion_charge
 
@@ -210,14 +211,14 @@ def test_shared_charges_match_provider_contract(model: Model, inputs: int) -> No
 @pytest.mark.parametrize(
     ("model", "inputs", "cached", "outputs", "expected"),
     (
-        (Model.SOL, 100, 20, 10, 262_000),
-        (Model.ASTRA, 100, 20, 10, 1_310_000),
-        (Model.SOL, 272_001, 1_000, 100, 1_085_704_000),
-        (Model.ASTRA, 272_001, 1_000, 100, 5_428_520_000),
+        (ROLE_MODELS["runtime"], 100, 20, 10, 262_000),
+        (ROLE_MODELS["strongest"], 100, 20, 10, 1_310_000),
+        (ROLE_MODELS["runtime"], 272_001, 1_000, 100, 1_085_704_000),
+        (ROLE_MODELS["strongest"], 272_001, 1_000, 100, 5_428_520_000),
     ),
 )
 def test_recorded_token_rates(
-    model: Model, inputs: int, cached: int, outputs: int, expected: int
+    model: str, inputs: int, cached: int, outputs: int, expected: int
 ) -> None:
     from phoenix.llm.provider import cost_nanodollars
 

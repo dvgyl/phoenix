@@ -10,9 +10,10 @@ import pytest
 from phoenix import pipeline, verify
 from phoenix.__main__ import _RecordedProvider
 from phoenix.analyze import Analysis, DevelopmentCase
+from phoenix.config import ROLE_MODELS
 from phoenix.ingest import BinaryMetadata
 from phoenix.llm.ledger import Budget, Ledger
-from phoenix.llm.provider import Completion, Model, Usage
+from phoenix.llm.provider import Completion, Usage
 from phoenix.recover import Function, Program
 from phoenix_eval import integrity
 from phoenix_eval.build import BuildResult, ProjectSnapshot
@@ -153,7 +154,7 @@ def test_development_integrity_gates_reconstruction(
                 }
             ),
             usage,
-            Model.SOL,
+            ROLE_MODELS["runtime"],
         )
         for body in (f"{_BAD_BODY}\nreturn 0;", "return 0;")
     ]

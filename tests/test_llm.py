@@ -3,11 +3,11 @@ from pathlib import Path
 
 import pytest
 
+from phoenix.config import ROLE_MODELS
 from phoenix.llm.codex import parse_codex_events
 from phoenix.llm.ledger import Budget, BudgetExceeded, Ledger, ReplayMissing
 from phoenix.llm.provider import (
     Completion,
-    Model,
     ProviderError,
     Request,
     RetryLater,
@@ -94,7 +94,7 @@ def test_codex_events_preserve_text_and_usage() -> None:
         )
     )
     assert parse_codex_events(events, 0, Request("prompt")) == Completion(
-        "answer", Usage(12, 3, 4), Model.SOL
+        "answer", Usage(12, 3, 4), ROLE_MODELS["runtime"]
     )
     with pytest.raises(ProviderError, match="did not return"):
         parse_codex_events(events, 1, Request("prompt"))
@@ -153,7 +153,7 @@ def test_responses_request_uses_standard_without_tools(
     provider = responses.ResponsesProvider("public-test-key")
     assert provider.complete(
         Request("Public test prompt.", max_output_tokens=128)
-    ) == Completion("answer", Usage(12, 3, 4), Model.SOL)
+    ) == Completion("answer", Usage(12, 3, 4), ROLE_MODELS["runtime"])
 
 
 @pytest.mark.parametrize("replay", [False, True])

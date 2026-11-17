@@ -9,6 +9,7 @@ from tempfile import NamedTemporaryFile
 from typing import TypedDict, cast
 
 from phoenix.analyze import Analysis, DevelopmentCase, analyze
+from phoenix.config import ROLE_MODELS
 from phoenix.generate import (
     Candidate,
     InvalidCandidate,
@@ -17,14 +18,12 @@ from phoenix.generate import (
     write_project,
 )
 from phoenix.generate.raw import write_raw_project
-from phoenix.generate.switch_plan import SwitchPlan, plan_switches
 from phoenix.ingest import BinaryMetadata
 from phoenix.lift import lift_binary
-from phoenix.lift.mapping import read_selected_generation
 from phoenix.llm.ledger import BudgetExceeded, Ledger
-from phoenix.llm.provider import Model, Provider, Request, RetryLater
+from phoenix.llm.provider import Provider, Request, RetryLater
 from phoenix.package import package_project, reached_functions
-from phoenix.recover import recover, recover_bytes
+from phoenix.recover import recover
 from phoenix.repair import feedback
 from phoenix.verify import (
     BUILD_CONFIGURATIONS,
@@ -88,14 +87,11 @@ class Settings:
     ghidra: Path
     java_home: Path
     repair_limit: int
-    astra_repair: bool
+    strongest_repair: bool
     checker_images: dict[str, str]
     method: Method = Method.PHOENIX
-    checked_switches: bool = False
 
     def __post_init__(self) -> None:
-        if self.checked_switches and self.method is not Method.PHOENIX:
-            raise ValueError("Checked switches require the Phoenix method.")
         if not 0 <= self.repair_limit <= 20:
             raise ValueError("Use a repair limit from 0 to 20.")
 
@@ -327,31 +323,9 @@ def reconstruct(
         else None
     )
     export = directory / "lift/lift.json"
-    switch_plan: SwitchPlan | None = None
-    if settings.checked_switches:
-        original = read_program(binary)
-        publication = export.parent
-        selection = publication / "evidence-current"
-        if not selection.exists() and not selection.is_symlink():
-            lift_binary(
-                binary,
-                export,
-                settings.ghidra,
-                settings.java_home,
-                max_heap_mib=256,
-                mapping_companion=True,
-                switch_graphs=True,
-                switch_source=True,
-            )
-        _, generation = read_selected_generation(publication, original)
-        program = recover_bytes(generation.lift, binary)
-        switch_plan = plan_switches(original, generation, program)
-        write_json(directory / "recover/switches.json", switch_plan.record())
-    else:
-        if not export.is_file():
-            lift_binary(binary, export, settings.ghidra, settings.java_home)
-        program = recover(export, binary)
-    protected = switch_plan.protected if switch_plan is not None else ()
+    if not export.is_file():
+        lift_binary(binary, export, settings.ghidra, settings.java_home)
+    program = recover(export, binary)
     recovered = directory / "recover/program.json"
     write_json(recovered, asdict(program))
     output = directory / "package" / "out" / key
@@ -401,14 +375,15 @@ def reconstruct(
                 stop = "budget-limit"
                 break
         stage = "generate" if index == 0 else f"repair/round-{index:02}"
-        model = Model.ASTRA if index >= 2 and settings.astra_repair else Model.SOL
+        model = ROLE_MODELS[
+            "strongest" if index >= 2 and settings.strongest_repair else "runtime"
+        ]
         request = request_candidate(
             program,
             previous=previous,
             difference=difference,
             round_number=index,
             model=model,
-            protected=protected,
         )
         try:
             response = _completion(request, provider, ledger, run, key, replay)
@@ -419,7 +394,7 @@ def reconstruct(
             write_json(budget_stop, index)
             break
         try:
-            candidate = parse_candidate(response, program, protected=protected)
+            candidate = parse_candidate(response, program)
         except InvalidCandidate as error:
             if index == settings.repair_limit:
                 if best is None:
@@ -498,11 +473,6 @@ def reconstruct(
             "analysis_candidates": analysis.candidate_count,
             "emulator_sensitive_candidates": analysis.emulator_sensitive,
             "invalid_candidates": analysis.invalid_candidates,
-            **(
-                {"checked_switches": switch_plan.record()}
-                if switch_plan is not None
-                else {}
-            ),
         },
     )
     write_json(

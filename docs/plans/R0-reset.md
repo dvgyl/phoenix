@@ -19,9 +19,9 @@ Experiment budget: 3 experiments. Only steps 14 and 16 make experiments. Step 16
 - [x] Step 3: Write the resize procedure and run its dry run (check: `$PHOENIX_ROOT/runs/r0-resize.json` -> `"status": "dry_run_ok"`; image size 60 GiB before and after; VM free 14 GiB)
 - [x] Step 4: Protected path list, role profiles, caller migration, `scripts/launch-role`, `phoenix-eval probe` (check: 72 targeted tests passed, including `tests/test_protection.py`; `uv run --locked phoenix-eval probe` -> 88 checks, each `denied=true`; review round 2 found no remaining defect; evidence in `$PHOENIX_ROOT/tmp/r0-protection-tests-round2.log`, `r0-probe.log`, `r0-protection-review-2.log`)
 - [x] Step 5: Commit the instruction documents and the protection change on `main` (check: `git show main:docs/plans/R0-reset.md` and `git show main:phoenix_eval/protection.py` -> exit 0; reviewed protection committed as `a52db2c`; commit hook passed)
-- [ ] Step 6: Build the worker images and start the Dev Author on batch 1 (check: `docker image inspect phoenix-worker:amd64` -> exit 0; the worker runs in `$PHOENIX_ROOT/worktrees/dev-author`)
-- [ ] Step 7: Salvage: restore, change and delete (check: `uv run --locked python -c "import phoenix.pipeline, phoenix.__main__, phoenix_eval.__main__"` -> exit 0; `./scripts/check` -> exit 0)
-- [ ] Step 8: Create `phoenix/config.py` (check: the two model identifiers of AGENTS.md section 6.1 occur in `phoenix/` only in `phoenix/config.py`)
+- [x] Step 6: Build the worker images and start the Dev Author on batch 1 (check: both image builds and `docker image inspect phoenix-worker:amd64` -> exit 0; worker session `01a1e7f1-53ea-7c91-adc4-a0d6a485d66d` runs in `$PHOENIX_ROOT/worktrees/dev-author`, branch `dev-corpus-1`, at `high` effort and Standard service; log `$PHOENIX_ROOT/tmp/r0-dev-author.log`)
+- [x] Step 7: Salvage: restore, change and delete (check: imports -> exit 0; deleted-module search -> no matches; `./scripts/check` -> exit 0, 783 passed and 25 skipped; evidence `$PHOENIX_ROOT/tmp/r0-salvage-check.log`)
+- [x] Step 8: Create `phoenix/config.py` (check: both model identifiers occur only in `phoenix/config.py`; price tuples match the evaluator; 108 targeted tests passed; strict type check passed; evidence `$PHOENIX_ROOT/tmp/r0-config-tests.log`)
 - [ ] Step 9: Smoke run of the M1 path on `corpus_public/bitstats.c` (check: `cat "$PHOENIX_ROOT/runs/r0-smoke.json"` -> dev pass rate 1.0 and `"replay_identical": true`)
 - [ ] Step 10: `scripts/build-dev-corpus` with the `linux/amd64` compilers (check: the manifest has 176 binaries)
 - [ ] Step 11: `phoenix_eval/run.py`, `scripts/loop`, `docs/SCOREBOARD.md`, `scripts/gate`, replay restore (check: `scripts/loop --probe --tier D0 --opt O0` -> exit 0 and one row with `loop` = `probe` and `exp` = `-`)
@@ -46,6 +46,8 @@ Experiment budget: 3 experiments. Only steps 14 and 16 make experiments. Step 16
 - `scripts/build-worker` builds `phoenix-toolchain` only for the native architecture (`arm64` on this host). `phoenix-worker:amd64` is built from the same `toolchain` stage of `containers/Dockerfile` for `linux/amd64`, and contains `gcc`, `clang` and the binutils. Step 10 uses it.
 
 ## Decision Log
+
+- Delete the two checked-switch CLI test functions. They test the removed option. The remaining CLI tests stay.
 
 - Keep `corpus_public/` as the harness self-test corpus of `phoenix-eval m0`. Reason: `runprobe.c` is a sandbox probe, not a reconstruction target, and `m0.py` reads this layout. Alternative not selected: move the three programs into `corpus_dev/`.
 - Protect `$PHOENIX_ROOT/runs/m1-t0-*` in place with the `sealed_runs` rule. Reason: a move would write into a sealed directory. Alternative not selected: move them to `sealed_runs/`.
