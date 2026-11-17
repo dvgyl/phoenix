@@ -9,6 +9,7 @@ from phoenix_eval.docker import WorkerError
 from phoenix_eval.m0 import SEED, Mode, evaluate
 from phoenix_eval.m1 import _directory, evaluate_m2, evaluate_t0
 from phoenix_eval.m2 import recorded_kind
+from phoenix_eval.protection import probe
 from phoenix_eval.submission import EvaluationPending
 
 
@@ -16,6 +17,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="phoenix-eval")
     parser.add_argument("--replay", dest="replay_run", metavar="RUN_ID")
     commands = parser.add_subparsers(dest="command")
+    commands.add_parser("probe", help="Check the protection profiles.")
     m0 = commands.add_parser("m0", help="Run the public M0 behavior checks.")
     m0.add_argument("--mode", type=Mode, choices=list(Mode), required=True)
     m0.add_argument("--corpus", type=Path, default=Path("corpus_public"))
@@ -28,6 +30,9 @@ def main() -> int:
     m2.add_argument("--run-id")
     m2.add_argument("--replay", metavar="RUN_ID")
     args = parser.parse_args()
+    if args.command == "probe":
+        probe_workspace = Path(os.environ["PHOENIX_ROOT"]).resolve()
+        return 0 if probe(probe_workspace, Path(__file__).resolve().parents[1]) else 1
     if args.command == "m0" and not args.replay_run:
         report, passed = evaluate(args.corpus, args.runs, args.mode, args.seed)
     elif (args.command in ("m1", "m2") and not args.replay_run) or (

@@ -47,12 +47,15 @@ def test_snapshot_rejects_a_custom_build(tmp_path: Path) -> None:
         freeze_project(source, tmp_path / "snapshot")
 
 
+@pytest.mark.parametrize("evaluation_run", ("measure", "m1-t0-synthetic"))
 def test_submission_resumes_after_the_provider_reports_a_limit(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, evaluation_run: str
 ) -> None:
     workspace = tmp_path
-    directory = workspace / "runs/measure/submissions/case"
+    directory = workspace / "runs" / evaluation_run / "submissions/case"
     original = workspace / "sealed/release/case.elf"
+    original.parent.mkdir(parents=True)
+    original.write_bytes(b"Synthetic binary.")
     project = project_path(workspace, "pipeline", "case")
     _project(project)
     (project / "phoenix_report.json").write_text('{"wall_seconds": 1}')
@@ -72,13 +75,20 @@ def test_submission_resumes_after_the_provider_reports_a_limit(
     )
     monkeypatch.setattr(subprocess, "run", runner)
     monkeypatch.setattr(
-        "phoenix_eval.submission.guarded_command", lambda _, command, **_unused: command
+        "phoenix_eval.submission.guarded_command",
+        lambda _, _repo, command, _profile: command,
     )
     with pytest.raises(EvaluationPending):
         submit(workspace, directory, "pipeline", "case", original, "phoenix")
     first = runner.call_args
     assert first.args[0][-4:] == ("--run-id", "pipeline", "--method", "phoenix")
-    assert first.kwargs["env"][GUARD_ENV] == str(directory / GUARD_PROBE)
+    copied_input = workspace / "runs/pipeline/case/input.elf"
+    assert str(copied_input) in first.args[0]
+    assert copied_input.read_bytes() == original.read_bytes()
+    assert first.kwargs["cwd"] == copied_input.parent / "pipeline-cwd"
+    assert first.kwargs["env"][GUARD_ENV] == str(
+        workspace / "runs/pipeline/case" / GUARD_PROBE
+    )
     assert Path(first.kwargs["env"]["PYTHONPATH"]) == CHECKOUT
     checkpoint = workspace / "runs/pipeline/case/run.json"
     checkpoint.touch()
@@ -119,7 +129,8 @@ def test_raw_lift_summary_is_bound_before_measurement(
         subprocess, "run", Mock(return_value=subprocess.CompletedProcess((), 2))
     )
     monkeypatch.setattr(
-        "phoenix_eval.submission.guarded_command", lambda _, command, **_unused: command
+        "phoenix_eval.submission.guarded_command",
+        lambda _, _repo, command, _profile: command,
     )
     if change_before_freeze:
         with pytest.raises(SubmissionError, match="summary changed"):
@@ -171,3 +182,15 @@ def test_checkpoint_rejection_closes_nonregular_file(
             os.close(descriptors[0])
         except OSError as error:
             assert error.errno == errno.EBADF
+
+
+def test_reserved_pipeline_run_is_rejected(tmp_path: Path) -> None:
+    with pytest.raises(SubmissionError, match="reserved for sealed records"):
+        submit(
+            tmp_path,
+            tmp_path / "evaluation",
+            "m1-t0-synthetic",
+            "case",
+            tmp_path / "input.elf",
+            "phoenix",
+        )

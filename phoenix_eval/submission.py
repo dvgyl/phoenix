@@ -252,6 +252,8 @@ def submit(
     method: Method,
     replay_pipeline_run: str | None = None,
 ) -> Submission:
+    if pipeline_run.startswith("m1-t0-"):
+        raise SubmissionError("The pipeline run ID is reserved for sealed records.")
     if directory.resolve() != directory:
         raise SubmissionError("Use the physical submission directory.")
     capture = directory / "capture"
@@ -268,9 +270,11 @@ def submit(
     if (directory / "submission.json").exists():
         raise SubmissionError("Use the recorded revision for this submission layout.")
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
-    probe = directory / GUARD_PROBE
+    pipeline_directory = workspace / "runs" / pipeline_run / key
+    pipeline_directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+    probe = pipeline_directory / GUARD_PROBE
     probe.write_text("Synthetic file guard witness.\n", encoding="utf-8")
-    cwd = directory / "pipeline-cwd"
+    cwd = pipeline_directory / "pipeline-cwd"
     cwd.mkdir(exist_ok=True, mode=0o700)
     base = (sys.executable, "-P", "-s", "-m", "phoenix", "run", "--binary-id", key)
     exists = (workspace / "runs" / pipeline_run / key / "run.json").is_file()
@@ -280,8 +284,10 @@ def submit(
     elif exists:
         options = ("--resume", pipeline_run)
     else:
-        options = (str(binary), "--run-id", pipeline_run, "--method", method)
-    command = guarded_command(workspace, (*base, *options), release=True, probe=probe)
+        copied_binary = pipeline_directory / "input.elf"
+        copied_binary.write_bytes(read_program(binary))
+        options = (str(copied_binary), "--run-id", pipeline_run, "--method", method)
+    command = guarded_command(workspace, CHECKOUT, (*base, *options), "pipeline")
     started = _reconstruction_start(directory)
     with (
         (directory / "pipeline.stdout").open("ab") as output,

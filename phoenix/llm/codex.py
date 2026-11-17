@@ -71,7 +71,8 @@ class CodexProvider:
         )
         if inherited_guard(self.workspace):
             return command
-        return guarded_command(self.workspace, command)
+        repo = Path(__file__).resolve().parents[2]
+        return guarded_command(self.workspace, repo, command, "pipeline")
 
     def complete(self, request: Request) -> Completion:
         if platform.system() != "Darwin":

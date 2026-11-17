@@ -13,11 +13,11 @@ Experiment budget: 3 experiments. Only steps 14 and 16 make experiments. Step 16
 
 ## Progress
 
-- [ ] Step 0: Record the start commit (check: `git rev-parse HEAD` -> a hash; write it in this line)
+- [x] Step 0: Record the start commit (check: `git rev-parse HEAD` -> `1a3716cbce54f1b008afc9e3d0732f7364d5569b`)
 - [x] Step 1: Storage cleanup (done before this plan; evidence in "Surprises and Discoveries": 31 GiB free of 60 GiB)
-- [ ] Step 2: Write `scripts/gc` without run archiving (check: `scripts/gc --dry-run` -> exit 0, a list of candidates, free space unchanged)
-- [ ] Step 3: Write the resize procedure and run its dry run (check: `cat "$PHOENIX_ROOT/runs/r0-resize.json"` -> `"status": "dry_run_ok"` or `"status": "blocked_on_owner"` with a reason)
-- [ ] Step 4: Protected path list, role profiles, caller migration, `scripts/launch-role`, `phoenix-eval probe` (check: `uv run --locked pytest -q tests/test_protection.py` -> all pass; `uv run --locked phoenix-eval probe` -> each boolean `true`)
+- [x] Step 2: Write `scripts/gc` without run archiving (check: `scripts/gc --dry-run` -> exit 0; candidates in `$PHOENIX_ROOT/tmp/r0-gc-dry-run.log`; free space 31 GiB before and after)
+- [x] Step 3: Write the resize procedure and run its dry run (check: `$PHOENIX_ROOT/runs/r0-resize.json` -> `"status": "dry_run_ok"`; image size 60 GiB before and after; VM free 14 GiB)
+- [x] Step 4: Protected path list, role profiles, caller migration, `scripts/launch-role`, `phoenix-eval probe` (check: 72 targeted tests passed, including `tests/test_protection.py`; `uv run --locked phoenix-eval probe` -> 88 checks, each `denied=true`; review round 2 found no remaining defect; evidence in `$PHOENIX_ROOT/tmp/r0-protection-tests-round2.log`, `r0-probe.log`, `r0-protection-review-2.log`)
 - [ ] Step 5: Commit the instruction documents and the protection change on `main` (check: `git show main:docs/plans/R0-reset.md` and `git show main:phoenix_eval/protection.py` -> exit 0)
 - [ ] Step 6: Build the worker images and start the Dev Author on batch 1 (check: `docker image inspect phoenix-worker:amd64` -> exit 0; the worker runs in `$PHOENIX_ROOT/worktrees/dev-author`)
 - [ ] Step 7: Salvage: restore, change and delete (check: `uv run --locked python -c "import phoenix.pipeline, phoenix.__main__, phoenix_eval.__main__"` -> exit 0; `./scripts/check` -> exit 0)

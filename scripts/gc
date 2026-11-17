@@ -1,0 +1,48 @@
+#!/bin/sh
+set -eu
+
+: "${PHOENIX_ROOT:?Source the Phoenix workspace environment.}"
+case "${1:-}" in
+    '') dry_run=false ;;
+    --dry-run) dry_run=true ;;
+    *) printf '%s\n' 'Use scripts/gc [--dry-run].' >&2; exit 2 ;;
+esac
+[ "$#" -le 1 ] || exit 2
+
+action() {
+    printf 'Action:'
+    printf ' <%s>' "$@"
+    printf '\n'
+    if ! "$dry_run"; then "$@"; fi
+}
+
+printf '%s\n' 'Free space before cleanup:'
+df -h "$PHOENIX_ROOT"
+for run in "$PHOENIX_ROOT"/runs/*; do
+    [ -d "$run" ] && [ ! -L "$run" ] || continue
+    case "${run##*/}" in m1-t0-*) continue ;; esac
+    find "$run" -type d \( -name '*.rep' -o -name 'ghidra-project' -o -name 'ghidra-projects' \) \
+        -prune -print | while IFS= read -r project; do action rm -rf -- "$project"; done
+    size_kib=$(du -sk "$run" | awk '{print $1}')
+    if [ "$size_kib" -gt 2097152 ]; then
+        printf 'Run above 2 GiB: %s (%s KiB)\n' "$run" "$size_kib"
+    fi
+done
+mark="$PHOENIX_ROOT/tmp/.gc-mark"
+if [ -f "$mark" ]; then
+    for entry in "$PHOENIX_ROOT"/tmp/* "$PHOENIX_ROOT"/tmp/.[!.]* "$PHOENIX_ROOT"/tmp/..?*; do
+        [ -e "$entry" ] || [ -L "$entry" ] || continue
+        [ "$entry" != "$mark" ] || continue
+        if [ ! "$entry" -nt "$mark" ]; then action rm -rf -- "$entry"; fi
+    done
+fi
+action touch "$mark"
+action docker builder prune --all --force
+action docker image prune --force
+docker image ls --format '{{.Repository}} {{.ID}}' | while read -r repository image; do
+    case "$repository" in phoenix-*) continue ;; esac
+    action docker image rm "$image"
+done
+action colima ssh -- sudo fstrim -av
+printf '%s\n' 'Free space after cleanup:'
+df -h "$PHOENIX_ROOT"

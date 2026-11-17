@@ -827,10 +827,11 @@ def test_atomic_capture_keeps_tier_keys_separate(
 
     monkeypatch.setattr(subprocess, "run", execute)
     monkeypatch.setattr(
-        capture, "guarded_command", lambda _, command, **kwargs: command
+        capture, "guarded_command", lambda _, _repo, command, _profile: command
     )
     first = "t0-case-0-gcc-O0-phoenix"
     second = "t1-case-0-gcc-O0-phoenix"
+    (tmp_path / "opaque.elf").write_bytes(b"Synthetic input.")
 
     def submit(key: str) -> Submission:
         return capture.submit(

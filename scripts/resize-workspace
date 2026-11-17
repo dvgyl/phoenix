@@ -1,0 +1,121 @@
+#!/bin/sh
+set -eu
+
+: "${PHOENIX_ROOT:?Source the Phoenix workspace environment.}"
+case "${1:-}" in
+    '') dry_run=false ;;
+    --dry-run) dry_run=true ;;
+    *) printf '%s\n' 'Use scripts/resize-workspace [--dry-run].' >&2; exit 2 ;;
+esac
+[ "$#" -le 1 ] || exit 2
+bundle='/Volumes/Extreme Pro/Phoenix/phoenix-work.sparsebundle'
+mountpoint=/Volumes/PhoenixWork
+environment='/Volumes/Extreme Pro/Phoenix/env.sh'
+size_before=$(df -Pk "$mountpoint" | awk 'END {print int(($2 + 1048575) / 1048576)}')
+host_before=$(df -Pk '/Volumes/Extreme Pro' | awk 'END {print int($4 / 1048576)}')
+allocated=$(du -sk "$bundle" | awk '{print int(($1 + 1048575) / 1048576)}')
+size=$((allocated + host_before - 20))
+[ "$size" -le 100 ] || size=100
+vm_free=$(colima ssh -- df -Pk /var/lib/docker | awk 'END {print int($4 / 1048576)}')
+status=dry_run_ok
+reason=''
+if [ "$size" -le "$size_before" ]; then
+    status=blocked_on_owner
+    reason='external drive free space'
+fi
+
+record() {
+    size_after=$(df -Pk "$mountpoint" | awk 'END {print int(($2 + 1048575) / 1048576)}')
+    host_after=$(df -Pk '/Volumes/Extreme Pro' | awk 'END {print int($4 / 1048576)}')
+    uv run --locked python - "$mountpoint/runs/r0-resize.json" "$status" "$reason" \
+        "$size_before" "$size_after" "$host_before" "$host_after" "$vm_free" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+keys = ("size_before_gib", "size_after_gib", "host_free_before_gib", "host_free_after_gib", "vm_free_gib")
+record = {"status": sys.argv[2], "reason": sys.argv[3]}
+record.update({key: int(value) for key, value in zip(keys, sys.argv[4:], strict=True)})
+Path(sys.argv[1]).write_text(json.dumps(record, indent=2) + "\n")
+PY
+}
+
+if "$dry_run"; then
+    printf 'allocated=%s GiB host_free=%s GiB size=%s GiB\n' "$allocated" "$host_before" "$size"
+    cat <<EOF
+colima ssh -- df -Pk /var/lib/docker
+colima stop
+hdiutil detach "$mountpoint"
+lsof "$mountpoint"  # Inspect a failed detach. Force only for cwd and txt descriptors.
+hdiutil compact "$bundle"
+# Compute allocated and host_free again. Keep 20 GiB free on the external drive.
+hdiutil resize -size "${size}g" "$bundle"
+. "$environment"
+diskutil info "$mountpoint"  # Read APFS Physical Store.
+diskutil apfs resizeContainer <store> 0
+# On each exit path, attach the image if necessary.
+hdiutil attach -nobrowse -mountpoint "$mountpoint" "$bundle"
+colima start
+docker info
+EOF
+    record
+    exit 0
+fi
+
+case "$PWD/" in "$mountpoint/"*)
+    printf '%s\n' 'Run the script text from memory with the working directory outside the image.' >&2
+    exit 2 ;;
+esac
+
+recover() {
+    result=$?
+    trap - EXIT HUP INT TERM
+    if [ "$result" -ne 0 ]; then status=blocked_on_owner; reason='workspace resize failed'; fi
+    if ! /sbin/mount | grep -Fq " on $mountpoint (apfs,"; then
+        hdiutil attach -nobrowse -mountpoint "$mountpoint" "$bundle" || exit 1
+    fi
+    . "$environment"
+    if ! colima start || ! docker info; then
+        status=blocked_on_owner
+        reason='Colima restart failed'
+        result=1
+    fi
+    cd "$mountpoint/phoenix"
+    record
+    exit "$result"
+}
+trap recover EXIT
+trap 'exit 1' HUP INT TERM
+status=ok
+colima stop
+if ! hdiutil detach "$mountpoint"; then
+    open_files=$(lsof -Fpf "$mountpoint" 2>/dev/null || true)
+    printf '%s\n' "$open_files"
+    if printf '%s\n' "$open_files" | awk '/^f/ && $0 != "fcwd" && $0 != "ftxt" {bad=1} END {exit bad}'; then
+        hdiutil detach -force "$mountpoint"
+    else
+        processes=$(printf '%s\n' "$open_files" | sed -n 's/^p//p' | sort -u)
+        current_session=$(ps -o sess= -p "$$" | tr -d " ")
+        for process in $processes; do
+            process_session=$(ps -o sess= -p "$process" | tr -d " ")
+            [ "$process_session" != "$current_session" ] || continue
+            kill -TERM "$process"
+        done
+        hdiutil detach "$mountpoint"
+    fi
+fi
+hdiutil compact "$bundle"
+allocated=$(du -sk "$bundle" | awk '{print int(($1 + 1048575) / 1048576)}')
+host_free=$(df -Pk '/Volumes/Extreme Pro' | awk 'END {print int($4 / 1048576)}')
+size=$((allocated + host_free - 20))
+[ "$size" -le 100 ] || size=100
+if [ "$size" -le "$size_before" ]; then
+    status=blocked_on_owner
+    reason='external drive free space'
+    exit 0
+fi
+hdiutil resize -size "${size}g" "$bundle"
+. "$environment"
+store=$(diskutil info "$mountpoint" | awk -F ': *' '/APFS Physical Store/ {print $2}')
+[ -n "$store" ]
+diskutil apfs resizeContainer "$store" 0

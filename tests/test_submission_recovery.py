@@ -64,7 +64,7 @@ def scenario(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Scenario:
     monkeypatch.setattr(subprocess, "run", runner)
     monkeypatch.setattr(time, "time", clock)
     monkeypatch.setattr(
-        module, "guarded_command", lambda _, command, **_kwargs: command
+        module, "guarded_command", lambda _, _repo, command, _profile: command
     )
     return Scenario(directory, project, original, runner, clock)
 
