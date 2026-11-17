@@ -189,6 +189,15 @@ def image_record_cases(name, rng):
                 add(data, args=args, files=files)
         add("C1 2 2 0 0 0 0 flood 0 0 0 0 0 flood 0 0 255 255 255")
         add("C1 2 2 0 0 0 0 bounds 255 autolevel palette")
+        add("C1 32 1 " + " ".join(map(str, range(32))))
+        add("CP 2 1 2 10 20 30 40 50 60 0 1")
+        add("C3 1 1 12 34 56 blend 100 110 120 0")
+        add("C1 3 1 0 0 0 gradient 10 20 60 40 50 20 0")
+        add("C3 1 1 10 20 30 bias 2")
+        add("C1 4 2 " + "111 " * 8 + "dither")
+        add("C1 3 4 " + "100 " * 12 + "dither")
+        add("C3 1 1 255 0 255 hue 0")
+        add("C3 1 1 251 0 0", args=["-g"])
     elif name == "recordloom":
         base = (
             'put key_a 10 3 " Ab c " put key_b -5 128 "a\\nb" put key_c 10 3 " Ab c "\n'

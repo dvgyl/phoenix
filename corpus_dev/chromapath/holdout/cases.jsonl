@@ -507,3 +507,12 @@
 {"args": ["-q"], "environment": {}, "stdin": "QzMgNyA1IDI1NSAwIDAgMjU1IDI1NSAyNTUgMCAwIDAgMCAwIDI1NSAwIDAgMjU1IDEyOCAxMjggMTI4IDAgMCAyNTUgMCAwIDAgMCAwIDAgMCAyNTUgMCAxMjggMTI4IDEyOCAwIDI1NSAwIDAgMjU1IDAgMTIgMjMgMzQgMCAwIDAgMjU1IDI1NSAyNTUgMjU1IDAgMCAwIDAgMjU1IDEyOCAxMjggMTI4IDAgMCAyNTUgMjU1IDAgMCAwIDI1NSAwIDAgMCAwIDI1NSAyNTUgMjU1IDEyOCAxMjggMTI4IDEyOCAxMjggMTI4IDAgMjU1IDAgMjU1IDAgMCAxMjggMTI4IDEyOCAyNTUgMjU1IDI1NSAyNTUgMCAwIDI1NSAyNTUgMjU1IDAgMCAwIDEyIDIzIDM0IDI1NSAyNTUgMjU1CnNhdHVyYXRpb24gMg==", "tree": {"entries": [{"data": "QzEgMiAyIDAgMjU1IDEyOCA2NA==", "kind": "file", "mode": 420, "path": "other"}], "mode": 493}}
 {"args": [], "environment": {}, "stdin": "QzEgMiAyIDAgMCAwIDAgZmxvb2QgMCAwIDAgMCAwIGZsb29kIDAgMCAyNTUgMjU1IDI1NQ==", "tree": {"entries": [], "mode": 493}}
 {"args": [], "environment": {}, "stdin": "QzEgMiAyIDAgMCAwIDAgYm91bmRzIDI1NSBhdXRvbGV2ZWwgcGFsZXR0ZQ==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "QzEgMzIgMSAwIDEgMiAzIDQgNSA2IDcgOCA5IDEwIDExIDEyIDEzIDE0IDE1IDE2IDE3IDE4IDE5IDIwIDIxIDIyIDIzIDI0IDI1IDI2IDI3IDI4IDI5IDMwIDMx", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "Q1AgMiAxIDIgMTAgMjAgMzAgNDAgNTAgNjAgMCAx", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "QzMgMSAxIDEyIDM0IDU2IGJsZW5kIDEwMCAxMTAgMTIwIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "QzEgMyAxIDAgMCAwIGdyYWRpZW50IDEwIDIwIDYwIDQwIDUwIDIwIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "QzMgMSAxIDEwIDIwIDMwIGJpYXMgMg==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "QzEgNCAyIDExMSAxMTEgMTExIDExMSAxMTEgMTExIDExMSAxMTEgZGl0aGVy", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "QzEgMyA0IDEwMCAxMDAgMTAwIDEwMCAxMDAgMTAwIDEwMCAxMDAgMTAwIDEwMCAxMDAgMTAwIGRpdGhlcg==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "QzMgMSAxIDI1NSAwIDI1NSBodWUgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-g"], "environment": {}, "stdin": "QzMgMSAxIDI1MSAwIDA=", "tree": {"entries": [], "mode": 493}}
