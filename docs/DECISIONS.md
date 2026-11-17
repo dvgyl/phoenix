@@ -97,3 +97,11 @@ Use `clang-ast-source-v1` with the operator set in SPEC.md section 10.6.
 Keep unresolved mutants in the denominator. Count compiler infrastructure
 failures as unresolved. Store source, case, tool and report hashes.
 The Linux fixture proof is in `$PHOENIX_ROOT/adequacy_runs/bced812a3047410eae4f7393fcd1fdd5`.
+
+## 13. Image build entry point
+
+Use `scripts/build-images worker|integrity amd64|arm64` for local image builds.
+The command retains immutable image IDs before and after each build.
+It serializes builds and takes compile and execution slots.
+The underlying builder recipes remain unchanged.
+A real rebuild preserved all 29 preceding image IDs.

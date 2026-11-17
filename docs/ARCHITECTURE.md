@@ -99,6 +99,7 @@ Each pipeline run writes `runs/<run_id>/<binary_sha256>/run.json`. It holds: the
   5. Each later stage runs again.
 - `phoenix run --replay` uses only the recorded LLM responses. A cache miss is an error (`replay_miss`). A replay writes a byte-identical project.
 - `scripts/gc` can archive a run directory as `runs/<run_id>.tar.gz` and record its SHA-256. Before a replay, `phoenix-eval --replay <run_id>` restores an archived run to its recorded directory and verifies the archive hash. The archive keeps the recorded responses and the provenance files of the run.
+- `scripts/build-images worker|integrity amd64|arm64` retains immutable image references before and after a serialized build. A build fails if it loses a retained reference.
 
 Determinism rules:
 

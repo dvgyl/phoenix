@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+repo=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd -P)
+exec uv run --locked --project "$repo" python "$repo/scripts/build_images.py" "$@"

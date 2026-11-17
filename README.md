@@ -77,8 +77,8 @@ the two worker images. Then run the public inputs through Rosetta, QEMU
 x86-64 emulation and native ARM64.
 
 ```sh
-./scripts/build-worker amd64
-./scripts/build-worker arm64
+./scripts/build-images worker amd64
+./scripts/build-images worker arm64
 uv run --locked phoenix-eval m0 --mode apple-silicon --runs "$PHOENIX_ROOT/runs"
 ```
 

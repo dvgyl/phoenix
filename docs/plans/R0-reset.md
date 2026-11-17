@@ -189,7 +189,7 @@ Before `scripts/launch-role` exists (steps 0 to 4), do not delegate.
 Build the worker images. The Dev Author needs `phoenix-worker:amd64` to build and run its programs:
 
 ```sh
-./scripts/build-worker amd64 && ./scripts/build-worker arm64
+./scripts/build-images worker amd64 && ./scripts/build-images worker arm64
 ```
 
 Create the worktree and start the Dev Author with the lead model identifier from AGENTS.md section 6.1:
@@ -313,7 +313,7 @@ Check: `grep -rn -e '<runtime model id>' -e '<strongest model id>' phoenix` list
 
 ```sh
 ./scripts/build-ghidra-native
-./scripts/build-integrity amd64 && ./scripts/build-integrity arm64
+./scripts/build-images integrity amd64 && ./scripts/build-images integrity arm64
 uv run --locked phoenix-eval m0 --mode apple-silicon --runs "$PHOENIX_ROOT/runs"
 smoke="r0-smoke-$(uuidgen | tr '[:upper:]' '[:lower:]')"
 scripts/launch-role pipeline -- uv run --locked phoenix run \
