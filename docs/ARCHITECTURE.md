@@ -998,6 +998,7 @@ All experiments run on `corpus_dev`. "Baseline" is the scoreboard row before the
 
 **N1. Function transplant with a register-preserving thunk.**
 - H: An in-process check of one function against the original gives an exact oracle for each function at each optimization level.
+- Prior art: [PCodeTrans](https://arxiv.org/html/2603.14855v1) and [DecompileBench](https://aclanthology.org/2025.findings-acl.1194/) already check functions inside the original program. Phoenix adds the register-preserving thunk, register and shadow-stack handling, negative transplants, and the use of the check to build a standalone project (section 7).
 - E: The thunk fixture suite. Then the truth transplant on `corpus_dev` at `-O0`, `-O2` and `-Os`. Then the draft loop in `transplant` mode against `compile_only` mode on D1 `-O2`.
 - M: Truth transplant rate. Binary success rate on D1 `-O2`. Repair rounds for each binary.
 - K: A success gain below 10 points on D1 `-O2` against `compile_only` mode after 3 experiments. Or a truth transplant rate below 50% at `-O2` after 3 acceptance attempts of the mechanism enabling item (instrumentation mode and thunk, `docs/ROADMAP.md` R2) and 3 of the pivot item.
@@ -1044,6 +1045,7 @@ All experiments run on `corpus_dev`. "Baseline" is the scoreboard row before the
 
 **N7. Trace-guided fault localization.**
 - H: The alignment of libc event sequences and call sequences finds the faulty function when transplant cannot (failures of the whole project, ARM64-only failures).
+- Prior art: [PCodeTrans](https://arxiv.org/html/2603.14855v1) uses breakpoint trace differences. [DecompileBench](https://aclanthology.org/2025.findings-acl.1194/) compares runtime profiles after function replacement. Phoenix adds the thunk, register and shadow-stack handling, negative transplants, and checks that support standalone project construction (section 7).
 - E: The injected faults of N2, restricted to decision table rows 4 and 5.
 - M: First-suspect accuracy on these rows.
 - K: Below 50% after 3 experiments.

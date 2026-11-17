@@ -92,6 +92,19 @@ acceptance and DecLLM's stated scope need further primary-source checks.
 [LLMSbt](https://arxiv.org/abs/2610.05999v1),
 [SK2Decompile](https://arxiv.org/abs/2509.22114v1).
 
+### Related research added on 2026-11-17
+
+These are published results and methods. They are not Phoenix results.
+
+| Work | Relevant evidence | Limit for the Phoenix comparison |
+| --- | --- | --- |
+| [PCodeTrans, arXiv 2603.14855v1](https://arxiv.org/html/2603.14855v1); [ASE 2026](https://conf.researchr.org/details/ase-2026/ase-2026-research-track/136/PCodeTrans-Translate-Decompiled-Pseudocode-to-Trace-Level-Equivalent-Source-Code) | Prior art for N1 and N7. Sections IV to VI describe function replacement and trace-guided repair. | Table I aggregates isolated function checks. It does not test a standalone project. The arXiv Linux results and the expanded conference scope are separate. |
+| [DecompileBench, ACL Findings 2025](https://aclanthology.org/2025.findings-acl.1194/) | Section 3.2.2 replaces a function inside the original program and compares runtime coverage profiles. Appendix D describes redirection. | Function checks do not establish Phoenix's whole-project success. |
+| [MirrorCode, arXiv 2606.30182v2](https://arxiv.org/html/2606.30182v2) | Rebuilds 25 programs with execute-only access and held-out tests. Reports a best score of 56%. | Section 2 defines its task scope and budget. Phoenix must run its own behavior-only baseline with the same runtime model and LLM budget. |
+| [SRE-Bench, arXiv 2608.11469v2](https://arxiv.org/html/2608.11469v2) | Uses 19 private programs created for contamination-free reverse-engineering evaluation. | Includes protected binaries and analysis tasks beyond Phoenix v1. |
+| [REBench, arXiv 2604.27319v1](https://arxiv.org/html/2604.27319v1) | Evaluates types and names in stripped binaries. Section 4.6 reports weak type inference. | Type and name recovery do not establish behavioral success. |
+| [SCRIBE, arXiv 2605.02121v1](https://arxiv.org/html/2605.02121v1) | Recompiles decompiled code for binary patching. Section V-E reports an 18-person user study. | The patched program still uses the original binary. |
+
 ### Evaluation boundary
 
 Phoenix's proposed contribution is the conjunction in SPEC.md section 2.2.

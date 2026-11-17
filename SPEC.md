@@ -497,12 +497,16 @@ Report each baseline next to Phoenix on Sealed-B:
 
 1. **Ghidra-raw**: the Ghidra decompiler C plus a generated compatibility header.
 2. **M1 pipeline**: the pipeline at commit `6897e47`. It uses one whole-program prompt and whole-program repair. Run it from a worktree at that commit with the current runtime model.
+3. **Behavior-only rebuild**: an agent gets execute-only access to the original program, as in [MirrorCode](https://arxiv.org/html/2606.30182v2). It gets no disassembly.
+4. **Plain agent**: a general coding agent gets the binary and Ghidra. It does not use the Phoenix pipeline.
+
+Both new baselines use the same runtime model and the same LLM budget as Phoenix for each binary. The input, output, scoring and integrity rules still apply. Phoenix can claim that the pipeline adds value only if it beats both baselines on the T1 and T2 fully-successful binary rates. Compare the same binaries at each optimization level.
 
 Report each ablation next to Phoenix:
 
-3. Phoenix without transplant (the compile-only mode of `docs/ARCHITECTURE.md`).
-4. Phoenix without the generated dev-set steps 1 and 4 (CLI surface recovery and LLM generators).
-5. Phoenix without trace evidence (techniques N5 and N9 off).
+5. Phoenix without transplant (the compile-only mode of `docs/ARCHITECTURE.md`).
+6. Phoenix without the generated dev-set steps 1 and 4 (CLI surface recovery and LLM generators).
+7. Phoenix without trace evidence (techniques N5 and N9 off).
 
 Run the ablations on T1 and T2 at `-O2` only. The evaluator scores each baseline and each ablation with the same rules as Phoenix.
 
@@ -550,6 +554,12 @@ The evaluator gives each pipeline run a cost cap. The cap is a safety limit. A p
 | Ghidra, IDA, Binary Ninja, RetDec | Readable pseudo-C | Not designed to recompile; no behavioral check |
 | rev.ng | Lifts through QEMU to LLVM and emits C that is meant to recompile | No behavioral harness; the output is not a maintainable project |
 | LLM4Decompile, DecLLM (ISSTA), SK2Decompile (ICLR) | LLM decompilation with recompile and re-execute metrics | Function level only |
+| [PCodeTrans](https://arxiv.org/html/2603.14855v1) (arXiv 2603.14855; [ASE 2026](https://conf.researchr.org/details/ase-2026/ase-2026-research-track/136/PCodeTrans-Translate-Decompiled-Pseudocode-to-Trace-Level-Equivalent-Source-Code)) | Puts one recompiled function into the unmodified original process with `LD_PRELOAD` and a trampoline. Repairs faults from breakpoint trace differences. | The Linux study uses Coreutils and Binutils, x86-64, `-O2` and official test suites. Stripped Coreutils reports 96.84% function success and 25.92% file-level success. File-level success aggregates isolated function checks. It does not build a standalone project. |
+| [DecompileBench](https://aclanthology.org/2025.findings-acl.1194/) (ACL Findings 2025) | Puts a decompiled function into the original program and compares runtime coverage profiles | Function-level decompiler evaluation |
+| [MirrorCode](https://arxiv.org/html/2606.30182v2) (arXiv 2606.30182) | Agents rebuild 25 whole programs with execute-only access. Held-out tests score the result. The best model scored 56%. | Its score uses its own task scope and budget. It does not require Phoenix's four build configurations. |
+| [SRE-Bench](https://arxiv.org/html/2608.11469v2) (arXiv 2608.11469) | Contamination-free reverse-engineering benchmark built from 19 private programs | Includes anti-analysis protections outside the Phoenix v1 input contract |
+| [REBench](https://arxiv.org/html/2604.27319v1) (arXiv 2604.27319) | Measures type and name recovery in stripped binaries | Type inference remains difficult. It does not measure standalone project behavior. |
+| [SCRIBE](https://arxiv.org/html/2605.02121v1) (arXiv 2605.02121) | Patches binaries through recompiled decompiled code. Includes an 18-person user study. | Keeps the original binary as the basis of the patched program |
 | Agent4Decompile (arXiv 2604.23940) | Multi-agent constraint-guided repair; 50.3% of 1,641 functions | Single function |
 | Chisel (arXiv 2608.27981, code released) | Ghidra pseudo-C plus a libFuzzer differential oracle; 79.8% re-executable | Single function; stripped signatures are a stated limitation |
 | "Recompilation Is Not Enough" (arXiv 2609.07201) | Whole-binary repair of decompiled C; 91 of 104 GNU coreutils programs pass the official tests | Coreutils only, which are in the training data of current models; needs existing test suites; same architecture; no released artifact |
@@ -566,6 +576,8 @@ No prior system shows all four of these properties together:
 2. Contamination-controlled evaluation on sealed programs, with a post-cutoff human-written tier.
 3. Shown portability: the same project builds and passes on ARM64.
 4. A behavioral oracle that needs no existing test suite and keeps the evaluation inputs hidden from the reconstruction process.
+
+The in-situ function check is not new.
 
 Add these two claims only if the measurements support them:
 
