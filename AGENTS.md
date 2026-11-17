@@ -160,7 +160,7 @@ Select the effort from the task. Do not use the maximum effort by default.
 | Task | Effort |
 |---|---|
 | Routine edits, documentation, status updates, log triage | `low` |
-| Normal engineering work (default) | `medium` |
+| Normal engineering work (default) | `high` |
 | `phoenix_eval`, sandbox, protection, integrity checker, transplant shim and thunk, data emitter | `high` |
 | Architect questions, a design that failed one time, root cause of a failure that resisted two fixes | `xhigh` |
 | Reviewer | `high` |
