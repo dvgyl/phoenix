@@ -1,5 +1,10 @@
 #!/bin/sh
 set -eu
 repo=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd -P)
+workspace=$(CDPATH='' cd -- "${PHOENIX_ROOT:?Source the Phoenix workspace environment.}" && pwd -P)
+if [ "$repo" != "$workspace/phoenix" ]; then
+    printf '%s\n' 'Build the development corpus from the main checkout.' >&2
+    exit 1
+fi
 cd "$repo"
 exec uv run --locked --project "$repo" python -m phoenix_eval.dev_corpus "$@"

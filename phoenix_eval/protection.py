@@ -166,6 +166,7 @@ def guarded_command(
             if parent.is_relative_to(runs) or parent.parent == cache
         )
     policy = "(version 1)(allow default)"
+    read_only = "sealed" if profile == "evaluator" else "binaries"
     for item in protected_paths(workspace, repo):
         match = _regex(item.pattern)
         if item.category in PROFILES[profile].denied:
@@ -174,7 +175,7 @@ def guarded_command(
                 f"(require-all {match} {''.join(allowed)})" if allowed else match
             )
             policy += f"(deny file-read* file-write* {condition})"
-        elif item.category == "sealed" and profile == "evaluator":
+        elif item.category == read_only:
             policy += f"(deny file-write* {match})"
     if profile == "pipeline":
         for parent in sorted(metadata):

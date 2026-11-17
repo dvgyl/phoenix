@@ -491,6 +491,20 @@ def test_worker_checkout_cannot_write_the_manifest(
     manifest = workspace / "dev_bin/manifest.json"
     manifest.parent.mkdir()
     manifest.write_bytes(b'{"binaries": []}\n')
+    launcher = worktree / "scripts/build-dev-corpus"
+    launcher.parent.mkdir()
+    original = Path(__file__).resolve().parents[1] / "scripts/build-dev-corpus"
+    launcher.write_bytes(original.read_bytes())
+    result = subprocess.run(
+        ("/bin/sh", str(launcher), "checksample"),
+        cwd=worktree,
+        env=env,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 1
+    assert b"main checkout" in result.stderr
+    assert manifest.read_bytes() == b'{"binaries": []}\n'
     monkeypatch.setattr(dc, "REPO", worktree)
     assert dc.main(["checksample"]) == 1
     assert "main checkout" in capsys.readouterr().err

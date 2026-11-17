@@ -137,7 +137,9 @@ def test_profile_reads_and_writes(
             (
                 str(path),
                 denied,
-                denied or (profile == "evaluator" and category == "sealed"),
+                denied
+                or (profile == "evaluator" and category == "sealed")
+                or (profile != "evaluator" and path.is_relative_to(root / "dev_bin")),
             )
         )
     script = """
