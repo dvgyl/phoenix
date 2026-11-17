@@ -18,6 +18,7 @@ if __package__ in (None, ""):
 
 from phoenix_eval.case import Invocation
 from phoenix_eval.docker import Engine, docker_args, docker_cli, freeze_images
+from phoenix_eval.jobs import limited
 from phoenix_eval.outcome import Outcome
 from phoenix_eval.provenance import worker_source_digest
 from phoenix_eval.wire import decode_invocation, decode_result, encode_invocation
@@ -229,6 +230,8 @@ def verify_observations(evidence: dict[str, Any], case_count: int) -> None:
             raise ValueError("The mutant status differs from its observations.")
 
 
+@limited("compile")
+@limited("execution")
 def run_container(request: dict[str, Any], directory: Path) -> dict[str, Any]:
     images = freeze_images((Engine.ROSETTA,), worker_source_digest(REPO))
     image = subprocess.run(
