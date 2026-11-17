@@ -116,6 +116,43 @@ def test_worker_receives_the_same_bytes_in_each_batch(
     assert batches == [MAX_BATCH, 1]
 
 
+def test_one_container_preserves_64_ordered_cases(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cases = tuple(Invocation((str(index),)) for index in range(64))
+    expected = tuple(
+        Outcome(str(index).encode(), b"", Exited(0), TreeSnapshot())
+        for index in range(64)
+    )
+    calls = []
+
+    def fake_docker(
+        command: tuple[str, ...], *, stdin: BinaryIO, stdout: BinaryIO, **kwargs: object
+    ) -> subprocess.CompletedProcess[bytes]:
+        stdin.readline()
+        assert tuple(decode_invocation(line.decode("ascii")) for line in stdin) == cases
+        calls.append(command)
+        stdout.write(
+            "".join(encode_result(result) + "\n" for result in expected).encode()
+        )
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(subprocess, "run", fake_docker)
+    assert run_batch(b"synthetic executable", cases, Engine.ARM64) == expected
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("count", [0, 65])
+def test_batch_count_rejection_does_not_launch_a_container(
+    monkeypatch: pytest.MonkeyPatch, count: int
+) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+    with pytest.raises(ValueError, match="worker batch"):
+        run_batch(b"synthetic executable", (Invocation(),) * count, Engine.ARM64)
+    runner.assert_not_called()
+
+
 @pytest.mark.parametrize("size", [0, MAX_PROGRAM_BYTES + 1])
 def test_worker_rejects_invalid_byte_input_size(
     monkeypatch: pytest.MonkeyPatch, size: int

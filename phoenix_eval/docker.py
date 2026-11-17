@@ -15,7 +15,7 @@ from phoenix_eval.provenance import IMAGE_SOURCE_LABEL
 from phoenix_eval.wire import PROTOCOL_VERSION, decode_result, encode_invocation
 from phoenix_eval.worker import MAX_PROGRAM_BYTES, WALL_SECONDS
 
-MAX_BATCH = 16
+MAX_BATCH = 64
 
 
 class Engine(StrEnum):
