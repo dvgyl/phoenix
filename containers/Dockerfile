@@ -4,6 +4,10 @@ FROM --platform=${X86_PLATFORM} ${UBUNTU_BASE} AS x86-base
 FROM ${UBUNTU_BASE} AS toolchain
 ARG UBUNTU_SNAPSHOT
 ARG TARGETARCH
+ARG LIBCLANG_RT18_DEB
+ARG LIBASAN8_DEB
+ARG LIBUBSAN1_DEB
+ARG LIBSTDCPP6_DEB
 ADD --checksum=sha256:641de77d8f142cfd62a1a6f964ba67b20754d3337c480efb529d086075a06c9a \
     https://snapshot.ubuntu.com/ubuntu/20261107T000000Z/pool/main/c/ca-certificates/ca-certificates_20240203_all.deb \
     /opt/ubuntu-ca.deb
@@ -19,7 +23,9 @@ RUN printf '%s\n' 'Types: deb' \
     apt-get -o Acquire::Retries=3 --error-on=any update && \
     if [ "$TARGETARCH" = arm64 ]; then set -- qemu-user; else set --; fi && \
     apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
-        binutils clang cmake gcc libc6-dev make python3 "$@" && \
+        binutils clang cmake gcc libc6-dev make python3 \
+        "libclang-rt-18-dev=$LIBCLANG_RT18_DEB" "libasan8=$LIBASAN8_DEB" \
+        "libubsan1=$LIBUBSAN1_DEB" "libstdc++6=$LIBSTDCPP6_DEB" "$@" && \
     rm -rf /var/lib/apt/lists/*
 FROM scratch AS qemu-source
 ADD --checksum=sha256:847346c1b82c1a54b2c38f6edbd85549edeb17430b7d4d3da12620e2962bc4f3 \
@@ -43,6 +49,7 @@ COPY --from=phoenix_launcher /launch-target /opt/launch-target
 COPY --from=x86-base /usr/lib/x86_64-linux-gnu /opt/x86-base/usr/lib/x86_64-linux-gnu
 COPY containers/prepare-runtime.sh /opt/prepare-runtime.sh
 COPY phoenix_eval /opt/phoenix/phoenix_eval
+COPY tools.lock /opt/phoenix/tools.lock
 WORKDIR /opt/phoenix
 ENTRYPOINT ["/usr/bin/python3", "-B", "-m", "phoenix_eval.worker"]
 

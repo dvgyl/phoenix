@@ -1,9 +1,32 @@
+import tomllib
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 
 from phoenix_eval.outcome import Outcome, TreeSnapshot
 
-FIXED_ENVIRONMENT = (("HOME", "/nonexistent"), ("LANG", "C.UTF-8"), ("TZ", "UTC"))
+
+def _oracle_pins() -> tuple[str, str]:
+    with (Path(__file__).resolve().parents[1] / "tools.lock").open("rb") as stream:
+        pins = tomllib.load(stream)
+    cpu, tunables = pins["qemu_cpu"], pins["glibc_tunables"]
+    if (
+        not isinstance(cpu, str)
+        or not cpu
+        or not isinstance(tunables, str)
+        or not tunables
+    ):
+        raise ValueError("Oracle pins must be nonempty strings.")
+    return cpu, tunables
+
+
+QEMU_CPU, GLIBC_TUNABLES = _oracle_pins()
+FIXED_ENVIRONMENT = (
+    ("HOME", "/nonexistent"),
+    ("LANG", "C.UTF-8"),
+    ("TZ", "UTC"),
+    ("GLIBC_TUNABLES", GLIBC_TUNABLES),
+)
 PROTECTED_PREFIXES = ("LD_", "QEMU_", "ROSETTA_", "DYLD_", "MALLOC_")
 
 
@@ -34,6 +57,7 @@ class Invocation:
 
 class WorkerRuntime(StrEnum):
     DIRECT = "direct"
+    TRUE_SOURCE_ARM64 = "true-source-arm64"
     QEMU = "qemu"
     ROSETTA = "rosetta"
 

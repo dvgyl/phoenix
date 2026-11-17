@@ -35,6 +35,10 @@ case "$1" in
         ;;
     arm64)
         make_root "" /opt/phoenix-runtime aarch64-linux-gnu ld-linux-aarch64.so.1
+        cp -a /opt/phoenix-runtime /opt/phoenix-validation-runtime
+        for library in libasan.so.8 libubsan.so.1 libstdc++.so.6; do
+            copy_file "" "/usr/lib/aarch64-linux-gnu/$library" /opt/phoenix-validation-runtime
+        done
         make_root /opt/x86-base /opt/phoenix-qemu-root x86_64-linux-gnu ld-linux-x86-64.so.2
         install -D /opt/qemu/bin/qemu-x86_64 /opt/phoenix-qemu-root/usr/bin/qemu-x86_64
         for path in $(ldd /opt/qemu/bin/qemu-x86_64 | awk '{for (i=1;i<=NF;i++) if ($i ~ "^/") print $i}'); do

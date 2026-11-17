@@ -90,7 +90,7 @@ static void set_limit(int fd, int resource, rlim_t soft, rlim_t hard) {
     }
 }
 
-static void execute(int fd, char **argv) {
+static void execute(int fd, char **argv, int validation) {
     uid_t uid = strtoul(argv[0], NULL, 10);
     gid_t gid = strtoul(argv[1], NULL, 10);
     if (chroot(argv[2]) < 0 || chdir("/work") < 0) {
@@ -102,7 +102,9 @@ static void execute(int fd, char **argv) {
     }
     set_limit(fd, RLIMIT_CORE, 0, 0);
     set_limit(fd, RLIMIT_CPU, 5, 6);
-    set_limit(fd, RLIMIT_AS, 1024L * 1024 * 1024, 1024L * 1024 * 1024);
+    if (!validation) {
+        set_limit(fd, RLIMIT_AS, 1024L * 1024 * 1024, 1024L * 1024 * 1024);
+    }
     set_limit(fd, RLIMIT_FSIZE, 64L * 1024 * 1024, 64L * 1024 * 1024);
     if (restrict_calls() < 0) {
         fail(fd, "seccomp");
@@ -123,7 +125,7 @@ static int wait_for(int fd, pid_t child) {
     return status;
 }
 
-static void run_init(int fd, int status_fd, char **argv) {
+static void run_init(int fd, int status_fd, char **argv, int validation) {
     char path[PATH_MAX];
     int length = snprintf(path, sizeof(path), "%s/proc", argv[2]);
     if (length < 0 || (size_t)length >= sizeof(path)) {
@@ -140,7 +142,7 @@ static void run_init(int fd, int status_fd, char **argv) {
     }
     if (child == 0) {
         close(status_fd);
-        execute(fd, argv);
+        execute(fd, argv, validation);
     }
     int status = wait_for(fd, child);
     if (write(status_fd, &status, sizeof(status)) != sizeof(status)) {
@@ -149,7 +151,7 @@ static void run_init(int fd, int status_fd, char **argv) {
     _exit(0);
 }
 
-static int run_with_proc(int fd, char **argv) {
+static int run_with_proc(int fd, char **argv, int validation) {
     if (unshare(CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWIPC) < 0 ||
         mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, NULL) < 0) {
         fail(fd, "create private process namespace");
@@ -164,7 +166,7 @@ static int run_with_proc(int fd, char **argv) {
     }
     if (init == 0) {
         close(channel[0]);
-        run_init(fd, channel[1], argv);
+        run_init(fd, channel[1], argv, validation);
     }
     close(channel[1]);
     int init_status = wait_for(fd, init);
@@ -196,8 +198,16 @@ int main(int argc, char **argv) {
         fail(fd, "fcntl");
     }
     if (strcmp(argv[1], "rosetta") == 0) {
-        return run_with_proc(fd, argv + 3);
+        return run_with_proc(fd, argv + 3, 0);
     }
-    execute(fd, argv + 3);
+#if defined(__aarch64__)
+    if (strcmp(argv[1], "true-source-arm64") == 0) {
+        return run_with_proc(fd, argv + 3, 1);
+    }
+#endif
+    if (strcmp(argv[1], "direct") != 0 && strcmp(argv[1], "qemu") != 0) {
+        return 125;
+    }
+    execute(fd, argv + 3, 0);
     return 125;
 }

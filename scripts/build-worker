@@ -26,25 +26,34 @@ cd "$(dirname "$0")/.."
 digest=$(uv run --locked python -m phoenix_eval.provenance)
 base=$(sed -n 's/^ubuntu_base = "\(.*\)"$/\1/p' tools.lock)
 snapshot=$(sed -n 's/^ubuntu_snapshot = "\(.*\)"$/\1/p' tools.lock)
+image_prefix=${PHOENIX_IMAGE_PREFIX:-phoenix}
+libclang_rt18=$(sed -n 's/^libclang_rt18_deb = "\(.*\)"$/\1/p' tools.lock)
+libasan8=$(sed -n 's/^libasan8_deb = "\(.*\)"$/\1/p' tools.lock)
+libubsan1=$(sed -n 's/^libubsan1_deb = "\(.*\)"$/\1/p' tools.lock)
+libstdcpp6=$(sed -n 's/^libstdcpp6_deb = "\(.*\)"$/\1/p' tools.lock)
 launcher=$(mktemp -d)
 trap 'rm -f "$launcher/launch-target"; rmdir "$launcher"' EXIT
 
 build_image() {
     docker_cli buildx build --load --build-arg "UBUNTU_BASE=$base" \
-        --build-arg "UBUNTU_SNAPSHOT=$snapshot" -f containers/Dockerfile "$@" .
+        --build-arg "UBUNTU_SNAPSHOT=$snapshot" \
+        --build-arg "LIBCLANG_RT18_DEB=$libclang_rt18" \
+        --build-arg "LIBASAN8_DEB=$libasan8" \
+        --build-arg "LIBUBSAN1_DEB=$libubsan1" \
+        --build-arg "LIBSTDCPP6_DEB=$libstdcpp6" -f containers/Dockerfile "$@" .
 }
 
-build_image --target toolchain --platform "linux/$native" -t "phoenix-toolchain:$native"
+build_image --target toolchain --platform "linux/$native" -t "$image_prefix-toolchain:$native"
 docker_cli run --rm -i --pull=never --network=none --read-only --pids-limit=32 \
     --tmpfs /work:rw,nosuid,nodev,size=16m --workdir /work --env TMPDIR=/work \
-    --platform "linux/$native" "phoenix-toolchain:$native" /bin/sh -ec \
+    --platform "linux/$native" "$image_prefix-toolchain:$native" /bin/sh -ec \
     'gcc -x c -std=c11 -Wall -Wextra -Werror -static -O2 -s -o launcher -; cat launcher' \
     < containers/launch-target.c > "$launcher/launch-target"
 chmod 0555 "$launcher/launch-target"
 
 build_image --target "worker-$architecture" --platform "linux/$architecture" \
     --build-context "phoenix_launcher=$launcher" \
-    --label "org.phoenix.worker-source-sha256=$digest" -t "phoenix-worker:$architecture"
+    --label "org.phoenix.worker-source-sha256=$digest" -t "$image_prefix-worker:$architecture"
 
 if [ "$(uv run --locked python -m phoenix_eval.provenance)" != "$digest" ]; then
     printf '%s\n' 'Worker sources changed during the build. Build the image again.' >&2

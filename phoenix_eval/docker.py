@@ -20,6 +20,7 @@ MAX_BATCH = 16
 class Engine(StrEnum):
     AMD64 = "amd64"
     ARM64 = "arm64"
+    TRUE_SOURCE_ARM64 = "true-source-arm64"
     QEMU_X86_64 = "qemu-x86-64"
     ROSETTA = "rosetta"
 
@@ -29,6 +30,8 @@ class Engine(StrEnum):
 
     @property
     def runtime(self) -> WorkerRuntime:
+        if self is Engine.TRUE_SOURCE_ARM64:
+            return WorkerRuntime.TRUE_SOURCE_ARM64
         if self is Engine.ROSETTA:
             return WorkerRuntime.ROSETTA
         if self is Engine.QEMU_X86_64:
@@ -84,7 +87,7 @@ def docker_args(
 ) -> tuple[str, ...]:
     namespace = (
         ("--cap-add=SYS_ADMIN", "--security-opt=apparmor=unconfined")
-        if engine is Engine.ROSETTA
+        if engine in (Engine.ROSETTA, Engine.TRUE_SOURCE_ARM64)
         else ()
     )
     return (

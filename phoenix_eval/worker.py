@@ -10,6 +10,7 @@ from tempfile import TemporaryDirectory, TemporaryFile
 from typing import BinaryIO
 
 from phoenix_eval.case import (
+    QEMU_CPU,
     CaseFailure,
     CaseResult,
     FailureKind,
@@ -23,6 +24,7 @@ from phoenix_eval.wire import PROTOCOL_VERSION, decode_invocation, encode_result
 
 SCRATCH = Path("/scratch")
 NATIVE_RUNTIME = Path("/opt/phoenix-runtime")
+VALIDATION_RUNTIME = Path("/opt/phoenix-validation-runtime")
 QEMU_RUNTIME = Path("/opt/phoenix-qemu-root")
 TARGET = "/program"
 LAUNCHER = "/opt/launch-target"
@@ -42,6 +44,8 @@ def worker_args(
         )
         return (
             "/usr/bin/qemu-x86_64",
+            "-cpu",
+            QEMU_CPU,
             "-R",
             "0",
             "-L",
@@ -64,6 +68,11 @@ def _launch(
     stderr: BinaryIO,
     trace: bool,
 ) -> int:
+    environment = case.environment()
+    if runtime is WorkerRuntime.TRUE_SOURCE_ARM64:
+        # LeakSanitizer needs process creation. Keep the process restriction.
+        environment["ASAN_OPTIONS"] = "detect_leaks=0:halt_on_error=1:symbolize=0"
+        environment["UBSAN_OPTIONS"] = "halt_on_error=1:print_stacktrace=0"
     with TemporaryFile(dir=SCRATCH) as setup:
         fd = setup.fileno()
         with subprocess.Popen(
@@ -79,7 +88,7 @@ def _launch(
             stdin=stdin,
             stdout=stdout,
             stderr=stderr,
-            env=case.environment(),
+            env=environment,
             pass_fds=(fd,),
             start_new_session=True,
         ) as process:
@@ -105,7 +114,10 @@ def run_case(
     runtime: WorkerRuntime,
     trace: bool = False,
 ) -> CaseResult:
-    libraries = QEMU_RUNTIME if runtime is WorkerRuntime.QEMU else NATIVE_RUNTIME
+    if runtime is WorkerRuntime.TRUE_SOURCE_ARM64:
+        libraries = VALIDATION_RUNTIME
+    else:
+        libraries = QEMU_RUNTIME if runtime is WorkerRuntime.QEMU else NATIVE_RUNTIME
     with TemporaryDirectory(dir=SCRATCH) as name:
         root = Path(name)
         root.chmod(0o755)
