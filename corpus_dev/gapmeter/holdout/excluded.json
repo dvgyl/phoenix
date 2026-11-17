@@ -1,0 +1,536 @@
+{
+  "binaries": {
+    "clang-O0": {
+      "errors": [],
+      "excluded": [],
+      "excluded_count": 0,
+      "failures": {},
+      "passed": true,
+      "runs": [
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/rosetta",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/rosetta",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/gcc/arm64",
+          "repeats": 3,
+          "sha256": "7d178125e52493174743d79125bdbec18925f47bf415f5f0db0c7c115807fb25"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/clang/arm64",
+          "repeats": 3,
+          "sha256": "e22c171f11999238e991a5f1a903b59800f361270c510f46c0a709a9a2fbdc41"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "sanitizer/arm64/gcc",
+          "repeats": 3,
+          "sha256": "e05030e31fbf6a7515d8fa608ee01d7b1722b55ccec105d1e92803296e82f816"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/rosetta",
+          "repeats": 3,
+          "sha256": "72f9ff204b695501aa9cb477524970890f89240efece0b0eaf13bf4c82a155c1"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "72f9ff204b695501aa9cb477524970890f89240efece0b0eaf13bf4c82a155c1"
+        }
+      ],
+      "sha256": "72f9ff204b695501aa9cb477524970890f89240efece0b0eaf13bf4c82a155c1",
+      "total": 266
+    },
+    "clang-O2": {
+      "errors": [],
+      "excluded": [],
+      "excluded_count": 0,
+      "failures": {},
+      "passed": true,
+      "runs": [
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/rosetta",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/rosetta",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/gcc/arm64",
+          "repeats": 3,
+          "sha256": "7d178125e52493174743d79125bdbec18925f47bf415f5f0db0c7c115807fb25"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/clang/arm64",
+          "repeats": 3,
+          "sha256": "e22c171f11999238e991a5f1a903b59800f361270c510f46c0a709a9a2fbdc41"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "sanitizer/arm64/gcc",
+          "repeats": 3,
+          "sha256": "e05030e31fbf6a7515d8fa608ee01d7b1722b55ccec105d1e92803296e82f816"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/rosetta",
+          "repeats": 3,
+          "sha256": "5534132052f17e7d253f5a2d58f691a1664f4d491d8ee1d4e74e87a5cff83ffd"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "5534132052f17e7d253f5a2d58f691a1664f4d491d8ee1d4e74e87a5cff83ffd"
+        }
+      ],
+      "sha256": "5534132052f17e7d253f5a2d58f691a1664f4d491d8ee1d4e74e87a5cff83ffd",
+      "total": 266
+    },
+    "clang-O3": {
+      "errors": [],
+      "excluded": [],
+      "excluded_count": 0,
+      "failures": {},
+      "passed": true,
+      "runs": [
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/rosetta",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/rosetta",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/gcc/arm64",
+          "repeats": 3,
+          "sha256": "7d178125e52493174743d79125bdbec18925f47bf415f5f0db0c7c115807fb25"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/clang/arm64",
+          "repeats": 3,
+          "sha256": "e22c171f11999238e991a5f1a903b59800f361270c510f46c0a709a9a2fbdc41"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "sanitizer/arm64/gcc",
+          "repeats": 3,
+          "sha256": "e05030e31fbf6a7515d8fa608ee01d7b1722b55ccec105d1e92803296e82f816"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/rosetta",
+          "repeats": 3,
+          "sha256": "860e2bd49bb25b31a767f5301439accd797c42bd064c511ce8cd73ad7a722242"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "860e2bd49bb25b31a767f5301439accd797c42bd064c511ce8cd73ad7a722242"
+        }
+      ],
+      "sha256": "860e2bd49bb25b31a767f5301439accd797c42bd064c511ce8cd73ad7a722242",
+      "total": 266
+    },
+    "clang-Os": {
+      "errors": [],
+      "excluded": [],
+      "excluded_count": 0,
+      "failures": {},
+      "passed": true,
+      "runs": [
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/rosetta",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/rosetta",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/gcc/arm64",
+          "repeats": 3,
+          "sha256": "7d178125e52493174743d79125bdbec18925f47bf415f5f0db0c7c115807fb25"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/clang/arm64",
+          "repeats": 3,
+          "sha256": "e22c171f11999238e991a5f1a903b59800f361270c510f46c0a709a9a2fbdc41"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "sanitizer/arm64/gcc",
+          "repeats": 3,
+          "sha256": "e05030e31fbf6a7515d8fa608ee01d7b1722b55ccec105d1e92803296e82f816"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/rosetta",
+          "repeats": 3,
+          "sha256": "50af38f44a90ce60ef24722f99869da169b7118cc59a63374fd64f5d7e090594"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "50af38f44a90ce60ef24722f99869da169b7118cc59a63374fd64f5d7e090594"
+        }
+      ],
+      "sha256": "50af38f44a90ce60ef24722f99869da169b7118cc59a63374fd64f5d7e090594",
+      "total": 266
+    },
+    "gcc-O0": {
+      "errors": [],
+      "excluded": [],
+      "excluded_count": 0,
+      "failures": {},
+      "passed": true,
+      "runs": [
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/rosetta",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/rosetta",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/gcc/arm64",
+          "repeats": 3,
+          "sha256": "7d178125e52493174743d79125bdbec18925f47bf415f5f0db0c7c115807fb25"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/clang/arm64",
+          "repeats": 3,
+          "sha256": "e22c171f11999238e991a5f1a903b59800f361270c510f46c0a709a9a2fbdc41"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "sanitizer/arm64/gcc",
+          "repeats": 3,
+          "sha256": "e05030e31fbf6a7515d8fa608ee01d7b1722b55ccec105d1e92803296e82f816"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/rosetta",
+          "repeats": 3,
+          "sha256": "99664a111824130489ae3e3a362c5f3cb366112d9a4f03b8796322df56da45eb"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "99664a111824130489ae3e3a362c5f3cb366112d9a4f03b8796322df56da45eb"
+        }
+      ],
+      "sha256": "99664a111824130489ae3e3a362c5f3cb366112d9a4f03b8796322df56da45eb",
+      "total": 266
+    },
+    "gcc-O2": {
+      "errors": [],
+      "excluded": [],
+      "excluded_count": 0,
+      "failures": {},
+      "passed": true,
+      "runs": [
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/rosetta",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/rosetta",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/gcc/arm64",
+          "repeats": 3,
+          "sha256": "7d178125e52493174743d79125bdbec18925f47bf415f5f0db0c7c115807fb25"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/clang/arm64",
+          "repeats": 3,
+          "sha256": "e22c171f11999238e991a5f1a903b59800f361270c510f46c0a709a9a2fbdc41"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "sanitizer/arm64/gcc",
+          "repeats": 3,
+          "sha256": "e05030e31fbf6a7515d8fa608ee01d7b1722b55ccec105d1e92803296e82f816"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/rosetta",
+          "repeats": 3,
+          "sha256": "9847d5163d151681b909711c103c58b74209ef5ea7368e0d5805da71aad3e723"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "9847d5163d151681b909711c103c58b74209ef5ea7368e0d5805da71aad3e723"
+        }
+      ],
+      "sha256": "9847d5163d151681b909711c103c58b74209ef5ea7368e0d5805da71aad3e723",
+      "total": 266
+    },
+    "gcc-O3": {
+      "errors": [],
+      "excluded": [],
+      "excluded_count": 0,
+      "failures": {},
+      "passed": true,
+      "runs": [
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/rosetta",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/rosetta",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/gcc/arm64",
+          "repeats": 3,
+          "sha256": "7d178125e52493174743d79125bdbec18925f47bf415f5f0db0c7c115807fb25"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/clang/arm64",
+          "repeats": 3,
+          "sha256": "e22c171f11999238e991a5f1a903b59800f361270c510f46c0a709a9a2fbdc41"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "sanitizer/arm64/gcc",
+          "repeats": 3,
+          "sha256": "e05030e31fbf6a7515d8fa608ee01d7b1722b55ccec105d1e92803296e82f816"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/rosetta",
+          "repeats": 3,
+          "sha256": "5111b0151d4f62412419c2304a1a81cc8d61c74c0f244f7e0fefb8f69b51b333"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "5111b0151d4f62412419c2304a1a81cc8d61c74c0f244f7e0fefb8f69b51b333"
+        }
+      ],
+      "sha256": "5111b0151d4f62412419c2304a1a81cc8d61c74c0f244f7e0fefb8f69b51b333",
+      "total": 266
+    },
+    "gcc-Os": {
+      "errors": [],
+      "excluded": [],
+      "excluded_count": 0,
+      "failures": {},
+      "passed": true,
+      "runs": [
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/rosetta",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/gcc/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "8fe959abece061e3067cbf6e42bd33deba03fd52f1cfbd8bd59fa3553b552419"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/rosetta",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/amd64/clang/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "360834355bebff83643b2b6b618a6c34fd9952c261f54e913f7b77e36b8e20c4"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/gcc/arm64",
+          "repeats": 3,
+          "sha256": "7d178125e52493174743d79125bdbec18925f47bf415f5f0db0c7c115807fb25"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "canonical/arm64/clang/arm64",
+          "repeats": 3,
+          "sha256": "e22c171f11999238e991a5f1a903b59800f361270c510f46c0a709a9a2fbdc41"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "sanitizer/arm64/gcc",
+          "repeats": 3,
+          "sha256": "e05030e31fbf6a7515d8fa608ee01d7b1722b55ccec105d1e92803296e82f816"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/rosetta",
+          "repeats": 3,
+          "sha256": "c210cf2daad93b91a58387785b800a8c9227df6bc542a05511113059d1faee01"
+        },
+        {
+          "cases_per_repeat": 266,
+          "label": "original/qemu-x86-64",
+          "repeats": 3,
+          "sha256": "c210cf2daad93b91a58387785b800a8c9227df6bc542a05511113059d1faee01"
+        }
+      ],
+      "sha256": "c210cf2daad93b91a58387785b800a8c9227df6bc542a05511113059d1faee01",
+      "total": 266
+    }
+  },
+  "bindings": {
+    "cases_sha256": "61bf3ec23b9c5a301453ef189cc44eedf4884ababb4cc219e7539646d5a49b21",
+    "meta_sha256": "2df8eeb954f2e148bd4fa3691f9d23dc8c3f53a4a1749b1cf5a66f37c1c9c6cb",
+    "source_sha256": "c69e9a19fa4b79c0f86a8d00077aa6c3b5738905c4ead8df6195df4bd71a8cd8",
+    "tools_sha256": "fb079405b61603f5a21b48349ef042656dab51860d149357437c0ea67755c1ba",
+    "validator_sha256": "862531e45e77d17e810bf541f24c78e2bd2bf0351791f4e834f6032a0a2ff253"
+  },
+  "images": {
+    "amd64": "sha256:69d66c22e94cae16267f9ad1b8fb17d00c3ad55a8032c1bc2a31b165e20a10c2",
+    "arm64": "sha256:260bf13210b88fad9e39b1086267ab99bc9da20b17b8765c9c85526f5b72c540"
+  },
+  "version": 1
+}

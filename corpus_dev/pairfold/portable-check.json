@@ -1,0 +1,32 @@
+{
+  "program": "pairfold",
+  "source_sha256": {
+    "main.c": "4c7d06e83f202d7f1017507e3a26683f696d254bf738af4cf36ac055374fa08f"
+  },
+  "published_cases": 229,
+  "published_cases_sha256": "7a5ac8028e75a054f83e0593029d8399c897396b82b7ee880ddb1a364640ae7a",
+  "validated_input_records": 229,
+  "validated_sequence_sha256": "7a5ac8028e75a054f83e0593029d8399c897396b82b7ee880ddb1a364640ae7a",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "c305cb47beb9f6c82468022fb910f70ac9c732c496958beb35f8fdba147c6caa",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

@@ -1,0 +1,24 @@
+{
+  "name": "recordloom",
+  "tier": "D1",
+  "lines": 1208,
+  "files": [
+    "src/codec.c",
+    "src/main.c",
+    "src/records.h",
+    "src/registry.c"
+  ],
+  "category": "record codec",
+  "features": [
+    "structs",
+    "function_pointer_tables",
+    "switch_8",
+    "getopt",
+    "floating_point_output",
+    "directory_tree",
+    "static_locals",
+    "qsort"
+  ],
+  "heldout_cases": 368,
+  "heldout_seed": 852201
+}

@@ -1,0 +1,32 @@
+{
+  "program": "runepack",
+  "source_sha256": {
+    "main.c": "aa5bce78794b87eb503ad9b84ee8bb74c0bc2f406d9c1baaf6e9a6a945140e5c"
+  },
+  "published_cases": 260,
+  "published_cases_sha256": "dea04974609bd02bbb99e404c76740281f3764028048477b3d8b32e460b218f3",
+  "validated_input_records": 294,
+  "validated_sequence_sha256": "c26d90e60be1791c55e6bd6213fc1ba3927dcdef14521c95f7d2d166801cf2b6",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "f5085db65dfe9325c8c8c2c0c6348722e19a8c959a459954a1b291101583c30e",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

@@ -1,0 +1,22 @@
+{
+  "name": "lumaquilt",
+  "tier": "D1",
+  "lines": 613,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "image filter",
+  "features": [
+    "structs",
+    "function_pointer_tables",
+    "switch_8",
+    "recursion",
+    "getopt",
+    "floating_point_output",
+    "directory_tree",
+    "static_locals",
+    "qsort"
+  ],
+  "heldout_cases": 394,
+  "heldout_seed": 852003
+}

@@ -1,0 +1,35 @@
+{
+  "program": "chromapath",
+  "source_sha256": {
+    "color.h": "b8612a3774532bf6d5e568dac6f19bc6505a6a6439f3f2c3b50a4f8764932123",
+    "filters.c": "dfbceace1f7e0d0542fccd568944e55afc4c5d06b9d944a898bfec64c542f5db",
+    "image.c": "d43168a9e95038ec6bc04bce636c49863faf685c87c14f86e8ff6ce2caf0b62e",
+    "main.c": "0eeeb822f1a30a43a513e850e2547400e567d28732e99757061e6fef3e11715e"
+  },
+  "published_cases": 509,
+  "published_cases_sha256": "7cf201deff5f5a605a554c839e018524e70ff48e33cfdb0a396b6043192e857b",
+  "validated_input_records": 509,
+  "validated_sequence_sha256": "7cf201deff5f5a605a554c839e018524e70ff48e33cfdb0a396b6043192e857b",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "a4948e290a53b0f87f840725abd816fe43ba33c63a79c707221bb62236975592",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

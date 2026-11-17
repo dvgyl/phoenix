@@ -1,0 +1,32 @@
+{
+  "program": "knotconf",
+  "source_sha256": {
+    "main.c": "05c323343b1f4f928bcbea38db33afa1a05a54b341d0554549fa7ba4851db30e"
+  },
+  "published_cases": 353,
+  "published_cases_sha256": "d982f9ce0b26058bf7f6b06b9da52ab8dfa1ec8dbe24cf44ca81b49030ed8d6c",
+  "validated_input_records": 353,
+  "validated_sequence_sha256": "d982f9ce0b26058bf7f6b06b9da52ab8dfa1ec8dbe24cf44ca81b49030ed8d6c",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "16d1dcbc2be43c67b919a2a1d51becab2445a9b41fb4fd290140dfed498101cc",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

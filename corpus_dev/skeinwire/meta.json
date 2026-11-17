@@ -1,0 +1,16 @@
+{
+  "name": "skeinwire",
+  "tier": "D1",
+  "lines": 610,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "codec",
+  "features": [
+    "structs",
+    "switch_8",
+    "getopt"
+  ],
+  "heldout_cases": 560,
+  "heldout_seed": 852005
+}

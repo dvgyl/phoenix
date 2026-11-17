@@ -1,0 +1,140 @@
+{
+  "program": "unitforge",
+  "source_sha256": {
+    "calculate.c": "32e1bedf0b6fbe11658fc939460a2d322adef2c39de4e72b80cb2b9b4d0169a1",
+    "main.c": "a585e0d69d8277f06f32ec44139469a550a0ce090361c1c13b16da8e44cf47d1",
+    "quantity.h": "dace30bab383cfc54e10a3f31ac57ed89b774a5ded13d912118db7e06880e240",
+    "units.c": "4c805f7a9ba01413c3e0633fe05e95cbbe0364238586299860a710075cee74c5"
+  },
+  "cases_sha256": "f899414076be04417b25d2d8ed97130c7c09af29e1d5f2622f8df2b52ba3b17c",
+  "status": "Direct source checks passed. Phoenix acceptance is pending.",
+  "cases": 618,
+  "branch_covered": 665,
+  "branch_total": 687,
+  "branch_percent": 96.79767103347889,
+  "uncovered": [
+    [
+      "/work/unitforge/src/units.c",
+      47
+    ],
+    [
+      "/work/unitforge/src/units.c",
+      142
+    ],
+    [
+      "/work/unitforge/src/units.c",
+      142
+    ],
+    [
+      "/work/unitforge/src/units.c",
+      233
+    ],
+    [
+      "/work/unitforge/src/main.c",
+      150
+    ],
+    [
+      "/work/unitforge/src/main.c",
+      158
+    ],
+    [
+      "/work/unitforge/src/main.c",
+      180
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      92
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      348
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      364
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      364
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      408
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      431
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      437
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      485
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      504
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      504
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      511
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      511
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      513
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      534
+    ],
+    [
+      "/work/unitforge/src/calculate.c",
+      537
+    ]
+  ],
+  "variants": [
+    "gcc -O0",
+    "gcc -O2",
+    "gcc -Os",
+    "gcc -O3",
+    "clang -O0",
+    "clang -O2",
+    "clang -Os",
+    "clang -O3"
+  ],
+  "repetitions": 3,
+  "compiler_image": "phoenix-worker:amd64",
+  "gcc": "13.3.0",
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+  "mutation_score": null,
+  "arm64_validation": false,
+  "runner_validation": false,
+  "compiler_comparison": {
+    "variants": [
+      "gcc -O0",
+      "gcc -O2",
+      "gcc -Os",
+      "gcc -O3",
+      "clang -O0",
+      "clang -O2",
+      "clang -Os",
+      "clang -O3"
+    ],
+    "repetitions": 3,
+    "validated_input_records": 641,
+    "validated_sequence_sha256": "d97876cf7540901ef83cc514595e527678b10f8e28577d6dd49cf8e6dffa19b1",
+    "published_cases": 618,
+    "all_published_cases_in_validated_sequence": true
+  },
+  "coverage_repetitions": 1
+}

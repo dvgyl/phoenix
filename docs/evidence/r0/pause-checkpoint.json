@@ -1,0 +1,144 @@
+{
+  "adequacy_current_passes": [
+    "branchmark",
+    "driftstat"
+  ],
+  "adequacy_reports": {
+    "branchmark": {
+      "counts": {
+        "equivalent": 0,
+        "killed": 260,
+        "survived": 23,
+        "timed_out": 5,
+        "uncompilable": 12,
+        "unresolved": 0
+      },
+      "coverage": {
+        "covered": 249,
+        "total": 262
+      },
+      "mutation_score": {
+        "denominator": 288,
+        "numerator": 265
+      },
+      "passed": true,
+      "run_id": "74eb878dd7fe4e6e9c5fbc2828f0053b",
+      "verified_current": true
+    },
+    "chromapath": {
+      "counts": {
+        "equivalent": 0,
+        "killed": 250,
+        "survived": 32,
+        "timed_out": 14,
+        "uncompilable": 4,
+        "unresolved": 0
+      },
+      "coverage": {
+        "covered": 641,
+        "total": 676
+      },
+      "mutation_score": {
+        "denominator": 296,
+        "numerator": 264
+      },
+      "passed": false,
+      "run_id": "9504b3ec73ed422088b6b5d4fd5f6f33",
+      "verified_current": false
+    },
+    "driftstat": {
+      "counts": {
+        "equivalent": 0,
+        "killed": 219,
+        "survived": 22,
+        "timed_out": 2,
+        "uncompilable": 11,
+        "unresolved": 0
+      },
+      "coverage": {
+        "covered": 60,
+        "total": 62
+      },
+      "mutation_score": {
+        "denominator": 243,
+        "numerator": 221
+      },
+      "passed": true,
+      "run_id": "bb628e4a606640dc8f1615d04edbf816",
+      "verified_current": true
+    }
+  },
+  "candidate_programs": 22,
+  "code_commit": "8fdbd1e60de3a8643263440416159e4833e8d9d7",
+  "current_manifest_entries": 56,
+  "experiment_budget": 3,
+  "experiments_used": 0,
+  "heldout_cases_total": 7848,
+  "initial_build": {
+    "binaries": 176,
+    "invalid_twins": 0,
+    "log": "tmp/r0-corpus-build.log",
+    "programs": 22
+  },
+  "interrupted_pilot": {
+    "cases": 518,
+    "program": "chromapath",
+    "rerun_required": true,
+    "run_id": "161a4413a7364bf698830c225af2be8f"
+  },
+  "main_check": {
+    "coverage_percent": 87.56,
+    "log": "tmp/r0-shared-runtime-lead-check.log",
+    "passed": 1105,
+    "seconds": 65.33,
+    "skipped": 38
+  },
+  "milestone": "R0",
+  "pending_integrity_fixture_patch": "docs/plans/R0-integrity-window-fixtures.patch",
+  "prototype": {
+    "branch": "wip/r0-local-name-evidence",
+    "checks_passed": 1117,
+    "checks_skipped": 41,
+    "commit": "879d612",
+    "critical_review_done": false,
+    "merged": false,
+    "pinned_compiler_checks_done": false
+  },
+  "r0_tag_exists": false,
+  "source_limit_exclusive": 9000,
+  "source_lines": 10638,
+  "state": "paused_by_owner",
+  "timestamp_utc": "2026-11-17T14:08:36.414255+00:00",
+  "tool_launch_proof": {
+    "before_after_identical": true,
+    "binaries": 8,
+    "case_checks": 120,
+    "run_id": "r0-tool-launch-proof-c8b0404142844433a3cb7cebc29645ea"
+  },
+  "validated_programs": [
+    "branchmark",
+    "chromapath",
+    "driftstat",
+    "fernconf",
+    "gapmeter",
+    "knotconf",
+    "lumaquilt"
+  ],
+  "validation_remaining": [
+    "niblace",
+    "pairfold",
+    "patchpanel",
+    "prismcsv",
+    "recordloom",
+    "runepack",
+    "skeinwire",
+    "spanrank",
+    "tariffgrid",
+    "tilehash",
+    "tokenlace",
+    "unitforge",
+    "velocalc",
+    "weighbit",
+    "wordweft"
+  ]
+}

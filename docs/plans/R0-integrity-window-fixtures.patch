@@ -1,0 +1,528 @@
+diff --git a/tests/fixtures/integrity-window/honest.c b/tests/fixtures/integrity-window/honest.c
+new file mode 100644
+index 0000000..093e2fb
+--- /dev/null
++++ b/tests/fixtures/integrity-window/honest.c
+@@ -0,0 +1,13 @@
++static unsigned transform(unsigned value)
++{
++    value = value * 17u + 29u;
++    value ^= value >> 3;
++    value = value * 43u + 11u;
++    return value ^ (value >> 5);
++}
++
++int main(int argc, char **argv)
++{
++    (void)argv;
++    return (int)(transform((unsigned)argc) & 127u);
++}
+diff --git a/tests/test_integrity_window_challenge.py b/tests/test_integrity_window_challenge.py
+new file mode 100644
+index 0000000..a31faec
+--- /dev/null
++++ b/tests/test_integrity_window_challenge.py
+@@ -0,0 +1,503 @@
++"""Independent byte-window challenges for SPEC section 9 and R0 Step 16."""
++
++import io
++import os
++import struct
++import subprocess
++import tarfile
++from dataclasses import dataclass
++from pathlib import Path
++
++import pytest
++
++from phoenix_eval.build import ProjectSnapshot
++from phoenix_eval.docker import Engine, docker_cli, freeze_images
++from phoenix_eval.elf import elf_sections
++from phoenix_eval.integrity import (
++    CompilerEvidence,
++    FunctionShape,
++    IntegrityError,
++    IntegrityReport,
++    Storage,
++    check_integrity,
++    inspect_project,
++)
++from phoenix_eval.jobs import Slots, limited
++from phoenix_eval.provenance import (
++    CHECKER_SOURCE_LABEL,
++    checker_source_digest,
++    worker_source_digest,
++)
++
++ARTIFACT = "src/program.c"
++SOURCE = b"int main(void) { return 0; }\n"
++ORIGIN = (FunctionShape("main", 0, 0, 0),)
++TARGETS = ("x86_64-linux-gnu", "aarch64-linux-gnu")
++WINDOW = bytes((index * 73 + 19) % 256 for index in range(64))
++RUNTIME_SYMBOLS = (
++    "_IO_stdin_used",
++    "__dso_handle",
++    "data_start",
++    "__data_start",
++    "completed.0",
++    "__TMC_END__",
++)
++WORKSPACE = os.environ.get("PHOENIX_ROOT", "")
++COMPILER_ARCHES = frozenset(
++    os.environ.get("PHOENIX_COMPILER_INTEGRITY_ARCHES", "").split(",")
++)
++
++
++@dataclass(frozen=True)
++class ElfSection:
++    name: str
++    data: bytes
++    flags: int = 2
++    kind: int = 1
++
++
++@dataclass(frozen=True)
++class ElfSymbol:
++    name: str
++    section: str
++    offset: int
++    size: int
++
++
++def elf(sections: tuple[ElfSection, ...], symbols: tuple[ElfSymbol, ...] = ()) -> bytes:
++    """Build ELF64 section and symbol tables without a compiler."""
++    entries = list(sections)
++    links: dict[str, tuple[int, int, int]] = {}
++    if symbols:
++        strings = bytearray(b"\0")
++        table = bytearray(24)
++        for symbol in symbols:
++            section_index = next(
++                index
++                for index, item in enumerate(sections, 1)
++                if item.name == symbol.section
++            )
++            table.extend(
++                struct.pack(
++                    "<IBBHQQ",
++                    len(strings),
++                    0x11,
++                    0,
++                    section_index,
++                    0x400000 + section_index * 0x1000 + symbol.offset,
++                    symbol.size,
++                )
++            )
++            strings.extend(symbol.name.encode() + b"\0")
++        entries.extend(
++            (
++                ElfSection(".strtab", bytes(strings), 0, 3),
++                ElfSection(".symtab", bytes(table), 0, 2),
++            )
++        )
++        links[".symtab"] = (len(sections) + 1, 1, 24)
++    names = bytearray(b"\0")
++    name_offsets = []
++    for name in [item.name for item in entries] + [".shstrtab"]:
++        name_offsets.append(len(names))
++        names.extend(name.encode() + b"\0")
++    entries.append(ElfSection(".shstrtab", bytes(names), 0, 3))
++    output = bytearray(64)
++    headers = [bytes(64)]
++    for index, item in enumerate(entries, 1):
++        output.extend(bytes(-len(output) % 8))
++        offset = len(output)
++        output.extend(item.data)
++        link, info, entry_size = links.get(
++            item.name, (0, 0, 8 if item.kind in (14, 15) else 0)
++        )
++        headers.append(
++            struct.pack(
++                "<IIQQQQIIQQ",
++                name_offsets[index - 1],
++                item.kind,
++                item.flags,
++                0x400000 + index * 0x1000 if item.flags & 2 else 0,
++                offset,
++                len(item.data),
++                link,
++                info,
++                8,
++                entry_size,
++            )
++        )
++    output.extend(bytes(-len(output) % 8))
++    section_offset = len(output)
++    output.extend(b"".join(headers))
++    output[:64] = struct.pack(
++        "<16sHHIQQQIHHHHHH",
++        b"\x7fELF\x02\x01\x01" + bytes(9),
++        2,
++        62,
++        1,
++        0x401000,
++        0,
++        section_offset,
++        0,
++        64,
++        0,
++        0,
++        64,
++        len(headers),
++        len(entries),
++    )
++    return bytes(output)
++
++
++def evidence(records: tuple[Storage, ...] = ()) -> tuple[CompilerEvidence, ...]:
++    return tuple(
++        CompilerEvidence(target, "18.1.3", records, (), ORIGIN) for target in TARGETS
++    )
++
++
++def check(
++    sections: tuple[ElfSection, ...] = (),
++    symbols: tuple[ElfSymbol, ...] = (),
++    records: tuple[Storage, ...] = (),
++    original_data: bytes = b"",
++    build_index: int = 0,
++    source: dict[str, bytes] | None = None,
++) -> IntegrityReport:
++    original = elf(
++        (
++            ElfSection(".text", b"\xf1" * 17 + WINDOW + b"\xf2" * 9, 6),
++            ElfSection(".rodata", original_data),
++        )
++    )
++    clean = elf((ElfSection(".text", b"\xc3", 6),))
++    builds = [clean] * 4
++    builds[build_index] = elf((ElfSection(".text", b"\xc3", 6), *sections), symbols)
++    return check_integrity(
++        original,
++        {ARTIFACT: SOURCE} if source is None else source,
++        tuple(builds),
++        evidence(records),
++        frozenset(),
++        ORIGIN,
++    )
++
++
++def test_honest_matching_text_passes() -> None:
++    program = elf((ElfSection(".text", WINDOW, 6),))
++    report = check_integrity(
++        program, {ARTIFACT: SOURCE}, (program,) * 4, evidence(), frozenset(), ORIGIN
++    )
++    assert report.passed, report.categories
++    assert report.categories == {}
++
++
++@pytest.mark.parametrize(
++    "section,flags", [(".rodata", 2), (".data", 3), (".data.rel.ro", 3)]
++)
++@pytest.mark.parametrize("build_index", range(4))
++@pytest.mark.parametrize("prefix", [b"", b"larger-constant:"])
++def test_each_build_rejects_text_in_data(
++    section: str, flags: int, build_index: int, prefix: bytes
++) -> None:
++    report = check(
++        (ElfSection(section, prefix + WINDOW + b"suffix", flags),),
++        build_index=build_index,
++    )
++    assert not report.passed
++    assert set(report.categories) == {"embedded_text"}
++
++
++@pytest.mark.parametrize("kind", ["literal", "literal_storage", "storage"])
++@pytest.mark.parametrize("prefix", [b"", b"inside:"])
++def test_decoded_storage_rejects_text_even_with_data_provenance(
++    kind: str, prefix: bytes
++) -> None:
++    payload = prefix + WINDOW + b"end"
++    type_name = f"const unsigned char[{len(payload)}]" if kind == "storage" else ""
++    record = Storage(kind, ARTIFACT, 0, payload, type_name)
++    report = check(records=(record,), original_data=payload)
++    assert not report.passed
++    assert set(report.categories) == {"embedded_text"}
++
++
++def test_raw_source_window_is_still_rejected() -> None:
++    report = check(source={ARTIFACT: b"/*" + WINDOW + b"*/" + SOURCE})
++    assert not report.passed
++    assert set(report.categories) == {"embedded_text"}
++
++
++@pytest.mark.parametrize("symbol", RUNTIME_SYMBOLS)
++def test_runtime_symbol_range_is_excluded(symbol: str) -> None:
++    report = check(
++        (ElfSection(".data", WINDOW, 3),), (ElfSymbol(symbol, ".data", 24, 8),)
++    )
++    assert report.passed, report.categories
++
++
++@pytest.mark.parametrize("symbol", RUNTIME_SYMBOLS)
++@pytest.mark.parametrize("side", ["before", "after"])
++def test_runtime_symbol_does_not_hide_adjacent_user_data(
++    symbol: str, side: str
++) -> None:
++    payload = WINDOW + b"runtime!" if side == "before" else b"runtime!" + WINDOW
++    offset = 64 if side == "before" else 0
++    report = check(
++        (ElfSection(".data", payload, 3),), (ElfSymbol(symbol, ".data", offset, 8),)
++    )
++    assert not report.passed
++    assert set(report.categories) == {"embedded_text"}
++
++
++@pytest.mark.parametrize("symbol", RUNTIME_SYMBOLS)
++def test_zero_size_runtime_symbol_does_not_hide_user_data(symbol: str) -> None:
++    report = check(
++        (ElfSection(".data", WINDOW, 3),), (ElfSymbol(symbol, ".data", 0, 0),)
++    )
++    assert not report.passed
++    assert set(report.categories) == {"embedded_text"}
++
++
++@pytest.mark.parametrize("symbol", RUNTIME_SYMBOLS)
++def test_runtime_symbol_name_must_match_exactly(symbol: str) -> None:
++    report = check(
++        (ElfSection(".data", WINDOW, 3),),
++        (ElfSymbol(symbol + "_user", ".data", 0, 64),),
++    )
++    assert not report.passed
++    assert set(report.categories) == {"embedded_text"}
++
++
++@pytest.mark.parametrize("section,kind", [(".init_array", 14), (".fini_array", 15)])
++def test_startup_array_section_is_excluded(section: str, kind: int) -> None:
++    report = check((ElfSection(section, WINDOW, 3, kind),))
++    assert report.passed, report.categories
++
++
++@pytest.mark.parametrize("section,kind", [(".init_array", 14), (".fini_array", 15)])
++def test_startup_array_does_not_hide_user_data(section: str, kind: int) -> None:
++    report = check(
++        (
++            ElfSection(section, WINDOW, 3, kind),
++            ElfSection(".data.rel.ro", b"prefix" + WINDOW, 3),
++        )
++    )
++    assert not report.passed
++    assert set(report.categories) == {"embedded_text"}
++
++
++@pytest.mark.parametrize("section,kind", [(".init_array", 14), (".fini_array", 15)])
++def test_startup_array_does_not_exempt_source_storage(section: str, kind: int) -> None:
++    record = Storage("storage", ARTIFACT, 0, WINDOW, "unsigned char[64]")
++    report = check(
++        (ElfSection(section, WINDOW, 3, kind),), records=(record,), original_data=WINDOW
++    )
++    assert not report.passed
++    assert set(report.categories) == {"embedded_text"}
++
++
++def test_excluded_bytes_do_not_join_separate_user_ranges() -> None:
++    payload = WINDOW[:32] + b"runtime!" + WINDOW[32:]
++    report = check(
++        (ElfSection(".data", payload, 3),), (ElfSymbol("__dso_handle", ".data", 32, 8),)
++    )
++    assert report.passed, report.categories
++
++
++def test_sixty_three_bytes_do_not_reach_the_window_limit() -> None:
++    report = check((ElfSection(".rodata", WINDOW[:63]),))
++    assert report.passed, report.categories
++
++
++@dataclass(frozen=True)
++class Images:
++    workers: dict[str, str]
++    checkers: dict[str, str]
++
++
++@pytest.fixture(scope="module")
++def pinned_images() -> Images:
++    assert WORKSPACE, "Source the Phoenix workspace environment."
++    with Slots.from_environment().acquire("compile"):
++        engines = (Engine.AMD64, Engine.ARM64)
++        return Images(
++            freeze_images(engines, worker_source_digest()),
++            freeze_images(
++                engines,
++                checker_source_digest(),
++                repository=os.environ.get(
++                    "PHOENIX_WINDOW_CHECKER_REPOSITORY", "phoenix-c-integrity"
++                ),
++                source_label=CHECKER_SOURCE_LABEL,
++            ),
++        )
++
++
++@pytest.fixture
++def global_slots(isolated_workspace: None, monkeypatch: pytest.MonkeyPatch) -> None:
++    # conftest isolates unit tests. Container tests must share the real slots.
++    assert WORKSPACE
++    monkeypatch.setenv("PHOENIX_ROOT", WORKSPACE)
++
++
++@limited("compile")
++def compile_c(
++    source: bytes, image: str, arch: str, compiler: str, *, strip: bool = False
++) -> bytes:
++    result = subprocess.run(
++        (
++            *docker_cli(),
++            "run",
++            "--rm",
++            "--interactive",
++            "--pull=never",
++            f"--platform=linux/{arch}",
++            "--network=none",
++            "--read-only",
++            "--cap-drop=ALL",
++            "--security-opt=no-new-privileges",
++            "--pids-limit=64",
++            "--memory=1536m",
++            "--memory-swap=1536m",
++            "--user=19704:19704",
++            "--tmpfs=/work:rw,noexec,nosuid,nodev,size=64m,uid=19704,gid=19704,mode=0700",
++            "--workdir=/work",
++            "--env=TMPDIR=/work",
++            "--env=HOME=/nonexistent",
++            "--env=SOURCE_DATE_EPOCH=1794268800",
++            "--entrypoint=/bin/sh",
++            image,
++            "-ec",
++            'cat > program.c; "$1" -std=c11 -pedantic-errors -Wall -Wextra '
++            "-Werror -O0 program.c -o program; "
++            'if [ "$2" = yes ]; then strip --strip-all program; fi; cat program',
++            "compile-window-fixture",
++            compiler,
++            "yes" if strip else "no",
++        ),
++        input=source,
++        capture_output=True,
++        check=False,
++        timeout=120,
++    )
++    assert result.returncode == 0, result.stderr.decode(errors="replace")
++    assert result.stdout.startswith(b"\x7fELF\x02\x01")
++    return result.stdout
++
++
++def snapshot(source: bytes) -> ProjectSnapshot:
++    archive = io.BytesIO()
++    with tarfile.open(fileobj=archive, mode="w") as output:
++        entry = tarfile.TarInfo("project/" + ARTIFACT)
++        entry.size = len(source)
++        entry.mode = 0o644
++        output.addfile(entry, io.BytesIO(source))
++    return ProjectSnapshot(((ARTIFACT, source),), archive.getvalue())
++
++
++@dataclass(frozen=True)
++class CompiledOriginal:
++    source: bytes
++    binary: bytes
++    functions: tuple[FunctionShape, ...]
++
++
++@pytest.fixture
++def compiled_original(global_slots: None, pinned_images: Images) -> CompiledOriginal:
++    source = (Path(__file__).parent / "fixtures/integrity-window/honest.c").read_bytes()
++    binary = compile_c(
++        source, pinned_images.workers["amd64"], "amd64", "gcc", strip=True
++    )
++    assert b".symtab\0" not in binary
++    return CompiledOriginal(
++        source, binary, (FunctionShape("transform", 0, 0, 0), *ORIGIN)
++    )
++
++
++def four_builds(source: bytes, images: Images) -> tuple[bytes, ...]:
++    return tuple(
++        compile_c(source, images.workers[arch], arch, compiler)
++        for arch in ("amd64", "arm64")
++        for compiler in ("gcc", "clang")
++    )
++
++
++@pytest.mark.skipif(
++    not {"amd64", "arm64"} <= COMPILER_ARCHES,
++    reason="Set PHOENIX_COMPILER_INTEGRITY_ARCHES=amd64,arm64 for pinned checks.",
++)
++class TestPinnedWindowChallenge:
++    @pytest.mark.parametrize("rename", [False, True], ids=["same-names", "renamed"])
++    def test_honest_compiler_output_passes(
++        self, compiled_original: CompiledOriginal, pinned_images: Images, rename: bool
++    ) -> None:
++        original = compiled_original
++        source = (
++            original.source.replace(b"transform", b"rebuild_value")
++            if rename
++            else original.source
++        )
++        builds = four_builds(source, pinned_images)
++        assert (
++            elf_sections(builds[0], ".text")[".text"].data
++            == elf_sections(original.binary, ".text")[".text"].data
++        )
++        facts = inspect_project(snapshot(source), pinned_images.checkers)
++        report = check_integrity(
++            original.binary,
++            {ARTIFACT: source},
++            builds,
++            facts,
++            frozenset(),
++            original.functions,
++        )
++        assert report.passed, report.categories
++
++    @pytest.mark.parametrize(
++        "qualifier,section", [("const ", ".rodata"), ("", ".data")]
++    )
++    def test_compiler_array_rejects_original_text(
++        self,
++        compiled_original: CompiledOriginal,
++        pinned_images: Images,
++        qualifier: str,
++        section: str,
++    ) -> None:
++        original = compiled_original
++        window = elf_sections(original.binary, ".text")[".text"].data[17:81]
++        assert len(window) == 64
++        values = ",".join(str(value) for value in b"prefix!" + window + b"tail")
++        source = (
++            f"static {qualifier}unsigned char payload[] = {{{values}}};\n".encode()
++            + original.source.replace(
++                b"transform((unsigned)argc)",
++                b"(transform((unsigned)argc) "
++                b"+ payload[(unsigned)argc % sizeof payload])",
++            )
++        )
++        builds = four_builds(source, pinned_images)
++        for binary in builds:
++            assert window in elf_sections(binary, section)[section].data
++        facts = inspect_project(snapshot(source), pinned_images.checkers)
++        assert all(any(window in item.data for item in fact.storage) for fact in facts)
++        report = check_integrity(
++            original.binary,
++            {ARTIFACT: source},
++            builds,
++            facts,
++            frozenset(),
++            original.functions,
++        )
++        assert not report.passed
++        assert report.categories.get("embedded_text", 0) > 0, report.categories
++
++    @pytest.mark.parametrize("section", [".init_array", ".fini_array"])
++    def test_source_cannot_request_an_excluded_section(
++        self, global_slots: None, pinned_images: Images, section: str
++    ) -> None:
++        source = (
++            f'unsigned char payload[64] __attribute__((section("{section}")))'
++            " = {1};\nint main(void) { return payload[0]; }\n"
++        ).encode()
++        with pytest.raises(IntegrityError) as failure:
++            inspect_project(snapshot(source), pinned_images.checkers)
++        assert failure.value.category == "compiler_unsupported_attribute"

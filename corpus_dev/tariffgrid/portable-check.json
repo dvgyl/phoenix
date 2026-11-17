@@ -1,0 +1,34 @@
+{
+  "program": "tariffgrid",
+  "source_sha256": {
+    "billing.h": "7b128cdd5dc5e2be892453b0de8202f725148440ca897439f363eaf4b3a58852",
+    "main.c": "4cc8c3b49b126069883771072c0cf3a608b696f147805ef274d4841fb6d19d0c",
+    "money.c": "43b70ba88b4f213188b671d345b2bad0b5f3b376de233a519d2e9f9330e8709c"
+  },
+  "published_cases": 423,
+  "published_cases_sha256": "92676b7b71a3c556d250476b72f1cc5b545f980d37c341ab3e2c01e4b9829ebe",
+  "validated_input_records": 423,
+  "validated_sequence_sha256": "92676b7b71a3c556d250476b72f1cc5b545f980d37c341ab3e2c01e4b9829ebe",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "10328b4f85d826dadc52773434fea713632463a6b22c8e196bfeef6531d8ac1a",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

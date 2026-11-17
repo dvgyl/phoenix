@@ -1,0 +1,15 @@
+{
+  "commit": "7a43189",
+  "dev_pass_rate": 1.0,
+  "integrity_passed": true,
+  "project_files": {
+    "CMakeLists.txt": "d950cc94c3639acc3381102a5c3e7827c2e9465a472261aea055527c47d71773",
+    "PHOENIX_REPORT.md": "2a6edff78f1f2dc1c0edadb8d62f8d7ec6e4dd57d49c9029afc6efb0a03f3860",
+    "phoenix_report.json": "507f810af5a4f9414a3c1fc448fe1a1f385904a3e6923a68858a652d0fe53683",
+    "src/program.c": "4473f06f58896879c3e02bebc8dd6a1569131a304029084c0c3f60eff433c90a",
+    "tests/dev.json": "bb1bb150a36c2164b19649b28747163d4caf46d82fb78ed7bf24c1723aee2cc9"
+  },
+  "replay_id": "r0-replay-352b75aa4ca34aefb53a70d46dfdf26f",
+  "replay_identical": true,
+  "run_id": "r0-smoke-85594d46f285453883b5954d37c0a9fe"
+}

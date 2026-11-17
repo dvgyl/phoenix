@@ -1,0 +1,12 @@
+{
+  "name": "tilehash",
+  "tier": "D0",
+  "lines": 225,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "checksum",
+  "features": [],
+  "heldout_cases": 262,
+  "heldout_seed": 851906
+}

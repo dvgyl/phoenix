@@ -1,0 +1,32 @@
+{
+  "program": "driftstat",
+  "source_sha256": {
+    "main.c": "39efd4be8f7cc70748d68effe7cb8ecbedd461a05a3d8c06928c29b7c6b104ae"
+  },
+  "published_cases": 267,
+  "published_cases_sha256": "80b7d71583e52afe1acb5f80039aad5b9bf080b67607810d197f983c2dc88ba2",
+  "validated_input_records": 269,
+  "validated_sequence_sha256": "4e6d0f4bf14ec5b8e39a7d9edd3b45d2f53a89bbeb83eaf193a95aeb4e98d033",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "dd59d6849ce2468fe050e376c6fa2ffd0741481164b3c9ce2ead0f0f31efa0fa",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

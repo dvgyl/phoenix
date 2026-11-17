@@ -1,0 +1,32 @@
+{
+  "program": "skeinwire",
+  "source_sha256": {
+    "main.c": "4d016ce8d256589939ad878af165b5e37de32168c42af5d42866c231277c1359"
+  },
+  "published_cases": 560,
+  "published_cases_sha256": "cb9065013d33f520400ce634be381be209fa26cddedfea15021fa68f6dd67fe5",
+  "validated_input_records": 560,
+  "validated_sequence_sha256": "cb9065013d33f520400ce634be381be209fa26cddedfea15021fa68f6dd67fe5",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "761292cf0b8f9be1fc408d93b1ffe8a76b7dc8c36f96cd5fb6933d68e516f69c",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

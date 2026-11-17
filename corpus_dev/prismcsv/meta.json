@@ -1,0 +1,18 @@
+{
+  "name": "prismcsv",
+  "tier": "D1",
+  "lines": 345,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "CSV transformer",
+  "features": [
+    "structs",
+    "function_pointer_tables",
+    "switch_8",
+    "getopt",
+    "floating_point_output"
+  ],
+  "heldout_cases": 373,
+  "heldout_seed": 852001
+}

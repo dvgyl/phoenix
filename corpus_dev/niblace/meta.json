@@ -1,0 +1,12 @@
+{
+  "name": "niblace",
+  "tier": "D0",
+  "lines": 71,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "encoder",
+  "features": [],
+  "heldout_cases": 298,
+  "heldout_seed": 851902
+}

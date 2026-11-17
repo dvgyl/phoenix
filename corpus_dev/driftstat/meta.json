@@ -1,0 +1,12 @@
+{
+  "name": "driftstat",
+  "tier": "D0",
+  "lines": 161,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "statistics",
+  "features": [],
+  "heldout_cases": 267,
+  "heldout_seed": 851900
+}

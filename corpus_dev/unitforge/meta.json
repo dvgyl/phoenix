@@ -1,0 +1,23 @@
+{
+  "name": "unitforge",
+  "tier": "D1",
+  "lines": 1204,
+  "files": [
+    "src/calculate.c",
+    "src/main.c",
+    "src/quantity.h",
+    "src/units.c"
+  ],
+  "category": "calculator",
+  "features": [
+    "structs",
+    "function_pointer_tables",
+    "switch_8",
+    "getopt",
+    "floating_point_output",
+    "static_locals",
+    "qsort"
+  ],
+  "heldout_cases": 618,
+  "heldout_seed": 852103
+}

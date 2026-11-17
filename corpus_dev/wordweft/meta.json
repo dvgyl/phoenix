@@ -1,0 +1,12 @@
+{
+  "name": "wordweft",
+  "tier": "D0",
+  "lines": 221,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "encoder",
+  "features": [],
+  "heldout_cases": 312,
+  "heldout_seed": 851909
+}

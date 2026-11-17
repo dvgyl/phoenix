@@ -1,0 +1,34 @@
+{
+  "program": "fernconf",
+  "source_sha256": {
+    "main.c": "986414746e059a57ceec446dd5eef494ecbe3ac69f296f094c26bd4e9717c916",
+    "tree.c": "3a4c6ae02993ac53b25a36ab99c4291ace15df207d3a30afcf40bfcdb096197e",
+    "tree.h": "5603efcf6fc1a269110d1cf2d1a8ad1d8d0729a3d912bc1bf9c47f1564d9b3a4"
+  },
+  "published_cases": 208,
+  "published_cases_sha256": "b71431bd64373cbc1d9fd646d4cc2746625cd47abd2f0ec2091950001d4131ed",
+  "validated_input_records": 388,
+  "validated_sequence_sha256": "c90ca88d3eec631d2e10f133f7cc79cb414530061065aff2763923778a9e285f",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "236b874e8a8d846887c6817a578adf2e498be71a9ef3068635820867513bfa35",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

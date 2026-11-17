@@ -1,0 +1,12 @@
+{
+  "name": "tokenlace",
+  "tier": "D0",
+  "lines": 267,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "encoder",
+  "features": [],
+  "heldout_cases": 429,
+  "heldout_seed": 851907
+}

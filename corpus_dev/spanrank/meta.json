@@ -1,0 +1,12 @@
+{
+  "name": "spanrank",
+  "tier": "D0",
+  "lines": 161,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "statistics",
+  "features": [],
+  "heldout_cases": 268,
+  "heldout_seed": 851905
+}

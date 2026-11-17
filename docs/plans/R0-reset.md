@@ -25,13 +25,60 @@ Experiment budget: 3 experiments. Only steps 14 and 16 make experiments. Step 16
 - [x] Step 9: Smoke run of the M1 path on `corpus_public/bitstats.c` (check: `$PHOENIX_ROOT/runs/r0-smoke.json` -> dev pass rate 1.0, integrity passed, all project files byte-identical, `"replay_identical": true`; run `r0-smoke-85594d46f285453883b5954d37c0a9fe`, replay `r0-replay-352b75aa4ca34aefb53a70d46dfdf26f`, commit `7a43189`)
 - [x] Step 10: `scripts/build-dev-corpus` with the `linux/amd64` compilers (check: exit 0; 22 programs, 176 binaries, 0 invalid twins; evidence `$PHOENIX_ROOT/tmp/r0-corpus-build.log`; held-out validation remains Step 12)
 - [ ] Step 11: `phoenix_eval/run.py`, `scripts/loop`, `docs/SCOREBOARD.md`, `scripts/gate`, replay restore (check: `scripts/loop --probe --tier D0 --opt O0` -> exit 0 and one row with `loop` = `probe` and `exp` = `-`); implementation committed as `06f20a1`; canonical publication and typed claims pass 393 related tests in `$PHOENIX_ROOT/tmp/r0-loop-reduction-worker.log`; the probe awaits valid held-out cases for the manifest.
-- [ ] Step 12: Corpus acceptance: held-out validation and adequacy pilot (check: `scripts/build-dev-corpus --check` -> exit 0; `uv run --locked python tools/adequacy.py --summary` -> 22 programs at or above both thresholds; `corpus_dev/accepted.json` exists); partial evidence: `driftstat` passes (60/62 branches, 221/243 mutants); `branchmark` passes (249/262 branches, 265/288 mutants, run `74eb878dd7fe4e6e9c5fbc2828f0053b`); `chromapath` fix round 1 passes all 8 validation builds with 518 cases and zero exclusions; its pilot is next. Validation continues in `$PHOENIX_ROOT/tmp/r0-corpus-validation-resumed.log` and `$PHOENIX_ROOT/tmp/r0-chromapath-fix-1-validation.log`.
-- [ ] Step 13: R0 bootstrap acceptance (check: `scripts/gate R0-bootstrap` -> `R0-bootstrap: PASS`; declared attempts used: <n> of 3)
+- [ ] Step 12: Corpus acceptance: held-out validation and adequacy pilot (check: `scripts/build-dev-corpus --check` -> exit 0; `uv run --locked python tools/adequacy.py --summary` -> 22 programs at or above both thresholds; `corpus_dev/accepted.json` exists); partial evidence: `driftstat` passes (60/62 branches, 221/243 mutants); `branchmark` passes (249/262 branches, 265/288 mutants, run `74eb878dd7fe4e6e9c5fbc2828f0053b`); `chromapath` fix round 1 passes all 8 validation builds with 518 cases and zero exclusions; its pilot was interrupted at the owner pause and needs a rerun. Seven programs have complete validation. Evidence is in `$PHOENIX_ROOT/tmp/r0-corpus-validation-resumed.log` and `$PHOENIX_ROOT/tmp/r0-chromapath-fix-1-validation.log`.
+- [ ] Step 13: R0 bootstrap acceptance (check: `scripts/gate R0-bootstrap` -> `R0-bootstrap: PASS`; declared design: 1 of 3; gate attempts used: 0)
 - [ ] Step 14: Experiment 1: the M1 path baseline on D0 and D1, immediately after step 13 (check: a row with `exp` = `1/3`)
 - [ ] Step 15: Noise measurement on the commit of experiment 1 (check: `scripts/loop noise` -> one row with `loop` = `noise`)
 - [ ] Step 16: Integrity window fix, fixtures, review, experiment 2 (check: `uv run --locked pytest -q tests/test_integrity.py` -> all pass; a row with `exp` = `2/3`)
 - [ ] Step 17: Mechanical gates of `scripts/check` (check: `uv run --locked pytest -q tests/test_check_gates.py` -> all pass)
 - [ ] Step 18: R0 gate and tag (check: `scripts/gate R0` -> `R0 gate: PASS`; `git tag -l r0` -> `r0`)
+
+## Pause checkpoint (2026-11-17)
+
+The owner requested a pause. All workers, validation processes and target
+containers are stopped. R0 is not complete. The `r0` tag does not exist.
+The saved aggregate state is in
+[`pause-checkpoint.json`](../evidence/r0/pause-checkpoint.json).
+
+- Main code: `8fdbd1e`. Its full check passed 1105 tests, with 38 skipped,
+  87.56% evaluator coverage, and a time of 65.33 seconds.
+- The 22 candidate programs and 7848 cases are saved. All 176 variants built
+  with zero invalid twins. The current manifest has 56 entries from the
+  seven completed validation programs.
+- Validation is complete for `branchmark`, `chromapath`, `driftstat`,
+  `fernconf`, `gapmeter`, `knotconf` and `lumaquilt`. All eight builds of each
+  program passed with zero excluded cases.
+- Current adequacy passes: `branchmark` and `driftstat`. The new 518-case
+  `chromapath` pilot was stopped. Its request is local run
+  `161a4413a7364bf698830c225af2be8f`. Rerun this pilot. Its earlier report
+  describes 509 cases and is stale.
+- The unmerged compiler-name prototype is saved as `879d612` on
+  `wip/r0-local-name-evidence`. Its full check passed 1117 tests, with
+  41 skipped. Pinned compiler builds, golden comparisons and critical
+  review remain open. Check the aggregate handling of unavailable counts.
+- The pending Step 16 challenge fixtures are saved in
+  `R0-integrity-window-fixtures.patch`. `git apply --check` passes on main.
+  The patch is not active. Apply it at Step 16 and adapt evidence fields
+  if the compiler-name prototype is merged.
+- Python source has 10638 nonblank lines. R0 requires fewer than 9000.
+  The source gap is 1639 lines. No target has changed.
+- No full-loop, noise or sealed run was started. The experiment count is 0.
+  The bootstrap design is 1 of 3. Its gate has not been attempted.
+
+Resume the remaining validation from the main checkout:
+
+```sh
+source "/Volumes/Extreme Pro/Phoenix/env.sh"
+cd "$PHOENIX_ROOT/phoenix"
+scripts/build-dev-corpus --check niblace pairfold patchpanel prismcsv recordloom runepack skeinwire spanrank tariffgrid tilehash tokenlace unitforge velocalc weighbit wordweft
+uv run --locked python tools/adequacy.py chromapath
+```
+
+Then finish the missing adequacy reports. Keep the current verified reports.
+Complete Step 11's real probe and Step 12's acceptance. Run the baseline
+immediately after bootstrap acceptance, then noise on the same commit.
+Continue the Progress sequence. The run directories and container images
+remain on the external workspace under `PHOENIX_ROOT`.
 
 ## Surprises and Discoveries
 

@@ -1,0 +1,20 @@
+{
+  "name": "patchpanel",
+  "tier": "D1",
+  "lines": 908,
+  "files": [
+    "src/main.c",
+    "src/table.c",
+    "src/table.h"
+  ],
+  "category": "CSV calculator",
+  "features": [
+    "structs",
+    "switch_8",
+    "getopt",
+    "floating_point_output",
+    "qsort"
+  ],
+  "heldout_cases": 436,
+  "heldout_seed": 852100
+}
