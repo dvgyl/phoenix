@@ -8,8 +8,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from phoenix_eval.provenance import revision
+
 GUARD_ENV = "PHOENIX_PIPELINE_GUARD"
 GUARD_PROBE = "pipeline-sandbox-probe"
+REVISION_ENV = "PHOENIX_PIPELINE_REVISION"
+MODEL_FD_ENV = "PHOENIX_MODEL_FD"
+REPLAY_ENV = "PHOENIX_PIPELINE_REPLAY"
 
 
 @dataclass(frozen=True)
@@ -18,11 +23,25 @@ class Profile:
 
 
 PROFILES: dict[str, Profile] = {
-    "pipeline": Profile(frozenset({"sealed", "records", "development"})),
+    "pipeline": Profile(
+        frozenset(
+            {
+                "sealed",
+                "records",
+                "development",
+                "corpus",
+                "git",
+                "runs",
+                "binaries",
+                "llm-cache",
+                "stage-cache",
+            }
+        )
+    ),
     "engineer": Profile(frozenset({"sealed", "records"})),
-    "dev-author": Profile(frozenset({"sealed", "records", "prompts"})),
+    "dev-author": Profile(frozenset({"sealed", "records", "prompts", "runs"})),
     "corpus-author": Profile(
-        frozenset({"records", "prompts", "corpus", "development"})
+        frozenset({"records", "prompts", "corpus", "development", "runs"})
     ),
     "evaluator": Profile(frozenset()),
 }
@@ -80,21 +99,32 @@ def protected_paths(workspace: Path, repo: Path) -> tuple[ProtectedPath, ...]:
     for name in names:
         add("sealed", workspace, name)
     add("records", workspace, "sealed_runs")
+    add("records", workspace, "sealed_work")
     add("records", workspace, "runs/m1-t0-*")
     add("prompts", workspace, "cache/phoenix")
-    add("prompts", workspace, "runs")
+    add("llm-cache", workspace, "cache/phoenix/llm")
+    for stage in ("lift", "devset"):
+        add("stage-cache", workspace, f"cache/phoenix/{stage}")
+    add("runs", workspace, "runs")
+    add("binaries", workspace, "dev_bin")
     add("development", workspace, "dev_bin/*/*/*.twin")
     add("development", workspace, "adequacy_runs")
     for checkout in _checkouts(workspace, repo):
         for name in ("src", "holdout", "tasks"):
             add("development", checkout, f"corpus_dev/*/{name}")
         add("corpus", checkout, "corpus_dev")
+        add("git", checkout, ".git")
         for relative in (
             "phoenix/analyze",
             "phoenix/devset",
             "phoenix/generate/prompts",
         ):
             add("prompts", checkout, relative)
+    git = ("git", "-C", str(repo), "rev-parse", "--path-format=absolute")
+    common = subprocess.check_output((*git, "--git-common-dir"), text=True).rstrip("\n")
+    git_directory = Path(common).resolve(strict=True)
+    if git_directory not in {path.path for path in paths if path.category == "git"}:
+        add("git", repo, str(git_directory))
     return tuple(paths)
 
 
@@ -108,31 +138,52 @@ def guarded_command(
     if profile not in PROFILES:
         raise ValueError("Unknown protection profile.")
     workspace = workspace.resolve()
-    exceptions = []
+    exceptions: dict[str, list[str]] = {"runs": [], "stage-cache": []}
+    metadata: set[Path] = set()
+    runs = workspace / "runs"
+    cache = workspace / "cache/phoenix"
     for path in allow:
-        path = path.resolve()
-        relative = path.relative_to(workspace / "sealed_runs")
         if (
             profile != "pipeline"
-            or len(relative.parts) < 2
-            or not re.fullmatch(r"[a-f0-9]{64}", relative.parts[1])
+            or path.resolve() != path
+            or not path.is_relative_to(workspace)
         ):
-            raise ValueError("Allow only the pipeline binary's sealed run directory.")
-        exceptions.append(f"(require-not (subpath {json.dumps(str(path))}))")
+            raise ValueError("Use a physical path in the pipeline workspace.")
+        parts = path.relative_to(workspace).parts
+        if len(parts) >= 3 and parts[0] == "runs" and not parts[1].startswith("m1-t0-"):
+            category = "runs"
+        elif path.parent in (cache / "lift", cache / "devset") and re.fullmatch(
+            r"[a-f0-9]{64}", path.name
+        ):
+            category = "stage-cache"
+        else:
+            raise ValueError("Allow only paths of the current pipeline run.")
+        exceptions[category].append(f"(require-not (subpath {json.dumps(str(path))}))")
+        metadata.update(
+            parent
+            for parent in path.parents
+            if parent.is_relative_to(runs) or parent.parent == cache
+        )
     policy = "(version 1)(allow default)"
     for item in protected_paths(workspace, repo):
         match = _regex(item.pattern)
         if item.category in PROFILES[profile].denied:
+            allowed = exceptions.get(item.category)
             condition = (
-                f"(require-all {match} {''.join(exceptions)})" if exceptions else match
+                f"(require-all {match} {''.join(allowed)})" if allowed else match
             )
             policy += f"(deny file-read* file-write* {condition})"
         elif item.category == "sealed" and profile == "evaluator":
             policy += f"(deny file-write* {match})"
     if profile == "pipeline":
-        pattern = f"^{re.escape(str(workspace))}/(runs|sealed_runs)/.*/{GUARD_PROBE}$"
+        for parent in sorted(metadata):
+            policy += f"(allow file-read-metadata (literal {json.dumps(str(parent))}))"
+        pattern = f"^{re.escape(str(runs))}/.*/{GUARD_PROBE}$"
         policy += f"(deny file-read* file-write* {_regex(pattern)})"
-    return "/usr/bin/sandbox-exec", "-p", policy, *command
+        replay = _regex(rf"^{re.escape(str(runs))}/[^/]+/[^/]+/\.replay-[^/]+(/|$)")
+        policy += f"(deny file-write* {replay})"
+    environment = ("/usr/bin/env", f"{REVISION_ENV}={revision(repo)}") if allow else ()
+    return "/usr/bin/sandbox-exec", "-p", policy, *environment, *command
 
 
 def inherited_guard(workspace: Path) -> bool:
@@ -140,9 +191,7 @@ def inherited_guard(workspace: Path) -> bool:
     if not location:
         return False
     probe = Path(location).resolve()
-    if probe.name != GUARD_PROBE or not any(
-        probe.is_relative_to(workspace / root) for root in ("runs", "sealed_runs")
-    ):
+    if probe.name != GUARD_PROBE or not probe.is_relative_to(workspace / "runs"):
         raise ValueError("The inherited file guard has an invalid probe path.")
     try:
         with probe.open("rb"):
@@ -165,21 +214,25 @@ def probe(workspace: Path, repo: Path) -> bool:
         "except OSError:\n sys.exit(2)\n"
         "else:\n os.close(fd);sys.exit(1)\n"
     )
+    paths = protected_paths(workspace, repo)
     for profile, definition in PROFILES.items():
-        for item in protected_paths(workspace, repo):
+        command = guarded_command(
+            workspace, repo, (sys.executable, "-c", script), profile
+        )
+        for item in paths:
             if item.category not in definition.denied:
                 continue
-            relative = str(item.path.relative_to(item.checkout))
             candidates = (
-                item.checkout.glob(relative) if "*" in relative else (item.path,)
+                item.checkout.glob(str(item.path.relative_to(item.checkout)))
+                if "*" in str(item.path)
+                else (item.path,)
             )
             for path in candidates:
                 if not path.exists():
                     continue
-                command = guarded_command(
-                    workspace, repo, (sys.executable, "-c", script, str(path)), profile
+                result = subprocess.run(
+                    (*command, str(path)), capture_output=True, check=False
                 )
-                result = subprocess.run(command, capture_output=True, check=False)
                 denied = result.returncode == 0
                 print(
                     f"{profile} {item.category} {item.checkout} "

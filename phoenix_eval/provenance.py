@@ -130,15 +130,18 @@ def pinned_lifting_tools(workspace: Path, root: Path = CHECKOUT) -> tuple[Path, 
     return ghidra, java
 
 
-def evaluator_build(root: Path = CHECKOUT) -> BuildEvidence:
-    commit = subprocess.run(
+def revision(root: Path = CHECKOUT) -> str:
+    return subprocess.run(
         ("git", "-C", str(root), "rev-parse", "HEAD"),
         capture_output=True,
         text=True,
         check=True,
         timeout=15,
     ).stdout.strip()
-    return BuildEvidence(commit, worker_source_digest(root))
+
+
+def evaluator_build(root: Path = CHECKOUT) -> BuildEvidence:
+    return BuildEvidence(revision(root), worker_source_digest(root))
 
 
 if __name__ == "__main__":

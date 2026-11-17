@@ -1,14 +1,18 @@
 import json
+import socket
+from concurrent.futures import ThreadPoolExecutor
 from hashlib import sha256
 from pathlib import Path
 
 import pytest
 
 from phoenix.config import ROLE_MODELS
-from phoenix.llm.ledger import Ledger
+from phoenix.llm.ledger import Budget, BudgetExceeded, Ledger
+from phoenix.llm.ledger_channel import LedgerChannel, serve
 from phoenix.llm.provider import Completion, ProviderError, Request, Usage
 from phoenix_eval.model_ledger import summarize
 from phoenix_eval.run_records import capture_ledger, read_ledger
+from phoenix_eval.submission import stage_replay
 
 
 class Provider:
@@ -19,6 +23,55 @@ class Provider:
 
     def complete(self, request: Request) -> Completion:
         return Completion("answer", Usage(5, 2, 3), request.model)
+
+
+def test_private_model_channels_share_the_run_budget(tmp_path: Path) -> None:
+    budget = Budget(120_000, 120_000)
+    ledger = Ledger(tmp_path, budget)
+    request = Request("synthetic")
+    provider = Provider()
+
+    def run_binary(key: str) -> int:
+        client, server = socket.socketpair()
+        with client, server, server.makefile("rw", encoding="utf-8") as peer:
+            with ThreadPoolExecutor(1) as executor:
+                job = executor.submit(serve, peer, ledger, key, provider)
+                try:
+                    with client.makefile("rw", encoding="utf-8") as stream:
+                        channel = LedgerChannel(tmp_path, budget, stream)
+                        try:
+                            completion = channel.call("ignored", request, provider)
+                        except BudgetExceeded:
+                            return channel.summary("ignored").calls
+                        assert completion == provider.complete(request)
+                        return channel.summary("ignored").calls
+                finally:
+                    client.close()
+                    job.result()
+
+    with ThreadPoolExecutor(2) as executor:
+        assert sorted(executor.map(run_binary, ("left", "right"))) == [0, 1]
+    assert not ledger.summary("ignored").calls
+    assert ledger.summary("left").calls + ledger.summary("right").calls == 1
+
+
+def test_staged_replay_uses_the_published_prefix_for_one_binary(tmp_path: Path) -> None:
+    ledger = Ledger(tmp_path / "source")
+    provider = Provider()
+    first = Request("before publication")
+    later = Request("after publication")
+    expected = ledger.call("case", first, provider)
+    ledger.call("sibling", first, provider)
+    prefix = ledger.path.read_bytes()
+    ledger.call("case", later, provider)
+
+    replay = stage_replay(ledger.path.parent, "case", tmp_path / "staged", prefix)
+    staged = Ledger(replay / "source")
+    assert staged.call("case", first, provider, replay=True) == expected
+    with pytest.raises(ProviderError, match="no recorded response"):
+        staged.call("case", later, provider, replay=True)
+    with pytest.raises(ProviderError, match="no recorded response"):
+        staged.call("sibling", first, provider, replay=True)
 
 
 @pytest.mark.parametrize("operation", ["call", "summary"])

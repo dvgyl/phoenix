@@ -59,6 +59,7 @@ def capture(
             "seed": 17,
             "repair_limit": 20,
             "strongest_repair": False,
+            "budget_run": 200_000_000_000,
         },
         "case_counts": {scoring.task_key(binary): 100},
         "case_hashes": {

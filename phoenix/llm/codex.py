@@ -75,7 +75,12 @@ class CodexProvider:
         if inherited_guard(self.workspace):
             return command
         repo = Path(__file__).resolve().parents[2]
-        return guarded_command(self.workspace, repo, command, "pipeline")
+        allow = (
+            (self.scratch,)
+            if self.scratch.is_relative_to(self.workspace / "runs")
+            else ()
+        )
+        return guarded_command(self.workspace, repo, command, "pipeline", allow)
 
     @limited("llm")
     def complete(self, request: Request) -> Completion:

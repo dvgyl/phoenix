@@ -26,12 +26,14 @@ class Scenario:
 
 @pytest.fixture
 def scenario(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Scenario:
-    directory = tmp_path / "evaluation/submissions/case"
+    directory = tmp_path / "runs/evaluation/submissions/case"
     project = module.project_path(tmp_path, "pipeline", "case")
     (project / "src").mkdir(parents=True)
     (project / "src/program.c").write_text("int main(void) { return 0; }\n")
     (project / "CMakeLists.txt").write_text(PROJECT_CMAKE)
-    (tmp_path / "runs/pipeline/case/run.json").write_text("{}")
+    (tmp_path / "runs/pipeline/case/run.json").write_text(
+        '{"budget_binary": 3000000000, "budget_run": 200000000000}'
+    )
     development = tmp_path / "runs/pipeline/case/analyze/cases.json"
     development.parent.mkdir()
     development.write_text(
@@ -64,7 +66,7 @@ def scenario(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Scenario:
     monkeypatch.setattr(subprocess, "run", runner)
     monkeypatch.setattr(time, "time", clock)
     monkeypatch.setattr(
-        module, "guarded_command", lambda _, _repo, command, _profile: command
+        module, "guarded_command", lambda _, _repo, command, _profile, _allow: command
     )
     return Scenario(directory, project, original, runner, clock)
 

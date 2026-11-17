@@ -16,7 +16,7 @@ from phoenix_eval.pair import evaluate_pair
 from phoenix_eval.provenance import CHECKOUT
 from phoenix_eval.quality import goto_density, register_named_locals
 from phoenix_eval.run_plan import case_identity
-from phoenix_eval.run_records import BinaryResult, RunPlan, read_json
+from phoenix_eval.run_records import BinaryResult, RunPlan, read_json, read_ledger
 from phoenix_eval.submission import (
     project_path,
     read_origin,
@@ -93,15 +93,11 @@ def measure(
         or heldout != cast(dict[str, str], plan.configuration["case_hashes"])[key]
     ):
         raise ValueError("The held-out cases differ from the fixed run plan.")
-    source_pipeline = (
-        str(
-            read_json(workspace / "runs" / replay.run_id / "published-ledger.json")[
-                "pipeline_run"
-            ]
-        )
-        if replay
-        else None
+    recorded = (
+        read_ledger(workspace, workspace / "runs" / replay.run_id) if replay else None
     )
+    source_pipeline = recorded.pipeline if recorded else None
+    settings = cast(dict[str, int], plan.configuration["pipeline_settings"])
     submission = submit(
         workspace,
         run / "submissions" / key,
@@ -111,10 +107,12 @@ def measure(
         "phoenix",
         source_pipeline,
         cost_cap_usd=CAPS[binary.tier],
+        run_budget=settings["budget_run"],
         environment={"PHOENIX_LLM_CACHE": "on" if plan.llm_cache else "off"},
         cache_root=(run / "cold-cache" / key)
         if not plan.llm_cache and not replay
         else None,
+        recorded_ledger=recorded.content if recorded else None,
     )
     result: dict[str, object] = {
         **asdict(binary),
@@ -244,7 +242,11 @@ def measure(
         categories.add("budget")
     registers = register_named_locals(files, image=images["arm64"])
     ledger = workspace / "runs" / (source_pipeline or plan.pipeline) / "llm.jsonl"
-    events = read_events(ledger.read_text().splitlines()) if ledger.exists() else ()
+    events = (
+        recorded.events
+        if recorded
+        else (read_events(ledger.read_text().splitlines()) if ledger.exists() else ())
+    )
     cost = summarize(events, key)
     if package_files(project_path(workspace, plan.pipeline, key)) != fingerprint:
         raise ValueError("The package changed during measurement.")

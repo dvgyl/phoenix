@@ -23,7 +23,7 @@ Experiment budget: 3 experiments. Only steps 14 and 16 make experiments. Step 16
 - [x] Step 7: Salvage: restore, change and delete (check: imports -> exit 0; deleted-module search -> no matches; `./scripts/check` -> exit 0, 783 passed and 25 skipped; evidence `$PHOENIX_ROOT/tmp/r0-salvage-check.log`)
 - [x] Step 8: Create `phoenix/config.py` (check: both model identifiers occur only in `phoenix/config.py`; price tuples match the evaluator; 108 targeted tests passed; strict type check passed; evidence `$PHOENIX_ROOT/tmp/r0-config-tests.log`)
 - [x] Step 9: Smoke run of the M1 path on `corpus_public/bitstats.c` (check: `$PHOENIX_ROOT/runs/r0-smoke.json` -> dev pass rate 1.0, integrity passed, all project files byte-identical, `"replay_identical": true`; run `r0-smoke-85594d46f285453883b5954d37c0a9fe`, replay `r0-replay-352b75aa4ca34aefb53a70d46dfdf26f`, commit `7a43189`)
-- [ ] Step 9a: Land the runtime model change with its tests (check: the review of AGENTS.md section 8 has no blocking item; `uv run --locked pytest -q tests/test_accounting.py tests/test_llm.py` passes; `git status --short phoenix phoenix_eval tests AGENTS.md` prints nothing; worker images rebuilt) Partial: the model mapping, prices and tests are committed with the owner's model-change commit; the critical review by the lead model found no reproducible defect. Open: rebuild both worker images.
+- [x] Step 9a: Land the runtime model change with its tests. The review of `0cbf8f9` found no reproducible defect. Both models replied at the Standard tier. All 74 model and accounting tests and all 1105 full-check tests passed. Both worker images rebuilt from `6c18483`. Evidence: `$PHOENIX_ROOT/tmp/r0-restart-model-tests.log`, `r0-restart-step9a-check.log` and `r0-restart-worker-images.log`.
 - [ ] Step 9b: Extend the pipeline denial (check: `uv run --locked pytest -q tests/test_protection.py` passes with a synthetic fixture for each new class; `uv run --locked phoenix-eval probe` prints only `denied=true`)
 - [ ] Step 9c: Repeat the Step 9 public smoke run with the new runtime model (check: `$PHOENIX_ROOT/runs/r0-smoke.json` -> dev pass rate 1.0 and `"replay_identical": true`; `run.json` names the runtime model of AGENTS.md section 6.1)
 - [ ] Step 10: `scripts/build-dev-corpus` with the `linux/amd64` compilers (check: the manifest has 176 binaries). Stale: the first full build gave 22 programs, 176 binaries and 0 invalid twins (`$PHOENIX_ROOT/tmp/r0-corpus-build.log`). Then an interrupted full `--check` run reset the manifest, which now has 56 entries. Run `scripts/build-dev-corpus` again, without `--check`, after Step 9c. The manifest-writer guard is part of this step.
@@ -137,9 +137,9 @@ Keep this block current. A new session resumes from it.
 
 | Item | Value | Restore or regeneration command |
 |---|---|---|
-| Clean commit | `<commit after Step 9a>` | `git status --short` prints nothing; `git log -1 --format=%H` |
+| Clean commit at Step 9a | `6c184831360435a5f4f46aefb384cf7aac372e1d` | `git log -1 --format=%H` |
 | Models and roles | the table of AGENTS.md section 6.1; Reviewer: lead model, new session | `grep -n -A6 '^| Role name' AGENTS.md` |
-| Image IDs | `phoenix-worker:amd64`, `phoenix-worker:arm64`, integrity images: `<image IDs>` | `./scripts/build-images worker amd64 && ./scripts/build-images worker arm64`; `./scripts/build-images integrity amd64 && ./scripts/build-images integrity arm64` |
+| Image IDs at Step 9a | `phoenix-worker:amd64` `sha256:9359514c89307935cedd2d8038504b5cef6aa1533e1f1eb12f24ee2c326d9ba4`, `phoenix-worker:arm64` `sha256:1d0e63639dea4d8a966725986aa7490f5594c6a6663be802597bd818683c0f40`. Build the integrity images at Step 9c. | `./scripts/build-images worker amd64 && ./scripts/build-images worker arm64`; `./scripts/build-images integrity amd64 && ./scripts/build-images integrity arm64` |
 | Worker checkouts | `$PHOENIX_ROOT/worktrees/dev-fix-<program>` | `git worktree list --porcelain` |
 | Smoke and replay IDs | `<Step 9c run ID>`, `<Step 9c replay ID>` | Step 9c commands |
 | Resize record | `$PHOENIX_ROOT/runs/r0-resize.json` | `scripts/resize-workspace --dry-run` |
@@ -473,7 +473,12 @@ Check: `uv run --locked pytest -q tests/test_protection.py tests/test_submission
 
 ### Step 9c: smoke run with the new runtime model
 
-Run the commands of Step 9 again after Steps 9a and 9b. This is the next reconstruction. Steps 9a and 9b must pass first.
+After Steps 9a and 9b pass, rebuild both worker images for the new evaluator
+source. Build Ghidra and the integrity images and run `phoenix-eval m0` as in
+Step 9. Run Phoenix on the public binary through
+`phoenix_eval.submission.submit`. Use the same entry point for replay. The
+evaluator copies the input and replay records into the directory that the
+pipeline profile permits. Compare the projects as in Step 9.
 
 Check: `$PHOENIX_ROOT/runs/r0-smoke.json` shows `dev_pass_rate` 1.0 and `"replay_identical": true`. The `run.json` of the run names the runtime model of AGENTS.md section 6.1. Write the run ID and the replay ID in the "Restart block".
 

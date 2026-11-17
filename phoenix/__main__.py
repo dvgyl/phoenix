@@ -3,9 +3,11 @@ import fcntl
 import json
 import os
 import re
+import socket
 import subprocess
 import sys
 import time
+from contextlib import ExitStack
 from dataclasses import asdict
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -19,6 +21,7 @@ from phoenix.ingest import InputRejected, inspect_binary
 from phoenix.lift import LiftError
 from phoenix.llm import select_provider
 from phoenix.llm.ledger import NANODOLLARS, Budget, Ledger
+from phoenix.llm.ledger_channel import LedgerChannel
 from phoenix.llm.provider import (
     Completion,
     Provider,
@@ -32,14 +35,21 @@ from phoenix.pipeline_types import Method, Settings
 from phoenix_eval.docker import Engine, WorkerError, freeze_images
 from phoenix_eval.m0 import SEED
 from phoenix_eval.platforms import verify_runtime
-from phoenix_eval.protection import inherited_guard
+from phoenix_eval.protection import (
+    MODEL_FD_ENV,
+    REPLAY_ENV,
+    REVISION_ENV,
+    inherited_guard,
+)
 from phoenix_eval.provenance import (
     CHECKER_SOURCE_LABEL,
+    BuildEvidence,
     checker_source_digest,
     evaluator_build,
     lifting_tool_identity,
     pinned_lifting_tools,
     pipeline_source_digest,
+    worker_source_digest,
 )
 from phoenix_eval.worker import MAX_PROGRAM_BYTES
 
@@ -170,7 +180,14 @@ def _locked_run(
     if previous is not None and metadata.sha256 != previous["binary_sha256"]:
         raise ValueError("The saved input binary SHA-256 has changed.")
 
-    provenance = evaluator_build(_PIPELINE_ROOT)
+    guarded = inherited_guard(workspace)
+    if guarded:
+        revision = os.environ.get(REVISION_ENV, "")
+        if not re.fullmatch(r"[a-f0-9]{40}", revision):
+            raise ValueError("The pipeline launcher did not supply a Git revision.")
+        provenance = BuildEvidence(revision, worker_source_digest(_PIPELINE_ROOT))
+    else:
+        provenance = evaluator_build(_PIPELINE_ROOT)
     pipeline_digest = pipeline_source_digest(_PIPELINE_ROOT)
     checker_digest = checker_source_digest(_PIPELINE_ROOT)
     if previous is not None:
@@ -333,22 +350,27 @@ def _locked_run(
         "effort": M1_EFFORT,
         "protection": {
             "profile": "pipeline",
-            "probe_denied": inherited_guard(workspace),
+            "probe_denied": guarded,
         },
     }
     write_json(record_path, record)
     write_json(directory / "ingest/metadata.json", asdict(metadata))
-    result = reconstruct(
-        run,
-        key,
-        original,
-        metadata,
-        settings,
-        ledger,
-        selected,
-        started=started,
-        replay=bool(args.replay),
-    )
+    with ExitStack() as stack:
+        if guarded and not args.replay and (descriptor := os.environ.get(MODEL_FD_ENV)):
+            connection = stack.enter_context(socket.socket(fileno=int(descriptor)))
+            channel = stack.enter_context(connection.makefile("rw", encoding="utf-8"))
+            ledger = LedgerChannel(run, budget, channel)
+        result = reconstruct(
+            run,
+            key,
+            original,
+            metadata,
+            settings,
+            ledger,
+            selected,
+            started=started,
+            replay=bool(args.replay),
+        )
     print(result.project)
     return 0 if result.development_passed else 1
 
@@ -365,7 +387,8 @@ def _run(args: argparse.Namespace) -> int:
     if from_id:
         if args.binary is not None:
             raise ValueError("Resume and replay use the saved input binary.")
-        source = runs / _identifier(from_id)
+        replay_root = os.environ.get(REPLAY_ENV) if args.replay else None
+        source = (Path(replay_root) if replay_root else runs) / _identifier(from_id)
         if source.resolve() != source:
             raise ValueError("The saved run cannot be a symbolic link.")
         key = _existing_key(source, args.binary_id)

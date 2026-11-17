@@ -1,14 +1,19 @@
+import fcntl
 import hashlib
 import json
 import math
 import os
 import re
+import signal
+import socket
 import stat
 import subprocess
 import sys
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import ExitStack, contextmanager
 from dataclasses import asdict, dataclass, fields
+from decimal import Decimal
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Literal
@@ -17,7 +22,15 @@ from phoenix_eval.artifacts import atomic_bytes
 from phoenix_eval.build import PROJECT_CMAKE, project_files
 from phoenix_eval.development import freeze_development
 from phoenix_eval.docker import read_program
-from phoenix_eval.protection import GUARD_ENV, GUARD_PROBE, guarded_command
+from phoenix_eval.jobs import file_lock
+from phoenix_eval.model_ledger import _open_ledger, parse_event
+from phoenix_eval.protection import (
+    GUARD_ENV,
+    GUARD_PROBE,
+    MODEL_FD_ENV,
+    REPLAY_ENV,
+    guarded_command,
+)
 from phoenix_eval.provenance import CHECKOUT
 
 type Method = Literal["phoenix", "ghidra-raw"]
@@ -89,6 +102,108 @@ def freeze_project(project: Path, snapshot: Path) -> str:
 
 def project_path(workspace: Path, pipeline_run: str, key: str) -> Path:
     return workspace / "runs" / pipeline_run / key / "package/out" / key
+
+
+def _authorized_budget(
+    directory: Path, cap: str | None, run_budget: int
+) -> tuple[int, int]:
+    authority = directory / "model-budget.json"
+    requested = int(Decimal(cap or "5") * 1_000_000_000)
+    with file_lock(authority.with_suffix(".lock")):
+        if not authority.exists():
+            write_report(authority, [requested, run_budget])
+        binary_budget, total = json.loads(authority.read_bytes())
+    if total != run_budget or (cap is not None and binary_budget != requested):
+        raise SubmissionError("The authorized model budget changed.")
+    return binary_budget, total
+
+
+@contextmanager
+def model_connection(
+    workspace: Path,
+    run: Path,
+    key: str,
+    binary_sha256: str,
+    budget: tuple[int, int],
+    cache_root: Path | None,
+    env: dict[str, str],
+) -> Iterator[int]:
+    client, server = socket.socketpair()
+    with client, server:
+        broker = subprocess.Popen(
+            (
+                sys.executable,
+                "-P",
+                "-s",
+                "-m",
+                "phoenix.llm.ledger_channel",
+                str(workspace),
+                str(run),
+                key,
+                binary_sha256,
+                *map(str, budget),
+                str(cache_root or ""),
+                str(server.fileno()),
+            ),
+            env={name: value for name, value in env.items() if name != GUARD_ENV},
+            pass_fds=(server.fileno(),),
+            start_new_session=True,
+        )
+        server.close()
+        try:
+            yield client.fileno()
+        finally:
+            client.close()
+            try:
+                broker.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(broker.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                broker.wait()
+
+
+def stage_replay(
+    source: Path,
+    key: str,
+    destination: Path,
+    content: bytes | None,
+) -> Path:
+    if content is None:
+        descriptor = _open_ledger(source / "llm.jsonl")
+        content = b""
+        if descriptor is not None:
+            with os.fdopen(descriptor, "rb") as stream:
+                fcntl.flock(stream, fcntl.LOCK_SH)
+                content = stream.read()
+    replay = destination / source.name
+    (replay / key).mkdir(parents=True)
+    (replay / "llm.jsonl").write_bytes(
+        b"".join(
+            line
+            for line in content.splitlines(keepends=True)
+            if parse_event(json.loads(line)).binary == key
+        )
+    )
+    for name in (
+        "run.json",
+        "ingest/original.elf",
+        "lift/lift.json",
+        "lift/stage.json",
+        "analyze/cases.json",
+        "analyze/stage.json",
+        "repair/budget-stop.json",
+        f"package/out/{key}/phoenix_report.json",
+    ):
+        file = source / key / name
+        if file.resolve() != file:
+            raise SubmissionError("Use a physical replay artifact.")
+        if file.is_file():
+            target = replay / key / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(file.read_bytes())
+    return destination
 
 
 def read_origin(path: Path, expected: str) -> bytes:
@@ -249,12 +364,16 @@ def submit(
     replay_pipeline_run: str | None = None,
     *,
     cost_cap_usd: str | None = None,
+    run_budget: int = 200_000_000_000,
     environment: dict[str, str] | None = None,
     cache_root: Path | None = None,
+    recorded_ledger: bytes | None = None,
 ) -> Submission:
     if pipeline_run.startswith("m1-t0-"):
         raise SubmissionError("The pipeline run ID is reserved for sealed records.")
-    if directory.resolve() != directory:
+    if directory.resolve() != directory or not directory.is_relative_to(
+        workspace / "runs"
+    ):
         raise SubmissionError("Use the physical submission directory.")
     capture = directory / "capture"
     if capture.exists():
@@ -271,42 +390,100 @@ def submit(
         raise SubmissionError("Use the recorded revision for this submission layout.")
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     pipeline_directory = workspace / "runs" / pipeline_run / key
+    if pipeline_directory.resolve() != pipeline_directory:
+        raise SubmissionError("Use a physical pipeline directory.")
     pipeline_directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     probe = pipeline_directory / GUARD_PROBE
     probe.write_text("Synthetic file guard witness.\n", encoding="utf-8")
     cwd = pipeline_directory / "pipeline-cwd"
     cwd.mkdir(exist_ok=True, mode=0o700)
-    base = (sys.executable, "-P", "-s", "-m", "phoenix", "run", "--binary-id", key)
-    exists = (workspace / "runs" / pipeline_run / key / "run.json").is_file()
+    base: tuple[str, ...] = (sys.executable, "-P", "-s", "-m", "phoenix", "run")
+    base += ("--binary-id", key)
+    exists = (pipeline_directory / "run.json").is_file()
     options: tuple[str, ...]
+    binary_bytes = b"" if replay_pipeline_run is not None else read_program(binary)
+    binary_sha256 = hashlib.sha256(binary_bytes).hexdigest()
     if replay_pipeline_run is not None:
         options = ("--replay", replay_pipeline_run, "--run-id", pipeline_run)
     elif exists:
         options = ("--resume", pipeline_run)
     else:
         copied_binary = pipeline_directory / "input.elf"
-        copied_binary.write_bytes(read_program(binary))
+        copied_binary.write_bytes(binary_bytes)
         options = (str(copied_binary), "--run-id", pipeline_run, "--method", method)
-    if cost_cap_usd is not None:
-        options += ("--cost-cap-usd", cost_cap_usd)
     if cache_root is not None:
         options += ("--cache-root", str(cache_root))
-    command = guarded_command(workspace, CHECKOUT, (*base, *options), "pipeline")
+    allow: tuple[Path, ...] = (pipeline_directory,)
+    if cache_root is not None:
+        allow += (cache_root,)
+    elif replay_pipeline_run is None:
+        allow += tuple(
+            workspace / "cache/phoenix" / stage / binary_sha256
+            for stage in ("lift", "devset")
+        )
+    if any(
+        path.is_relative_to(directory) or directory.is_relative_to(path)
+        for path in allow
+    ):
+        raise SubmissionError("The pipeline cannot have access to submission records.")
     started = _reconstruction_start(directory)
+    budget = None
+    if replay_pipeline_run is None:
+        budget = _authorized_budget(directory, cost_cap_usd, run_budget)
+        binary_cap, run_cap = (f"{Decimal(x) / 1_000_000_000:f}" for x in budget)
+        base += ("--cost-cap-usd", binary_cap, "--budget-run", run_cap)
+    elif cost_cap_usd is not None:
+        base += ("--cost-cap-usd", cost_cap_usd)
+    command = guarded_command(workspace, CHECKOUT, (*base, *options), "pipeline", allow)
+    for path in allow[1:]:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    env = {
+        **os.environ,
+        **(environment or {}),
+        GUARD_ENV: str(probe),
+        "PYTHONPATH": str(CHECKOUT),
+        "PYTHONDONTWRITEBYTECODE": "1",
+    }
+    env.pop(REPLAY_ENV, None)
+    env.pop(MODEL_FD_ENV, None)
     with (
+        ExitStack() as stack,
         (directory / "pipeline.stdout").open("ab") as output,
         (directory / "pipeline.stderr").open("ab") as errors,
     ):
+        descriptors: tuple[int, ...] = ()
+        if replay_pipeline_run is not None:
+            if not re.fullmatch(
+                r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,95}", replay_pipeline_run
+            ) or replay_pipeline_run.startswith("m1-t0-"):
+                raise SubmissionError("Use a development replay ID.")
+            temporary = stack.enter_context(
+                TemporaryDirectory(dir=pipeline_directory, prefix=".replay-")
+            )
+            source = workspace / "runs" / replay_pipeline_run
+            env[REPLAY_ENV] = str(
+                stage_replay(source, key, Path(temporary), recorded_ledger)
+            )
+        else:
+            assert budget is not None
+            descriptor = stack.enter_context(
+                model_connection(
+                    workspace,
+                    pipeline_directory.parent,
+                    key,
+                    binary_sha256,
+                    budget,
+                    cache_root,
+                    env,
+                )
+            )
+            env[MODEL_FD_ENV] = str(descriptor)
+            descriptors = (descriptor,)
         result = subprocess.run(
             command,
             cwd=cwd,
-            env={
-                **os.environ,
-                **(environment or {}),
-                GUARD_ENV: str(probe),
-                "PYTHONPATH": str(CHECKOUT),
-                "PYTHONDONTWRITEBYTECODE": "1",
-            },
+            env=env,
+            pass_fds=descriptors,
             stdout=output,
             stderr=errors,
             check=False,

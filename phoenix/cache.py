@@ -104,7 +104,12 @@ class StageCache:
         )
         if identity.seed is not None:
             directory /= str(identity.seed)
-        with file_lock(directory.with_suffix(".lock")):
+        lock = (
+            destination.parent.with_suffix(".lock")
+            if recorded is not None
+            else directory.with_suffix(".lock")
+        )
+        with file_lock(lock):
             if recorded is not None:
                 data = read_entry(recorded.parent, recorded.name, record)
                 if destination.exists():

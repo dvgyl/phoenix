@@ -9,7 +9,7 @@ import pytest
 from phoenix_eval.build import PROJECT_CMAKE
 from phoenix_eval.case import Invocation
 from phoenix_eval.outcome import Exited, Outcome, TreeSnapshot
-from phoenix_eval.protection import GUARD_ENV, GUARD_PROBE
+from phoenix_eval.protection import GUARD_ENV, GUARD_PROBE, MODEL_FD_ENV
 from phoenix_eval.provenance import CHECKOUT
 from phoenix_eval.submission import (
     EvaluationPending,
@@ -74,12 +74,23 @@ def test_submission_resumes_after_the_provider_reports_a_limit(
         ]
     )
     monkeypatch.setattr(subprocess, "run", runner)
+    broker = Mock()
+    monkeypatch.setattr(subprocess, "Popen", broker)
     monkeypatch.setattr(
         "phoenix_eval.submission.guarded_command",
-        lambda _, _repo, command, _profile: command,
+        lambda _, _repo, command, _profile, _allow: command,
     )
     with pytest.raises(EvaluationPending):
-        submit(workspace, directory, "pipeline", "case", original, "phoenix")
+        submit(
+            workspace,
+            directory,
+            "pipeline",
+            "case",
+            original,
+            "phoenix",
+            cost_cap_usd="3",
+            run_budget=150_000_000_000,
+        )
     first = runner.call_args
     assert first.args[0][-4:] == ("--run-id", "pipeline", "--method", "phoenix")
     copied_input = workspace / "runs/pipeline/case/input.elf"
@@ -91,10 +102,22 @@ def test_submission_resumes_after_the_provider_reports_a_limit(
     )
     assert Path(first.kwargs["env"]["PYTHONPATH"]) == CHECKOUT
     checkpoint = workspace / "runs/pipeline/case/run.json"
-    checkpoint.touch()
-    result = submit(workspace, directory, "pipeline", "case", original, "phoenix")
+    checkpoint.write_text('{"budget_binary": 4000000000, "budget_run": 201000000000}')
+    result = submit(
+        workspace,
+        directory,
+        "pipeline",
+        "case",
+        original,
+        "phoenix",
+        run_budget=150_000_000_000,
+    )
     assert result.source_sha256 is not None
     assert runner.call_args.args[0][-2:] == ("--resume", "pipeline")
+    command = runner.call_args.args[0]
+    assert command[command.index("--cost-cap-usd") + 1] == "3"
+    assert command[command.index("--budget-run") + 1] == "150"
+    assert broker.call_args.args[0][-4:-2] == ("3000000000", "150000000000")
     assert (
         submit(workspace, directory, "pipeline", "case", original, "phoenix") == result
     )
@@ -125,18 +148,22 @@ def test_raw_lift_summary_is_bound_before_measurement(
             }
         )
     )
-    monkeypatch.setattr(
-        subprocess, "run", Mock(return_value=subprocess.CompletedProcess((), 2))
-    )
+    runner = Mock(return_value=subprocess.CompletedProcess((), 2))
+    monkeypatch.setattr(subprocess, "run", runner)
+    monkeypatch.setattr(subprocess, "Popen", Mock())
     monkeypatch.setattr(
         "phoenix_eval.submission.guarded_command",
-        lambda _, _repo, command, _profile: command,
+        lambda _, _repo, command, _profile, _allow: command,
     )
     if change_before_freeze:
         with pytest.raises(SubmissionError, match="summary changed"):
             submit(tmp_path, directory, "pipeline", "raw", original, "ghidra-raw")
     else:
         result = submit(tmp_path, directory, "pipeline", "raw", original, "ghidra-raw")
+        assert (
+            int(runner.call_args.kwargs["env"][MODEL_FD_ENV])
+            in (runner.call_args.kwargs["pass_fds"])
+        )
         assert result.origin_sha256 == digest
         snapshot = directory / "capture/origin.json"
         (lift / "program.json").write_bytes(b"changed")
