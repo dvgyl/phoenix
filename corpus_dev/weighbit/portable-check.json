@@ -1,0 +1,32 @@
+{
+  "program": "weighbit",
+  "source_sha256": {
+    "main.c": "f1cdb5c466b16652fcd7925d2cf6312890bc30241ba5ef19baa7aea9b367f19b"
+  },
+  "published_cases": 327,
+  "published_cases_sha256": "73aa210b3ec3e115bb68e1789f0b54b2ce65486ba78591e9f4f1a816dbea86c9",
+  "validated_input_records": 327,
+  "validated_sequence_sha256": "73aa210b3ec3e115bb68e1789f0b54b2ce65486ba78591e9f4f1a816dbea86c9",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "5458b72d71bdc9056a95e94ec05c2d082990a457606bf94cbda158715fa4d3e9",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

@@ -1,0 +1,32 @@
+{
+  "program": "velocalc",
+  "source_sha256": {
+    "main.c": "8134e48f55c66167b0b1499eb899a1e5b41ef0a384d63510a4329abe00d02f06"
+  },
+  "published_cases": 321,
+  "published_cases_sha256": "e8d5afcbeebdde8734d1b46ba0e7890139ddcb6abfe61a3249d26dde69a5744f",
+  "validated_input_records": 364,
+  "validated_sequence_sha256": "a5e4a6fa8bd44bd9ce36ce2b09ec06468f0c3940808968f0dabdf659afb9a5ed",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "9cd42f42679e6e85e0d6af3de4ef4d06c3cd52ad0b33b8ff7a87905a31b2204f",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

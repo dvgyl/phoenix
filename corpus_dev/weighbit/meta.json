@@ -1,0 +1,12 @@
+{
+  "name": "weighbit",
+  "tier": "D0",
+  "lines": 53,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "checksum",
+  "features": [],
+  "heldout_cases": 327,
+  "heldout_seed": 851908
+}

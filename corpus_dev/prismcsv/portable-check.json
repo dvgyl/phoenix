@@ -1,0 +1,32 @@
+{
+  "program": "prismcsv",
+  "source_sha256": {
+    "main.c": "28bcbd4a9dcc70e96a8ad0653fd166c136ce1080a585bf28276cb785b3ba1e8b"
+  },
+  "published_cases": 373,
+  "published_cases_sha256": "02e72a8523f328c75a21c1a596cfa57efe97f9badad449b024866aca9659b580",
+  "validated_input_records": 373,
+  "validated_sequence_sha256": "02e72a8523f328c75a21c1a596cfa57efe97f9badad449b024866aca9659b580",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "2dd223a05c41f005c98fd9738914778db094e335015f50f3d24e2c2202dbe2f6",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

@@ -1,0 +1,20 @@
+{
+  "name": "velocalc",
+  "tier": "D1",
+  "lines": 319,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "calculator",
+  "features": [
+    "structs",
+    "function_pointer_tables",
+    "switch_8",
+    "recursion",
+    "getopt",
+    "floating_point_output",
+    "static_locals"
+  ],
+  "heldout_cases": 321,
+  "heldout_seed": 852002
+}

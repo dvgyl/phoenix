@@ -1,0 +1,32 @@
+{
+  "program": "niblace",
+  "source_sha256": {
+    "main.c": "80938d5651909bfe4406246d7a0e0a9a201ff436cd304f951a91f92086c45567"
+  },
+  "published_cases": 298,
+  "published_cases_sha256": "abfa46bf4c8baae7970a97ffd94bcd1ba6166c86977bc6733f4751bdd9f32aee",
+  "validated_input_records": 298,
+  "validated_sequence_sha256": "abfa46bf4c8baae7970a97ffd94bcd1ba6166c86977bc6733f4751bdd9f32aee",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "072ca099d74a3a6f14fba391781c46d866b917cf0bc04ef7a45a37e660ae8526",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

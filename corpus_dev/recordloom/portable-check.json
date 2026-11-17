@@ -1,0 +1,35 @@
+{
+  "program": "recordloom",
+  "source_sha256": {
+    "codec.c": "7c16b6d72bcfcd1c7141d364a18d0fb656c1334be471a507d889678d5dcf7bcb",
+    "main.c": "f73987047cf8a64695931e09e2a15df5392cca14316207767fd6d80b0412f076",
+    "records.h": "204e4c026de527379630e6b392134110dce68ce813e0dfdb3df875026c3a94b1",
+    "registry.c": "0080a0229fa78150f3b5d418f6c2c45b9ec7bb5224fe049ffb2b5abcb2fdfc45"
+  },
+  "published_cases": 368,
+  "published_cases_sha256": "bfd54e72c1cddfec87568a041efd39f512becd8ab045aa9bbe3b1a9ac7005794",
+  "validated_input_records": 573,
+  "validated_sequence_sha256": "f11ab2a6eca9810dc95861fb9de1a1dd13ee92df1e963d31ebd240ed73cede99",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "6e7145d20adb250e45b97884ab1548c827d06b6c3967409637630807b051bb90",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

@@ -1,0 +1,32 @@
+{
+  "program": "branchmark",
+  "source_sha256": {
+    "main.c": "610431886b0f68cde374e46f71c64e44cfa586442a4447d6b5cbfa37fb4e808a"
+  },
+  "published_cases": 347,
+  "published_cases_sha256": "98125775353ff074c5aec2c90d11b53f1dc62dd2186e02caff34a2bcb480bc0b",
+  "validated_input_records": 347,
+  "validated_sequence_sha256": "98125775353ff074c5aec2c90d11b53f1dc62dd2186e02caff34a2bcb480bc0b",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "452fe1c57b49bc23174cf45979b4bd2ceab00c38afdc4708eaf7b5b063ee6749",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

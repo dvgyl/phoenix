@@ -1,0 +1,12 @@
+{
+  "name": "gapmeter",
+  "tier": "D0",
+  "lines": 264,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "statistics",
+  "features": [],
+  "heldout_cases": 266,
+  "heldout_seed": 851901
+}

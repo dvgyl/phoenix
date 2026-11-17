@@ -1,0 +1,32 @@
+{
+  "program": "lumaquilt",
+  "source_sha256": {
+    "main.c": "f5fb2ebe58dffebf7b5612e26f2ca9a5f9d101937acdac0b7fa73850fc3d7812"
+  },
+  "published_cases": 394,
+  "published_cases_sha256": "4677ed250ec14820fbe608d1c85369d68f95c660da41e954ab3f2e3ced9277cb",
+  "validated_input_records": 394,
+  "validated_sequence_sha256": "4677ed250ec14820fbe608d1c85369d68f95c660da41e954ab3f2e3ced9277cb",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "ef197462a702911c3851eecf731adfe89d15f5be05b18dd1eeec8e6b369ae443",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

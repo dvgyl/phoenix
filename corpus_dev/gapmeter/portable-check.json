@@ -1,0 +1,32 @@
+{
+  "program": "gapmeter",
+  "source_sha256": {
+    "main.c": "2c0dfeb757daed0495b0d180e34f76efbbcfdb107cf980d3391fadabed933a21"
+  },
+  "published_cases": 266,
+  "published_cases_sha256": "61bf3ec23b9c5a301453ef189cc44eedf4884ababb4cc219e7539646d5a49b21",
+  "validated_input_records": 269,
+  "validated_sequence_sha256": "9950ccbe97b6327615029cdac17496f0743b587863e9483a67f7ded33304f5f0",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "62733f72e611e5a74097f5bde608ffb58cd9d32b10197e738ed5e222feb08537",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

@@ -1,0 +1,93 @@
+{
+  "program": "lumaquilt",
+  "source_sha256": {
+    "main.c": "f5fb2ebe58dffebf7b5612e26f2ca9a5f9d101937acdac0b7fa73850fc3d7812"
+  },
+  "cases_sha256": "4677ed250ec14820fbe608d1c85369d68f95c660da41e954ab3f2e3ced9277cb",
+  "status": "Direct source checks passed. Phoenix acceptance is pending.",
+  "cases": 394,
+  "branch_covered": 272,
+  "branch_total": 283,
+  "branch_percent": 96.113074204947,
+  "uncovered": [
+    [
+      "/work/lumaquilt/src/main.c",
+      38
+    ],
+    [
+      "/work/lumaquilt/src/main.c",
+      38
+    ],
+    [
+      "/work/lumaquilt/src/main.c",
+      48
+    ],
+    [
+      "/work/lumaquilt/src/main.c",
+      332
+    ],
+    [
+      "/work/lumaquilt/src/main.c",
+      368
+    ],
+    [
+      "/work/lumaquilt/src/main.c",
+      409
+    ],
+    [
+      "/work/lumaquilt/src/main.c",
+      409
+    ],
+    [
+      "/work/lumaquilt/src/main.c",
+      410
+    ],
+    [
+      "/work/lumaquilt/src/main.c",
+      448
+    ],
+    [
+      "/work/lumaquilt/src/main.c",
+      484
+    ],
+    [
+      "/work/lumaquilt/src/main.c",
+      573
+    ]
+  ],
+  "variants": [
+    "gcc -O0",
+    "gcc -O2",
+    "gcc -Os",
+    "gcc -O3",
+    "clang -O0",
+    "clang -O2",
+    "clang -Os",
+    "clang -O3"
+  ],
+  "repetitions": 3,
+  "compiler_image": "phoenix-worker:amd64",
+  "gcc": "13.3.0",
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+  "mutation_score": null,
+  "arm64_validation": false,
+  "runner_validation": false,
+  "compiler_comparison": {
+    "variants": [
+      "gcc -O0",
+      "gcc -O2",
+      "gcc -Os",
+      "gcc -O3",
+      "clang -O0",
+      "clang -O2",
+      "clang -Os",
+      "clang -O3"
+    ],
+    "repetitions": 3,
+    "validated_input_records": 394,
+    "validated_sequence_sha256": "4677ed250ec14820fbe608d1c85369d68f95c660da41e954ab3f2e3ced9277cb",
+    "published_cases": 394,
+    "all_published_cases_in_validated_sequence": true
+  },
+  "coverage_repetitions": 1
+}

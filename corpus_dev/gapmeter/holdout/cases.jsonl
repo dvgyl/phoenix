@@ -1,0 +1,266 @@
+{"args": ["-?"], "environment": {}, "stdin": "", "tree": {"entries": [], "mode": 493}}
+{"args": ["absent"], "environment": {}, "stdin": "", "tree": {"entries": [], "mode": 493}}
+{"args": ["a", "b"], "environment": {}, "stdin": "", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "eA==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "bmFu", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "aW5m", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MWUyMA==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MSAwIC0yIHg=", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MA==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MSAxIDE=", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MSAtMSAxIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t"], "environment": {}, "stdin": "", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c"], "environment": {}, "stdin": "", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "x"], "environment": {}, "stdin": "", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "-1"], "environment": {}, "stdin": "", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "nan"], "environment": {}, "stdin": "", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAg", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "NTAgLTUwIC0xIC0xIC0xIDEgLTMuOCAwIDAgMSAtNTAgNTAgMSA1MCAtMSAxIDAgMCAwIDEgLTUwIDUwIC0xIDAgNTAgLTEgMCAwIDEgMA==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "NTAgLTEgMCAtNTAgLTUwIDEgMSAzLjMgMCAtMTguMyAtNTAgLTUwIC03LjQgLTEgLTUwIC01MCA1MCAwIDAgMCAtNTAgMSAwIC01MCAxMS45IDMuNiAxIC0x", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "LTUwIC0xIC01MCAtNTAgMCAtMSA1MCAtMy4yIDUwIC0xNy44IC01MCAxIDEgNTAgNTAgLTEgMCAxIDUwIDAgLTUwIC01MCAxIDUwIC0xIDE3LjEgMCAtMy4xIC01MCA1MCAtNTAgMSAwIDEuMSAxIDAgMCAtNTAgLTE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "MCA1MCAxIC01MCAwIDEgMSA1MCAwIDAgMCAtNTAgMCAxIDAgMCAwIDAgNTAgMSAtNTAgMCAwIC01MCAwIDIuOSA1MCA1MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MSAtMSAwIDEgNTAgMTAuNSA1MCAwLjIgOC4xIDUwIDAgNTAgLTEgLTUwIC01MCAtMSAwIC01MCA1LjMgMCAwIDEgLTEwLjggMCAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "NTAgNTA=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTE3LjggLTEgNTAgLTEuMSAwIDAgLTEgMCA1MCAtNTAgMTIuNyAtMTAuOSAwIDAgLTEgNTAgLTUwIC0xIDUwIDUwIC01MCAwIC0xIC0wLjMgMSAxNC4xIDAgNS4yIDE5LjkgLTEgLTEgLTUwIC0yLjkgLTE=", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "NTAgLTUwIDUwIC0xIDguMiA1MCA1MCAtMSAwIDEgMSAwIDUwIC0xIDUwIDAgMCAxIDAgMCA1MCA1LjIgMCAwIDAgMCAtNy4xIDEgLTUwIDAgLTEgNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MCA1MCA1MCAxIC0xMi41IDEgNTAgMCAtNTAgMSAxIC01MCAwIC01MCA1MCAwIDEgLTUwIDUwIDMuMCAtNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "LTEgMCA3LjQgMSAxNS42IC01MCAxIC0xIDAgLTUwIDAgMCAxIDEgMSAwIDUwIDAgLTE3LjggNTAgMCAxNy43IDEgMSA1MCAwIC01MCAwIC01MCAtNTAgLTUwIDUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTE5LjcgMSAxIDUwIC03LjMgNTAgLTUwIDAgMCAwIDEgMSAwIDEgMCAx", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "LTEgLTEgMSAwIC02LjcgMCAwIC01MCAxIDAgLTExLjAgNTAgLTEgMCAxIDAgLTUwIDEgLTEgNS4xIDUwIDEgNTAgMCAwIC0xIC0xIC01MCAwIDEgMTMuMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MCAtMSAxIDUwIDUwIC0yLjMgLTUwIDEgMTcuMCA1MCAtNTAgMCAtMTEuNiAwIC0xIC01MCAwIC0xIDE3LjcgLTEgLTUwIC0xIDAgLTEgMSAxIDAgLTUwIC0xIDAgNy45IDEuMCAtNTAgMSAwIDQuMyAtNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTUwIDUwIDEgMCAtNTAgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "LTEgLTE5LjEgLTUwIC04LjYgLTEgMCAxIC0xIDEgNTAgMCA4LjUgLTEgNTAgLTE5LjYgLTguNyAxNi42IDAgMCAxIDAgLTUwIC01MCA1MCAwIDUwIC0xIDAgMCA1MCAxIDAgMCAtMSAxIDAgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTUwIC02LjUgMSAtNTAgMCAtMSAxMi44IDAgMSAwIDUwIDQuMyA1LjcgMSAtMSA1LjYgLTUwIDAgMCAwIDEzLjMgLTEgMCAwIDAgLTUwIDUwIC01MCAtNTAgMCAtMQ==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MCAtNTAgLTEgMCAtMSA1MCAtNTAgLTEwLjMgNTAgLTE2LjEgNTAgLTYuMiA1MCAxNS41IDAgMSAtNTAgMSAwIDE2LjMgNTAgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "LTUwIDUwIC01MCAwIDcuNCAwIDUwIDAgLTEgLTUwIDEgMCAtMi4zIDUwIC0xIDUwIC01MCAwIC00LjUgLTUwIC0xIDUwIC01MCAtMi40IC01MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "LTEgMCAtNTAgOC44IC01MCAtNTAgMCAwIDEgMSAtMTAuNiAxIC01MCA1MCAtNy45IC01MCAtNTAgMCAtNTAgMCAtMSAxMy4zIDAgMSAx", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "LTUwIDAgMi4zIC0xIC01MCAtMSAxIDAgMCAxIC04LjYgNTAgMCA1MCA1MCA1MCAtOS43", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCAtNTAgMCAxNi41IDUwIC0xIDEgNTAgMSAwIDEgMCAwLjAgMCAxIC0xIDEgLTUwIDAgNTAgNTAgMSAwIC0xIDE0LjUgMi4xIC01MCAwIDUwIDEgLTEgMy4yIDUwIDAgLTUuMCA5LjI=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "LTUwIDE2LjAgLTIuNCAtNTAgMCA2LjkgMCAwIC01MCA1MCAwIC01MCA1MCA1MCAtNTAgNTAgMCAtNTAgMCAwIC01MCAtNTAgLTUwIDUwIDQuMiAwIDEgLTcuMyAtMTEuNw==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "LTEyLjMgLTE2LjYgMCAxLjkgLTUwIC01MCAxIDE2LjQgLTEgMCAtNTAgMSAzLjcgMTcuMCAwIDUwIC0xIDEgMCAwIC0xMy40IC0xLjkgLTUwIDAgLTUwIC01MCA1MCAtMSAwIC01MCAxNS43", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MCAxIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "MCA1MCAxIC01MCAxIDEgLTEgLTEgMCA1MCA1MCAwIC0xMS4yIC04LjIgLTE4LjEgNTAgLTE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCAwIC01MCAwIDAgNTAgLTUwIDAgLTUwIDEgMSA4LjQgMTEuOSAwIC0xIDEgNTAgMTguMiAwIDAgMCAwIC01MCA1MCAtMSAwIDAgNTAgMCAtNi4yIC0xNC44IDUwIC01MCAtMSAxIDE=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MTguMyAtNTAgLTUwIDEgMCA1MCAxIDAgLTUwIC0xIC0xIDAgLTUwIC0xMC41IC01MCAwIDAgLTUwIC0wLjEgLTEgLTEgMCA1MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTEgLTcuNCAwIDAgMSAtMTAuOCAtMSAwIDAgOC4xIDAgMCAw", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "LTEgMCAtNTAgLTkuNyA2LjQgMCAtNTAgNTAgOS4yIDAgNTAgNTAgMCAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MCAtNTAgLTEgMCAxLjYgMCAwIDAgNTAgLTEuOCAxIDEgMSAxIC0xIC01MCAtMSA1MCA1MCAwIC0xNy4zIC0xIDEgMSAwIDAgMCAwIDEgMTYuNg==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "NTAgLTEgMSAwIDAgLTEwLjMgMCAwIDEgMQ==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "MSAxIDMuMyA1MCAtMSAwIC0xIDAgMCAtMSAxNC44IDEgMSAtNTAgMCA1MCAwIDAgLTUwIDEyLjA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MTIuOSA1MCAwIDAgMSAtNTAgLTUwIDAgMCAxMi4zIDEgMCAwIDUwIC0xIC01MCAwIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "LTEgMSAtMSAtMTYuMyAwIC0xMy44IDUwIC0xIDkuMiAtMSA1MCAtNTAgLTUwIDAgMCAtMTYuOSAxIDUwIC02LjAgLTEgLTE4LjcgMSAwIDUwIC0xMC45IC0xIDAgMCAwIC01MCAwIC0xIC0xIC01MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTE0LjggLTEzLjUgMCAtMSAxIC0xLjMgMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCAtNTAgLTUwIDAgNTAgLTUwIDEgNTAgNTAgMCAwIDUwIC0xIC01MCA1MCAtMTAuMCA1MCAtMQ==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "LTUwIDEgMSAxIDUwIDUwIC01MCAtMSAxIDAgLTUwIDAgMCAwIDEgLTUwIDUwIDEgNTAgNC42IC0xIC01MCAtNTAgMCA4LjUgLTUwIDEgMCAxIDAgLTUwIC0xNS4xIDEyLjEgLTUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MCAwIDE3LjMgLTEgNS4zIDYuOCAwIDAgLTUwIC01MCAwIDAgMCA1MCA1MCA1MCAtNTAgNTAgLTUwIDAgLTUwIDAgNTAgMS40IDAgLTQuNSAtNTAgMTguMCAwIDUwIC0xIDUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "LTUwIC0x", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "NTAgMSAtNTAgNTAgLTE4LjUgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCAw", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTE0LjM=", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "LTUwIDAgMTIuOSA1MCAtNTAgLTUwIC0xIDEgLTE3LjMgLTEgMCAwIDEgLTUwIDEzLjUgNTAgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MCAtNTAgLTE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MCAwIC0xLjQgLTEgMCAtNTAgMCA1MCAtMSAwIDAuNSA1MCA1MCAtMTQuMyAwIC0xIC0xIDEgLTEgLTUwIDEgLTUwIC0xIC0xIDEgLTEgLTEgLTEgMTYuMg==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MQ==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "NTAgLTUwIDUwIDAgNTAgLTQuMyAxIDUwIC01MCAwIDAgNTAgLTUwIC01MCAtNC4wIDguNiA1MCAwIDAgLTUwIDAgMTUuMiA1MCAtMSAxIDEgNTAgLTUwIC0xIC0xIDQuMCA3LjIgLTE0LjkgLTUwIC0xIDUwIDEgLTUwIC01MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MSAwIDYuMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "MTEuNSAtMSAwIDAgLTUwIDAgLTE0LjggNTAgLTIuNyAtNTAgLTUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTEgNTAgMCAtMTcuNyAtMTguMCAx", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "LTAuMSAwIDUwIDUwIDUwIC0xIDUuNiAx", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "MSAxIDAgLTEgMSAwIC01MCA1MCAwIC0xMy43IDAgNTAgMSAtMSAwIDUwIDE5LjggNTAgMSAxIC01MCAwIDAgNTAgOS4zIDAgMTMuMSAxIDAgLTEgMSA1MCAwIC0xIC0xIC01MCAtMTEuOA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "NTAgLTUwIDEgMCAxIDEgMCAwIDEgNTAgLTUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MSAxIDAgMSAwIC01MCAtNTAgMSAxIDEgLTUwIDEgLTUwIDUwIDUwIDAgLTUwIC01MCAwIDEgLTE1LjYgNTAgNTAgMTMuNiAtMSAwIDE5LjcgNTAgMCAxNy4wIC05LjIgLTUwIDAgMCA1MCAxIDAgMCAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "NTAgMCAtNTAgMSAtNTAgMSAtMSAxIDUuMCAwIDAgMCA1MCAwIDEuNCAtMSAtMSAtNTAgLTEyLjIgMCAwIDEgMSAtMSAwIDAgLTYuMSA1MCAtMSAxIC01MCA1MCAxIDAgLTUw", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MCA1MCAxIDEgMCA1MCAxOS44IDEgLTEgMCAtMy44IDUwIC0xMS4wIDEgLTEgLTUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "NTAgMCAwIC01MCAxIDAgMCAtMSAtNTAgLTUwIC0xIDUuOCAwIDAgLTUwIDUwIC01MCAtNTAgNTAgMi41IDAgLTUwIDEuOCAtNTAgLTEuMiAtMSAtNTAgMCAxIC01MCAtMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "LTEgMCAtMSA1MCAxIC0xIDAgMCAtMSAtMSA1MCAtNTAgMSA1MCAtNTAgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTExLjMgMCA1MCAtMSA1MCAxIDAgMCA1MCAtMSAtNTAgNTAgLTEgMSAwIDAgNTAgMSAtNTAgLTUwIDUwIDAgMA==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "NTAgMSAtNTAgNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "NTAgLTUuMSAwIC0xIC01MCAwIC01MCAwIDAgMCAtNTAgMCAxIDAgMCAwIDUwIC0xIC0xIDAgLTEgMCAwIDYuMCAxLjggNTAgNTAgNTAgMCAwIDE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MSAxIC0xMy4wIDEgLTUuNSAtNTAgLTEgMCAtMSAtNTAgLTEgMCAwIDEgNTAgMC4yIDUwIC0xIDEgLTEgLTE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTEgLTUwIC0xIC0xIDAgMCAwIC0xIDUwIDEgMCAwIC0xIC0xIDAgLTEgNy4yIDEgMSAtNTAgLTUwIC0xIDUwIDUwIDAgLTE2LjM=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "NTAgLTExLjUgLTEgLTE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MCAwIDEgMTEuNCAtMSAtMTQuMyA2LjYgMTQuMiAtNTAgNTAgLTUwIC01MCA1MCAtMSAxIDEgMCAtMSAwIC01MCAtNTAgOS41IC0xIDEgNTAgLTE5LjUgLTEgNTAgLTUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTUwIDAgNTAgLTUwIDEgLTEgMC4zIC0yMC4wIDUwIDEgLTUwIDEgMCAtMSAwIDEgMTcuNSAwIDEgLTEgMCAwIDEgMCAtNTAgLTEgNTAgLTEgLTEyLjIgNTAgMCAwIC01MCAtNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCAwIC0xIDEgNTAgMCAyLjEgMSA1MCAxIC0xIC01MCAwIDAgMCAwIDUwIC0xIC01MA==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MCAxIDAgMCA1MCAxIC01LjkgLTEgMCAxIC01MCA1MCAx", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MSAtMSAtMSAwIDExLjkgLTUwIC0yLjIgMCAxIDAgLTEgMCAzLjcgLTUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "MSAtMi4yIDAgLTE2Ljc=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "LTEgMCAwIDUwIC00LjkgLTE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MSAtMQ==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "NTAgNTAgMSA1MA==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MCAxIDAgMSAxLjEgMCAxMy4zIC01MCAwIC0xIDAuMCA1MCAwIC0xIC01MCAwIC01MCAxIC0xIDAgNTAgLTEgLTAuNCAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "NTAgMSAwIC01MCAtMSAtNTAgMSAtMSAtMTIuNSAtNTAgNTAgMSAwIDAgMCAxIDEgNTAgNTAgLTEyLjcgMCA1MCAtNTAgLTEgLTEgMCAtNTAgNTAgNTAgMCAwIC0xIDAgMTkuMyAxIDQuNCAtNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "LTEgMCAtMSAtMSAwIC0xNS43", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MSAtMSA1MCAtMSAxIC0xIC01MCAtNTAgMCAwIC0xIC0xOC42", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MSAxNC4wIDAgMCAtNTAgMSAxIDAgMSAtMTEuNyAwIDUwIDAgLTEgMSAxIDAgMCA1MCAtMSAtNTAgLTEuMiAtNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "LTUwIC0xIDAgMSAtMSAtMSAwIC0xIC01MCAwIC01MCAtMSAxIC0xNC44IC01MCAwIDguMyA2LjIgMCAtNTAgMTcuOSAtNTAgNTAgLTUwIDEgLTUwIDAgLTUwIDUwIDE2LjEgNTAgLTUuOCAtMSAwIDEgLTUwIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "MCA1MCAwIC0xMC4yIDUwIDEgMSAxIC0xIDAgMSAwIC01MCAtMSAxIDUwIDguOSAtMSAtMTAuOSAxNC4wIC0xIC0xIDEgLTUwIDAgLTIuNyAtMSA1MCA0LjQgNTAgLTUwIC0zLjMgLTE2LjUgMCAxIDUwIDAgLTE=", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MSA0LjQgNTAgMCA4LjcgNTAgLTEgNTAgNTAgLTUwIDEgLTUwIDE2LjIgMCAwIDUwIDExLjkgLTEgMCAtNTAgLTEzLjUgLTEgLTE0LjIgLTEgMCA1MCAtMSAxIDUwIDAgMCAwIDAgNTAgLTUwIDcuOA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MSA1MA==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "OC4zIC0xIDEgLTUwIDAgLTUwIDUwIDAgMCAxIDUwIDEgLTMuNiA1MCAwIDUwIC01MCAtMTQuOCAtMSAtMTguNSAwIDE3LjMgMCAxIDEgNTAgMCAwIDUwIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "MSAxLjIgMCAwIC0xMi4wIDAgNTAgLTUwIDAgLTEgMSAtNi4wIDAgNTAgMCAtMi42IDAgNTAgOC4zIDAgLTUwIDAgNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MCAxNS4wIDAgLTEgLTE3LjYgMCAwIDUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MSAtNTAgMSAxIDAgLTEgMSAtMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "NTAgNS44IC01MCAtMTguMiAtMSAtMSA1MCAtNTAgMCAtNTAgMCAwIC0xIDAgMTguOSAtMTcuOSA1MCAwIDUwIC0xIDEzLjMgLTUwIDAgNTAgMSAwIDEgNTAgLTMuMSAxIDUwIDEgMTUuNyA2LjcgMCAw", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MCAtNC44", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MSA1MCAtMSAtNTAgNTAgMSA1MCAwIDEgMCAtMSAxNC4wIDEgLTUwIDAgLTEwLjcgNTAgMSAtMSAxIDAgLTEgMSAtNC4xIC0xIDAgMCAwIC0xIDAgMCAxIC0wLjYgLTUwIC01MCAwIDAgLTIuNg==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "LTUwIDUwIC0xIDAgLTEgLTUwIC0xIDEgMCA1MCA2LjAgMSAxNS45IDUwIDUwIC01MCA1MCA1MCAxIC0zLjQgMCAtMSAwIDAgMSAxIDAgLTUwIC0xNS41IDUwIDUwIDUwIDUwIC01MCAwIDEuNSAtNTAgNTAgNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "NTAgMCAwIDEgMCAwIDUwIDAgLTUwIDAgMCAxIDAgLTUwIC0xIDAgNTAgLTEgMCAxIDAgMCAwIC01MCAtNTAgMCAtNTAgLTEgMSA1MCAwIDAgLTUwIDUwIDUwIDAgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTUwIDAgNTAgMCAtNTAgMCAtMSAtMTAuMSAtMSA1MCAtMSAwIC01MCA1MCAxIDAgNTAgMCAwIDE5LjMgMSA1MA==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "LTE0LjMgMCAtNTAgMSAwIDUwIDUwIDExLjYgLTEgNTAgMCAwIC0xIDUwIDUwIDUwIC01MCAxIDYuOSAwIDUwIDEgLTEgMCAxMi45IC0xIDAgLTUwIC0xIDcuMSAtNTAgLTUwIC0xOS41", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTEgNTAgLTUwIDEgMSAx", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "NTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "LTUwIDAgMSA1MCA1MCAwIDAgMi4xIC01MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCA1MCAtMSAtMSAtNC45IDUwIDAgLTEgLTUwIDUw", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "MCAtOC40IDEgLTUwIDUwIDUwIC0xIC01MCA1MCAwIC01MCAwIC0xMi44IDAgMCAxIDE2LjYgLTEgMCAwIDAgLTUwIDEgLTUwIC01MCA1MCAtNTAgMCAtNTAgMCAtNTAgMTQuNw==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "LTUwIDAgLTYuOCAtNTAgMTcuOSA4LjUgLTEgMSA1LjMgMSAxIDAgMCAtNTAgMSAtMSAwIDAgLTE0LjMgLTEgMSAtNTAgMCAxIDAgLTEgMSAwIDE2LjEgMCAxIDExLjIgMCAxIDAgLTUwIDEgLTUwIDE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "LTUwIC01MCAtMTMuMiAtMSAwIC0yLjYgLTUwIC0xIC0xIDAgMCAxIC01MCA1MCAtMSAtNTAgMSAxIDE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "MTMuNSAtNTAgLTUwIDUwIC0xIDEgMCAwIDAgMSAxIC0wLjIgMSA4LjEgLTE2LjkgOC4yIDEgLTUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MSAwIDEgMCA1MCA1MCA1MCAwIC01MCAwIDUwIC0xIDAgMSA1MCAxIDAgMCAtNTAgNTA=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "LTUwIDAgLTEgLTUwIC0xIC01MCAtMSAwIC01MCAwIDAgMSAxIC01MCAxIDUwIDAgNTAgMCAxIDEgLTUwIDAgMCAtNTAgLTcuOCAtNTAgMCAtMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MCA1MCA1MCA4LjYgLTUwIC0xIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "NTAgLTEgMCAtMSAxIDAgMTIuMSA1MCAwIDUwIDEgLTAuNSAxIDEuNyAwIC01MCAtMTYuMyAwIC01MCA1MCAtNTAgMCAtMSAxIDAgLTEgLTUwIDUwIDEgLTUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MSAwIC01MCAtMSA1MCAtMTUuNSA1MCAtNy44IC01MCAtOS42", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "My4xIDUwIDEgLTUwIDEgOS43IDAgOS44", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "NTAgMCAtMSAtMSAwIC0xIDUwIC01MCA3LjEgLTkuNiAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "LTEgLTUwIC0xIDAgMCAyLjYgLTE5LjggLTUwIC0xOS4xIDUwIDUwIDEgLTUwIDAgMCAwIC0xIDAgLTEgLTEgLTUwIDUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "NTAgMCAtMSAwLjQgMCA1MCA1MCAtMSAtMSAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTUwIDAgNTAgLTUwIC0xIDAgNTAgMCAwIDAgMCAtMTAuNyAw", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "NTAgLTUwIC01MCAwIC0xIDEgMCAxOS41IC0xNy44IDEgMSAtNTAgLTEgNTAgLTUwIC0xIC01MCAxNi4yIDUwIC0xIDUwIDAgLTEgLTEgMTUuMSAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "NTAgNC44IDE3LjYgNC42IDAgMCAxIC0xIDUwIC0xIDAgLTUwIDAgMSAxIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "MCAtMSAtMSAwIDAgMSAtMSAxIC04LjAgMSAtNTAgNi43IDAgLTEgMSAtNTAgMSAtMSAwIDEgMCA1MCAtMSAwIDAgNTAgMCAtMTIuMCAwIC0xIDUwIDUwIDAgLTUw", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "LTEgMCA1MCAwIDUwIC0xIDExLjQgLTUwIDguMSAtMTIuNCAwIC0xOS4wIC01MCAwIDEgMSAwIDEgLTUwIDEgLTEwLjUgLTEgLTEgMCAtNTAgMSA1MCAxIDE4LjIgNTAgMCAwIDAgLTUwIDAgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MA==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "LTYuMSAtMSAtNTAgLTkuMyAtMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "LTEyLjAgMCA1MCAtMS45", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "NTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "LTUuOCAwIC0xIDAgMSA1LjkgLTYuNSAtMSAtMTUuMiAtNTAgMSAtNTAgLTUwIDEgLTE3LjkgLTYuMCAtNTAgMCA1MCAwIC0xIDUwIDUwIDE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTUwIC0xOC40IDE5LjQgNTAgMTIuOSAtNS4wIC01MCA3LjcgMCAtMTcuNyAxIDE4LjAgNTAgLTUwIDAgMSAtNTAgLTEgMCAtMTUuNCAtMSAtMSAtNTA=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MCAtNi4zIC0xIDAgMCAwIC01MCAxIDEgLTUwIDAgLTUwIC0xIDAgLTExLjQgMSA1MCAxIC0xOS43IDEgLTEgLTUwIC01MCAtMTguNCAtNTAgLTE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "LTEgLTEgNTAgNTAgLTUwIDUwIDAgLTEgLTUwIDUwIDAgMCAxMC41IDAgMSAxIDEgMC42IC0xNi43IDAgNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "NTAgMCAwIDE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "LTEgLTEgNTAgMSAtMTUuMCA1MCA1MCA1MCAwIDEgMCAtNTAgMCAtMSAtMSA3LjcgLTUwIDEgLTQuNyA1MCAtNTAgMC41IDUwIDAgMCAtMTUuNCAwIC0xIDAgLTEgMSA1MCAtNTAgMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MTAuMyAtMSAtNTAgMCAtMTIuOCAxIDAgMTAuNSA1LjMgNTAgMSAwIC01MCAxIC0wLjggMSA1MCA1MCAxIC0x", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "LTUwIDYuMSAwIDAgLTUwIDAgLTEgMSAtMSAtNTAgMCAxIDEgNTAgLTEgMCAtNTAgNTAgLTEgLTE2LjUgMCAtNTAgMSAtMTYuNiA1MCAwIC01MCAtMy4wIC0xIC01MCAxIDEgLTEgLTEgLTUwIDEyLjUgNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTEgLTUwIDAgLTE4LjAgLTEgLTE3LjggMCAxIC0xLjAgMSAtNTAgNy42IDAgNTAgLTEgLTE0LjkgMCA1MCA1MCAtNTAgMCAwIDUwIDAgNTAgLTEgNTAgMCAtMSAtNTAgMCAtMSAtMSA1MCAwIDUwIDEgMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MCA1MCA1MCAxIDAgMSAtNTAgLTEgMCAxIDUwIC01MCAwIDAgMCA1MCAxIDUwIDYuNiAxIC0xIC01MCA1MCAxIC0xIDguNCAwIDEzLjcgMSAwIDE4LjIgMTguOSAxIC01MCAwIDAgMSAtMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "Ny40IC0xIC01MCAtMSAxIDAgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MSAxIDEgMS4yIDUwIDAgMSA1MCAw", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "LTEgNTAgMSAtMSA1MCAxIC01MCAxIDEgMTIuMiAtMSAxIC01MCA1MCA1MCAwIC0xIDAgNTAgLTUwIDAgLTUwIDUwIDUwIC0xNC41IDUwIC01MCAwIDEgMSAtMSAxNC40IDUwIDEgMCAtMTYuNSAtMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "LTUwIDAgMTguMyAwIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MSAwLjYgMCA1MCAwIC0xIDE3LjAgMCAtNS45IDUwIDEyLjggLTEgMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTUwIC01MCAtNS40IC01MCA1MCA1MCAwIDUwIDAgMCAtMSAxMi4xIC01MCA1MCAxOS42IDEgLTEgLTEgMCAtNTAgMSAxIDAgMCAtNTAgMCAtMTAuMCAtNTAgNC4yIDUwIDAgLTUwIC00LjMgLTUwIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MTQuMSAtMSAwIDUwIC0xIC0xIC0xIC0wLjggMCAtOC45IDE0LjkgMCAwIC0xIDAgNTAgMCA1MCAxNC4zIC0xIDAgMCAtNTAgNTAgLTEgLTUwIDEgMCAwIDUwIC05Ljg=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "LTMuMyAtMTkuNSAxIDEgMSAwIDEgMCA1MCAxIC0xIC05LjcgLTE4LjYgMCAwIC0xIDAgLTUwIDAgMSAtNTAgLTEgLTUwIDAgMTUuMCAxIC01MCAwIDEgLTEgNTAgNTAgMSAx", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MCAwIDEgMSAtMSAtNTAgMTIuOCAtMSAwIDEgMCAtNTAgMCAxMi4yIDAgMSA1MCAxIDUwIDAgMTUuOCAwIC05LjMgMC4xIC01MCA1MCAwIDUwIC01MCAtMSAxIC0xOC4xIDAgLTUwIDAgMCAtMTEuNQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "NTAgMCAxIDUwIDAgLTUwIDEgNTAgMCAxIDEgLTUwIDAgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MSAtMSAtMTQuNyA1MCAwIC0xNy4yIDAgMCAxIC01MCAxMi42IDcuNCAxIC00LjcgLTUwIDEgMSAwIC0xNC4yIDUwIDAgNTAgLTEgNy40IDEgMCAwIDEgMSAtNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTEgLTEgNTA=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "MSAxIC00LjIgMSA1MCAtNTAgLTUwIDAgNTAgMSA1MCAwIDUwIDEgMSAtNTAgLTEgLTUuOCAxIC0xIC0xIC0xIDEgNTAgMCAwIDAgLTUwIC02LjQgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "OC4zIC00LjYgLTEwLjMgMCAwIDUwIDAgLTUwIC01MCAtMSAwIDAgOS42IC0xIC00LjYgNTAgMCA1MCAwIDUwIC0xIDUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MSAxIDAgLTUwIDEuMyAwIC01MCAwIDAgMCAxIC01MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MSA1MCAtMSAxIC01MCAwIC01MCAwIDUwIDEgMCA1MCAtNTAgMSAtNS4yIC0xIDEgMSAtMTcuMyAwIC01MCAxIDAgMCAwIC01MCAtNTAgNTAgLTE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCAw", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MSAtMSAtMSAxIDUwIDUwIC01MCAtMSAwIDkuNyAwIC01MCAwIDUwIC01MCA1MCA1MCAwIC0xIC0wLjggMCA1MCAwIC0xIDEgMCAwIDAgMCA1MCAtMSAwIDAgLTMuNSAxIC01MCA1MCAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MSAwIDUwIDYuMyA1MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "MTAuMSA1MA==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "LTUwIDEgMCAwIDAgLTEgMCA1MCAtNTAgNTAgMCAwIDguMSA1MCAtMSAxIC0xIC0xIC0x", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCAxIDAgNTAgLTEgMCAxMy44IDAgLTkuOCAwIDEgMCAtMSAwIDAgLTE1LjIgMCAtNTAgNS4zIDE3LjQgLTIuNSAwIDAgMA==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MCAwIC0xLjMgMCAwIC01MCAwIDAuNSAtMi4yIC0xIDAgMSAxNy40IC04LjggMCAtMSAtNTAgLTEgLTUwIC0xNi41IDUwIDUwIDAgMSAwIDAgMSAtMTEuNiAtMSA1MCAtMSA1MCAwIDIuMyA1LjUgMCAwIDE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "NTAgLTUwIDAgLTUwIDAgMCA1MCA1MCA1MCAx", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "NTAgNTAgMSAtMSAtMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MCAwIDExLjMgMSA2LjMgNTAgLTUwIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCAwIC0xIDAgMCAtNTAgOC45IDUwIC0xIC0xIDUwIDUwIDAgNTAgOC41IDEgMCAtMTAuMyAwIC01MCAwIC0xIDUwIDEgLTUwIC01MCAxOC44", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MSAxIC0xIDAgMCAx", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "LTEgMCAxMC45IDExLjMgLTUwIC0xIC01MCA1MCA1MCAxIDUwIDAgLTUwIDEgNTAgLTEgMCAxIDUwIDAgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MSAwIDEgLTUwIDcuNyA1MCAtNTAgMSAtNTAgMCAtMSAtMSA1MCAwIDAgMCAtMSAtMTIuNSAwIDAgLTUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "LTEgMCA0LjcgMCAtNTAgMSAwIC0xIDAgLTE5LjIgMSAwIC0xIDUwIC0xIC0xIDAgLTUwIC01MCA1MCAxIDEgMCAtMSAtMSAtMSAtMTkuNSAtMSAtMTcuNSAtNTAgMi4xIC01MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCAwIDUwIC01MCA1MCAw", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MCAxIC01MCAtMSAtNy4zIC01MCAtMSAwIDUwIC01MCAxIC0xIDUwIDAgMCA1MCAtMSAwIDEgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "MSAwIC0xIDUwIDUwIC0xLjggLTUwIDEgLTUwIDE2LjQgMCAtMSAtNTAgLTUwIDAgNTAgMSAwIDAgMCAxIC05LjAgMCAwIDAgMCAtMSAtMy4xIDEgLTUwIDEgLTE5LjMgLTUwIC01MCA1MCAwIDEgNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "LTEgMCAxIDUwIDUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MCAwIDAgMTAuNSAtNTAgMCAwIC0xIDUwIDEgMCAtMSAtMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "NTAgMCAxIDUwIDUwIC01MCAtNTAgLTIuNiAxIDQuNiAwIDEyLjYgMCAtMS4zIDUwIDEgMCAwIDAgMTguMSAwIDE0LjQgLTUwIC0xIDEgLTUwIDMuMyAtNC43IDkuNyAtMSAtMTUuNiAwIDAgLTMuNCA1MCAxIC01MCAxIDA=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "MCAtOS4yIC01MCAwIC0xIC0xIC0xIDAgMCAtNTAgMCAxIC01MCAtMTAuMSAtNTAgMCAtNTAgNTAgLTkuMyAxIDAgMTUuNiAxIC01MCAxIC01MCAwIDUwIC0xMi41IC0xIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "LTAuMyAwIC0xIC01LjAgMSAtNS45IDEgLTAuMSA1LjkgLTEgNTAgLTEgLTUwIDAgLTEgNTAgMSAtMSAwIDAgMSAwIDAgMSA1MCAtMSAtMSAwIC0xIDAgMCA1MCAtNTAgLTExLjYgMSAtMC45IDEwLjkgMSAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "MCAwIDUwIC0xIDAgMCAwIDE1LjggMCAtMSAtMSAwIDUwIC01MCAwIDkuMCAxIC0xIC0xIDUwIDAgLTUwIC0xIDAgMCAxIC0xMC40IC01MCAtNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTUwIDUuOCAtNTAgNTAgMTAuNiAwIDAgLTEgNTAgMCAx", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "NTAgLTUwIDUwIDAgMCAtMSAwIC0x", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "LTE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "LTEwLjk=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "LTUwIDAgMSAtNTAgMCAtMy40IC01MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MTMuMA==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "MCAtNTAgMSAwIC0xIDUwIC01MCA1MCA1MCAtNTAgNTAgLTUwIC01MCAtNTAgNTAgMCAtMy40IC01MCA4LjYgMSAxIDAgLTExLjUgMCAwIDEgMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "NTAgMSAwIC01MCAtMSA1MCAtMSAxIDAgMCAwIC01MCAtMSAtMSAtOS4yIDAgMCAwIDAgMSAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MCAtMSAtMSAtNTAgNTAgMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MTYuNSA1MCAwIDEgLTUwIDAgNTAgMCA5LjAgNTAgLTEgNTAgMSAxIC01MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTEgMCAwIC01MCA1MCAwIDUuMiAtMSAtMSAwIDEgMCA1MCA1MCA1LjggNTAgLTEgLTUwIC0x", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MCAwIDEgMSAzLjQgLTUwIC01MCA1MCAwIDE4LjIgLTEgLTUwIDEgMCAtNTAgNTAgNTAgMSAxIDUwIDUwIDEuOA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "NTAgMSAxIC01MCAxIC01MCAtMTkuOSAtNi43IC0xNy40IDUwIC01MCAwIC0xIDAgMSAxIC0xLjQgNTAgMCAtNTAgMSAw", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MSA1MCAtMSAtMSAxIDAgLTEuNCA1MCAwIC0xIDUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTE3LjUgMCA1MCAtMTAuMyAtNTAgMC44IDAgLTUuNCAwIC0xIDEgMSAtMSAwIDUwIC01MCAtNTAgNTA=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MCAxIDAgMCAxIDAgNTAgMCAwIDAgNTAgMCAtMSAxIDAuNCAtNTAgLTE4LjQgMCA1MCAtMSAtOC4wIDEzLjUgMCAtNTAgLTUwIDEgLTUwIDAgMTcuNiAtNTAgLTUwIDAgLTEgLTE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "MTAuNiA1MCA0LjggLTEgMTEuOSAtMSAtOS4xIDUwIC0xIDAgLTEyLjkgLTEgMCAtNTAgLTEgNTAgNi4wIDAgMSAtNC4y", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "LTUwIC0xOC40IDUwIC0xIDAgMSAxIDAgLTEgMCAxIC0xIDEgLTEgLTE1LjIgNTAgMi4zIDAgLTEgNTAgLTYuNSAtMSAxIDAgMSAtNi41IDExLjYgLTUwIDAgLTUwIDAgMCAtMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "NTAgLTUwIDEgMCAwIC0xIDUwIDUwIC01MCA1LjQgLTEgMCA0LjkgLTE3LjYgLTE3LjAgMCAtMSAtMSAtMTkuMSAtOS4yIC0xIC01MCAwIC0xIDEwLjggNTAgLTUwIC01MCAtMSAtNTAgMSAxMy42IC0xIDEgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "NTAgLTUwIDcuMSAtMTEuNyAtMy4wIC0xIDUwIDAgLTEgNTAgLTE2LjggNTAgMSAxIDEgMSA1MCA1MCAwIDEgMCAwIC0xIDA=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MSAxIDAgLTEzLjYgLTEgMSAtMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MSAxIC0xIDUwIDAgMSA1MCAtNTAgMCAtMSAtMSAwIDAgMCAxIDUwIDAgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "LTExLjIgLTYuNSAtMSAwIDAgNTAgMCAwIDAgMSAtMTAuOSAwIC01MCAtNTAgLTQuMiAxIDAgLTEgMSAxIC01MCAtNTAgLTUwIDAgMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCAtNTAgMSAwIDUwIDAgMSAxIC0xMC4yIC0xIC0xIC01MCAxIC01MCAtNTAgLTEgLTUw", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MSA1MCAwIC0xIDEgMS45", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "MCA1MCAwIDAgLTEgNTAgMTguNyAxIDAgMCAxIDAgLTUwIC01MCAwIDAgMCA1MCAtMTEuMyAtMSAwIDcuMSAtMSAtMSAwIDAgMSA1MCAtMSA1MCA1MCAwIDE=", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "LTcuNiAtMSAxIC0x", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "NTAgLTUwIDAgMSAtMSAtNTAgNTAgMCA1MCAtNTAgLTUwIDAgLTEgLTE1LjUgMCAwIC0xIDAgMCAtMTUuOSAwIDUwIDAgLTUwIC01MCAxIC0xIDUwIDAgLTUwIDUwIDAgNTAgMCAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTEzLjkgNTAgLTE3LjcgMSAxNy42IC0xIC01MCAxIDUwIDEuMSAwIC0xIDEgLTUwIDAgLTEzLjYgMSAtMSAtNi4x", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "LTEgMCAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MCA1MCAwIDUwIDAgMCAtMSAxIC0xIDAuMCA1MCAwIC0xIDAgMCAwIDUwIDAgMTEuNSAtMSAtNTAgNTAgLTEgNTAgLTEzLjIgMSA1MCAwLjEgMCAtNTAgNTAgLTUwIC01MCAxIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "LTEgLTUwIDEgNTAgOS4xIDAgLTEgLTEgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTEgLTUuMSAtNTAgLTYuMSA1MCA1MCAwIDEgMCAtNTAgMSA1MCAwIDEgLTUwIDEgMCAtMSAtMSAtNTAgMCA3LjcgMCAwIDUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "Ny43IDAgMCAtMSAtNC42IDEgNTAgLTUwIC01MCAxIDUwIC0yLjIgMSAwIDAgLTEgLTEgMCAtNTAgMi44IDEgNC43", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "LTEgNTAgLTUwIDYuMyAwIC01MCAwIDUwIC0xIDUwIC01MCA1MCAwIDAgMCA1MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "LTEgMCAwIDAgLTUwIC0xMy4zIDUwIDAgLTEgNTAgMSA1MCAxIDUwIDEgMCA1MCAtMSAtMSAwIC01MCAwIC0xIC01MCAtNTAgLTUwIC0xIDUwIC01MCAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "LTEgMCA1MCAtMSAtMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MSAxIDAgLTUwIDAgMCAwIDAgMCAtMSA1MCAtMSAtMSAxIDUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCAtNTAgLTUwIDAgLTEgLTUwIDE1LjggLTEgMCAtMSAwIC01MCAwIDAgLTEgMCAwIC01MCA1MCAxMi4zIDAgMTAuNSA1MCA1MCAwIDEgMTcuMSA1MCAxIDUwIDAgMS43IDEgMCAtMSAw", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTEgNTAgLTEgMCAxIC0xIDQuNSA1MCAwIDAgNTAgMCAxLjkgNTAgMSAtMSAtMSAxIC0wLjUgMCAxIDUwIDAgMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "LTEgMSAtNTAgLTMuMCAtNTAgLTIuMiAwIDEgMCAtNTAgNTAgLTUwIC01MCAxOC43IDEgLTEgMSAtMSAxIC0xIC0xIDUwIC0xNC4zIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MCAtNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MTEuNyAtNTAgLTEgMSAwIDE0LjYgMTcuOSAtNTAgLTEgMSAxIC0xIDAgLTUwIC01MCA1MCAtMSA1MCAxIC0xIC01MCAtMSAwIDEgNTAgMy40IDAgMA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTEgLTEgLTEgMCA1MCAtMy4zIC02LjkgLTEgMCAtNTAgLTUwIDEgNTAgMCA1MCAwIC0xMi41IC0xIC0xIDEgOC41IDAgMCAwIDUwIDAgMSAtMSAwIDEgMCAtNS42IDEgLTUwIC01MCAw", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "NTAgMCAtNTAgMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "NTAgMSAtNTAgLTcuMCAtMSAwIDAgNTAgLTUwIDEgMSAwIDEgMCAtNTAgMSAtMSAtMSAwIC01MCAwIC01MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTEgLTUwIDEgMSAtMSAwIDEgMSAtMSAtMSAtMSAwIDAgMCAwIC0xIC01MCA1LjYgMC44IDAgMSAwIDAgMCAw", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MCAtNTAgLTkuNiAtNTAgMCAtMTYuOSA1MCAxIDAgMSAtMSAwIDAgLTUwIC0xIC0xIDUwIC01MCAxIC01MCAxIC0xMi45IDAgLTEgNTAgLTUw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MSA1MCAwIC02LjUgMCAtNTAgLTEgLTEgMCA3LjUgMSAxMi4xIDAgMCAtMTYuNiAwIC01MA==", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "NC4wIC0xIDEgMSAtMSAtNTAgMCAxIC00LjYgMSAwIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "MQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MCA1MCAwIDkuMiA1MCAtNTAgLTEgLTUwIC0xOS4yIDAgMSAtMSAwIC0xOS45IDAgLTUwIC01MCAtNTAgMCAtMTUuOSA1MCAtNTAgNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "LTEgMTguNSA1MCA1MCA1MCAwIC01MCAxNC41IDE=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTE5LjcgMCAwIDEgNC44IC0xIDE=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "MSA1MCAxIC0xIDUwIDUuMiAtMSAtNTAgMSAwIDAgLTUwIDAgMCAtMQ==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "LTEgLTUwIDAgLTUwIDEgMSAtMSAtNTAgLTEgLTUwIDExLjYgNTAgMCAwIC01MCAwIC0zLjUgMCAtNTAgNTAgLTUwIDUwIDEgLTEgMTEuMyAtMSAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "MSAtMSAtNTAgMSAtNTAgNTAgMTMuNyAxIDUwIC0xIDAgNTAgMCAtNTAgMCAwIDUwIC0xMi43IDEgLTEgNTAgMCAtNTAgMSAwIC01MA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "MCAtMSAxLjMgMCA1MCAtMSA1MCAxIDAgLTEgLTYuNCAxIC0xIDAgNS45IC0xIDEgMCAtMTAuOCAtMSA1MCAtMC4x", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "MCAwIDAgLTEgNTAgMCAtNTAgNTAgLTEgNTAgMCAwIDE4LjMgMSAwIC0xIDAgLTE4LjA=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MS44IDUwIDE4LjIgNTAgLTUwIC0xIDAgMCAtNTAgLTUwIDEgLTE2LjggMSAwIDAgNTAgMSAwIC01MCA1MCAwIC0xIDAgLTEgLTUwIC00LjAgMCAtMSAxIDUwIC01MCAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "MCA1MCAtNTAgLTUw", "tree": {"entries": [], "mode": 493}}
+{"args": [], "environment": {}, "stdin": "NTAgLTUwIDUwIC01MCA1MCAxIDAgLTEgLTUwIDUwIDUwIC0xNi40IDguMSAtNTAgNTAgLTUwIDAgMSAtMSAwIDUwIDAgLTUwIC01MCAxIC01MCAtNTAgMCAtNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MSAwIDAgMCAwIDAgLTUwIC0x", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s", "input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "LTUwIDAgMCA1MCAw", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "NTAgMSAtNTAgLTUwIC01MCAxIC01MCAwIDAgMCAtMSAxIC0xIC0x", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MCAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "0"], "environment": {}, "stdin": "MSAwIDAgMCAxMC4yIDEyLjUgMCAwIDUwIDAgNTAgMCAwIDAgMCAtNTAgMCAwIDAgMCAtMSAtNTAgMSAwIDAgMTMuOSAwIC0xIDEgNTAgNTAgNTAgLTUuNA==", "tree": {"entries": [], "mode": 493}}
+{"args": ["-c", "-2"], "environment": {}, "stdin": "LTUwIC01MCAxNS4zIDUwIDA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["input"], "environment": {}, "stdin": "", "tree": {"entries": [{"data": "OC4xIC01MCAwIC01MCAwIC01MCAwIC01LjM=", "kind": "file", "mode": 420, "path": "input"}], "mode": 493}}
+{"args": ["-h"], "environment": {}, "stdin": "MCAtNTAgMy4xIDAgLTE5LjAgNTA=", "tree": {"entries": [], "mode": 493}}
+{"args": ["-s"], "environment": {}, "stdin": "NTAgMi4xIDAgLTUwIC01MCAwIC0xIC01MCAxIDUwIDEgLTEgMSAtMSAtMSAwIDAgLTUwIC0x", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "0"], "environment": {}, "stdin": "LTEgLTUwIDUwIDAgLTEgMTYuOSAwIDEgLTEgMCAtMTIuMiAwIC0xIDUwIC01MCAwIDUwIC0xLjYgMCA1MCAw", "tree": {"entries": [], "mode": 493}}
+{"args": ["-t", "10", "-s"], "environment": {}, "stdin": "MSAxIDAgLTEwLjAgLTUwIC0xIDUwIDEgMSAwIC02LjQgMCA1MCAwIDUwIDAgMSA1MCAtMSAxIDEgMCAtMSA1MCAzLjIgLTEgLTUwIDA=", "tree": {"entries": [], "mode": 493}}

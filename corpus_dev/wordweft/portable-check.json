@@ -1,0 +1,32 @@
+{
+  "program": "wordweft",
+  "source_sha256": {
+    "main.c": "594f4c353450f1ac32d9ff433113ca132042e7f3ccf3f69dc8ab7a9707fe7ac0"
+  },
+  "published_cases": 312,
+  "published_cases_sha256": "99fec061b91972be9d575b9b403f7cc941751558b8de20576a76936690ce524a",
+  "validated_input_records": 312,
+  "validated_sequence_sha256": "99fec061b91972be9d575b9b403f7cc941751558b8de20576a76936690ce524a",
+  "configurations": [
+    "gcc-x86_64",
+    "clang-x86_64",
+    "gcc-aarch64",
+    "clang-aarch64"
+  ],
+  "repetitions": 3,
+  "arm64_sanitizers": {
+    "compiler": "gcc",
+    "flags": [
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer"
+    ],
+    "repetitions": 3,
+    "passed": true
+  },
+  "outcomes_match_across_configurations": true,
+  "published_outcome_hash": "e9651a3e80990c1a1f93d928533cad8a0e0f4d45d4af02d3fab8f5281427f10e",
+  "excluded_cases": 0,
+  "official_acceptance": false,
+  "qemu_and_rosetta_runner_validation": false,
+  "mutation_score": null
+}

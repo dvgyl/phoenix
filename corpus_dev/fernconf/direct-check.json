@@ -1,0 +1,231 @@
+{
+  "program": "fernconf",
+  "source_sha256": {
+    "main.c": "986414746e059a57ceec446dd5eef494ecbe3ac69f296f094c26bd4e9717c916",
+    "tree.c": "3a4c6ae02993ac53b25a36ab99c4291ace15df207d3a30afcf40bfcdb096197e",
+    "tree.h": "5603efcf6fc1a269110d1cf2d1a8ad1d8d0729a3d912bc1bf9c47f1564d9b3a4"
+  },
+  "cases_sha256": "b71431bd64373cbc1d9fd646d4cc2746625cd47abd2f0ec2091950001d4131ed",
+  "status": "Direct source checks passed. Phoenix acceptance is pending.",
+  "cases": 208,
+  "branch_covered": 431,
+  "branch_total": 476,
+  "branch_percent": 90.54621848739495,
+  "uncovered": [
+    [
+      "/work/fernconf/src/main.c",
+      24
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      38
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      48
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      68
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      73
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      84
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      89
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      96
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      100
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      100
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      108
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      152
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      156
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      156
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      182
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      219
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      222
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      229
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      231
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      255
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      274
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      277
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      284
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      295
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      295
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      297
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      298
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      305
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      308
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      356
+    ],
+    [
+      "/work/fernconf/src/main.c",
+      389
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      19
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      23
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      25
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      39
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      127
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      127
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      155
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      240
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      253
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      359
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      385
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      419
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      422
+    ],
+    [
+      "/work/fernconf/src/tree.c",
+      431
+    ]
+  ],
+  "variants": [
+    "gcc -O0",
+    "gcc -O2",
+    "gcc -Os",
+    "gcc -O3",
+    "clang -O0",
+    "clang -O2",
+    "clang -Os",
+    "clang -O3"
+  ],
+  "repetitions": 1,
+  "compiler_image": "phoenix-worker:amd64",
+  "gcc": "13.3.0",
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+  "mutation_score": null,
+  "arm64_validation": false,
+  "runner_validation": false,
+  "compiler_comparison": {
+    "variants": [
+      "gcc -O0",
+      "gcc -O2",
+      "gcc -Os",
+      "gcc -O3",
+      "clang -O0",
+      "clang -O2",
+      "clang -Os",
+      "clang -O3"
+    ],
+    "repetitions": 1,
+    "validated_input_records": 388,
+    "validated_sequence_sha256": "c90ca88d3eec631d2e10f133f7cc79cb414530061065aff2763923778a9e285f",
+    "published_cases": 208,
+    "all_published_cases_in_validated_sequence": true
+  },
+  "coverage_repetitions": 1
+}

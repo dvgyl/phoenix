@@ -1,0 +1,57 @@
+{
+  "program": "driftstat",
+  "source_sha256": {
+    "main.c": "39efd4be8f7cc70748d68effe7cb8ecbedd461a05a3d8c06928c29b7c6b104ae"
+  },
+  "cases_sha256": "80b7d71583e52afe1acb5f80039aad5b9bf080b67607810d197f983c2dc88ba2",
+  "status": "Direct source checks passed. Phoenix acceptance is pending.",
+  "cases": 267,
+  "branch_covered": 60,
+  "branch_total": 62,
+  "branch_percent": 96.7741935483871,
+  "uncovered": [
+    [
+      "/work/driftstat/src/main.c",
+      26
+    ],
+    [
+      "/work/driftstat/src/main.c",
+      64
+    ]
+  ],
+  "variants": [
+    "gcc -O0",
+    "gcc -O2",
+    "gcc -Os",
+    "gcc -O3",
+    "clang -O0",
+    "clang -O2",
+    "clang -Os",
+    "clang -O3"
+  ],
+  "repetitions": 3,
+  "compiler_image": "phoenix-worker:amd64",
+  "gcc": "13.3.0",
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+  "mutation_score": null,
+  "arm64_validation": false,
+  "runner_validation": false,
+  "compiler_comparison": {
+    "variants": [
+      "gcc -O0",
+      "gcc -O2",
+      "gcc -Os",
+      "gcc -O3",
+      "clang -O0",
+      "clang -O2",
+      "clang -Os",
+      "clang -O3"
+    ],
+    "repetitions": 3,
+    "validated_input_records": 269,
+    "validated_sequence_sha256": "4e6d0f4bf14ec5b8e39a7d9edd3b45d2f53a89bbeb83eaf193a95aeb4e98d033",
+    "published_cases": 267,
+    "all_published_cases_in_validated_sequence": true
+  },
+  "coverage_repetitions": 1
+}

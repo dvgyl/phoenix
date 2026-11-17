@@ -1,0 +1,22 @@
+{
+  "name": "chromapath",
+  "tier": "D1",
+  "lines": 1201,
+  "files": [
+    "src/color.h",
+    "src/filters.c",
+    "src/image.c",
+    "src/main.c"
+  ],
+  "category": "image filter",
+  "features": [
+    "structs",
+    "function_pointer_tables",
+    "getopt",
+    "floating_point_output",
+    "static_locals",
+    "qsort"
+  ],
+  "heldout_cases": 509,
+  "heldout_seed": 852200
+}

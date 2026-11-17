@@ -1,0 +1,85 @@
+{
+  "program": "velocalc",
+  "source_sha256": {
+    "main.c": "8134e48f55c66167b0b1499eb899a1e5b41ef0a384d63510a4329abe00d02f06"
+  },
+  "cases_sha256": "e8d5afcbeebdde8734d1b46ba0e7890139ddcb6abfe61a3249d26dde69a5744f",
+  "status": "Direct source checks passed. Phoenix acceptance is pending.",
+  "cases": 321,
+  "branch_covered": 140,
+  "branch_total": 149,
+  "branch_percent": 93.95973154362416,
+  "uncovered": [
+    [
+      "/work/velocalc/src/main.c",
+      63
+    ],
+    [
+      "/work/velocalc/src/main.c",
+      67
+    ],
+    [
+      "/work/velocalc/src/main.c",
+      81
+    ],
+    [
+      "/work/velocalc/src/main.c",
+      107
+    ],
+    [
+      "/work/velocalc/src/main.c",
+      107
+    ],
+    [
+      "/work/velocalc/src/main.c",
+      161
+    ],
+    [
+      "/work/velocalc/src/main.c",
+      240
+    ],
+    [
+      "/work/velocalc/src/main.c",
+      293
+    ],
+    [
+      "/work/velocalc/src/main.c",
+      293
+    ]
+  ],
+  "variants": [
+    "gcc -O0",
+    "gcc -O2",
+    "gcc -Os",
+    "gcc -O3",
+    "clang -O0",
+    "clang -O2",
+    "clang -Os",
+    "clang -O3"
+  ],
+  "repetitions": 3,
+  "compiler_image": "phoenix-worker:amd64",
+  "gcc": "13.3.0",
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+  "mutation_score": null,
+  "arm64_validation": false,
+  "runner_validation": false,
+  "compiler_comparison": {
+    "variants": [
+      "gcc -O0",
+      "gcc -O2",
+      "gcc -Os",
+      "gcc -O3",
+      "clang -O0",
+      "clang -O2",
+      "clang -Os",
+      "clang -O3"
+    ],
+    "repetitions": 3,
+    "validated_input_records": 364,
+    "validated_sequence_sha256": "a5e4a6fa8bd44bd9ce36ce2b09ec06468f0c3940808968f0dabdf659afb9a5ed",
+    "published_cases": 321,
+    "all_published_cases_in_validated_sequence": true
+  },
+  "coverage_repetitions": 1
+}

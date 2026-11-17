@@ -1,0 +1,192 @@
+{
+  "program": "chromapath",
+  "source_sha256": {
+    "color.h": "b8612a3774532bf6d5e568dac6f19bc6505a6a6439f3f2c3b50a4f8764932123",
+    "filters.c": "dfbceace1f7e0d0542fccd568944e55afc4c5d06b9d944a898bfec64c542f5db",
+    "image.c": "d43168a9e95038ec6bc04bce636c49863faf685c87c14f86e8ff6ce2caf0b62e",
+    "main.c": "0eeeb822f1a30a43a513e850e2547400e567d28732e99757061e6fef3e11715e"
+  },
+  "cases_sha256": "7cf201deff5f5a605a554c839e018524e70ff48e33cfdb0a396b6043192e857b",
+  "status": "Direct source checks passed. Phoenix acceptance is pending.",
+  "cases": 509,
+  "branch_covered": 641,
+  "branch_total": 676,
+  "branch_percent": 94.8224852071006,
+  "uncovered": [
+    [
+      "/work/chromapath/src/main.c",
+      24
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      29
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      51
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      68
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      68
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      68
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      92
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      92
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      92
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      93
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      116
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      154
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      154
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      247
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      324
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      324
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      325
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      333
+    ],
+    [
+      "/work/chromapath/src/main.c",
+      340
+    ],
+    [
+      "/work/chromapath/src/image.c",
+      19
+    ],
+    [
+      "/work/chromapath/src/image.c",
+      19
+    ],
+    [
+      "/work/chromapath/src/image.c",
+      29
+    ],
+    [
+      "/work/chromapath/src/image.c",
+      32
+    ],
+    [
+      "/work/chromapath/src/image.c",
+      32
+    ],
+    [
+      "/work/chromapath/src/image.c",
+      40
+    ],
+    [
+      "/work/chromapath/src/image.c",
+      57
+    ],
+    [
+      "/work/chromapath/src/image.c",
+      66
+    ],
+    [
+      "/work/chromapath/src/image.c",
+      190
+    ],
+    [
+      "/work/chromapath/src/image.c",
+      204
+    ],
+    [
+      "/work/chromapath/src/filters.c",
+      75
+    ],
+    [
+      "/work/chromapath/src/filters.c",
+      365
+    ],
+    [
+      "/work/chromapath/src/filters.c",
+      368
+    ],
+    [
+      "/work/chromapath/src/filters.c",
+      422
+    ],
+    [
+      "/work/chromapath/src/filters.c",
+      422
+    ],
+    [
+      "/work/chromapath/src/filters.c",
+      422
+    ]
+  ],
+  "variants": [
+    "gcc -O0",
+    "gcc -O2",
+    "gcc -Os",
+    "gcc -O3",
+    "clang -O0",
+    "clang -O2",
+    "clang -Os",
+    "clang -O3"
+  ],
+  "repetitions": 3,
+  "compiler_image": "phoenix-worker:amd64",
+  "gcc": "13.3.0",
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+  "mutation_score": null,
+  "arm64_validation": false,
+  "runner_validation": false,
+  "compiler_comparison": {
+    "variants": [
+      "gcc -O0",
+      "gcc -O2",
+      "gcc -Os",
+      "gcc -O3",
+      "clang -O0",
+      "clang -O2",
+      "clang -Os",
+      "clang -O3"
+    ],
+    "repetitions": 3,
+    "validated_input_records": 509,
+    "validated_sequence_sha256": "7cf201deff5f5a605a554c839e018524e70ff48e33cfdb0a396b6043192e857b",
+    "published_cases": 509,
+    "all_published_cases_in_validated_sequence": true
+  },
+  "coverage_repetitions": 1
+}

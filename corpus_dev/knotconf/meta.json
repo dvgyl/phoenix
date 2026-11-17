@@ -1,0 +1,20 @@
+{
+  "name": "knotconf",
+  "tier": "D1",
+  "lines": 322,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "configuration transformer",
+  "features": [
+    "structs",
+    "switch_8",
+    "recursion",
+    "getopt",
+    "directory_tree",
+    "static_locals",
+    "qsort"
+  ],
+  "heldout_cases": 353,
+  "heldout_seed": 852000
+}

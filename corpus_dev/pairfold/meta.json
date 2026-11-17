@@ -1,0 +1,12 @@
+{
+  "name": "pairfold",
+  "tier": "D0",
+  "lines": 107,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "checksum",
+  "features": [],
+  "heldout_cases": 229,
+  "heldout_seed": 851903
+}

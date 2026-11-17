@@ -1,0 +1,12 @@
+{
+  "name": "runepack",
+  "tier": "D0",
+  "lines": 108,
+  "files": [
+    "src/main.c"
+  ],
+  "category": "encoder",
+  "features": [],
+  "heldout_cases": 260,
+  "heldout_seed": 851904
+}
