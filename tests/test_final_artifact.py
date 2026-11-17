@@ -222,12 +222,22 @@ def test_delivered_line_sensitive_source_is_the_tested_artifact(
     assert snapshot_project(resumed.project) == delivered
     assert len(snapshots) == calls
     assert provider.complete.call_count == 1 + repairs
+    recorded_files = {
+        path.relative_to(resumed.project): path.read_bytes()
+        for path in resumed.project.rglob("*")
+        if path.is_file()
+    }
     replayed = pipeline.reconstruct(
         tmp_path / "replay", *args, started=time(), replay=True
     )
     assert snapshot_project(replayed.project) == delivered
     assert replayed.development_passed is passed
     assert provider.complete.call_count == 1 + repairs
+    assert {
+        path.relative_to(replayed.project): path.read_bytes()
+        for path in replayed.project.rglob("*")
+        if path.is_file()
+    } == recorded_files
 
 
 def test_package_keeps_return_line_eight(tmp_path: Path) -> None:

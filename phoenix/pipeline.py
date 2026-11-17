@@ -4,6 +4,7 @@ import time
 from dataclasses import asdict, dataclass
 from enum import StrEnum
 from hashlib import sha256
+from math import isfinite
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import TypedDict, cast
@@ -116,6 +117,38 @@ class Trial:
             and self.integrity is not None
             and self.integrity.passed
         )
+
+
+@dataclass(frozen=True, slots=True)
+class PackageMetadata:
+    run_id: str
+    replayed: bool
+    wall_seconds: float
+
+
+def _package_metadata(
+    run: Path, key: str, ledger: Ledger, started: float, replay: bool
+) -> PackageMetadata:
+    if not replay:
+        return PackageMetadata(run.name, False, round(time.time() - started, 3))
+    report = ledger.path.parent / key / "package/out" / key / "phoenix_report.json"
+    data = json.loads(report.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("The recorded package metadata is invalid.")
+    run_id = data.get("run_id")
+    replayed = data.get("replayed", False)
+    elapsed = data.get("wall_seconds")
+    if (
+        not isinstance(run_id, str)
+        or not run_id
+        or type(replayed) is not bool
+        or not isinstance(elapsed, (int, float))
+        or isinstance(elapsed, bool)
+        or not isfinite(elapsed)
+        or elapsed < 0
+    ):
+        raise ValueError("The recorded package metadata is invalid.")
+    return PackageMetadata(run_id, replayed, float(elapsed))
 
 
 def write_json(path: Path, value: object) -> None:
@@ -341,10 +374,9 @@ def reconstruct(
         write_json(
             output / "phoenix_report.json",
             {
-                "run_id": run.name,
+                **asdict(_package_metadata(run, key, ledger, started, replay)),
                 "sha256": metadata.sha256,
                 "method": settings.method,
-                "wall_seconds": round(time.time() - started, 3),
                 "llm": asdict(ledger.summary(key)),
             },
         )
@@ -456,14 +488,12 @@ def reconstruct(
         verification,
         best.integrity,
         {
-            "run_id": run.name,
+            **asdict(_package_metadata(run, key, ledger, started, replay)),
             "sha256": metadata.sha256,
             "seed": settings.seed,
             "method": settings.method,
             "images": settings.images,
-            "replayed": replay,
             "stop": stop,
-            "wall_seconds": round(time.time() - started, 3),
             "llm": asdict(ledger.summary(key)),
             "coverage": {
                 "kind": "recovered_block_entries",
