@@ -64,7 +64,16 @@ def _append(stream: TextIO, event: dict[str, object]) -> None:
 def _completion(event: ModelEvent) -> Completion:
     assert event.usage is not None and event.text is not None
     return Completion(
-        event.text, Usage(**asdict(event.usage)), str(event.request["model"])
+        event.text,
+        Usage(**asdict(event.usage)),
+        str(event.request["model"]),
+        cache_hit=event.cache_hit,
+        cache_key=event.cache_key,
+        original_usage=(
+            Usage(**asdict(event.original_usage))
+            if event.original_usage is not None
+            else None
+        ),
     )
 
 

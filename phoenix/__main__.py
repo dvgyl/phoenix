@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import TypedDict, cast
 from uuid import uuid4
 
+from phoenix.cache import default_root, stage_versions
+from phoenix.checkpoints import write_json
+from phoenix.config import M1_EFFORT, ROLE_MODELS
 from phoenix.ingest import InputRejected, inspect_binary
 from phoenix.lift import LiftError
 from phoenix.llm import select_provider
@@ -24,10 +27,12 @@ from phoenix.llm.provider import (
     RetryLater,
     Usage,
 )
-from phoenix.pipeline import Method, Settings, reconstruct, write_json
+from phoenix.pipeline import reconstruct
+from phoenix.pipeline_types import Method, Settings
 from phoenix_eval.docker import Engine, WorkerError, freeze_images
 from phoenix_eval.m0 import SEED
 from phoenix_eval.platforms import verify_runtime
+from phoenix_eval.protection import inherited_guard
 from phoenix_eval.provenance import (
     CHECKER_SOURCE_LABEL,
     checker_source_digest,
@@ -63,6 +68,11 @@ class _RunRecord(TypedDict):
     budget_binary: int
     budget_run: int
     started: float
+    cache_root: str
+    stage_versions: dict[str, str]
+    protection: dict[str, object]
+    models: dict[str, str]
+    effort: str
 
 
 class _RecordedProvider:
@@ -187,6 +197,9 @@ def _locked_run(
             "method": args.method,
             "budget_binary": args.budget_binary,
             "budget_run": args.budget_run,
+            "cache_root": str(args.cache_root.resolve())
+            if args.cache_root is not None
+            else None,
         }
         for name, value in overrides.items():
             if value is not None and value != previous.get(name):
@@ -201,6 +214,21 @@ def _locked_run(
     if previous is not None and tool_identity != previous.get("lifting_tool_identity"):
         raise ValueError("Resume and replay require the recorded lifting tools.")
 
+    cache_root = (
+        Path(previous["cache_root"])
+        if previous is not None
+        else (args.cache_root or default_root()).resolve()
+    )
+    if (
+        cache_root.resolve() != cache_root
+        or not cache_root.is_relative_to(workspace)
+        or any(
+            cache_root.is_relative_to(workspace / name)
+            for name in ("sealed", "holdout", "sealed_b", "holdout_b", "sealed_runs")
+        )
+    ):
+        raise ValueError("Use a cache directory in the permitted Phoenix workspace.")
+
     verify_runtime("apple-silicon")
     engines = (Engine.ROSETTA, Engine.ARM64)
     images = freeze_images(engines, provenance.worker_source_sha256)
@@ -210,7 +238,10 @@ def _locked_run(
         repository="phoenix-c-integrity",
         source_label=CHECKER_SOURCE_LABEL,
     )
+    versions = stage_versions(pipeline_digest, tool_identity, images)
     if previous is not None:
+        if versions != previous.get("stage_versions"):
+            raise ValueError("Resume and replay require the recorded stage versions.")
         if images != previous["images"]:
             raise ValueError("Resume and replay require the recorded worker images.")
         if checker_images != previous.get("checker_images"):
@@ -224,6 +255,8 @@ def _locked_run(
             previous["strongest_repair"],
             checker_images,
             Method(previous["method"]),
+            cache_root,
+            versions,
         )
         budget = Budget(previous["budget_binary"], previous["budget_run"])
     else:
@@ -236,6 +269,8 @@ def _locked_run(
             bool(args.strongest_repair),
             checker_images,
             args.method or Method.PHOENIX,
+            cache_root,
+            versions,
         )
         budget = Budget(
             args.budget_binary or 5 * NANODOLLARS, args.budget_run or 200 * NANODOLLARS
@@ -259,7 +294,13 @@ def _locked_run(
         selected: Provider = _RecordedProvider(previous["provider"])
         ledger = Ledger(source, budget)
     else:
-        selected = select_provider(workspace, directory)
+        selected = select_provider(
+            workspace,
+            directory,
+            binary_sha256=metadata.sha256,
+            cache_root=cache_root,
+            pipeline_version=pipeline_digest,
+        )
         ledger = Ledger(run, budget)
     if previous is not None and selected.name != previous["provider"]:
         raise ValueError("Resume requires the recorded model provider.")
@@ -286,6 +327,14 @@ def _locked_run(
         "budget_binary": budget.per_binary,
         "budget_run": budget.per_run,
         "started": started,
+        "cache_root": str(cache_root),
+        "stage_versions": versions,
+        "models": ROLE_MODELS,
+        "effort": M1_EFFORT,
+        "protection": {
+            "profile": "pipeline",
+            "probe_denied": inherited_guard(workspace),
+        },
     }
     write_json(record_path, record)
     write_json(directory / "ingest/metadata.json", asdict(metadata))
@@ -369,6 +418,7 @@ def main() -> int:
     prior.add_argument("--replay", metavar="RUN_ID")
     run.add_argument("--ghidra", type=Path)
     run.add_argument("--java-home", type=Path)
+    run.add_argument("--cache-root", type=Path)
     run.add_argument("--seed", type=int)
     run.add_argument("--method", type=Method, choices=list(Method))
     run.add_argument("--max-repairs", type=int)

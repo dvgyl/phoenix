@@ -251,6 +251,10 @@ def submit(
     binary: Path,
     method: Method,
     replay_pipeline_run: str | None = None,
+    *,
+    cost_cap_usd: str | None = None,
+    environment: dict[str, str] | None = None,
+    cache_root: Path | None = None,
 ) -> Submission:
     if pipeline_run.startswith("m1-t0-"):
         raise SubmissionError("The pipeline run ID is reserved for sealed records.")
@@ -287,6 +291,10 @@ def submit(
         copied_binary = pipeline_directory / "input.elf"
         copied_binary.write_bytes(read_program(binary))
         options = (str(copied_binary), "--run-id", pipeline_run, "--method", method)
+    if cost_cap_usd is not None:
+        options += ("--cost-cap-usd", cost_cap_usd)
+    if cache_root is not None:
+        options += ("--cache-root", str(cache_root))
     command = guarded_command(workspace, CHECKOUT, (*base, *options), "pipeline")
     started = _reconstruction_start(directory)
     with (
@@ -298,6 +306,7 @@ def submit(
             cwd=cwd,
             env={
                 **os.environ,
+                **(environment or {}),
                 GUARD_ENV: str(probe),
                 "PYTHONPATH": str(CHECKOUT),
                 "PYTHONDONTWRITEBYTECODE": "1",
@@ -316,7 +325,7 @@ def submit(
         staging = Path(scratch) / "capture"
         staging.mkdir(mode=0o700)
         origin_sha = None
-        if method == "ghidra-raw":
+        if method in ("phoenix", "ghidra-raw"):
             lift = workspace / "runs" / pipeline_run / key / "recover"
             evidence = lift / "evidence.json"
             if evidence.is_file():

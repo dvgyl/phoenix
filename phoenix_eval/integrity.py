@@ -10,6 +10,7 @@ from uuid import uuid4
 from phoenix_eval.build import ProjectSnapshot, snapshot_project
 from phoenix_eval.docker import docker_cli
 from phoenix_eval.elf import elf_sections
+from phoenix_eval.jobs import limited
 
 _TEXT_WINDOW = 64
 _MAX_TEXT = 512 * 1024
@@ -227,6 +228,7 @@ def compiler_evidence(
         raise IntegrityError("Clang did not supply complete source evidence.") from None
 
 
+@limited("compile")
 def inspect_project(
     project: Path | ProjectSnapshot, images: dict[str, str]
 ) -> tuple[CompilerEvidence, ...]:

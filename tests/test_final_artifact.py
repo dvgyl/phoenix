@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from phoenix import pipeline, verify
+from phoenix import checkpoints, pipeline, verify
 from phoenix.analyze import Analysis, DevelopmentCase
 from phoenix.config import ROLE_MODELS
 from phoenix.generate import Candidate, Definition, write_project
@@ -17,6 +17,7 @@ from phoenix.ingest import BinaryMetadata
 from phoenix.llm.ledger import Ledger
 from phoenix.llm.provider import Completion, Usage
 from phoenix.package import package_project
+from phoenix.pipeline_types import Settings
 from phoenix.recover import Function, Program
 from phoenix.verify import BUILD_CONFIGURATIONS, Check, Verification
 from phoenix.verify.integrity import IntegrityInputs
@@ -77,8 +78,8 @@ def test_delivered_line_sensitive_source_is_the_tested_artifact(
         (),
         (),
     )
-    monkeypatch.setattr(pipeline, "analyze", lambda *_: analysis)
-    monkeypatch.setattr(pipeline, "lift_binary", lambda *_: None)
+    monkeypatch.setattr(checkpoints, "analyze", lambda *_: analysis)
+    monkeypatch.setattr(checkpoints, "lift_binary", lambda *_: None)
     monkeypatch.setattr(pipeline, "recover", lambda *_: program)
 
     def reached(
@@ -182,7 +183,7 @@ def test_delivered_line_sensitive_source_is_the_tested_artifact(
         )
         for body in ("return __LINE__;", "return __LINE__ + 1;")
     ]
-    settings = pipeline.Settings(
+    settings = Settings(
         {"amd64": "synthetic", "arm64": "synthetic"},
         0,
         tmp_path,

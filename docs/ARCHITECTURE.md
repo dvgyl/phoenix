@@ -610,6 +610,7 @@ def inherited_guard(workspace: Path) -> bool
 - On macOS, `guarded_command` returns a `sandbox-exec` command with a generated SBPL policy. Path patterns such as `corpus_dev/*/src` become SBPL `regex` rules.
 - On Linux, it returns a `bwrap` command. Each protected path becomes an empty `--tmpfs` mount. Glob patterns expand at launch time.
 - `scripts/launch-role <role> -- <command>` calls `guarded_command`.
+- The prompt category also covers `cache/phoenix` and public `runs`. These paths hold cached prompts and model ledgers. Both Author profiles deny access.
 - The pipeline run creates a probe file in its run directory and puts the probe path in `PHOENIX_PIPELINE_GUARD`. The profile denies the probe. `inherited_guard` confirms the denial. `run.json` records `{"profile": "pipeline", "probe_denied": true}`. The evaluator requires this record (`SPEC.md` section 2.2, condition 4).
 - The rules apply to the main checkout and to each registered worktree under `$PHOENIX_ROOT/worktrees/` (from `git worktree list --porcelain`). Each repository path pattern, for example `corpus_dev/*/src` or `phoenix/devset`, becomes one rule for each checkout. `guarded_command` generates the profile at each launch, so a new worktree is covered.
 - `tests/test_protection.py` checks the generated policy of each profile with a temporary layout. The layout has a main checkout and a worker checkout.

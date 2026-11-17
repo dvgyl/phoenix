@@ -8,6 +8,7 @@ from tempfile import TemporaryDirectory
 from uuid import uuid4
 
 from phoenix_eval.docker import Engine, docker_cli
+from phoenix_eval.jobs import limited
 from phoenix_eval.toolchain import Compiler
 
 _SOURCE_LIMIT = 4 * 1024 * 1024
@@ -101,6 +102,7 @@ def project_archive(project: Path | ProjectSnapshot) -> bytes:
     return snapshot.archive
 
 
+@limited("compile")
 def build_project(
     project: Path | ProjectSnapshot,
     destination: Path,

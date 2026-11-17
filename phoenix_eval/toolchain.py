@@ -4,6 +4,7 @@ from enum import StrEnum
 from pathlib import Path
 
 from phoenix_eval.docker import Engine, docker_cli
+from phoenix_eval.jobs import limited
 
 
 class Compiler(StrEnum):
@@ -11,6 +12,7 @@ class Compiler(StrEnum):
     CLANG = "clang"
 
 
+@limited("compile")
 def build_public(
     source: Path,
     output: Path,

@@ -7,13 +7,14 @@ from unittest.mock import Mock
 
 import pytest
 
-from phoenix import pipeline, verify
+from phoenix import checkpoints, pipeline, verify
 from phoenix.__main__ import _RecordedProvider
 from phoenix.analyze import Analysis, DevelopmentCase
 from phoenix.config import ROLE_MODELS
 from phoenix.ingest import BinaryMetadata
 from phoenix.llm.ledger import Budget, Ledger
 from phoenix.llm.provider import Completion, Usage
+from phoenix.pipeline_types import Settings
 from phoenix.recover import Function, Program
 from phoenix_eval import integrity
 from phoenix_eval.build import BuildResult, ProjectSnapshot
@@ -55,8 +56,8 @@ def test_development_integrity_gates_reconstruction(
         (),
         (),
     )
-    monkeypatch.setattr(pipeline, "analyze", lambda *_: analysis)
-    monkeypatch.setattr(pipeline, "lift_binary", lambda *_: None)
+    monkeypatch.setattr(checkpoints, "analyze", lambda *_: analysis)
+    monkeypatch.setattr(checkpoints, "lift_binary", lambda *_: None)
     monkeypatch.setattr(pipeline, "recover", lambda *_: program)
     monkeypatch.setattr(pipeline, "reached_functions", lambda *_: frozenset({0}))
     monkeypatch.setattr(
@@ -158,7 +159,7 @@ def test_development_integrity_gates_reconstruction(
         )
         for body in (f"{_BAD_BODY}\nreturn 0;", "return 0;")
     ]
-    settings = pipeline.Settings(
+    settings = Settings(
         {"amd64": "worker-x86", "arm64": "worker-arm"},
         0,
         tmp_path,

@@ -80,3 +80,20 @@ transport. Each Dockerfile is part of its image source digest.
 The evaluator builds each project with `-O2`, stack protection on each
 function, full RELRO and immediate binding. The same profile applies to
 Phoenix and the baselines, on both architectures.
+
+## 11. True-source sanitizer validation
+
+Use `Engine.TRUE_SOURCE_ARM64` only for true-source validation.
+It permits sanitizer virtual reservations and retains the other target limits.
+Disable LeakSanitizer and external symbolization. Keep ASan and UBSan active.
+Pin `qemu64-v1` and the glibc feature mask in `tools.lock`.
+The fixture probe matched 145 libc/libm symbol versions on both x86-64 runners.
+Evidence is in `$PHOENIX_ROOT/tmp/validation-runtime/proof.json`.
+
+## 12. Source mutation tool
+
+Mull is absent from the pinned compiler image. Its probe returned exit 127.
+Use `clang-ast-source-v1` with the operator set in SPEC.md section 10.6.
+Keep unresolved mutants in the denominator. Count compiler infrastructure
+failures as unresolved. Store source, case, tool and report hashes.
+The Linux fixture proof is in `$PHOENIX_ROOT/adequacy_runs/bced812a3047410eae4f7393fcd1fdd5`.

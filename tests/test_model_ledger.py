@@ -1,247 +1,116 @@
 import json
-from dataclasses import asdict
+import os
 from hashlib import sha256
 from pathlib import Path
 
 import pytest
 
-from phoenix_eval import m1
-from phoenix_eval.case import Invocation
-from phoenix_eval.corpus import Variant
-from phoenix_eval.model_ledger import (
-    LedgerIdentity,
-    bound_summary,
-    freeze_identity,
-    ledger_digest,
-    read_identity,
-)
-from phoenix_eval.submission import Method, Submission, write_report
-from phoenix_eval.toolchain import Compiler
+from phoenix.llm.ledger import Ledger
+from phoenix.llm.provider import Completion, Request, Usage
+from phoenix_eval.run_records import ledger_snapshot, verify_ledger
 
 
-@pytest.fixture
-def synthetic_evaluator(monkeypatch: pytest.MonkeyPatch) -> list[str]:
-    events: list[str] = []
-    variant = Variant("synthetic", Compiler.GCC, "-O0", "a" * 64, "fixture")
-    monkeypatch.setattr(m1, "t0_manifest", lambda _: ((variant,), "b" * 64))
-    monkeypatch.setattr(
-        m1, "_configuration", lambda *_: {"heldout_archive_sha256": "c" * 64}
-    )
-    monkeypatch.setattr(m1, "_release_bytes", lambda *_: b"synthetic")
+class Provider:
+    name = "synthetic"
 
-    def submit(
-        workspace: Path,
-        directory: Path,
-        pipeline_run: str,
-        key: str,
-        binary: Path,
-        method: Method,
-        replay: str | None,
-    ) -> Submission:
-        events.append("submit")
-        result = Submission(method, key, None, "pipeline-failed", replay)
-        write_report(directory / "capture/submission.json", asdict(result))
-        return result
+    def __init__(self, text: str) -> None:
+        self.text = text
 
-    def measure(
-        workspace: Path,
-        run: Path,
-        pipeline_run: str,
-        task: m1.Task,
-        captured: Submission,
-        binary: Path | bytes,
-        cases: tuple[Invocation, ...],
-        config: m1._Configuration,
-        development: frozenset[bytes],
-        origin: bytes | None,
-        identity: LedgerIdentity,
-    ) -> dict[str, object]:
-        return {
-            "method": task.method,
-            "fully_successful": False,
-            "model": asdict(bound_summary(workspace, run, task.key, identity)),
-        }
+    def maximum_usage(self, request: Request) -> Usage:
+        return Usage(10, 0, 10)
 
-    def cases(
-        path: Path, digest: str, names: set[str]
-    ) -> dict[str, tuple[Invocation, ...]]:
-        root = path.parents[1]
-        evaluations = [
-            directory
-            for directory in (root / "runs").iterdir()
-            if not directory.name.endswith("-rebuild")
-        ]
-        assert evaluations
-        for directory in evaluations:
-            assert read_identity(directory / "model-ledger.json")["schema"] == 1
-        events.append("cases")
-        return {"synthetic": ()}
-
-    monkeypatch.setattr(m1, "submit", submit)
-    monkeypatch.setattr(m1, "heldout_cases", cases)
-    monkeypatch.setattr(m1, "_measure", measure)
-    return events
+    def complete(self, request: Request) -> Completion:
+        return Completion(self.text, Usage(5, 2, 3), request.model)
 
 
-@pytest.mark.parametrize("present", [False, True])
-@pytest.mark.parametrize("replay", [False, True])
-def test_changed_ledger_stops_resume_or_replay_before_submission(
-    tmp_path: Path, synthetic_evaluator: list[str], present: bool, replay: bool
-) -> None:
-    ledger = tmp_path / "runs/origin-rebuild/llm.jsonl"
-    ledger.parent.mkdir(parents=True)
-    if present:
-        ledger.write_bytes(b"")
-    m1.evaluate_t0(tmp_path, "origin")
-    synthetic_evaluator.clear()
-    ledger.write_bytes(b"changed synthetic ledger\n")
-    with pytest.raises(ValueError, match="model ledger changed"):
-        m1.evaluate_t0(
-            tmp_path, "replay" if replay else "origin", "origin" if replay else None
-        )
-    assert synthetic_evaluator == []
+def publication(workspace: Path, text: str = "synthetic") -> tuple[Ledger, Path, bytes]:
+    ledger = Ledger(workspace / "runs/pipeline")
+    ledger.call("case", Request("fixture"), Provider(text))
+    run = workspace / "evaluation"
+    run.mkdir()
+    content, costs = ledger_snapshot(workspace, run, "pipeline")
+    assert costs["case"].cost_nanodollars == 36_200
+    return ledger, run, content
 
 
-@pytest.mark.parametrize("present", [False, True])
-def test_replay_preserves_origin_identity_and_creates_no_ledger(
-    tmp_path: Path, synthetic_evaluator: list[str], present: bool
-) -> None:
-    ledger = tmp_path / "runs/origin-rebuild/llm.jsonl"
-    ledger.parent.mkdir(parents=True)
-    if present:
-        ledger.write_bytes(b"")
-    original, _ = m1.evaluate_t0(tmp_path, "origin")
-    identity = json.loads(original.read_text())["model_ledger"]
+def test_snapshot_hashes_complete_large_file(tmp_path: Path) -> None:
+    ledger, run, content = publication(tmp_path, "synthetic\n" * 200_000)
+    identity = json.loads((run / "published-ledger.json").read_bytes())
+    assert content == ledger.path.read_bytes()
     assert identity == {
-        "schema": 1,
-        "pipeline_run": "origin-rebuild",
-        "sha256": sha256(b"").hexdigest() if present else None,
+        "pipeline_run": "pipeline",
+        "bytes": len(content),
+        "sha256": sha256(content).hexdigest(),
     }
-    assert read_identity(original.parent / "model-ledger.json") == identity
-    replay, _ = m1.evaluate_t0(tmp_path, "replay", "origin")
-    assert (
-        json.loads(replay.read_text())["model_ledger"]
-        == json.loads(original.read_text())["model_ledger"]
-    )
-    assert not (tmp_path / "runs/replay-rebuild/llm.jsonl").exists()
-
-
-@pytest.mark.parametrize("phase", ["submit", "cases", "measure"])
-def test_replay_rejects_fresh_ledger(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    synthetic_evaluator: list[str],
-    phase: str,
-) -> None:
-    m1.evaluate_t0(tmp_path, "origin")
-    name = {"submit": "submit", "cases": "heldout_cases", "measure": "_measure"}[phase]
-    original = getattr(m1, name)
-
-    def changed(*args: object) -> object:
-        ledger = tmp_path / "runs/replay-rebuild/llm.jsonl"
-        ledger.parent.mkdir(parents=True, exist_ok=True)
-        ledger.write_bytes(b"fresh synthetic ledger")
-        return original(*args)
-
-    monkeypatch.setattr(m1, name, changed)
-    with pytest.raises(ValueError, match="fresh model ledger"):
-        m1.evaluate_t0(tmp_path, "replay", "origin")
-
-
-@pytest.mark.parametrize("phase", ["cases", "measure"])
-def test_measurement_rejects_ledger_change(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    synthetic_evaluator: list[str],
-    phase: str,
-) -> None:
-    name = "heldout_cases" if phase == "cases" else "_measure"
-    original = getattr(m1, name)
-
-    def changed(*args: object) -> object:
-        ledger = tmp_path / "runs/origin-rebuild/llm.jsonl"
-        ledger.parent.mkdir(parents=True, exist_ok=True)
-        ledger.write_bytes(b"changed synthetic ledger")
-        return original(*args)
-
-    monkeypatch.setattr(m1, name, changed)
-    with pytest.raises(ValueError, match="model ledger changed"):
-        m1.evaluate_t0(tmp_path, "origin")
-    assert not (tmp_path / "runs/origin/m1.json").exists()
-
-
-def test_identity_hashes_complete_large_file_and_rejects_symlinks(
-    tmp_path: Path,
-) -> None:
-    ledger = tmp_path / "runs/pipeline/llm.jsonl"
-    ledger.parent.mkdir(parents=True)
-    content = b"synthetic\n" * 200_000
-    ledger.write_bytes(content)
-    run = tmp_path / "evaluation"
-    identity = freeze_identity(tmp_path, run, "pipeline")
-    assert identity["sha256"] == sha256(content).hexdigest()
-    assert "synthetic" not in (run / "model-ledger.json").read_text()
-    link = tmp_path / "link"
-    link.symlink_to(ledger)
-    with pytest.raises(ValueError, match="symbolic links"):
-        ledger_digest(link)
-
-
-def test_replay_rejects_missing_origin_identity(
-    tmp_path: Path, synthetic_evaluator: list[str]
-) -> None:
-    m1.evaluate_t0(tmp_path, "origin")
-    (tmp_path / "runs/origin/model-ledger.json").unlink()
-    synthetic_evaluator.clear()
-    with pytest.raises(ValueError, match="invalid or missing"):
-        m1.evaluate_t0(tmp_path, "replay", "origin")
-    assert synthetic_evaluator == []
-
-
-def test_removed_original_ledger_stops_replay(
-    tmp_path: Path, synthetic_evaluator: list[str]
-) -> None:
-    ledger = tmp_path / "runs/origin-rebuild/llm.jsonl"
-    ledger.parent.mkdir(parents=True)
-    ledger.write_bytes(b"")
-    m1.evaluate_t0(tmp_path, "origin")
-    ledger.unlink()
-    synthetic_evaluator.clear()
-    with pytest.raises(ValueError, match="model ledger changed"):
-        m1.evaluate_t0(tmp_path, "replay", "origin")
-    assert synthetic_evaluator == []
+    assert "synthetic" not in (run / "published-ledger.json").read_text()
+    assert verify_ledger(tmp_path, run) == content
 
 
 @pytest.mark.parametrize("content", [b"{}", b"[]", b" " * 4097])
-def test_malformed_identity_is_rejected(tmp_path: Path, content: bytes) -> None:
-    record = tmp_path / "model-ledger.json"
-    record.write_bytes(content)
-    with pytest.raises(ValueError, match="invalid or missing"):
-        read_identity(record)
+def test_malformed_events_cannot_be_published(tmp_path: Path, content: bytes) -> None:
+    ledger = tmp_path / "runs/pipeline/llm.jsonl"
+    ledger.parent.mkdir(parents=True)
+    ledger.write_bytes(content)
+    run = tmp_path / "evaluation"
+    run.mkdir()
+    with pytest.raises(ValueError):
+        ledger_snapshot(tmp_path, run, "pipeline")
+    assert not (run / "published-ledger.json").exists()
 
 
-def test_nonregular_ledger_is_rejected(tmp_path: Path) -> None:
-    directory = tmp_path / "ledger"
-    directory.mkdir()
-    with pytest.raises(ValueError, match="regular file"):
-        ledger_digest(directory)
-
-
-def test_cyclic_ledger_paths_have_controlled_errors(tmp_path: Path) -> None:
-    record = tmp_path / "model-ledger.json"
-    record.symlink_to(record.name)
-    with pytest.raises(ValueError, match="symbolic link"):
-        ledger_digest(record)
-    with pytest.raises(ValueError, match="invalid or missing"):
-        read_identity(record)
-
-
-def test_resume_rejects_missing_frozen_identity(
-    tmp_path: Path, synthetic_evaluator: list[str]
+@pytest.mark.parametrize("target", ["live", "snapshot"])
+@pytest.mark.parametrize("kind", ["symlink", "cycle", "directory", "fifo"])
+def test_unsafe_ledger_paths_are_rejected(
+    tmp_path: Path, target: str, kind: str
 ) -> None:
-    m1.evaluate_t0(tmp_path, "origin")
-    (tmp_path / "runs/origin/model-ledger.json").unlink()
-    synthetic_evaluator.clear()
-    with pytest.raises(ValueError, match="invalid or missing"):
-        m1.evaluate_t0(tmp_path, "origin")
-    assert synthetic_evaluator == []
+    ledger, run, _ = publication(tmp_path)
+    path = ledger.path if target == "live" else run / "published-ledger.jsonl"
+    original = path.with_suffix(".saved")
+    path.rename(original)
+    if kind == "symlink":
+        path.symlink_to(original)
+    elif kind == "cycle":
+        path.symlink_to(path.name)
+    elif kind == "directory":
+        path.mkdir()
+    else:
+        os.mkfifo(path)
+    with pytest.raises(ValueError, match="symbolic link|regular file"):
+        verify_ledger(tmp_path, run)
+    if target == "live":
+        with pytest.raises(ValueError, match="symbolic link|regular file"):
+            ledger_snapshot(tmp_path, run, "pipeline")
+
+
+@pytest.mark.parametrize("target", ["live", "snapshot"])
+@pytest.mark.parametrize("change", ["replace", "truncate", "empty", "missing"])
+def test_published_prefix_cannot_change_or_disappear(
+    tmp_path: Path, target: str, change: str
+) -> None:
+    ledger, run, content = publication(tmp_path)
+    path = ledger.path if target == "live" else run / "published-ledger.jsonl"
+    if change == "replace":
+        path.write_bytes(content.replace(b"synthetic", b"different"))
+    elif change == "truncate":
+        path.write_bytes(content.splitlines(keepends=True)[0])
+    elif change == "empty":
+        path.write_bytes(b"")
+    else:
+        path.unlink()
+    with pytest.raises(ValueError, match="changed|published prefix|missing"):
+        verify_ledger(tmp_path, run)
+    with pytest.raises(ValueError):
+        ledger_snapshot(tmp_path, run, "pipeline")
+
+
+@pytest.mark.parametrize("field,value", [("bytes", 0), ("sha256", "0" * 64)])
+def test_snapshot_metadata_must_match_published_bytes(
+    tmp_path: Path, field: str, value: object
+) -> None:
+    _, run, _ = publication(tmp_path)
+    path = run / "published-ledger.json"
+    identity = json.loads(path.read_bytes())
+    identity[field] = value
+    path.write_text(json.dumps(identity))
+    with pytest.raises(ValueError, match="published model ledger changed"):
+        verify_ledger(tmp_path, run)

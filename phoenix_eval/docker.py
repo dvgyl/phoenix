@@ -10,6 +10,7 @@ from tempfile import TemporaryFile
 from uuid import uuid4
 
 from phoenix_eval.case import CaseResult, Invocation, WorkerRuntime
+from phoenix_eval.jobs import limited
 from phoenix_eval.provenance import IMAGE_SOURCE_LABEL
 from phoenix_eval.wire import PROTOCOL_VERSION, decode_result, encode_invocation
 from phoenix_eval.worker import MAX_PROGRAM_BYTES, WALL_SECONDS
@@ -131,6 +132,7 @@ def read_program(binary: Path | bytes) -> bytes:
     return binary
 
 
+@limited("execution")
 def run_batch(
     binary: Path | bytes,
     cases: tuple[Invocation, ...],

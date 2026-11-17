@@ -81,6 +81,8 @@ def protected_paths(workspace: Path, repo: Path) -> tuple[ProtectedPath, ...]:
         add("sealed", workspace, name)
     add("records", workspace, "sealed_runs")
     add("records", workspace, "runs/m1-t0-*")
+    add("prompts", workspace, "cache/phoenix")
+    add("prompts", workspace, "runs")
     add("development", workspace, "dev_bin/*/*/*.twin")
     for checkout in _checkouts(workspace, repo):
         for name in ("src", "holdout", "tasks"):

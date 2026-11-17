@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+repo=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd -P)
+case "${1-}" in
+  R0-bootstrap|R0)
+    [ "$#" -eq 1 ] || exit 2
+    exec uv run --locked --project "$repo" python "$repo/scripts/check_gates.py" --gate "$1"
+    ;;
+  --enabling)
+    [ "$#" -eq 2 ] || exit 2
+    exec uv run --locked --project "$repo" python "$repo/scripts/check_gates.py" --enabling "$2"
+    ;;
+  *)
+    echo 'Usage: scripts/gate R0-bootstrap|R0|--enabling <name>' >&2
+    exit 2
+    ;;
+esac

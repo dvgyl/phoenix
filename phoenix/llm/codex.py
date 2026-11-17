@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 from typing import cast
 
+from phoenix.jobs import limited
 from phoenix.llm.provider import Completion, ProviderError, Request, RetryLater, Usage
 from phoenix_eval.protection import guarded_command, inherited_guard
 
@@ -61,6 +62,8 @@ class CodexProvider:
             "-c",
             'service_tier="default"',
             "-c",
+            f'model_reasoning_effort="{request.effort}"',
+            "-c",
             'approval_policy="never"',
             "-c",
             'web_search="disabled"',
@@ -74,6 +77,7 @@ class CodexProvider:
         repo = Path(__file__).resolve().parents[2]
         return guarded_command(self.workspace, repo, command, "pipeline")
 
+    @limited("llm")
     def complete(self, request: Request) -> Completion:
         if platform.system() != "Darwin":
             raise ProviderError("Live Codex requests require the macOS file sandbox.")

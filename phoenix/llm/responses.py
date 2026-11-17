@@ -3,6 +3,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request as HttpRequest
 from urllib.request import urlopen
 
+from phoenix.jobs import limited
 from phoenix.llm.provider import Completion, ProviderError, Request, RetryLater, Usage
 
 _ENDPOINT = "https://api.openai.com/v1/responses"
@@ -19,11 +20,13 @@ class ResponsesProvider:
             len(request.prompt.encode("utf-8")) + 1024, 0, request.max_output_tokens
         )
 
+    @limited("llm")
     def complete(self, request: Request) -> Completion:
         body = {
             "model": request.model,
             "input": request.prompt,
             "max_output_tokens": request.max_output_tokens,
+            "reasoning": {"effort": request.effort},
             "service_tier": "default",
             "store": False,
             "tools": [],

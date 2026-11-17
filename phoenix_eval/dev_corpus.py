@@ -32,6 +32,7 @@ from phoenix_eval.docker import (
     run_cases,
 )
 from phoenix_eval.elf import elf_sections
+from phoenix_eval.jobs import limited
 from phoenix_eval.outcome import Outcome
 from phoenix_eval.platforms import verify_runtime
 from phoenix_eval.provenance import worker_source_digest
@@ -98,6 +99,7 @@ _VALIDATION_PATHS = (
             "corpus",
             "docker",
             "elf",
+            "jobs",
             "outcome",
             "platforms",
             "provenance",
@@ -395,6 +397,7 @@ def heldout_hash(corpus: Path, workspace: Path, binaries: tuple[DevBinary, ...])
     )
 
 
+@limited("compile")
 def compile_source(
     files: tuple[tuple[str, bytes], ...],
     compiler: str,

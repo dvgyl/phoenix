@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+: "${PHOENIX_ROOT:?Source the Phoenix workspace environment.}"
+cd "$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+exec uv run --locked python -m phoenix_eval.loop "$@"

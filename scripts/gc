@@ -18,21 +18,22 @@ action() {
 
 printf '%s\n' 'Free space before cleanup:'
 df -h "$PHOENIX_ROOT"
-for run in "$PHOENIX_ROOT"/runs/*; do
-    [ -d "$run" ] && [ ! -L "$run" ] || continue
-    case "${run##*/}" in m1-t0-*) continue ;; esac
-    find "$run" -type d \( -name '*.rep' -o -name 'ghidra-project' -o -name 'ghidra-projects' \) \
-        -prune -print | while IFS= read -r project; do action rm -rf -- "$project"; done
-    size_kib=$(du -sk "$run" | awk '{print $1}')
-    if [ "$size_kib" -gt 2097152 ]; then
-        printf 'Run above 2 GiB: %s (%s KiB)\n' "$run" "$size_kib"
-    fi
-done
+repository=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+if "$dry_run"; then
+    uv run --locked --project "$repository" python -m phoenix_eval.run_archive gc \
+        --workspace "$PHOENIX_ROOT" --scoreboard "$repository/docs/SCOREBOARD.md" --dry-run
+else
+    uv run --locked --project "$repository" python -m phoenix_eval.run_archive gc \
+        --workspace "$PHOENIX_ROOT" --scoreboard "$repository/docs/SCOREBOARD.md"
+fi
 mark="$PHOENIX_ROOT/tmp/.gc-mark"
 if [ -f "$mark" ]; then
     for entry in "$PHOENIX_ROOT"/tmp/* "$PHOENIX_ROOT"/tmp/.[!.]* "$PHOENIX_ROOT"/tmp/..?*; do
         [ -e "$entry" ] || [ -L "$entry" ] || continue
         [ "$entry" != "$mark" ] || continue
+        case "${entry##*/}" in
+            sealed*|holdout*|m1-t0-*|runs|.archive-*|.restore-*) continue ;;
+        esac
         if [ ! "$entry" -nt "$mark" ]; then action rm -rf -- "$entry"; fi
     done
 fi

@@ -1,91 +1,148 @@
-import io
 import json
-import tarfile
+from dataclasses import asdict
 from hashlib import sha256
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
-from phoenix_eval.case import Invocation
-from phoenix_eval.corpus import CorpusError, committed_hash, heldout_cases, t0_manifest
-from phoenix_eval.wire import encode_invocation
+from phoenix_eval import dev_corpus as dc
+from phoenix_eval import run_plan
+from phoenix_eval.run_records import Selection
+
+
+def metadata() -> list[dict[str, object]]:
+    return [
+        asdict(
+            dc.DevBinary(
+                name,
+                "D0",
+                compiler,
+                ("-std=c11", f"-{level}", "-lm"),
+                sha256(f"{name}-{compiler}-{level}".encode()).hexdigest(),
+                "synthetic",
+                False,
+            )
+        )
+        for name in ("case_alpha", "case_beta")
+        for compiler in dc.COMPILERS
+        for level in dc.LEVELS
+    ]
 
 
 @pytest.fixture
-def release(tmp_path: Path) -> Path:
-    manifest = []
-    for index in range(10):
-        name = f"case-{index}"
-        for compiler in ("gcc", "clang"):
-            for flag in ("-O0", "-O2"):
-                binary = tmp_path / name / compiler / f"{flag[1:]}.elf"
-                binary.parent.mkdir(parents=True, exist_ok=True)
-                data = f"{name}-{compiler}-{flag}".encode("ascii")
-                binary.write_bytes(data)
-                manifest.append(
-                    {
-                        "name": name,
-                        "tier": "T0",
-                        "compiler": compiler,
-                        "flags": [flag],
-                        "sha256": sha256(data).hexdigest(),
-                        "category": "fixture",
-                    }
-                )
-    (tmp_path / "manifest.json").write_text(json.dumps(manifest))
-    return tmp_path
+def manifest(tmp_path: Path) -> Path:
+    path = tmp_path / "dev_bin/manifest.json"
+    path.parent.mkdir()
+    path.write_text(json.dumps({"binaries": metadata()}))
+    for binary in dc.read_manifest(path):
+        target = path.parent / binary.name / binary.key / binary.name
+        target.parent.mkdir(parents=True)
+        target.write_bytes(f"{binary.name}-{binary.compiler}-{binary.level}".encode())
+    return path
 
 
-def test_release_binds_every_variant_to_its_hash(release: Path) -> None:
-    variants, digest = t0_manifest(release)
-    assert len(variants) == 40
-    assert digest == sha256((release / "manifest.json").read_bytes()).hexdigest()
-    binary = variants[0].executable(release)
-    binary.write_bytes(b"changed")
-    with pytest.raises(CorpusError, match="manifest hash"):
-        t0_manifest(release)
-
-
-def test_release_rejects_a_duplicate_variant(release: Path) -> None:
-    file = release / "manifest.json"
-    records = json.loads(file.read_text())
-    records[0] = records[1]
-    file.write_text(json.dumps(records))
-    with pytest.raises(CorpusError, match="every required variant"):
-        t0_manifest(release)
-
-
-def _archive(path: Path, name: str, content: bytes) -> str:
-    member = tarfile.TarInfo(name)
-    member.size = len(content)
-    with tarfile.open(path, "w:gz") as archive:
-        archive.addfile(member, io.BytesIO(content))
-    return sha256(path.read_bytes()).hexdigest()
-
-
-def test_reads_cases_only_from_the_committed_archive(tmp_path: Path) -> None:
-    archive = tmp_path / "inputs.tar.gz"
-    case = Invocation(("synthetic",), b"input")
-    digest = _archive(
-        archive, "t0/cases/case-0.jsonl", encode_invocation(case).encode()
-    )
-    commitments = tmp_path / "commitments.md"
-    commitments.write_text(f"| `inputs.tar.gz` | `{digest}` |\n")
-    assert committed_hash(commitments, archive.name) == digest
-    assert heldout_cases(archive, digest, {"case-0"}) == {"case-0": (case,)}
-    with pytest.raises(CorpusError, match="match its commitment"):
-        heldout_cases(archive, "0" * 64, {"case-0"})
+def test_manifest_binds_every_variant_to_its_hash(manifest: Path) -> None:
+    binaries = dc.read_manifest(manifest)
+    assert len(binaries) == 16
+    original = dc.corpus_hash(manifest.parents[1], binaries)
+    for binary in binaries:
+        path = dc.binary_path(manifest.parents[1], binary)
+        content = path.read_bytes()
+        assert sha256(content).hexdigest() == binary.sha256
+        path.write_bytes(b"changed fixture")
+        with pytest.raises(ValueError, match="hash or path changed"):
+            dc.corpus_hash(manifest.parents[1], binaries)
+        path.write_bytes(content)
+    assert dc.corpus_hash(manifest.parents[1], binaries) == original
 
 
 @pytest.mark.parametrize(
-    ("member", "content"),
-    (("../fixture", b"{}"), ("t0/cases/case-0.jsonl", b"private synthetic input")),
+    "field,value",
+    [
+        ("name", "../bad"),
+        ("name", 1),
+        ("tier", "T0"),
+        ("compiler", "other"),
+        ("flags", ["-O1"]),
+        ("flags", "-O0"),
+        ("sha256", "a" * 63),
+        ("category", ""),
+        ("category", False),
+        ("twin_valid", 1),
+    ],
 )
-def test_archive_errors_do_not_expose_case_data(
-    tmp_path: Path, member: str, content: bytes
+def test_manifest_rejects_invalid_fields(
+    manifest: Path, field: str, value: object
 ) -> None:
-    archive = tmp_path / "inputs.tar.gz"
-    digest = _archive(archive, member, content)
-    with pytest.raises(CorpusError, match="invalid case set") as failure:
-        heldout_cases(archive, digest, {"case-0"})
-    assert content.decode() not in str(failure.value)
+    records = metadata()
+    records[0][field] = value
+    manifest.write_text(json.dumps({"binaries": records}))
+    with pytest.raises(ValueError):
+        dc.read_manifest(manifest)
+
+
+@given(st.text(min_size=1).filter(lambda key: key not in metadata()[0]))
+def test_manifest_rejects_unknown_fields(key: str) -> None:
+    records = metadata()
+    records[0][key] = "opaque fixture"
+    with TemporaryDirectory() as name:
+        manifest = Path(name) / "manifest.json"
+        manifest.write_text(json.dumps({"binaries": records}))
+        with pytest.raises(ValueError, match="manifest fields"):
+            dc.read_manifest(manifest)
+
+
+def test_manifest_rejects_duplicate_roster(manifest: Path) -> None:
+    records = metadata()
+    records[0] = records[1]
+    manifest.write_text(json.dumps({"binaries": records}))
+    with pytest.raises(ValueError, match="repeats"):
+        dc.read_manifest(manifest)
+
+
+@pytest.mark.parametrize("index", range(16))
+def test_selection_rejects_each_missing_accepted_variant(
+    manifest: Path, monkeypatch: pytest.MonkeyPatch, index: int
+) -> None:
+    workspace = manifest.parents[1]
+    corpus = workspace / "corpus_dev"
+    corpus.mkdir()
+    binaries = dc.read_manifest(manifest)
+    (corpus / "accepted.json").write_text(
+        json.dumps(
+            {
+                "corpus_hash": dc.corpus_hash(workspace, binaries),
+                "heldout_hash": "a" * 64,
+            }
+        )
+    )
+    monkeypatch.setattr(run_plan, "CHECKOUT", workspace)
+    monkeypatch.setattr(run_plan, "heldout_hash", lambda *_: "a" * 64)
+    assert len(run_plan._selection(workspace, Selection())[0]) == 12
+    records = metadata()
+    records.pop(index)
+    manifest.write_text(json.dumps({"binaries": records}))
+    with pytest.raises(ValueError, match="differs from its acceptance record"):
+        run_plan._selection(workspace, Selection())
+
+
+@pytest.mark.parametrize("target", ["binary", "parent", "missing"])
+def test_binary_keeps_path_checks(manifest: Path, target: str) -> None:
+    workspace = manifest.parents[1]
+    binary = dc.read_manifest(manifest)[0]
+    path = dc.binary_path(workspace, binary)
+    if target == "binary":
+        destination = path.with_suffix(".saved")
+        path.rename(destination)
+        path.symlink_to(destination)
+    elif target == "parent":
+        destination = workspace / "outside"
+        path.parent.rename(destination)
+        path.parent.symlink_to(destination, target_is_directory=True)
+    else:
+        path.unlink()
+    with pytest.raises(ValueError):
+        dc.binary_path(workspace, binary)

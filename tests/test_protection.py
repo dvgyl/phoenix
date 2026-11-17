@@ -68,6 +68,8 @@ def layout(
         ("sealed", "holdout_c"),
         ("records", "sealed_runs/other"),
         ("records", "runs/m1-t0-example"),
+        ("prompts", "cache/phoenix/llm"),
+        ("prompts", "runs/public_pipeline"),
         ("development", "dev_bin/example/gcc-O0/p.twin"),
     ):
         path = root / relative

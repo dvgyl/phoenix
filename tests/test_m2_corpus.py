@@ -8,218 +8,100 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from phoenix_eval import corpus
+from phoenix_eval import dev_corpus as dc
+from phoenix_eval import run_archive as archive
 from phoenix_eval.case import Invocation
-from phoenix_eval.corpus import (
-    CorpusError,
-    Tier,
-    heldout_cases,
-    manifest_variants,
-    release_manifest,
-)
+from phoenix_eval.corpus import _case
+from phoenix_eval.outcome import EntryKind, TreeEntry, TreeSnapshot
 from phoenix_eval.wire import encode_invocation
 
+arguments = st.text(alphabet=st.characters(exclude_characters="\0"))
 
-def metadata() -> list[dict[str, object]]:
-    return [
-        {
-            "name": f"case-{index}",
-            "tier": "T1",
-            "compiler": compiler,
-            "flags": [flag],
-            "sha256": sha256(b"opaque fixture").hexdigest(),
-            "category": "synthetic",
-        }
-        for index in range(15)
-        for compiler in ("gcc", "clang")
-        for flag in ("-O0", "-O2", "-Os")
+
+@given(st.lists(arguments).map(tuple), st.binary(), st.binary(), arguments)
+def test_case_round_trip(
+    args: tuple[str, ...], stdin: bytes, file: bytes, environment: str
+) -> None:
+    case = Invocation(
+        args,
+        stdin,
+        TreeSnapshot(entries=(TreeEntry("file", EntryKind.FILE, 0o640, file),)),
+        (("PHOENIX_TEST", environment),),
+    )
+    assert _case(encode_invocation(case)) == case
+
+
+@pytest.mark.parametrize("level", ["case", "tree", "entry"])
+@pytest.mark.parametrize("change", ["missing", "unknown", "duplicate"])
+def test_case_rejects_invalid_fields(level: str, change: str) -> None:
+    data = json.loads(
+        encode_invocation(
+            Invocation(
+                tree=TreeSnapshot(entries=(TreeEntry("file", EntryKind.FILE, 0o640),))
+            )
+        )
+    )
+    target = {"case": data, "tree": data["tree"], "entry": data["tree"]["entries"][0]}[
+        level
     ]
+    field = {"case": "args", "tree": "entries", "entry": "path"}[level]
+    if change == "missing":
+        del target[field]
+    elif change == "unknown":
+        target["unknown"] = 1
+    encoded = json.dumps(data)
+    if change == "duplicate":
+        encoded = encoded.replace(f'"{field}":', f'"{field}": null, "{field}":', 1)
+    with pytest.raises(ValueError):
+        _case(encoded)
+
+
+@pytest.mark.parametrize("content", ["private synthetic input", '{"private": 1}'])
+def test_case_errors_do_not_expose_case_data(content: str) -> None:
+    with pytest.raises(ValueError) as failure:
+        _case(content)
+    assert content not in str(failure.value)
+
+
+@pytest.mark.parametrize("count", [0, 1, 99, 100])
+def test_development_cases_require_complete_sets(tmp_path: Path, count: int) -> None:
+    (tmp_path / "holdout").mkdir()
+    (tmp_path / "meta.json").write_text('{"tier": "D0"}')
+    (tmp_path / "holdout/cases.jsonl").write_text(
+        (encode_invocation(Invocation()) + "\n") * count
+    )
+    if count < 100:
+        with pytest.raises(ValueError, match="at least 100"):
+            dc._cases(tmp_path)
+    else:
+        assert dc._cases(tmp_path) == (Invocation(),) * count
+
+
+def test_development_case_file_rejects_symlink(tmp_path: Path) -> None:
+    (tmp_path / "holdout").mkdir()
+    (tmp_path / "cases.jsonl").write_text(encode_invocation(Invocation()) + "\n")
+    (tmp_path / "holdout/cases.jsonl").symlink_to(tmp_path / "cases.jsonl")
+    with pytest.raises(ValueError, match="regular file"):
+        dc._cases(tmp_path)
 
 
 @pytest.fixture
-def release(tmp_path: Path) -> Path:
-    root = tmp_path / "release"
-    root.mkdir()
-    data = json.dumps(metadata()).encode()
-    (root / "manifest.json").write_bytes(data)
-    for variant in manifest_variants(data, Tier.T1):
-        path = variant.executable(root)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(b"opaque fixture")
-    return root
+def archived_run(tmp_path: Path) -> tuple[Path, Path]:
+    root = tmp_path / "runs/dev-one"
+    root.mkdir(parents=True)
+    (root / "plan.json").write_text('{"dependencies": []}')
+    (root / "scoreboard.json").write_text('{"run_state": "complete"}')
+    (root / "cases.jsonl").write_text(encode_invocation(Invocation()) + "\n")
+    return tmp_path, archive.archive_run(tmp_path, "dev-one")
 
 
-def test_t1_manifest_checks_all_binary_hashes(release: Path) -> None:
-    variants, digest = release_manifest(release, Tier.T1)
-    assert len(variants) == 90
-    assert digest == sha256((release / "manifest.json").read_bytes()).hexdigest()
-    for variant in variants:
-        path = variant.executable(release)
-        path.write_bytes(b"changed fixture")
-        with pytest.raises(CorpusError, match="manifest hash"):
-            release_manifest(release, Tier.T1)
-        path.write_bytes(b"opaque fixture")
-
-
-@pytest.mark.parametrize(
-    "field,value",
-    [
-        ("name", "../bad"),
-        ("name", 1),
-        ("tier", "T0"),
-        ("compiler", "other"),
-        ("flags", ["-O1"]),
-        ("flags", "-O0"),
-        ("sha256", "a" * 63),
-        ("category", ""),
-        ("category", "x" * 129),
-        ("category", "line\nbreak"),
-        ("category", False),
-    ],
-)
-def test_manifest_rejects_invalid_fields(field: str, value: object) -> None:
-    records = metadata()
-    records[0][field] = value
-    with pytest.raises(CorpusError):
-        manifest_variants(json.dumps(records).encode(), Tier.T1)
-
-
-@given(st.integers(min_value=0, max_value=89))
-def test_manifest_rejects_each_missing_variant(index: int) -> None:
-    records = metadata()
-    records.pop(index)
-    with pytest.raises(CorpusError):
-        manifest_variants(json.dumps(records).encode(), Tier.T1)
-
-
-@given(st.text(min_size=1).filter(lambda key: key not in metadata()[0]))
-def test_manifest_rejects_unknown_fields(key: str) -> None:
-    records = metadata()
-    records[0][key] = "opaque fixture"
-    with pytest.raises(CorpusError):
-        manifest_variants(json.dumps(records).encode(), Tier.T1)
-
-
-def test_manifest_rejects_duplicate_fields_and_roster() -> None:
-    data = json.dumps(metadata()).replace(
-        '"tier": "T1"', '"tier": "T0", "tier": "T1"', 1
-    )
-    with pytest.raises(CorpusError):
-        manifest_variants(data.encode(), Tier.T1)
-    records = metadata()
-    records[0] = records[1]
-    with pytest.raises(CorpusError, match="every required"):
-        manifest_variants(json.dumps(records).encode(), Tier.T1)
-
-
-@pytest.mark.parametrize(
-    "target",
-    ["manifest", "binary", "parent", "missing", "manifest_size", "binary_size"],
-)
-def test_release_keeps_path_and_size_limits(
-    release: Path, monkeypatch: pytest.MonkeyPatch, target: str
+def test_archive_reads_cases_from_verified_bytes(
+    archived_run: tuple[Path, Path],
 ) -> None:
-    variant = manifest_variants((release / "manifest.json").read_bytes(), Tier.T1)[0]
-    path = variant.executable(release)
-    if target == "manifest":
-        path = release / "manifest.json"
-    if target in ("manifest", "binary"):
-        destination = path.with_suffix(".saved")
-        path.rename(destination)
-        path.symlink_to(destination)
-    elif target == "parent":
-        destination = path.parent.with_name("saved")
-        path.parent.rename(destination)
-        path.parent.symlink_to(destination, target_is_directory=True)
-    elif target == "missing":
-        path.unlink()
-    elif target == "manifest_size":
-        (release / "manifest.json").write_bytes(b" " * (65536 + 1))
-    else:
-        monkeypatch.setattr(corpus, "MAX_PROGRAM_BYTES", 2)
-    with pytest.raises(CorpusError):
-        release_manifest(release, Tier.T1)
-
-
-def archive(path: Path, entries: list[tuple[str, bytes, bytes]]) -> str:
-    with tarfile.open(path, "w:gz") as package:
-        for name, content, kind in entries:
-            member = tarfile.TarInfo(name)
-            member.type = kind
-            member.linkname = (
-                "t1/cases/case-0.jsonl"
-                if kind in (tarfile.SYMTYPE, tarfile.LNKTYPE)
-                else ""
-            )
-            member.size = len(content) if kind == tarfile.REGTYPE else 0
-            package.addfile(member, io.BytesIO(content))
-    return sha256(path.read_bytes()).hexdigest()
-
-
-def test_tier_archives_keep_names_separate(tmp_path: Path) -> None:
-    path = tmp_path / "inputs.tar.gz"
-    for tier in Tier:
-        case = Invocation(stdin=tier.encode())
-        digest = archive(
-            path,
-            [
-                (
-                    f"{tier.lower()}/cases/case-0.jsonl",
-                    encode_invocation(case).encode(),
-                    tarfile.REGTYPE,
-                )
-            ],
-        )
-        assert heldout_cases(path, digest, {"case-0"}, tier=tier) == {"case-0": (case,)}
-        other = Tier.T1 if tier is Tier.T0 else Tier.T0
-        with pytest.raises(CorpusError):
-            heldout_cases(path, digest, {"case-0"}, tier=other)
-
-
-@pytest.mark.parametrize(
-    "name",
-    [
-        "t0/cases/case-0.jsonl",
-        "../t1/cases/case-0.jsonl",
-        "/t1/cases/case-0.jsonl",
-        "t1/cases/../case-0.jsonl",
-        "t1/cases/unknown.jsonl",
-    ],
-)
-def test_archive_rejects_paths(tmp_path: Path, name: str) -> None:
-    path = tmp_path / "inputs.tar.gz"
-    digest = archive(
-        path, [(name, encode_invocation(Invocation()).encode(), tarfile.REGTYPE)]
-    )
-    with pytest.raises(CorpusError):
-        heldout_cases(path, digest, {"case-0"}, tier=Tier.T1)
-
-
-@pytest.mark.parametrize(
-    "kind", [tarfile.SYMTYPE, tarfile.LNKTYPE, tarfile.FIFOTYPE, tarfile.DIRTYPE]
-)
-def test_archive_rejects_nonregular_cases(tmp_path: Path, kind: bytes) -> None:
-    path = tmp_path / "inputs.tar.gz"
-    digest = archive(path, [("t1/cases/case-0.jsonl", b"", kind)])
-    with pytest.raises(CorpusError):
-        heldout_cases(path, digest, {"case-0"}, tier=Tier.T1)
-
-
-@pytest.mark.parametrize("directory", [False, True])
-def test_archive_rejects_duplicate_members(tmp_path: Path, directory: bool) -> None:
-    path = tmp_path / "inputs.tar.gz"
-    entry = (
-        ("t1/cases", b"", tarfile.DIRTYPE)
-        if directory
-        else (
-            "t1/cases/case-0.jsonl",
-            encode_invocation(Invocation()).encode(),
-            tarfile.REGTYPE,
-        )
-    )
-    digest = archive(path, [entry, entry])
-    with pytest.raises(CorpusError):
-        heldout_cases(path, digest, {"case-0"}, tier=Tier.T1)
+    workspace, path = archived_run
+    assert path.is_file()
+    restored = archive.restore_run(workspace, "dev-one")
+    assert _case((restored / "cases.jsonl").read_text()) == Invocation()
 
 
 @pytest.mark.parametrize(
@@ -227,44 +109,117 @@ def test_archive_rejects_duplicate_members(tmp_path: Path, directory: bool) -> N
     [
         "missing",
         "unknown",
-        "tree",
-        "entry",
-        "duplicate",
-        "count",
-        "file_size",
-        "archive_size",
-        "symlink",
-        "hash",
+        "case-directory",
+        "case-size",
+        "manifest-size",
+        "manifest-symlink",
+        "duplicate-file",
+        "duplicate-json",
+        "run-id",
+        "long-kind",
+        "newline-kind",
+        "boolean-kind",
+        "empty-kind",
     ],
 )
-def test_archive_rejects_incomplete_or_unbounded_cases(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str
+def test_archive_rejects_incomplete_or_invalid_cases(
+    archived_run: tuple[Path, Path], change: str
 ) -> None:
-    path = tmp_path / "inputs.tar.gz"
-    data = json.loads(encode_invocation(Invocation()))
-    if change == "unknown":
-        data["unknown"] = 1
-    elif change == "tree":
-        data["tree"]["unknown"] = 1
-    elif change == "entry":
-        data["tree"]["entries"] = [{"unknown": 1}]
-    content = json.dumps(data).encode()
-    if change == "duplicate":
-        content = content.replace(b'"args": []', b'"args": [], "args": []')
-    if change == "count":
-        monkeypatch.setattr(corpus, "_CASE_COUNT_LIMIT", 1)
-        content = content + b"\n" + content
-    if change == "file_size":
-        monkeypatch.setattr(corpus, "_CASE_FILE_LIMIT", 1)
-    if change == "archive_size":
-        monkeypatch.setattr(corpus, "_ARCHIVE_LIMIT", 1)
-    digest = archive(path, [("t1/cases/case-0.jsonl", content, tarfile.REGTYPE)])
-    if change == "symlink":
+    workspace, path = archived_run
+    replacement = workspace / "replacement.tar.gz"
+    with (
+        tarfile.open(path, "r:gz") as source,
+        tarfile.open(replacement, "w:gz") as target,
+    ):
+        for member in source.getmembers():
+            content = source.extractfile(member) if member.isreg() else None
+            data = content.read() if content is not None else b""
+            if member.name == "manifest.json":
+                if change == "manifest-size":
+                    data = b" " * (16 * 1024 * 1024 + 1)
+                elif change == "manifest-symlink":
+                    member.type = tarfile.SYMTYPE
+                    member.linkname = "payload/dev-one/cases.jsonl"
+                    data = b""
+                elif change == "duplicate-json":
+                    data = data.replace(b'"version": 1', b'"version": 0, "version": 1')
+                elif change in {
+                    "run-id",
+                    "long-kind",
+                    "newline-kind",
+                    "boolean-kind",
+                    "empty-kind",
+                }:
+                    document = json.loads(data)
+                    if change == "run-id":
+                        document["run_id"] = "dev-other"
+                    else:
+                        document["entries"][0]["kind"] = {
+                            "long-kind": "x" * 129,
+                            "newline-kind": "line\nbreak",
+                            "boolean-kind": False,
+                            "empty-kind": "",
+                        }[change]
+                    data = json.dumps(document).encode()
+                member.size = len(data)
+            elif member.name.endswith("/cases.jsonl"):
+                if change == "missing":
+                    continue
+                if change == "unknown":
+                    member.name = "payload/dev-one/unknown.jsonl"
+                elif change == "case-directory":
+                    member.type = tarfile.DIRTYPE
+                    member.size = 0
+                    data = b""
+                elif change == "case-size":
+                    data += b"private synthetic input"
+                    member.size = len(data)
+                elif change == "duplicate-file":
+                    target.addfile(member, io.BytesIO(data))
+            target.addfile(member, io.BytesIO(data) if member.isreg() else None)
+    replacement.replace(path)
+    index = workspace / "runs/archive-index.json"
+    document = json.loads(index.read_text())
+    document["archives"]["dev-one"]["sha256"] = sha256(path.read_bytes()).hexdigest()
+    index.write_text(json.dumps(document))
+    with pytest.raises(ValueError) as failure:
+        archive.restore_run(workspace, "dev-one")
+    assert "private synthetic input" not in str(failure.value)
+    assert not (workspace / "runs/dev-one").exists()
+
+
+@pytest.mark.parametrize("target", ["archive", "index", "parent", "missing"])
+def test_run_archive_keeps_path_checks(
+    archived_run: tuple[Path, Path], target: str
+) -> None:
+    workspace, path = archived_run
+    if target in {"archive", "index"}:
+        if target == "index":
+            path = path.parent / "archive-index.json"
         destination = path.with_suffix(".saved")
         path.rename(destination)
         path.symlink_to(destination)
-    if change == "hash":
-        digest = "0" * 64
-    names = {"case-0", "case-1"} if change == "missing" else {"case-0"}
-    with pytest.raises(CorpusError):
-        heldout_cases(path, digest, names, tier=Tier.T1)
+    elif target == "parent":
+        destination = workspace / "outside"
+        path.parent.rename(destination)
+        path.parent.symlink_to(destination, target_is_directory=True)
+    else:
+        path.unlink()
+        with pytest.raises(FileNotFoundError):
+            archive.restore_run(workspace, "dev-one")
+        return
+    with pytest.raises(ValueError):
+        archive.restore_run(workspace, "dev-one")
+
+
+@pytest.mark.parametrize("digest", ["a" * 63, "a" * 65, "g" * 64, False])
+def test_archive_rejects_invalid_committed_hash(
+    archived_run: tuple[Path, Path], digest: object
+) -> None:
+    workspace, _ = archived_run
+    index = workspace / "runs/archive-index.json"
+    document = json.loads(index.read_text())
+    document["archives"]["dev-one"]["sha256"] = digest
+    index.write_text(json.dumps(document))
+    with pytest.raises(ValueError, match="SHA-256"):
+        archive.restore_run(workspace, "dev-one")

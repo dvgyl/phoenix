@@ -6,15 +6,6 @@ import stat
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TypedDict, cast
-
-from phoenix_eval.submission import write_report
-
-
-class LedgerIdentity(TypedDict):
-    schema: int
-    pipeline_run: str
-    sha256: str | None
 
 
 def _open_ledger(path: Path) -> int | None:
@@ -34,78 +25,6 @@ def _open_ledger(path: Path) -> int | None:
         os.close(descriptor)
         raise ValueError("The model ledger must be a regular file.")
     return descriptor
-
-
-def ledger_digest(path: Path) -> str | None:
-    descriptor = _open_ledger(path)
-    if descriptor is None:
-        return None
-    with os.fdopen(descriptor, "rb") as stream:
-        return hashlib.file_digest(stream, "sha256").hexdigest()
-
-
-def read_identity(path: Path) -> LedgerIdentity:
-    try:
-        descriptor = _open_ledger(path)
-        if descriptor is None:
-            raise ValueError
-        with os.fdopen(descriptor, "rb") as stream:
-            content = stream.read(4097)
-            if len(content) > 4096:
-                raise ValueError
-            data = json.loads(content)
-        if (
-            not isinstance(data, dict)
-            or set(data) != {"schema", "pipeline_run", "sha256"}
-            or type(data["schema"]) is not int
-            or data["schema"] != 1
-            or not isinstance(data["pipeline_run"], str)
-            or not re.fullmatch(
-                r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,71}", data["pipeline_run"]
-            )
-            or (
-                data["sha256"] is not None
-                and (
-                    not isinstance(data["sha256"], str)
-                    or not re.fullmatch(r"[0-9a-f]{64}", data["sha256"])
-                )
-            )
-        ):
-            raise ValueError
-        return cast(LedgerIdentity, data)
-    except (OSError, ValueError, TypeError, RecursionError):
-        raise ValueError(
-            "The model ledger identity record is invalid or missing."
-        ) from None
-
-
-def verify_identity(workspace: Path, identity: LedgerIdentity) -> None:
-    path = workspace / "runs" / identity["pipeline_run"] / "llm.jsonl"
-    if ledger_digest(path) != identity["sha256"]:
-        raise ValueError("The model ledger changed after submission.")
-
-
-def freeze_identity(
-    workspace: Path,
-    run: Path,
-    pipeline_run: str,
-    *,
-    expected: LedgerIdentity | None = None,
-) -> LedgerIdentity:
-    identity = LedgerIdentity(
-        schema=1,
-        pipeline_run=pipeline_run,
-        sha256=ledger_digest(workspace / "runs" / pipeline_run / "llm.jsonl"),
-    )
-    if expected is not None and identity != expected:
-        raise ValueError("The original model ledger changed before replay freeze.")
-    record = run / "model-ledger.json"
-    if record.exists() or record.is_symlink():
-        if read_identity(record) != identity:
-            raise ValueError("The model ledger changed after submission.")
-    else:
-        write_report(record, identity)
-    return identity
 
 
 def require_no_replay_ledger(workspace: Path, pipeline_run: str) -> None:
@@ -151,6 +70,9 @@ class ModelEvent:
     cost_nanodollars: int
     usage: TokenUsage | None
     text: str | None
+    cache_hit: bool = False
+    cache_key: str | None = None
+    original_usage: TokenUsage | None = None
 
 
 def _integer(value: object) -> int:
@@ -185,11 +107,16 @@ def parse_event(data: object) -> ModelEvent:
             if not isinstance(data[name], str) or not data[name]:
                 raise ValueError
         request = data["request"]
-        if not isinstance(request, dict) or set(request) != {
-            "prompt",
-            "model",
-            "max_output_tokens",
-        }:
+        if not isinstance(request, dict) or set(request) not in (
+            {"prompt", "model", "max_output_tokens"},
+            {"prompt", "model", "max_output_tokens", "effort", "schema"},
+        ):
+            raise ValueError
+        if "effort" in request and (
+            request["effort"] not in ("low", "medium", "high", "xhigh")
+            or not isinstance(request["schema"], str)
+            or not request["schema"]
+        ):
             raise ValueError
         if (
             not isinstance(request["prompt"], str)
@@ -211,6 +138,9 @@ def parse_event(data: object) -> ModelEvent:
         cost = _integer(data["cost_nanodollars"])
         usage = None
         text = None
+        cache_hit = False
+        cache_key = None
+        original_usage = None
         if state in ("completed", "limit-exceeded"):
             result = data["completion"]
             counts = result["usage"]
@@ -219,6 +149,35 @@ def parse_event(data: object) -> ModelEvent:
             usage = TokenUsage(
                 **{name: _integer(value) for name, value in counts.items()}
             )
+            cache_fields = {"cache_hit", "cache_key", "original_usage"}
+            if cache_fields & result.keys():
+                if not cache_fields <= result.keys():
+                    raise ValueError
+                if type(result["cache_hit"]) is not bool:
+                    raise ValueError
+                if result["cache_hit"]:
+                    if (
+                        not isinstance(result["cache_key"], str)
+                        or not re.fullmatch(r"[0-9a-f]{64}", result["cache_key"])
+                        or usage != TokenUsage()
+                    ):
+                        raise ValueError
+                    original = result["original_usage"]
+                    if set(original) != {
+                        "input_tokens",
+                        "cached_input_tokens",
+                        "output_tokens",
+                    }:
+                        raise ValueError
+                    original_usage = TokenUsage(**original)
+                    completion_charge(request["model"], original_usage)
+                    cache_hit = True
+                    cache_key = result["cache_key"]
+                elif (
+                    result["cache_key"] is not None
+                    or result["original_usage"] is not None
+                ):
+                    raise ValueError
             text = result["text"]
             if (
                 usage.cached_input_tokens > usage.input_tokens
@@ -240,6 +199,9 @@ def parse_event(data: object) -> ModelEvent:
             cost,
             usage,
             text,
+            cache_hit,
+            cache_key,
+            original_usage,
         )
     except (KeyError, TypeError, ValueError, AttributeError):
         raise ValueError("The model ledger is malformed or inconsistent.") from None
@@ -304,34 +266,3 @@ def summarize(events: Iterable[ModelEvent], binary: str) -> ModelSummary:
         sum(event.cost_nanodollars for event in measured),
         sum(event.cost_nanodollars for event in selected if event.usage is None),
     )
-
-
-def bound_summary(
-    workspace: Path, run: Path, binary: str, identity: LedgerIdentity | None = None
-) -> ModelSummary:
-    if identity is None:
-        identity = read_identity(run / "model-ledger.json")
-    return summarize(_bound_events(workspace, identity), binary)
-
-
-def bound_summaries(
-    workspace: Path, keys: tuple[str, ...], identity: LedgerIdentity
-) -> dict[str, ModelSummary]:
-    events = _bound_events(workspace, identity)
-    if len(keys) != len(set(keys)) or any(event.binary not in keys for event in events):
-        raise ValueError("The model ledger task keys do not match the fixed roster.")
-    return {key: summarize(events, key) for key in keys}
-
-
-def _bound_events(workspace: Path, identity: LedgerIdentity) -> tuple[ModelEvent, ...]:
-    path = workspace / "runs" / identity["pipeline_run"] / "llm.jsonl"
-    descriptor = _open_ledger(path)
-    if descriptor is None:
-        if identity["sha256"] is None:
-            return ()
-        raise ValueError("The model ledger changed after submission.")
-    with os.fdopen(descriptor, "rb") as stream:
-        content = stream.read()
-    if hashlib.sha256(content).hexdigest() != identity["sha256"]:
-        raise ValueError("The model ledger changed after submission.")
-    return read_events(content.decode("utf-8").splitlines())

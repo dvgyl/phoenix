@@ -5,9 +5,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from phoenix import pipeline
+from phoenix import checkpoints
 from phoenix.analyze import Analysis, DevelopmentCase
 from phoenix.generate import Candidate, Definition, write_project
+from phoenix.pipeline_types import Settings
 from phoenix.verify import Check, Verification
 from phoenix_eval.build import BuildResult, ProjectSnapshot, snapshot_project
 from phoenix_eval.case import Invocation
@@ -21,7 +22,7 @@ from phoenix_eval.wire import encode_result
 @pytest.fixture
 def checkpoint(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> tuple[ProjectSnapshot, Path, Path, Analysis, pipeline.Settings]:
+) -> tuple[ProjectSnapshot, Path, Path, Analysis, Settings]:
     project = tmp_path / "project"
     write_project(
         project,
@@ -47,21 +48,21 @@ def checkpoint(
                 )
             )
     live = Mock(return_value=Verification(tuple(checks), 1))
-    monkeypatch.setattr(pipeline, "verify_project", live)
+    monkeypatch.setattr(checkpoints, "verify_project", live)
     args = (
         snapshot_project(project),
         builds,
         tmp_path / "result.json",
         analysis,
-        pipeline.Settings({}, 0, tmp_path, tmp_path, 0, False, {}),
+        Settings({}, 0, tmp_path, tmp_path, 0, False, {}),
     )
-    assert pipeline._verify(*args).passed
+    assert checkpoints.verification(*args).passed
     live.side_effect = AssertionError("A saved checkpoint must not run a build.")
     return args
 
 
 def test_cached_differences_are_derived_from_outcomes(
-    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, pipeline.Settings],
+    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, Settings],
 ) -> None:
     path = checkpoint[2]
     saved = json.loads(path.read_text())
@@ -70,7 +71,7 @@ def test_cached_differences_are_derived_from_outcomes(
         check["outcomes"] = [encode_result(wrong)]
         check["differences"] = [[]]
     path.write_text(json.dumps(saved))
-    result = pipeline._verify(*checkpoint)
+    result = checkpoints.verification(*checkpoint)
     assert not result.passed
     assert not result.passed_cases
     assert all(
@@ -80,7 +81,7 @@ def test_cached_differences_are_derived_from_outcomes(
 
 @pytest.mark.parametrize("change", ["duplicate", "wrong", "missing", "extra"])
 def test_cached_build_matrix_must_be_complete_and_distinct(
-    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, pipeline.Settings],
+    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, Settings],
     change: str,
 ) -> None:
     path = checkpoint[2]
@@ -100,12 +101,12 @@ def test_cached_build_matrix_must_be_complete_and_distinct(
         checks.append(checks[0])
     path.write_text(json.dumps(saved))
     with pytest.raises(ValueError, match="configuration"):
-        pipeline._verify(*checkpoint)
+        checkpoints.verification(*checkpoint)
 
 
 @pytest.mark.parametrize("change", ["input", "expected", "trace", "count"])
 def test_checkpoint_binds_development_cases(
-    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, pipeline.Settings],
+    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, Settings],
     change: str,
 ) -> None:
     project, builds, path, analysis, settings = checkpoint
@@ -120,12 +121,12 @@ def test_checkpoint_binds_development_cases(
         )
     changed = replace(analysis, cases=(case, case) if change == "count" else (case,))
     with pytest.raises(ValueError, match="development"):
-        pipeline._verify(project, builds, path, changed, settings)
+        checkpoints.verification(project, builds, path, changed, settings)
 
 
 @pytest.mark.parametrize("change", ["short", "long", "failed", "missing_hash"])
 def test_checkpoint_rejects_inconsistent_build_observations(
-    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, pipeline.Settings],
+    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, Settings],
     change: str,
 ) -> None:
     path = checkpoint[2]
@@ -141,30 +142,30 @@ def test_checkpoint_rejects_inconsistent_build_observations(
         check["build"]["executable_sha256"] = None
     path.write_text(json.dumps(saved))
     with pytest.raises(ValueError):
-        pipeline._verify(*checkpoint)
+        checkpoints.verification(*checkpoint)
 
 
 def test_new_checkpoints_store_observations_without_verdicts(
-    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, pipeline.Settings],
+    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, Settings],
 ) -> None:
     saved = json.loads(checkpoint[2].read_text())
     assert all("differences" not in check for check in saved["checks"])
-    assert pipeline._verify(*checkpoint).passed
+    assert checkpoints.verification(*checkpoint).passed
 
 
 def test_saved_false_failures_do_not_override_matching_observations(
-    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, pipeline.Settings],
+    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, Settings],
 ) -> None:
     path = checkpoint[2]
     saved = json.loads(path.read_text())
     for check in saved["checks"]:
         check["differences"] = [["stdout"]]
     path.write_text(json.dumps(saved))
-    assert pipeline._verify(*checkpoint).passed
+    assert checkpoints.verification(*checkpoint).passed
 
 
 def test_failed_build_has_no_results_or_executable_identity(
-    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, pipeline.Settings],
+    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, Settings],
 ) -> None:
     path = checkpoint[2]
     saved = json.loads(path.read_text())
@@ -173,28 +174,28 @@ def test_failed_build_has_no_results_or_executable_identity(
     check["outcomes"] = []
     path.write_text(json.dumps(saved))
     with pytest.raises(ValueError, match="failed build"):
-        pipeline._verify(*checkpoint)
+        checkpoints.verification(*checkpoint)
     check["build"]["executable_sha256"] = None
     path.write_text(json.dumps(saved))
-    result = pipeline._verify(*checkpoint)
+    result = checkpoints.verification(*checkpoint)
     assert not result.passed
     assert not result.passed_cases
 
 
 def test_unbound_legacy_checkpoint_is_rejected(
-    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, pipeline.Settings],
+    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, Settings],
 ) -> None:
     path = checkpoint[2]
     saved = json.loads(path.read_text())
     del saved["development_sha256"]
     path.write_text(json.dumps(saved))
     with pytest.raises(ValueError, match="development"):
-        pipeline._verify(*checkpoint)
+        checkpoints.verification(*checkpoint)
 
 
 @pytest.mark.parametrize("change", ["source", "executable", "missing_executable"])
 def test_checkpoint_keeps_tested_source_and_executable_identities(
-    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, pipeline.Settings],
+    checkpoint: tuple[ProjectSnapshot, Path, Path, Analysis, Settings],
     change: str,
 ) -> None:
     snapshot, builds, path, analysis, settings = checkpoint
@@ -207,4 +208,4 @@ def test_checkpoint_keeps_tested_source_and_executable_identities(
         else:
             executable.unlink()
     with pytest.raises((ValueError, FileNotFoundError)):
-        pipeline._verify(snapshot, builds, path, analysis, settings)
+        checkpoints.verification(snapshot, builds, path, analysis, settings)

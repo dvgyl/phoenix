@@ -10,7 +10,7 @@ from test_provenance import DECOMPILER, PIPELINE_FILE, write_project, write_tool
 from phoenix import __main__ as cli
 from phoenix.__main__ import main
 from phoenix.ingest import BinaryMetadata
-from phoenix.pipeline import Method, Reconstruction, Settings
+from phoenix.pipeline_types import Method, Reconstruction, Settings
 from phoenix_eval.provenance import (
     BuildEvidence,
     lifting_tool_identity,
