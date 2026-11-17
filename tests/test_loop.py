@@ -11,7 +11,6 @@ import subprocess
 from collections.abc import Callable
 from dataclasses import asdict
 from pathlib import Path
-from types import ModuleType
 from typing import cast
 
 import pytest
@@ -21,10 +20,10 @@ from phoenix.llm.ledger import Ledger
 from phoenix.llm.provider import Completion, Usage
 from phoenix.llm.provider import Request as ModelRequest
 from phoenix_eval import run as evaluation
+from phoenix_eval import run_plan
 from phoenix_eval.dev_corpus import DevBinary
 from phoenix_eval.loop import (
     HEADER,
-    Evaluator,
     Loop,
     Request,
     append_row,
@@ -35,6 +34,9 @@ from phoenix_eval.loop import (
     table,
 )
 from phoenix_eval.run_binary import task_key
+from phoenix_eval.run_records import Selection
+
+REAL_EVALUATE = evaluation.evaluate
 
 
 class Provider:
@@ -74,7 +76,7 @@ def git(root: Path, *args: str) -> str:
     ).stdout.strip()
 
 
-class SyntheticBackend:
+class SyntheticExecution:
     def __init__(self, checkout: Path):
         self.checkout = checkout
         self.calls: list[str] = []
@@ -97,16 +99,19 @@ class SyntheticBackend:
         self,
         workspace: Path,
         run_id: str,
-        request: Request,
-        metadata: dict[str, object],
+        selection: Selection,
+        llm_cache: bool,
+        *,
+        metadata: dict[str, object] | None = None,
     ) -> None:
+        assert metadata is not None
         self.calls.append(run_id)
         binaries: list[dict[str, object]] = []
         results: list[dict[str, object]] = []
         counts: dict[str, int] = {}
         hashes: dict[str, str] = {}
-        for tier in request.tiers:
-            for level in request.levels:
+        for tier in selection.tiers:
+            for level in selection.levels:
                 for compiler in ("gcc", "clang"):
                     for number in range(2):
                         index = len(binaries)
@@ -142,13 +147,7 @@ class SyntheticBackend:
             run / "plan.json",
             {
                 "run_id": run_id,
-                "selection": {
-                    "corpus": "corpus_dev",
-                    "tiers": list(request.tiers),
-                    "levels": list(request.levels),
-                    "quick": request.quick_selection,
-                    "probe": request.kind == "probe",
-                },
+                "selection": asdict(selection),
                 "binaries": binaries,
                 "corpus_hash": corpus,
                 "heldout_hash": heldout,
@@ -158,7 +157,7 @@ class SyntheticBackend:
                     "case_counts": counts,
                     "case_hashes": hashes,
                 },
-                "llm_cache": request.llm_cache,
+                "llm_cache": llm_cache,
                 "dependencies": [f"{run_id}-p", f"{run_id}-check"],
                 "started": 0,
                 "replay_of": None,
@@ -178,7 +177,7 @@ class SyntheticBackend:
 @pytest.fixture
 def environment(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> tuple[Loop, SyntheticBackend]:
+) -> tuple[Loop, SyntheticExecution]:
     checkout = tmp_path / "checkout"
     checkout.mkdir()
     (checkout / "docs").mkdir()
@@ -192,8 +191,15 @@ def environment(
     git(checkout, "add", ".")
     git(checkout, "commit", "-qm", "test: create synthetic repository")
     monkeypatch.setattr(evaluation, "CHECKOUT", checkout)
-    backend = SyntheticBackend(checkout)
-    return Loop(tmp_path, checkout, backend), backend
+    execution = SyntheticExecution(checkout)
+    monkeypatch.setattr(evaluation, "evaluate", execution.evaluate)
+    monkeypatch.setattr(run_plan, "model_identity", execution.configuration_identity)
+    monkeypatch.setattr(
+        run_plan,
+        "_selection",
+        lambda workspace, _: ((), *execution.noise_identity(workspace)),
+    )
+    return Loop(tmp_path, checkout), execution
 
 
 def test_exact_header_and_null_row() -> None:
@@ -228,15 +234,15 @@ def test_exact_header_and_null_row() -> None:
 
 
 def test_publication_is_idempotent_and_preserves_cost(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     request = Request(label="measured example")
     document = loop.execute(request, "same-id")
     scoreboard = loop.scoreboard.read_bytes()
     published = (loop.workspace / "runs/same-id/scoreboard.json").read_bytes()
     assert loop.execute(request, "same-id") == document
-    assert backend.calls == ["same-id"]
+    assert execution.calls == ["same-id"]
     assert loop.scoreboard.read_bytes() == scoreboard
     assert (loop.workspace / "runs/same-id/scoreboard.json").read_bytes() == published
     assert document["experiment"] == [1, 3]
@@ -250,19 +256,19 @@ def test_publication_is_idempotent_and_preserves_cost(
 
 
 def test_conflicting_id_does_not_evaluate(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     loop.execute(Request(), "existing")
     with pytest.raises(ValueError, match="conflicting"):
         loop.execute(Request(label="changed"), "existing")
     with pytest.raises(ValueError, match="conflicting"):
         loop.execute(Request(kind="probe"), "existing")
-    assert len(backend.calls) == 1
+    assert len(execution.calls) == 1
 
 
 def test_duplicate_and_conflicting_rows(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
     loop, _ = environment
     document = loop.execute(Request(), "example")
@@ -276,10 +282,10 @@ def test_duplicate_and_conflicting_rows(
 
 
 def test_stopped_run_keeps_every_denominator(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
-    backend.stop = True
+    loop, execution = environment
+    execution.stop = True
     document = loop.execute(Request(), "stopped")
     assert document["run_state"] == "stopped"
     assert document["success"] == {
@@ -291,21 +297,21 @@ def test_stopped_run_keeps_every_denominator(
     }
     assert document["held_out_cases"] == [8, 192]
     assert document["failure_categories"] == {"pipeline_error": 23}
-    backend.stop = False
+    execution.stop = False
     assert loop.execute(Request(), "stopped") == document
-    assert backend.calls == ["stopped"]
+    assert execution.calls == ["stopped"]
 
 
 def test_active_recovery_publishes_before_new_work(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
-    backend.crash = True
+    loop, execution = environment
+    execution.crash = True
     with pytest.raises(RuntimeError, match="interruption"):
         loop.execute(Request(), "abandoned")
     assert loop.active.exists()
     assert not loop.scoreboard.exists()
-    backend.crash = False
+    execution.crash = False
 
     def observe(_: str) -> None:
         rows = table(loop.scoreboard)[1]
@@ -316,7 +322,7 @@ def test_active_recovery_publishes_before_new_work(
             == "stopped"
         )
 
-    backend.after = observe
+    execution.after = observe
     document = loop.execute(Request(), "next")
     assert document["experiment"] == [2, 3]
     assert [row[1] for row in table(loop.scoreboard)[1]] == ["abandoned", "next"]
@@ -324,34 +330,34 @@ def test_active_recovery_publishes_before_new_work(
 
 
 def test_crash_after_append_does_not_duplicate_row(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     document = loop.execute(Request(), "written")
     write(loop.active, {"schema": 1, "run_id": "written"})
     assert loop.execute(Request(), "written") == document
     assert len(table(loop.scoreboard)[1]) == 1
-    assert backend.calls == ["written"]
+    assert execution.calls == ["written"]
 
 
 @pytest.mark.parametrize("active", [{"schema": 99}, {"schema": 1, "run_id": "unknown"}])
 def test_unknown_recovery_preserves_state(
-    environment: tuple[Loop, SyntheticBackend], active: dict[str, object]
+    environment: tuple[Loop, SyntheticExecution], active: dict[str, object]
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     write(loop.active, active)
     content = loop.active.read_bytes()
     with pytest.raises((ValueError, OSError)):
         loop.execute(Request(), "new")
     assert loop.active.read_bytes() == content
-    assert not backend.calls
+    assert not execution.calls
 
 
 def test_missing_fixed_plan_does_not_erase_allocation(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
-    backend.crash = True
+    loop, execution = environment
+    execution.crash = True
     with pytest.raises(RuntimeError):
         loop.execute(Request(), "unselected")
     (loop.workspace / "runs/unselected/plan.json").unlink()
@@ -361,13 +367,13 @@ def test_missing_fixed_plan_does_not_erase_allocation(
 
 
 def test_full_budget_counts_failed_and_stopped_only_once(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
-    backend.outcome = lambda _run, _index: False
+    loop, execution = environment
+    execution.outcome = lambda _run, _index: False
     failed = loop.execute(Request(), "failed")
     assert failed["experiment"] == [1, 3]
-    backend.stop = True
+    execution.stop = True
     stopped = loop.execute(Request(), "stopped")
     assert stopped["experiment"] == [2, 3]
     assert loop.execute(Request(), "stopped") == stopped
@@ -376,15 +382,15 @@ def test_full_budget_counts_failed_and_stopped_only_once(
     assert loop.execute(Request(), "third")["experiment"] == [3, 3]
     with pytest.raises(ValueError, match="budget of 3"):
         loop.execute(Request(), "fourth")
-    assert "fourth" not in backend.calls
+    assert "fourth" not in execution.calls
 
 
 def test_noise_flips_and_reference_without_committing_rows(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     full = loop.execute(Request(), "full")
-    backend.outcome = lambda run, index: (
+    execution.outcome = lambda run, index: (
         not (run.endswith("-b") and index in (0, 1, 12))
     )
     noise = loop.execute(Request(kind="noise", llm_cache=False), "noise")
@@ -408,7 +414,7 @@ def test_noise_flips_and_reference_without_committing_rows(
     assert [row[5] for row in table(loop.scoreboard)[1]] == ["full", "noise"]
     assert "| 2/12 | 1/12 | - | - |" in format_row(noise)
     assert loop.execute(Request(kind="noise", llm_cache=False), "noise") == noise
-    assert len(backend.calls) == 3
+    assert len(execution.calls) == 3
     later = loop.execute(Request(), "later")
     assert later["noise_ref"] == 2
     assert later["experiment"] == [2, 3]
@@ -417,9 +423,9 @@ def test_noise_flips_and_reference_without_committing_rows(
 @pytest.mark.parametrize("change", ["commit", "binary", "heldout", "models", "effort"])
 @pytest.mark.parametrize("when", ["-a", "-b"])
 def test_changed_noise_commit_or_data_is_rejected(
-    environment: tuple[Loop, SyntheticBackend], change: str, when: str
+    environment: tuple[Loop, SyntheticExecution], change: str, when: str
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
 
     def mutate(run_id: str) -> None:
         if not run_id.endswith(when):
@@ -429,15 +435,15 @@ def test_changed_noise_commit_or_data_is_rejected(
                 loop.checkout, "commit", "--allow-empty", "-qm", "test: change revision"
             )
         elif change == "binary":
-            backend.data = "changed"
+            execution.data = "changed"
         elif change == "heldout":
-            backend.heldout = "changed"
+            execution.heldout = "changed"
         elif change == "models":
-            backend.models["runtime"] = "changed"
+            execution.models["runtime"] = "changed"
         else:
-            backend.effort["runtime"] = "high"
+            execution.effort["runtime"] = "high"
 
-    backend.after = mutate
+    execution.after = mutate
     with pytest.raises(ValueError, match="changed during noise"):
         loop.execute(Request(kind="noise", llm_cache=False), "unstable")
     assert loop.active.exists()
@@ -448,30 +454,30 @@ def test_changed_noise_commit_or_data_is_rejected(
 
 
 def test_noise_rejects_different_frozen_binary_identity(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     loop.execute(Request(kind="quick", llm_cache=False), "left")
-    backend.data = "changed"
+    execution.data = "changed"
     loop.execute(Request(kind="quick", llm_cache=False), "right")
     left = evaluation.publish(loop.workspace, "left")
     right = evaluation.publish(loop.workspace, "right")
     right.document["row"] = left.document["row"]
     with pytest.raises(ValueError, match="identities changed"):
-        noise_document("noise", [left, right], backend.configuration_identity())
+        noise_document("noise", [left, right], execution.configuration_identity())
 
 
 def test_noise_recovery_publishes_unstarted_trial_as_failures(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
-    backend.crash = True
+    loop, execution = environment
+    execution.crash = True
     request = Request(kind="noise", llm_cache=False)
     with pytest.raises(RuntimeError):
         loop.execute(request, "interrupted-noise")
-    backend.crash = False
+    execution.crash = False
     document = loop.execute(request, "interrupted-noise")
-    assert backend.calls == ["interrupted-noise-a"]
+    assert execution.calls == ["interrupted-noise-a"]
     assert document["run_state"] == "stopped"
     assert document["noise"] == {"D0": [1, 12], "D1": [0, 12]}
     assert read(loop.workspace / "runs/interrupted-noise-b/scoreboard.json")[
@@ -482,7 +488,7 @@ def test_noise_recovery_publishes_unstarted_trial_as_failures(
 
 
 def test_quick_probe_is_not_an_experiment(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
     loop, _ = environment
     document = loop.execute(Request(kind="probe", quick=True), "quick-probe")
@@ -492,34 +498,34 @@ def test_quick_probe_is_not_an_experiment(
 
 
 def test_existing_unallocated_id_is_rejected(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     run = loop.workspace / "runs/existing"
     run.mkdir(parents=True)
     write(run / "untouched.json", {"cost": 19})
     with pytest.raises(ValueError, match="without a loop allocation"):
         loop.execute(Request(), "existing")
     assert read(run / "untouched.json") == {"cost": 19}
-    assert not backend.calls
+    assert not execution.calls
 
 
 def test_existing_id_cannot_move_to_a_different_commit(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     loop.execute(Request(), "existing")
     git(loop.checkout, "commit", "--allow-empty", "-qm", "test: change revision")
     with pytest.raises(ValueError, match="conflicting request or commit"):
         loop.execute(Request(), "existing")
-    assert backend.calls == ["existing"]
+    assert execution.calls == ["existing"]
 
 
 def test_fixed_plan_run_id_cannot_change(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
-    backend.crash = True
+    loop, execution = environment
+    execution.crash = True
     with pytest.raises(RuntimeError):
         loop.execute(Request(), "original")
     path = loop.workspace / "runs/original/plan.json"
@@ -531,9 +537,9 @@ def test_fixed_plan_run_id_cannot_change(
 
 
 def test_hash_validation_precedes_row_publication(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
 
     def corrupted(run_id: str) -> None:
         document = evaluation.publish(loop.workspace, run_id).document
@@ -541,7 +547,7 @@ def test_hash_validation_precedes_row_publication(
         refs[next(iter(refs))] = "f" * 64
         write(loop.workspace / "runs" / run_id / "scoreboard.json", document)
 
-    backend.after = corrupted
+    execution.after = corrupted
     with pytest.raises(ValueError, match="terminal result changed"):
         loop.execute(Request(), "corrupt")
     assert not loop.scoreboard.exists()
@@ -549,10 +555,10 @@ def test_hash_validation_precedes_row_publication(
 
 
 def test_new_publication_normalizes_tuple_fields(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
-    backend.crash = True
+    loop, execution = environment
+    execution.crash = True
     with pytest.raises(RuntimeError):
         loop.execute(Request(), "stopped")
     document = loop.execute(Request(), "stopped")
@@ -561,15 +567,15 @@ def test_new_publication_normalizes_tuple_fields(
     assert evaluation.publish(loop.workspace, "stopped").document == document
     assert document["run_state"] == "stopped"
     assert len(table(loop.scoreboard)[1]) == 1
-    assert backend.calls == ["stopped"]
+    assert execution.calls == ["stopped"]
 
 
 @pytest.mark.parametrize("source", ["phoenix", "phoenix_eval"])
 @pytest.mark.parametrize("state", ["tracked", "staged", "untracked", "deleted"])
 def test_dirty_source_is_rejected(
-    environment: tuple[Loop, SyntheticBackend], source: str, state: str
+    environment: tuple[Loop, SyntheticExecution], source: str, state: str
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     path = loop.checkout / source / "tracked.py"
     if state == "deleted":
         path.unlink()
@@ -581,7 +587,7 @@ def test_dirty_source_is_rejected(
             git(loop.checkout, "add", str(path))
     with pytest.raises(ValueError, match="tracked and untracked"):
         loop.execute(Request(kind="probe"), "dirty")
-    assert not backend.calls
+    assert not execution.calls
     assert not loop.active.exists()
 
 
@@ -590,7 +596,7 @@ def test_dirty_source_is_rejected(
     ["binary", "heldout", "denominator", "aggregate", "reference", "terminal"],
 )
 def test_corrupt_identity_or_denominator_is_rejected(
-    environment: tuple[Loop, SyntheticBackend], corruption: str
+    environment: tuple[Loop, SyntheticExecution], corruption: str
 ) -> None:
     loop, _ = environment
     document = loop.execute(Request(), "record")
@@ -615,29 +621,29 @@ def test_corrupt_identity_or_denominator_is_rejected(
 
 
 def test_workspace_lock_blocks_other_loop(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     runs = loop.workspace / "runs"
     runs.mkdir()
     with (runs / ".loop.lock").open("a+b") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         with pytest.raises(ValueError, match="Another workspace loop"):
             loop.execute(Request(), "blocked")
-    assert not backend.calls
+    assert not execution.calls
 
 
 def test_loop_keeps_archive_lock_until_publication(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
 
     def attempt_archive(_: str) -> None:
         with (loop.workspace / "runs/.archive.lock").open("a+b") as lock:
             with pytest.raises(BlockingIOError):
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
 
-    backend.after = attempt_archive
+    execution.after = attempt_archive
     loop.execute(Request(kind="probe"), "protected")
     with (loop.workspace / "runs/.archive.lock").open("a+b") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -654,45 +660,23 @@ def test_cli_help_loads_without_evaluator(capsys: pytest.CaptureFixture[str]) ->
     "run_id", ["../escape", "m1-t0-reserved", "sealed/forbidden", ".", "x" * 97]
 )
 def test_invalid_run_id_has_no_run_writes(
-    environment: tuple[Loop, SyntheticBackend], run_id: str
+    environment: tuple[Loop, SyntheticExecution], run_id: str
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     with pytest.raises(ValueError):
         loop.execute(Request(), run_id)
-    assert not backend.calls
+    assert not execution.calls
     assert not loop.active.exists()
-
-
-@pytest.fixture
-def evaluator_modules(monkeypatch: pytest.MonkeyPatch) -> tuple[ModuleType, ModuleType]:
-    import phoenix_eval
-
-    if importlib.util.find_spec("phoenix_eval.run") is None:
-        checkout = Path(__file__).resolve().parent.parent
-        common = Path(git(checkout, "rev-parse", "--git-common-dir"))
-        main = (checkout / common).resolve().parent
-        monkeypatch.setattr(
-            phoenix_eval,
-            "__path__",
-            [*phoenix_eval.__path__, str(main / "phoenix_eval")],
-        )
-    return (
-        importlib.import_module("phoenix_eval.run"),
-        importlib.import_module("phoenix_eval.run_records"),
-    )
 
 
 @pytest.mark.parametrize("kind", ["full", "noise"])
 def test_real_preflight_failure_releases_only_unselected_run(
-    environment: tuple[Loop, SyntheticBackend],
-    evaluator_modules: tuple[ModuleType, ModuleType],
+    environment: tuple[Loop, SyntheticExecution],
     monkeypatch: pytest.MonkeyPatch,
     kind: str,
 ) -> None:
-    loop, backend = environment
-    evaluation, _ = evaluator_modules
-    loop.backend = Evaluator()
-    monkeypatch.setattr(loop.backend, "noise_identity", backend.noise_identity)
+    loop, execution = environment
+    monkeypatch.setattr(evaluation, "evaluate", REAL_EVALUATE)
 
     def unavailable(_: Path) -> dict[str, object]:
         raise ValueError("worker image unavailable")
@@ -703,16 +687,12 @@ def test_real_preflight_failure_releases_only_unselected_run(
         loop.execute(request, "preflight-failed")
     assert not loop.active.exists()
     assert not loop.scoreboard.exists()
-    failed = loop.workspace / "runs/preflight-failed/preselection-failure.json"
+    failed = loop.workspace / "runs/preflight-failed/loop.json"
     record = read(failed)
-    assert record["state"] == "preselection_failed"
-    assert record["error"] == {
-        "type": "ValueError",
-        "message": "worker image unavailable",
-    }
-    assert record["experiment"] is None
+    assert record["failure"] == ["ValueError", "worker image unavailable"]
+    assert record["experiment"] == (1 if kind == "full" else None)
     content = failed.read_bytes()
-    loop.backend = backend
+    monkeypatch.setattr(evaluation, "evaluate", execution.evaluate)
     document = loop.execute(Request(), "after-preflight")
     assert document["row"] == 1
     assert document["experiment"] == [1, 3]
@@ -722,28 +702,42 @@ def test_real_preflight_failure_releases_only_unselected_run(
 
 @pytest.mark.parametrize(
     "artifact",
-    ["unknown.json", "results/paid.json", "../unsafe-p/llm.jsonl", ".active"],
+    [
+        "unknown.json",
+        "results/paid.json",
+        "../unsafe-p/llm.jsonl",
+        ".active",
+        "../unsafe-check/paid.json",
+        "plan.json",
+        "loop.json",
+    ],
 )
 def test_known_preselection_error_preserves_unknown_or_paid_state(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
     monkeypatch: pytest.MonkeyPatch,
     artifact: str,
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     path = loop.workspace / "runs/unsafe" / artifact
 
     def fail(
-        workspace: Path, run_id: str, request: Request, metadata: dict[str, object]
+        workspace: Path,
+        run_id: str,
+        selection: Selection,
+        llm_cache: bool,
+        *,
+        metadata: dict[str, object] | None = None,
     ) -> None:
         write(path, {"reserved_cost": 19})
         raise ValueError("Fixture preflight error with uncertain state.")
 
-    monkeypatch.setattr(backend, "evaluate", fail)
+    monkeypatch.setattr(evaluation, "evaluate", fail)
     with pytest.raises(ValueError, match="uncertain state"):
         loop.execute(Request(), "unsafe")
     active, content = loop.active.read_bytes(), path.read_bytes()
-    assert not (loop.workspace / "runs/unsafe/preselection-failure.json").exists()
-    with pytest.raises(ValueError, match="no fixed plan"):
+    if artifact != "loop.json":
+        assert read(loop.workspace / "runs/unsafe/loop.json")["failure"] is None
+    with pytest.raises((ValueError, KeyError)):
         loop.execute(Request(), "new")
     assert loop.active.read_bytes() == active
     assert path.read_bytes() == content
@@ -751,70 +745,83 @@ def test_known_preselection_error_preserves_unknown_or_paid_state(
 
 
 def test_known_error_after_selection_preserves_plan_and_experiment(
-    environment: tuple[Loop, SyntheticBackend], monkeypatch: pytest.MonkeyPatch
+    environment: tuple[Loop, SyntheticExecution], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    loop, backend = environment
-    evaluate = backend.evaluate
+    loop, execution = environment
+    evaluate = evaluation.evaluate
 
     def fail(
-        workspace: Path, run_id: str, request: Request, metadata: dict[str, object]
+        workspace: Path,
+        run_id: str,
+        selection: Selection,
+        llm_cache: bool,
+        *,
+        metadata: dict[str, object] | None = None,
     ) -> None:
-        evaluate(workspace, run_id, request, metadata)
+        evaluate(workspace, run_id, selection, llm_cache, metadata=metadata)
         raise ValueError("Fixture error after selection.")
 
-    monkeypatch.setattr(backend, "evaluate", fail)
+    monkeypatch.setattr(evaluation, "evaluate", fail)
     with pytest.raises(ValueError, match="after selection"):
         loop.execute(Request(), "fixed")
     run = loop.workspace / "runs/fixed"
     original = (run / "plan.json").read_bytes()
     assert loop.active.exists()
-    assert not (run / "preselection-failure.json").exists()
-    monkeypatch.setattr(backend, "evaluate", evaluate)
+    assert read(run / "loop.json")["failure"] is None
+    monkeypatch.setattr(evaluation, "evaluate", evaluate)
     assert loop.execute(Request(), "fixed")["experiment"] == [1, 3]
     assert (run / "plan.json").read_bytes() == original
 
 
 def test_unknown_exception_before_selection_keeps_active_pointer(
-    environment: tuple[Loop, SyntheticBackend], monkeypatch: pytest.MonkeyPatch
+    environment: tuple[Loop, SyntheticExecution], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
 
     def fail(
-        workspace: Path, run_id: str, request: Request, metadata: dict[str, object]
+        workspace: Path,
+        run_id: str,
+        selection: Selection,
+        llm_cache: bool,
+        *,
+        metadata: dict[str, object] | None = None,
     ) -> None:
         raise RuntimeError("Fixture unknown interruption.")
 
-    monkeypatch.setattr(backend, "evaluate", fail)
+    monkeypatch.setattr(evaluation, "evaluate", fail)
     with pytest.raises(RuntimeError, match="unknown interruption"):
         loop.execute(Request(), "unknown-error")
     active = loop.active.read_bytes()
     with pytest.raises(ValueError, match="no fixed plan"):
         loop.execute(Request(), "new")
     assert loop.active.read_bytes() == active
-    assert not (
-        loop.workspace / "runs/unknown-error/preselection-failure.json"
-    ).exists()
+    assert read(loop.workspace / "runs/unknown-error/loop.json")["failure"] is None
 
 
 @pytest.mark.parametrize("paid_after_record", [False, True])
 def test_preselection_record_recovery_rechecks_work_before_clearing_pointer(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
     monkeypatch: pytest.MonkeyPatch,
     paid_after_record: bool,
 ) -> None:
-    loop, backend = environment
-    evaluate = backend.evaluate
+    loop, execution = environment
+    evaluate = evaluation.evaluate
 
     def fail(
-        workspace: Path, run_id: str, request: Request, metadata: dict[str, object]
+        workspace: Path,
+        run_id: str,
+        selection: Selection,
+        llm_cache: bool,
+        *,
+        metadata: dict[str, object] | None = None,
     ) -> None:
         raise ValueError("Fixture preflight failure.")
 
-    monkeypatch.setattr(backend, "evaluate", fail)
+    monkeypatch.setattr(evaluation, "evaluate", fail)
     with pytest.raises(ValueError, match="preflight failure"):
         loop.execute(Request(), "preflight")
     write(loop.active, {"schema": 1, "run_id": "preflight"})
-    monkeypatch.setattr(backend, "evaluate", evaluate)
+    monkeypatch.setattr(evaluation, "evaluate", evaluate)
     if paid_after_record:
         path = loop.workspace / "runs/preflight-p/llm.jsonl"
         write(path, {"reserved_cost": 19})
@@ -822,7 +829,7 @@ def test_preselection_record_recovery_rechecks_work_before_clearing_pointer(
             loop.execute(Request(), "new")
         assert loop.active.exists()
         assert read(path) == {"reserved_cost": 19}
-        assert not backend.calls
+        assert not execution.calls
     else:
         document = loop.execute(Request(), "new")
         assert document["row"] == 1
@@ -831,7 +838,7 @@ def test_preselection_record_recovery_rechecks_work_before_clearing_pointer(
 
 
 def test_noise_reference_requires_current_quick_set(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
     loop, _ = environment
     noise = loop.execute(Request(kind="noise", llm_cache=False), "noise")
@@ -841,24 +848,24 @@ def test_noise_reference_requires_current_quick_set(
 
 @pytest.mark.parametrize("change", ["corpus", "heldout", "models", "effort"])
 def test_noise_reference_requires_current_identity(
-    environment: tuple[Loop, SyntheticBackend], change: str
+    environment: tuple[Loop, SyntheticExecution], change: str
 ) -> None:
-    loop, backend = environment
+    loop, execution = environment
     loop.execute(Request(kind="noise", llm_cache=False), "old-noise")
     if change == "corpus":
-        backend.data = "changed"
+        execution.data = "changed"
     elif change == "heldout":
-        backend.heldout = "changed"
+        execution.heldout = "changed"
     elif change == "models":
-        backend.models["runtime"] = "changed"
+        execution.models["runtime"] = "changed"
     else:
-        backend.effort["runtime"] = "high"
+        execution.effort["runtime"] = "high"
     document = loop.execute(Request(), "changed")
     assert document["noise_ref"] is None
 
 
 def test_noise_reference_can_use_an_earlier_commit(
-    environment: tuple[Loop, SyntheticBackend],
+    environment: tuple[Loop, SyntheticExecution],
 ) -> None:
     loop, _ = environment
     noise = loop.execute(Request(kind="noise", llm_cache=False), "old-noise")
@@ -869,8 +876,7 @@ def test_noise_reference_can_use_an_earlier_commit(
 
 
 def test_real_noise_recovery_keeps_empty_model_trial_and_paid_cost(
-    environment: tuple[Loop, SyntheticBackend],
-    evaluator_modules: tuple[ModuleType, ModuleType],
+    environment: tuple[Loop, SyntheticExecution],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from phoenix.config import ROLE_MODELS
@@ -879,8 +885,9 @@ def test_real_noise_recovery_keeps_empty_model_trial_and_paid_cost(
     from phoenix.llm.provider import Request as ModelRequest
     from phoenix_eval.submission import EvaluationPending
 
-    loop, backend = environment
-    evaluation, records = evaluator_modules
+    loop, execution = environment
+    from phoenix_eval import run_records as records
+
     corpus = importlib.import_module("phoenix_eval.dev_corpus")
     binary_module = importlib.import_module("phoenix_eval.run_binary")
     resources = importlib.import_module("phoenix_eval.run_resources")
@@ -906,7 +913,7 @@ def test_real_noise_recovery_keeps_empty_model_trial_and_paid_cost(
     monkeypatch.setattr(
         evaluation,
         "_selection",
-        lambda *_: (binaries, *backend.noise_identity(loop.workspace)),
+        lambda *_: (binaries, *execution.noise_identity(loop.workspace)),
     )
     monkeypatch.setattr(evaluation, "load_validated_cases", lambda *_: None)
     monkeypatch.setattr(
@@ -927,7 +934,7 @@ def test_real_noise_recovery_keeps_empty_model_trial_and_paid_cost(
             return Completion("fixture", Usage(5, 0, 3), request.model)
 
     def measure(
-        workspace: Path, run: Path, item: object, plan: object, replay: object
+        workspace: Path, run: Path, item: DevBinary, plan: object, replay: object
     ) -> object:
         if item != binaries[0]:
             raise EvaluationPending("Fixture interruption.")
@@ -946,21 +953,18 @@ def test_real_noise_recovery_keeps_empty_model_trial_and_paid_cost(
 
     monkeypatch.setattr(evaluation, "measure", measure)
 
-    class InterruptedEvaluator(Evaluator):
-        def noise_identity(self, workspace: Path) -> tuple[str, str]:
-            return backend.noise_identity(workspace)
+    def interrupted(
+        workspace: Path,
+        run_id: str,
+        selection: Selection,
+        llm_cache: bool,
+        *,
+        metadata: dict[str, object] | None = None,
+    ) -> None:
+        REAL_EVALUATE(workspace, run_id, selection, llm_cache, metadata=metadata)
+        raise RuntimeError("Fixture stop between trials.")
 
-        def evaluate(
-            self,
-            workspace: Path,
-            run_id: str,
-            request: Request,
-            metadata: dict[str, object],
-        ) -> None:
-            super().evaluate(workspace, run_id, request, metadata)
-            raise RuntimeError("Fixture stop between trials.")
-
-    loop.backend = InterruptedEvaluator()
+    monkeypatch.setattr(evaluation, "evaluate", interrupted)
     request = Request(kind="noise", llm_cache=False)
     with pytest.raises(RuntimeError, match="between trials"):
         loop.execute(request, "real-noise")
@@ -993,3 +997,178 @@ def test_real_noise_recovery_keeps_empty_model_trial_and_paid_cost(
     )
     assert not loop.active.exists()
     assert len(table(loop.scoreboard)[1]) == 1
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("extra", "unknown"),
+        ("row", "1"),
+        ("row", None),
+        ("experiment", True),
+        ("noise_ref", 1),
+        ("failure", ["ValueError"]),
+        ("failure", {"type": "unknown"}),
+        ("noise_verified", True),
+        ("noise_verified", "unknown"),
+        ("noise_data", ["a" * 64, "b" * 64]),
+        ("checkout", "/unknown"),
+        ("run_id", "other"),
+        ("request", {"kind": "unknown"}),
+    ],
+)
+def test_unknown_claim_blocks_recovery_without_changes(
+    environment: tuple[Loop, SyntheticExecution], field: str, value: object
+) -> None:
+    loop, execution = environment
+    execution.crash = True
+    with pytest.raises(RuntimeError):
+        loop.execute(Request(), "unknown-claim")
+    path = loop.workspace / "runs/unknown-claim/loop.json"
+    write(path, {**read(path), field: value})
+    active, claim = loop.active.read_bytes(), path.read_bytes()
+    with pytest.raises((ValueError, KeyError)):
+        loop.execute(Request(), "new")
+    assert loop.active.read_bytes() == active
+    assert path.read_bytes() == claim
+    assert execution.calls == ["unknown-claim"]
+    assert not loop.scoreboard.exists()
+
+
+@pytest.mark.parametrize("phase", ["failure", "noise_data", "noise_verified"])
+def test_interrupted_claim_update_preserves_the_allocation(
+    environment: tuple[Loop, SyntheticExecution],
+    monkeypatch: pytest.MonkeyPatch,
+    phase: str,
+) -> None:
+    from phoenix_eval import loop as module
+
+    loop, execution = environment
+    atomic = module._atomic
+
+    def interrupted(path: Path, content: bytes) -> None:
+        if path.name == "loop.json":
+            record = json.loads(content)
+            if record[phase] not in (None, False):
+                raise RuntimeError("Fixture interruption before claim update.")
+        atomic(path, content)
+
+    monkeypatch.setattr(module, "_atomic", interrupted)
+    if phase == "failure":
+
+        def fail(*args: object, **kwargs: object) -> None:
+            raise ValueError("Fixture preselection failure.")
+
+        monkeypatch.setattr(evaluation, "evaluate", fail)
+    request = Request(kind="noise", llm_cache=False)
+    with pytest.raises(RuntimeError, match="before claim update"):
+        loop.execute(request, "claim-update")
+    assert loop.active.exists()
+    allocation = loop.workspace / "runs/claim-update/loop.json"
+    assert read(allocation)[phase] in (None, False)
+    monkeypatch.setattr(module, "_atomic", atomic)
+    if phase == "noise_verified":
+        calls = list(execution.calls)
+        document = loop.execute(request, "claim-update")
+        assert document["row"] == 1
+        assert execution.calls == calls
+    else:
+        content = allocation.read_bytes()
+        with pytest.raises(ValueError, match="no fixed plan"):
+            loop.execute(Request(), "new")
+        assert allocation.read_bytes() == content
+        assert loop.active.exists()
+
+
+@pytest.mark.parametrize("boundary", ["child", "parent", "markdown"])
+def test_noise_publication_recovers_each_boundary_without_execution(
+    environment: tuple[Loop, SyntheticExecution],
+    monkeypatch: pytest.MonkeyPatch,
+    boundary: str,
+) -> None:
+    from phoenix_eval import loop as module
+
+    loop, execution = environment
+    atomic = module._atomic
+
+    def interrupted(path: Path, content: bytes) -> None:
+        if (
+            boundary == "child"
+            and path.name == "loop.json"
+            and json.loads(content)["noise_verified"]
+            or boundary == "parent"
+            and path.name == "scoreboard.json"
+            or boundary == "markdown"
+            and path == loop.scoreboard
+        ):
+            raise RuntimeError("Fixture publication interruption.")
+        atomic(path, content)
+
+    monkeypatch.setattr(module, "_atomic", interrupted)
+    request = Request(kind="noise", llm_cache=False)
+    with pytest.raises(RuntimeError, match="publication interruption"):
+        loop.execute(request, "publication")
+    assert loop.active.exists()
+    child = loop.workspace / "runs/publication-a/scoreboard.json"
+    child_bytes = child.read_bytes()
+    charges = (child.parent / "published-ledger.jsonl").read_bytes()
+    calls = list(execution.calls)
+    monkeypatch.setattr(module, "_atomic", atomic)
+    if boundary != "child":
+        execution.data = "changed after verification"
+    document = loop.execute(request, "publication")
+    assert document["row"] == 1
+    assert document["noise"] == {"D0": [0, 12], "D1": [0, 12]}
+    assert child.read_bytes() == child_bytes
+    assert (child.parent / "published-ledger.jsonl").read_bytes() == charges
+    assert execution.calls == calls
+    assert len(table(loop.scoreboard)[1]) == 1
+    assert not loop.active.exists()
+
+
+@pytest.mark.parametrize(
+    "artifact", ["unknown.json", "../noise-b-p/llm.jsonl", ".active"]
+)
+def test_unstarted_noise_trial_preserves_unknown_work(
+    environment: tuple[Loop, SyntheticExecution], artifact: str
+) -> None:
+    loop, execution = environment
+    execution.crash = True
+    request = Request(kind="noise", llm_cache=False)
+    with pytest.raises(RuntimeError):
+        loop.execute(request, "noise")
+    path = loop.workspace / "runs/noise-b" / artifact
+    write(path, {"reserved_cost": 19})
+    content = path.read_bytes()
+    with pytest.raises(ValueError, match="Unknown unfinished noise child"):
+        loop.execute(request, "noise")
+    assert path.read_bytes() == content
+    assert not (loop.workspace / "runs/noise-b/plan.json").exists()
+    assert loop.active.exists()
+    assert not loop.scoreboard.exists()
+    assert execution.calls == ["noise-a"]
+
+
+def test_loop_rejects_replay_before_archive_restore(
+    environment: tuple[Loop, SyntheticExecution], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from phoenix_eval import run_archive
+
+    loop, execution = environment
+    execution.crash = True
+    with pytest.raises(RuntimeError):
+        loop.execute(Request(), "replay")
+    path = loop.workspace / "runs/replay/plan.json"
+    write(path, {**read(path), "replay_of": "missing-ancestor"})
+
+    def restore(*args: object) -> None:
+        pytest.fail("Archive restore under the shared loop archive lock.")
+
+    monkeypatch.setattr(run_archive, "restore_run", restore)
+    content = path.read_bytes()
+    with pytest.raises(ValueError, match="cannot use a replay plan"):
+        loop.execute(Request(), "new")
+    assert path.read_bytes() == content
+    assert loop.active.exists()
+    assert not loop.scoreboard.exists()
+    assert execution.calls == ["replay"]

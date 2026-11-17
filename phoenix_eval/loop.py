@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import argparse
 import fcntl
-import hashlib
-import importlib
 import json
 import math
 import os
@@ -15,17 +13,19 @@ import sys
 import uuid
 from collections.abc import Iterator
 from contextlib import ExitStack, contextmanager
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from statistics import median
 from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import cast
 
+from phoenix_eval import run as evaluation
+from phoenix_eval import run_plan
 from phoenix_eval.docker import WorkerError
-
-if TYPE_CHECKING:
-    from phoenix_eval.run import Publication
+from phoenix_eval.run import Publication
+from phoenix_eval.run_records import RunPlan, Selection, _boolean, _string, _strings
+from phoenix_eval.run_records import directory as _run
 
 HEADER = (
     "| row | run_id | commit | corpus | data hash | loop | cache | milestone | exp | "
@@ -96,14 +96,6 @@ def _hash(value: object, length: int = 64) -> str:
     if not isinstance(value, str) or not re.fullmatch(f"[0-9a-f]{{{length}}}", value):
         raise ValueError("Invalid recorded hash.")
     return value
-
-
-def _run(workspace: Path, run_id: str) -> Path:
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,95}", run_id):
-        raise ValueError("Invalid development run ID.")
-    if run_id.startswith("m1-t0-"):
-        raise ValueError("Use a development run ID.")
-    return _physical(workspace / "runs" / run_id)
 
 
 def revision(checkout: Path, *, clean: bool = True) -> str:
@@ -312,23 +304,107 @@ class Request:
             raise ValueError("Use the quick flag with a probe request.")
 
     @property
-    def quick_selection(self) -> bool:
-        return self.quick or self.kind in ("quick", "noise")
+    def selection(self) -> Selection:
+        return Selection(
+            tiers=self.tiers,
+            levels=self.levels,
+            quick=self.quick or self.kind in ("quick", "noise"),
+            probe=self.kind == "probe",
+        )
 
-    def record(self) -> dict[str, object]:
-        return _object(json.loads(_encode(asdict(self))))
 
+@dataclass(frozen=True)
+class Claim:
+    run_id: str
+    checkout: str
+    commit: str
+    request: Request
+    row: int
+    experiment: int | None
+    noise_ref: int | None
+    configuration_identity: dict[str, object]
+    noise_data: tuple[str, ...] | None = None
+    noise_verified: bool = False
+    failure: tuple[str, ...] | None = None
 
-class Backend(Protocol):
-    def evaluate(
-        self,
-        workspace: Path,
-        run_id: str,
-        request: Request,
-        metadata: dict[str, object],
-    ) -> None: ...
-    def noise_identity(self, workspace: Path) -> tuple[str, str]: ...
-    def configuration_identity(self) -> dict[str, object]: ...
+    @property
+    def children(self) -> tuple[str, ...]:
+        return (
+            (f"{self.run_id}-a", f"{self.run_id}-b")
+            if self.request.kind == "noise"
+            else (self.run_id,)
+        )
+
+    @property
+    def metadata(self) -> dict[str, object]:
+        return {
+            "row": self.row,
+            "loop": self.request.kind,
+            "milestone": "R0",
+            "experiment": [self.experiment, 3] if self.experiment is not None else None,
+            "noise_ref": self.noise_ref,
+            "configuration_identity": self.configuration_identity,
+            "label": self.request.label,
+        }
+
+    @classmethod
+    def load(cls, path: Path) -> Claim:
+        record = _read(path)
+        request = _object(record["request"])
+        if set(record) != set(cls.__dataclass_fields__) or set(request) != set(
+            Request.__dataclass_fields__
+        ):
+            raise ValueError("Unknown loop claim. Preserve it for recovery.")
+        row = record["row"]
+        if type(row) is not int or row < 1:
+            raise ValueError("Unknown loop row. Preserve it for recovery.")
+        claim = cls(
+            _string(record["run_id"]),
+            _string(record["checkout"]),
+            _hash(record["commit"], 40),
+            Request(
+                _string(request["kind"]),
+                _strings(request["tiers"]),
+                _strings(request["levels"]),
+                _boolean(request["llm_cache"]),
+                _string(request["label"]) if request["label"] is not None else None,
+                _boolean(request["quick"]),
+            ),
+            row,
+            cast(int | None, record["experiment"]),
+            cast(int | None, record["noise_ref"]),
+            _object(record["configuration_identity"]),
+            _strings(record["noise_data"])
+            if record["noise_data"] is not None
+            else None,
+            _boolean(record["noise_verified"]),
+            _strings(record["failure"]) if record["failure"] is not None else None,
+        )
+        if (
+            claim.run_id != path.parent.name
+            or any(
+                type(value) is not int or not 1 <= value <= limit
+                for value, limit in (
+                    (claim.row, sys.maxsize),
+                    (claim.experiment, 3),
+                    (claim.noise_ref, claim.row - 1),
+                )
+                if value is not None
+            )
+            or (claim.experiment is not None) != (claim.request.kind == "full")
+            or (claim.noise_data is not None and len(claim.noise_data) != 2)
+            or (claim.failure is not None and len(claim.failure) != 2)
+            or (
+                claim.noise_verified
+                and (claim.noise_data is None or claim.failure is not None)
+            )
+            or (claim.request.kind != "noise" and claim.noise_data is not None)
+        ):
+            raise ValueError("Unknown loop claim state. Preserve it for recovery.")
+        if claim.noise_data is not None:
+            for value in claim.noise_data:
+                _hash(value)
+        return claim
 
 
 def noise_document(
@@ -420,27 +496,38 @@ def noise_document(
     }
 
 
+def _noise_identity(workspace: Path) -> tuple[str, str]:
+    _, corpus, heldout = run_plan._selection(workspace, Selection(quick=True))
+    return _hash(corpus), _hash(heldout)
+
+
 class Loop:
-    def __init__(self, workspace: Path, checkout: Path, backend: Backend):
+    def __init__(self, workspace: Path, checkout: Path):
         self.workspace = _physical(workspace)
         self.checkout = _physical(checkout)
-        self.backend = backend
         self.scoreboard = checkout / "docs/SCOREBOARD.md"
         self.active = workspace / "runs/.active-loop.json"
 
+    def _save(self, claim: Claim, previous: Claim | None = None) -> Claim:
+        path = _run(self.workspace, claim.run_id) / "loop.json"
+        if previous is None:
+            _immutable(path, asdict(claim))
+        else:
+            if _encode(_read(path)) != _encode(asdict(previous)):
+                raise ValueError("The loop claim changed. Preserve it for recovery.")
+            _atomic(path, _encode(asdict(claim)))
+        return claim
+
+    def _claim(self, run_id: str) -> Claim:
+        claim = Claim.load(_run(self.workspace, run_id) / "loop.json")
+        if claim.checkout != str(self.checkout):
+            raise ValueError("Recover the active loop from its recorded checkout.")
+        return claim
+
     @contextmanager
-    def _unselected(self, claim: dict[str, object]) -> Iterator[bool]:
-        run_id = str(claim["run_id"])
-        dependencies = (
-            [f"{run_id}-a", f"{run_id}-b"]
-            if _object(claim["request"])["kind"] == "noise"
-            else []
-        )
-        if claim["dependencies"] != dependencies:
-            yield False
-            return
+    def _unselected(self, claim: Claim) -> Iterator[bool]:
         with ExitStack() as locks:
-            for identifier in [run_id, *dependencies]:
+            for identifier in dict.fromkeys((claim.run_id, *claim.children)):
                 run = _run(self.workspace, identifier)
                 if run.exists():
                     lock = locks.enter_context(
@@ -448,12 +535,8 @@ class Loop:
                     )
                     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     allowed = {"evaluation.lock"}
-                    if identifier == run_id:
-                        allowed |= {
-                            "loop.json",
-                            "noise-identity.json",
-                            "preselection-failure.json",
-                        }
+                    if identifier == claim.run_id:
+                        allowed.add("loop.json")
                     if any(
                         path.name not in allowed or not _physical(path).is_file()
                         for path in run.iterdir()
@@ -468,70 +551,12 @@ class Loop:
                     return
             yield True
 
-    def _preselection_failed(self, claim: dict[str, object]) -> bool:
-        path = _run(self.workspace, str(claim["run_id"])) / "preselection-failure.json"
-        if not path.exists():
-            return False
-        record = _read(path)
-        error = _object(record.get("error"))
-        if (
-            set(record)
-            != {
-                "schema",
-                "run_id",
-                "state",
-                "claim_sha256",
-                "error",
-                "experiment",
-                "selection_fixed",
-                "paid_pipeline_work",
-            }
-            or record["schema"] != 1
-            or record["run_id"] != claim["run_id"]
-            or record["state"] != "preselection_failed"
-            or record["claim_sha256"] != hashlib.sha256(_encode(claim)).hexdigest()
-            or record["experiment"] is not None
-            or record["selection_fixed"] is not False
-            or record["paid_pipeline_work"] is not False
-            or set(error) != {"type", "message"}
-            or any(not isinstance(value, str) for value in error.values())
-        ):
-            raise ValueError("Unknown preselection failure state. Preserve it.")
-        return True
-
-    def _record_preselection_failure(
-        self, claim: dict[str, object], error: Exception
-    ) -> None:
-        try:
-            with self._unselected(claim) as safe:
-                if not safe:
-                    return
-                _immutable(
-                    _run(self.workspace, str(claim["run_id"]))
-                    / "preselection-failure.json",
-                    {
-                        "schema": 1,
-                        "run_id": claim["run_id"],
-                        "state": "preselection_failed",
-                        "claim_sha256": hashlib.sha256(_encode(claim)).hexdigest(),
-                        "error": {"type": type(error).__name__, "message": str(error)},
-                        "experiment": None,
-                        "selection_fixed": False,
-                        "paid_pipeline_work": False,
-                    },
-                )
-                self.active.unlink()
-        except (OSError, ValueError):
-            return
-
-    def _noise_reference(
-        self, rows: list[list[str]], configuration_identity: dict[str, object]
-    ) -> int | None:
+    def _noise_reference(self, rows: list[list[str]]) -> int | None:
         noise_rows = [row for row in reversed(rows) if row[5] == "noise"]
         if not noise_rows:
             return None
         try:
-            corpus, heldout = self.backend.noise_identity(self.workspace)
+            corpus, heldout = _noise_identity(self.workspace)
         except (ValueError, OSError, KeyError, WorkerError, subprocess.SubprocessError):
             return None
         for row in noise_rows:
@@ -539,145 +564,104 @@ class Loop:
             if not path.exists():
                 continue
             noise = _read(path)
-            if (
-                noise.get("run_id") == row[1]
-                and noise.get("row") == int(row[0])
-                and noise.get("loop") == "noise"
-                and noise.get("corpus") == "corpus_dev"
-                and noise.get("corpus_hash") == corpus
-                and noise.get("heldout_hash") == heldout
-                and noise.get("quick_set") == 1
-                and noise.get("configuration_identity") == configuration_identity
-            ):
+            expected = {
+                "run_id": row[1],
+                "row": int(row[0]),
+                "loop": "noise",
+                "corpus": "corpus_dev",
+                "corpus_hash": corpus,
+                "heldout_hash": heldout,
+                "quick_set": 1,
+                "configuration_identity": run_plan.model_identity(),
+            }
+            if all(noise.get(key) == value for key, value in expected.items()):
                 return int(row[0])
         return None
 
-    def _claim(self, run_id: str) -> dict[str, object]:
-        claim = _read(_run(self.workspace, run_id) / "loop.json")
-        if (
-            set(claim)
-            != {
-                "schema",
-                "run_id",
-                "checkout",
-                "commit",
-                "request",
-                "metadata",
-                "dependencies",
-            }
-            or claim.get("schema") != 1
-            or claim.get("run_id") != run_id
-        ):
-            raise ValueError("Unknown active-loop record. Preserve it for recovery.")
-        if claim.get("checkout") != str(self.checkout):
-            raise ValueError("Recover the active loop from its recorded checkout.")
-        request = _object(claim["request"])
-        metadata = _object(claim["metadata"])
-        if (
-            request.get("kind") not in ("full", "quick", "probe", "noise")
-            or metadata.get("loop") != request["kind"]
-        ):
-            raise ValueError("Unknown loop request state.")
-        return claim
-
-    def _child(self, run_id: str, claim: dict[str, object]) -> Publication:
-        if not (_run(self.workspace, run_id) / "plan.json").exists():
+    def _child(self, run_id: str, claim: Claim) -> Publication:
+        path = _run(self.workspace, run_id) / "plan.json"
+        if not path.exists():
             raise ValueError(
                 f"Run {run_id} has no fixed plan. Preserve the active-loop record."
             )
-        publication = cast(
-            "Publication",
-            importlib.import_module("phoenix_eval.run").publish(self.workspace, run_id),
-        )
-        plan = publication.plan
-        config = plan.configuration
-        if config.get("revision") != claim["commit"] or any(
-            config.get(key) != value
-            for key, value in _object(claim["metadata"]).items()
+        plan = RunPlan.load(path)
+        if plan.replay_of is not None:
+            raise ValueError("A loop allocation cannot use a replay plan.")
+        if plan.configuration.get("revision") != claim.commit or any(
+            plan.configuration.get(key) != value
+            for key, value in claim.metadata.items()
         ):
             raise ValueError("The fixed plan differs from the loop allocation.")
-        from phoenix_eval.run_records import Selection
-
-        request = _object(claim["request"])
-        expected = Selection(
-            tiers=tuple(cast(list[str], request["tiers"])),
-            levels=tuple(cast(list[str], request["levels"])),
-            quick=bool(request["quick"] or request["kind"] in ("quick", "noise")),
-            probe=request["kind"] == "probe",
-        )
-        if plan.selection != expected or plan.llm_cache != request["llm_cache"]:
+        if (
+            plan.selection != claim.request.selection
+            or plan.llm_cache != claim.request.llm_cache
+        ):
             raise ValueError("The fixed selection differs from the loop request.")
-        return publication
+        return evaluation.publish(self.workspace, run_id)
 
-    def _finish(self, claim: dict[str, object]) -> dict[str, object]:
-        run_id = str(claim["run_id"])
-        run = _run(self.workspace, run_id)
-        if _object(claim["request"])["kind"] == "noise":
-            dependencies = claim.get("dependencies")
-            if dependencies != [f"{run_id}-a", f"{run_id}-b"]:
-                raise ValueError("Unknown noise dependency state.")
-            left = self._child(str(dependencies[0]), claim)
-            plan = asdict(left.plan)
-            pending = _run(self.workspace, str(dependencies[1]))
+    def _noise_check(self, claim: Claim) -> None:
+        if (
+            revision(self.checkout) != claim.commit
+            or _noise_identity(self.workspace) != claim.noise_data
+            or run_plan.model_identity() != claim.configuration_identity
+        ):
+            raise ValueError("Commit or data changed during noise recovery.")
+
+    def _finish(self, claim: Claim) -> dict[str, object]:
+        run = _run(self.workspace, claim.run_id)
+        if claim.request.kind == "noise":
+            left = self._child(claim.children[0], claim)
+            pending = _run(self.workspace, claim.children[1])
             if not (pending / "plan.json").exists():
                 pending.mkdir(parents=True, exist_ok=True)
                 with _physical(pending / "evaluation.lock").open("a+b") as lock:
                     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     if any(
-                        path.name not in ("evaluation.lock", "plan.json")
-                        for path in pending.iterdir()
+                        path.name != "evaluation.lock" for path in pending.iterdir()
+                    ) or any(
+                        _run(self.workspace, f"{pending.name}{suffix}").exists()
+                        for suffix in ("-p", "-check")
                     ):
                         raise ValueError("Unknown unfinished noise child state.")
-                    # Both trials use this fixed selection. Recovery starts no work.
                     _immutable(
                         pending / "plan.json",
-                        {
-                            **plan,
-                            "run_id": dependencies[1],
-                            "dependencies": [
-                                f"{dependencies[1]}-p",
-                                f"{dependencies[1]}-check",
-                            ],
-                        },
+                        asdict(
+                            replace(
+                                left.plan,
+                                run_id=pending.name,
+                                dependencies=(
+                                    f"{pending.name}-p",
+                                    f"{pending.name}-check",
+                                ),
+                            )
+                        ),
                     )
                     for suffix in ("-p", "-check"):
-                        _run(self.workspace, f"{dependencies[1]}{suffix}").mkdir(
+                        _run(self.workspace, f"{pending.name}{suffix}").mkdir(
                             exist_ok=True
                         )
-            publications = [left, self._child(str(dependencies[1]), claim)]
-            children = [publication.document for publication in publications]
-            snapshot = _read(run / "noise-identity.json")
-            expected = [children[0]["corpus_hash"], children[0]["heldout_hash"]]
-            identity = _object(_object(claim["metadata"])["configuration_identity"])
-            if snapshot != {
-                "commit": children[0]["commit"],
-                "data": expected,
-                "configuration_identity": identity,
-            }:
-                raise ValueError("Noise differs from its initial commit or data.")
-            verified = run / "noise-verified.json"
-            if not verified.exists():
-                if (
-                    revision(self.checkout) != snapshot["commit"]
-                    or list(self.backend.noise_identity(self.workspace)) != expected
-                    or self.backend.configuration_identity() != identity
-                ):
-                    raise ValueError("Commit or data changed during noise recovery.")
-                _immutable(verified, snapshot)
-            elif _read(verified) != snapshot:
-                raise ValueError("The noise verification record changed.")
-            document = noise_document(run_id, publications, identity)
+            publications = [left, self._child(pending.name, claim)]
+            if claim.noise_data != (left.plan.corpus_hash, left.plan.heldout_hash):
+                raise ValueError("Noise differs from its initial data.")
+            if not claim.noise_verified:
+                self._noise_check(claim)
+                self._save(replace(claim, noise_verified=True), claim)
+            document = noise_document(
+                claim.run_id, publications, claim.configuration_identity
+            )
             document["result_refs"] = {
                 publication.plan.run_id: publication.sha256
                 for publication in publications
             }
             _immutable(
                 run / "plan.json",
-                {**plan, "run_id": run_id, "dependencies": dependencies},
+                asdict(
+                    replace(left.plan, run_id=claim.run_id, dependencies=claim.children)
+                ),
             )
             _immutable(run / "scoreboard.json", document)
         else:
-            document = self._child(run_id, claim).document
+            document = self._child(claim.run_id, claim).document
         append_row(self.scoreboard, document)
         return document
 
@@ -699,8 +683,8 @@ class Loop:
                     raise ValueError(
                         "Unknown active-loop state. Preserve it for recovery."
                     )
-                prior = self._claim(str(active["run_id"]))
-                if self._preselection_failed(prior):
+                prior = self._claim(_string(active["run_id"]))
+                if prior.failure is not None:
                     with self._unselected(prior) as safe:
                         if not safe:
                             raise ValueError(
@@ -710,10 +694,10 @@ class Loop:
                 else:
                     recovered = self._finish(prior)
                     self.active.unlink()
-                    if run_id == prior["run_id"]:
-                        if prior["request"] != request.record():
-                            raise ValueError("The run ID has a conflicting request.")
-                        return recovered
+                if run_id == prior.run_id and prior.failure is None:
+                    if prior.request != request:
+                        raise ValueError("The run ID has a conflicting request.")
+                    return recovered
             commit = revision(self.checkout)
             run_id = (
                 run_id
@@ -725,9 +709,9 @@ class Loop:
                 raise ValueError("The run ID leaves no space for evaluator suffixes.")
             if (run / "loop.json").exists():
                 prior = self._claim(run_id)
-                if prior["request"] != request.record() or prior["commit"] != commit:
+                if prior.request != request or prior.commit != commit:
                     raise ValueError("The run ID has a conflicting request or commit.")
-                if self._preselection_failed(prior):
+                if prior.failure is not None:
                     raise ValueError(
                         "The run failed before selection. Use a new run ID."
                     )
@@ -740,68 +724,44 @@ class Loop:
                     "The run ID is already published without its allocation."
                 )
             status = (self.checkout / "docs/STATUS.md").read_text()
-            match = re.search(r"^Milestone: (R\d+),", status, re.MULTILINE)
-            if match is None or match[1] != "R0":
+            if not re.search(r"^Milestone: R0,", status, re.MULTILINE):
                 raise ValueError("The R0 loop requires milestone R0 in docs/STATUS.md.")
             used = sum(row[5] == "full" and row[7] == "R0" for row in rows)
             if request.kind == "full" and used >= 3:
                 raise ValueError("The R0 full-loop budget of 3 is used.")
-            configuration_identity = self.backend.configuration_identity()
-            metadata: dict[str, object] = {
-                "row": len(rows) + 1,
-                "loop": request.kind,
-                "milestone": match[1],
-                "experiment": [used + 1, 3] if request.kind == "full" else None,
-                "noise_ref": self._noise_reference(rows, configuration_identity),
-                "configuration_identity": configuration_identity,
-                "label": request.label,
-            }
-            dependencies = (
-                [f"{run_id}-a", f"{run_id}-b"] if request.kind == "noise" else []
+            claim = Claim(
+                run_id,
+                str(self.checkout),
+                commit,
+                request,
+                len(rows) + 1,
+                used + 1 if request.kind == "full" else None,
+                self._noise_reference(rows),
+                run_plan.model_identity(),
             )
-            for child in dependencies:
+            for child in claim.children if request.kind == "noise" else ():
                 if _run(self.workspace, child).exists():
                     raise ValueError("A noise child run ID already exists.")
-            claim = {
-                "schema": 1,
-                "run_id": run_id,
-                "checkout": str(self.checkout),
-                "commit": commit,
-                "request": request.record(),
-                "metadata": metadata,
-                "dependencies": dependencies,
-            }
-            _immutable(run / "loop.json", claim)
+            self._save(claim)
             _atomic(self.active, _encode({"schema": 1, "run_id": run_id}))
             try:
                 if request.kind == "noise":
-                    identity = self.backend.noise_identity(self.workspace)
-                    _immutable(
-                        run / "noise-identity.json",
-                        {
-                            "commit": commit,
-                            "data": list(identity),
-                            "configuration_identity": configuration_identity,
-                        },
+                    claim = self._save(
+                        replace(claim, noise_data=_noise_identity(self.workspace)),
+                        claim,
                     )
-                    for child in dependencies:
-                        if (
-                            revision(self.checkout) != commit
-                            or self.backend.noise_identity(self.workspace) != identity
-                            or self.backend.configuration_identity()
-                            != configuration_identity
-                        ):
-                            raise ValueError("Commit or data changed during noise.")
-                        self.backend.evaluate(self.workspace, child, request, metadata)
-                    if (
-                        revision(self.checkout) != commit
-                        or self.backend.noise_identity(self.workspace) != identity
-                        or self.backend.configuration_identity()
-                        != configuration_identity
-                    ):
-                        raise ValueError("Commit or data changed during noise.")
-                else:
-                    self.backend.evaluate(self.workspace, run_id, request, metadata)
+                for child in claim.children:
+                    if request.kind == "noise":
+                        self._noise_check(claim)
+                    evaluation.evaluate(
+                        self.workspace,
+                        child,
+                        request.selection,
+                        request.llm_cache,
+                        metadata=claim.metadata,
+                    )
+                if request.kind == "noise":
+                    self._noise_check(claim)
             except (
                 ValueError,
                 OSError,
@@ -809,47 +769,22 @@ class Loop:
                 WorkerError,
                 subprocess.SubprocessError,
             ) as error:
-                self._record_preselection_failure(claim, error)
+                try:
+                    with self._unselected(claim) as safe:
+                        if safe:
+                            self._save(
+                                replace(
+                                    claim, failure=(type(error).__name__, str(error))
+                                ),
+                                claim,
+                            )
+                            self.active.unlink()
+                except (OSError, ValueError):
+                    pass
                 raise
             document = self._finish(claim)
             self.active.unlink()
             return document
-
-
-class Evaluator:
-    """Load the evaluator only at the command boundary."""
-
-    def configuration_identity(self) -> dict[str, object]:
-        return _object(
-            importlib.import_module("phoenix_eval.run_plan").model_identity()
-        )
-
-    def evaluate(
-        self,
-        workspace: Path,
-        run_id: str,
-        request: Request,
-        metadata: dict[str, object],
-    ) -> None:
-        records = importlib.import_module("phoenix_eval.run_records")
-        selection = records.Selection(
-            tiers=request.tiers,
-            levels=request.levels,
-            quick=request.quick_selection,
-            probe=request.kind == "probe",
-        )
-        importlib.import_module("phoenix_eval.run").evaluate(
-            workspace, run_id, selection, request.llm_cache, metadata=metadata
-        )
-
-    def noise_identity(self, workspace: Path) -> tuple[str, str]:
-        selection = importlib.import_module("phoenix_eval.run_records").Selection(
-            quick=True
-        )
-        _, corpus, heldout = importlib.import_module(
-            "phoenix_eval.run_plan"
-        )._selection(workspace, selection)
-        return _hash(corpus), _hash(heldout)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -881,7 +816,7 @@ def main(argv: list[str] | None = None) -> int:
         checkout = Path(__file__).resolve().parent.parent
         if not checkout.is_relative_to(workspace) or not workspace.is_absolute():
             raise ValueError("Keep the checkout and runs under PHOENIX_ROOT.")
-        document = Loop(workspace, checkout, Evaluator()).execute(request, args.run_id)
+        document = Loop(workspace, checkout).execute(request, args.run_id)
         print(f"Published row {document['row']} for run {document['run_id']}.")
     except (
         ValueError,
