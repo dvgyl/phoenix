@@ -1,15 +1,8 @@
 """Measure source properties with C tokens and Clang declarations."""
 
-import io
-import json
 import re
-import tarfile
-from typing import cast
 
-from phoenix_eval.docker import Engine, freeze_images
-from phoenix_eval.jobs import limited
-from phoenix_eval.provenance import worker_source_digest
-from phoenix_eval.toolchain import run_tool
+from phoenix_eval.integrity import CompilerEvidence
 
 _TOKEN = re.compile(r'/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', re.S)
 _REGISTER = re.compile(
@@ -44,63 +37,8 @@ def goto_density(source: dict[str, bytes]) -> float:
     return 100 * count / lines if lines else 0.0
 
 
-def _locals(node: dict[str, object]) -> int:
-    children = cast(list[dict[str, object]], node.get("inner", []))
-    if node.get("kind") == "FunctionDecl":
-        if not any(child.get("kind") == "CompoundStmt" for child in children):
-            return 0
-
-        def declarations(item: dict[str, object]) -> int:
-            name = item.get("name")
-            own = int(
-                item.get("kind") in ("VarDecl", "ParmVarDecl")
-                and isinstance(name, str)
-                and _REGISTER.fullmatch(name) is not None
-            )
-            return own + sum(
-                declarations(child)
-                for child in cast(list[dict[str, object]], item.get("inner", []))
-            )
-
-        return sum(declarations(child) for child in children)
-    return sum(_locals(child) for child in children)
-
-
-@limited("compile")
-def register_named_locals(source: dict[str, bytes], *, image: str | None = None) -> int:
-    if image is None:
-        image = freeze_images((Engine.ARM64,), worker_source_digest())["arm64"]
-    archive = io.BytesIO()
-    with tarfile.open(fileobj=archive, mode="w") as stream:
-        for name, data in sorted(source.items()):
-            if not name.endswith((".c", ".h")):
-                continue
-            if not re.fullmatch(r"(?:src|include)/[A-Za-z0-9_.-]+", name):
-                raise ValueError("Use regular project source paths.")
-            entry = tarfile.TarInfo(name)
-            entry.size = len(data)
-            stream.addfile(entry, io.BytesIO(data))
-    count = 0
-    for name in sorted(name for name in source if name.endswith(".c")):
-        result = run_tool(
-            "arm64",
-            image,
-            "tar -xf -; clang -std=c11 -D_POSIX_C_SOURCE=200809L -Iinclude "
-            '-Xclang -ast-dump=json -fsyntax-only "$1"',
-            "quality",
-            name,
-            options=(
-                "--cap-drop=ALL",
-                "--pids-limit=32",
-                "--memory=1536m",
-                "--tmpfs=/work:rw,nosuid,nodev,size=64m",
-            ),
-            input=archive.getvalue(),
-            timeout=60,
-            check=True,
-        )
-        document = json.loads(result.stdout)
-        if not isinstance(document, dict):
-            raise ValueError("Clang returned an invalid syntax tree.")
-        count += _locals(document)
-    return count
+def register_named_locals(evidence: tuple[CompilerEvidence, ...]) -> int | None:
+    arm = [item for item in evidence if item.target == "aarch64-linux-gnu"]
+    if len(arm) != 1:
+        return None
+    return sum(_REGISTER.fullmatch(name) is not None for name in arm[0].local_names)

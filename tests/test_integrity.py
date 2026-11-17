@@ -17,6 +17,7 @@ from phoenix_eval.integrity import (
     compiler_evidence,
     inspect_project,
 )
+from phoenix_eval.quality import register_named_locals
 
 TARGETS = ("x86_64-linux-gnu", "aarch64-linux-gnu")
 ARTIFACT = "src/program.c"
@@ -41,7 +42,7 @@ def _evidence(
     functions: tuple[FunctionShape, ...] = ORIGIN,
 ) -> tuple[CompilerEvidence, ...]:
     return tuple(
-        CompilerEvidence(target, "18.1.3", storage, calls, functions)
+        CompilerEvidence(target, "18.1.3", storage, calls, (), functions)
         for target in TARGETS
     )
 
@@ -172,6 +173,7 @@ def _document(target: str = TARGETS[0]) -> dict[str, object]:
         ],
         "calls": [{"kind": "builtin", "name": "puts"}],
         "functions": [{"name": "main", "branches": 0, "loops": 0, "switches": 0}],
+        "local_names": [],
     }
 
 
@@ -182,6 +184,13 @@ def _document(target: str = TARGETS[0]) -> dict[str, object]:
         ("record_count", 2),
         ("target", "unknown"),
         ("calls", [None]),
+        ("local_names", None),
+        ("local_names", "rax"),
+        ("local_names", {}),
+        ("local_names", [None]),
+        ("local_names", [1]),
+        ("local_names", [True]),
+        ("local_names", [["rax"]]),
     ),
 )
 def test_rejects_invalid_checker_results(field: str, value: object) -> None:
@@ -200,7 +209,12 @@ def test_requires_both_target_checks(
     runner = Mock(
         side_effect=[
             subprocess.CompletedProcess(
-                (), 0, json.dumps(_document(target)).encode(), b""
+                (),
+                0,
+                json.dumps(
+                    {**_document(target), "local_names": ["rax", "count"]}
+                ).encode(),
+                b"",
             )
             for target in TARGETS
         ]
@@ -209,4 +223,22 @@ def test_requires_both_target_checks(
     result = inspect_project(tmp_path, images)
     assert tuple(item.target for item in result) == TARGETS
     assert all(item.storage[0].data == b"a" for item in result)
+    assert register_named_locals(result) == 1
+    assert runner.call_count == 2
     assert check_integrity(b"", SOURCE, (b"",) * 4, result, frozenset(), ORIGIN).passed
+
+
+def test_local_name_evidence_is_required() -> None:
+    document = _document()
+    del document["local_names"]
+    with pytest.raises(IntegrityError):
+        compiler_evidence(json.dumps(document).encode(), TARGETS[0], ARTIFACT, SOURCE)
+
+
+def test_local_names_preserve_unicode_and_repeated_declarations() -> None:
+    names = ["rax_١", "rax_١", "rbx২", "r8d𝟡", "count"]
+    document = {**_document(), "local_names": names}
+    parsed = compiler_evidence(
+        json.dumps(document).encode(), TARGETS[0], ARTIFACT, SOURCE
+    )
+    assert parsed.local_names == tuple(names)

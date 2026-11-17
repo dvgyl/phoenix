@@ -73,6 +73,7 @@ struct Evidence {
     json::Array records;
     json::Array calls;
     json::Array functions;
+    json::Array localNames;
     json::Object error;
     size_t byteCount = 0;
     bool walked = false;
@@ -98,6 +99,7 @@ struct Evidence {
             report["records"] = std::move(records);
             report["calls"] = std::move(calls);
             report["functions"] = std::move(functions);
+            report["local_names"] = std::move(localNames);
         } else {
             report["status"] = "unchecked";
             report["error"] = std::move(error);
@@ -556,6 +558,38 @@ public:
     }
 };
 
+class LocalNames : public RecursiveASTVisitor<LocalNames> {
+    SourcePolicy &source;
+    json::Array &names;
+    bool inFunction = false;
+
+public:
+    LocalNames(SourcePolicy &source, json::Array &names) : source(source), names(names) {}
+
+    // Type-only parameters are absent from the JSON declaration children.
+    bool TraverseTypeLoc(TypeLoc) { return true; }
+
+    bool TraverseFunctionDecl(FunctionDecl *decl) {
+        if (!inFunction && !decl->doesThisDeclarationHaveABody())
+            return true;
+        bool previous = inFunction;
+        inFunction = true;
+        for (auto *parameter : decl->parameters())
+            TraverseDecl(parameter);
+        if (decl->doesThisDeclarationHaveABody())
+            TraverseStmt(decl->getBody());
+        inFunction = previous;
+        return true;
+    }
+
+    bool VisitVarDecl(VarDecl *decl) {
+        if (inFunction && !decl->isImplicit() && !decl->getName().empty() &&
+            source.expansion(decl->getLocation()).project())
+            names.push_back(decl->getNameAsString());
+        return true;
+    }
+};
+
 class Consumer : public ASTConsumer {
     SourcePolicy &source;
     Evidence &evidence;
@@ -574,6 +608,10 @@ public:
         }
         Inventory inventory(context, source, evidence, unseenStrings);
         evidence.walked = inventory.TraverseDecl(context.getTranslationUnitDecl()) && inventory.finish();
+        if (evidence.walked) {
+            LocalNames names(source, evidence.localNames);
+            names.TraverseDecl(context.getTranslationUnitDecl());
+        }
     }
 };
 

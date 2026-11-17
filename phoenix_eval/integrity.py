@@ -71,6 +71,7 @@ class CompilerEvidence:
     version: str
     storage: tuple[Storage, ...]
     calls: tuple[Call, ...]
+    local_names: tuple[str, ...]
     functions: tuple[FunctionShape, ...] = ()
 
 
@@ -215,11 +216,17 @@ def compiler_evidence(
                     "Clang source evidence contains an invalid function."
                 )
             functions.append(FunctionShape(name, *counts))
+        local_names = document["local_names"]
+        if not isinstance(local_names, list) or any(
+            not isinstance(name, str) for name in local_names
+        ):
+            raise IntegrityError("Clang source evidence contains invalid local names.")
         return CompilerEvidence(
             target,
             str(document["clang_version"]),
             tuple(storage),
             tuple(calls),
+            tuple(local_names),
             tuple(functions),
         )
     except (KeyError, TypeError, AttributeError, ValueError, UnicodeError):

@@ -44,7 +44,6 @@ def _invoke_tool(kind: str, tmp_path: Path) -> object:
     from phoenix_eval.build import ProjectSnapshot, build_project
     from phoenix_eval.coverage import inspect_x86
     from phoenix_eval.integrity import inspect_project
-    from phoenix_eval.quality import register_named_locals
 
     source = tmp_path / "program.c"
     source.write_bytes(b"int main(void) { return 0; }")
@@ -70,8 +69,6 @@ def _invoke_tool(kind: str, tmp_path: Path) -> object:
         return inspect_project(
             project, {"amd64": "sha256:" + "a" * 64, "arm64": "sha256:" + "b" * 64}
         )
-    if kind == "quality":
-        return register_named_locals(dict(project.files), image="sha256:" + "a" * 64)
     assert kind == "coverage"
     elf = bytearray(120)
     elf[:6] = b"\x7fELF\x02\x01"
@@ -82,9 +79,7 @@ def _invoke_tool(kind: str, tmp_path: Path) -> object:
     return inspect_x86(bytes(elf), image="sha256:" + "a" * 64)
 
 
-@pytest.mark.parametrize(
-    "kind", ["public", "build", "integrity", "quality", "coverage"]
-)
+@pytest.mark.parametrize("kind", ["public", "build", "integrity", "coverage"])
 def test_tool_container_policy_and_transport(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
 ) -> None:
@@ -110,13 +105,13 @@ def test_tool_container_policy_and_transport(
                     "records": [],
                     "calls": [],
                     "functions": [],
+                    "local_names": [],
                 }
             ).encode()
         else:
             output = {
                 "public": b"\x7fELF\x02\x01" + bytes(12) + b"\x3e\0",
                 "build": b"\x7fELF\x02\x01" + bytes(12) + b"\x3e\0",
-                "quality": b"{}",
                 "coverage": b"    1000: ret\n",
             }[kind]
         return subprocess.CompletedProcess(command, 0, output, b"")
@@ -165,10 +160,6 @@ def test_tool_container_policy_and_transport(
                     "--memory-swap": "1536m" if kind == "build" else "768m",
                 }
             )
-        if kind == "quality":
-            expected.update(
-                {"--cap-drop": "ALL", "--memory": "1536m", "--platform": "linux/arm64"}
-            )
         if kind == "integrity" and index:
             expected["--platform"] = "linux/arm64"
         expected["--pids-limit"] = "64" if kind in ("public", "build") else "32"
@@ -180,7 +171,6 @@ def test_tool_container_policy_and_transport(
             "integrity": (
                 "/work:rw,noexec,nosuid,nodev,size=64m,uid=19704,gid=19704,mode=0700"
             ),
-            "quality": "/work:rw,nosuid,nodev,size=64m",
             "coverage": "/work:rw,nosuid,nodev,size=32m",
         }[kind]
         assert policy == expected
@@ -195,7 +185,7 @@ def test_tool_container_policy_and_transport(
         )
         assert command[image_index + 1] == "-ec"
         assert kwargs["capture_output"] is True
-        assert kwargs["check"] is (kind in ("quality", "coverage"))
+        assert kwargs["check"] is (kind == "coverage")
         assert kwargs["timeout"] == {"public": 120, "build": 180}.get(kind, 60)
         assert isinstance(kwargs["input"], bytes)
         if kind in ("build", "integrity"):
@@ -203,13 +193,9 @@ def test_tool_container_policy_and_transport(
         elif kind == "public":
             assert kwargs["input"] == (tmp_path / "program.c").read_bytes()
             assert command[-3:] == ("build-public", "clang", "-DPHOENIX_MUTANT=7")
-        elif kind == "quality":
-            assert command[-2:] == ("quality", "src/program.c")
 
 
-@pytest.mark.parametrize(
-    "kind", ["public", "build", "integrity", "quality", "coverage"]
-)
+@pytest.mark.parametrize("kind", ["public", "build", "integrity", "coverage"])
 @pytest.mark.parametrize("cleanup_error", [None, "os", "timeout", "process"])
 @pytest.mark.parametrize("docker_host", [None, "unix:///synthetic/docker.sock"])
 def test_timeout_classification_requires_successful_cleanup(
@@ -292,9 +278,7 @@ def test_timeout_classification_requires_successful_cleanup(
         fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
 
 
-@pytest.mark.parametrize(
-    "kind", ["public", "build", "integrity", "quality", "coverage"]
-)
+@pytest.mark.parametrize("kind", ["public", "build", "integrity", "coverage"])
 @pytest.mark.parametrize(
     "failure",
     [

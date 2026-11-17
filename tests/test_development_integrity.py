@@ -129,6 +129,7 @@ def test_development_integrity_gates_reconstruction(
             "record_count": len(records),
             "records": records,
             "calls": [],
+            "local_names": [],
             "functions": [{"name": "main", "branches": 0, "loops": 0, "switches": 0}],
         }
         return subprocess.CompletedProcess(command, 0, json.dumps(output).encode())

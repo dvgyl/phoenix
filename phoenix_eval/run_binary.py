@@ -242,7 +242,7 @@ def measure(
         categories.add("pipeline_error")
     if report.get("stop") == "budget-limit":
         categories.add("budget")
-    registers = register_named_locals(files, image=images["arm64"])
+    registers = register_named_locals(evidence)
     ledger = workspace / "runs" / (source_pipeline or plan.pipeline) / "llm.jsonl"
     events = read_events(ledger.read_text().splitlines()) if ledger.exists() else ()
     cost = summarize(events, key)

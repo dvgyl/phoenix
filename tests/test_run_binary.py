@@ -11,8 +11,9 @@ from phoenix_eval import run_binary as scoring
 from phoenix_eval.build import PROJECT_CMAKE, snapshot_project
 from phoenix_eval.case import Invocation
 from phoenix_eval.dev_corpus import DevBinary, ValidatedCases
-from phoenix_eval.integrity import IntegrityReport
+from phoenix_eval.integrity import CompilerEvidence, IntegrityError, IntegrityReport
 from phoenix_eval.pair import BuildReport, PairReport
+from phoenix_eval.quality import register_named_locals
 from phoenix_eval.run_plan import case_identity
 from phoenix_eval.run_records import RunPlan, Selection
 from phoenix_eval.submission import Submission, freeze_project, project_path
@@ -195,7 +196,14 @@ def capture(
     monkeypatch.setattr(scoring, "submit", submit)
     monkeypatch.setattr(scoring, "verify_development", lambda *_: frozenset())
     monkeypatch.setattr(scoring, "evaluate_pair", pair)
-    monkeypatch.setattr(scoring, "inspect_project", lambda *_: ())
+    monkeypatch.setattr(
+        scoring,
+        "inspect_project",
+        lambda *_: (
+            CompilerEvidence("x86_64-linux-gnu", "18.1.3", (), (), ("rax", "rbx")),
+            CompilerEvidence("aarch64-linux-gnu", "18.1.3", (), (), ("rax", "count")),
+        ),
+    )
     monkeypatch.setattr(
         scoring,
         "check_integrity",
@@ -209,7 +217,6 @@ def capture(
             (),
         ),
     )
-    monkeypatch.setattr(scoring, "register_named_locals", lambda *_, **__: 0)
     run = tmp_path / "runs/measure"
     run.mkdir(parents=True)
     return tmp_path, run, binary, plan, flags
@@ -223,6 +230,7 @@ def test_complete_capture_is_scored_against_all_valid_cases(
     assert result.fully_successful
     assert result.held_out_cases == (400, 400)
     assert result.details["replay_identical"] is True
+    assert result.details["register_named_locals"] == 1
 
 
 @pytest.mark.parametrize(
@@ -316,3 +324,37 @@ def test_scoring_rejects_changed_frozen_cases(
     with pytest.raises(ValueError, match="held-out cases differ"):
         scoring.measure(workspace, run, binary, plan)
     submit.assert_not_called()
+
+
+def test_scoring_reuses_the_inspection_evidence(
+    capture: tuple[Path, Path, DevBinary, RunPlan, dict[str, bool]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace, run, binary, plan, _ = capture
+    inspection = Mock(wraps=getattr(scoring, "inspect_project"))
+    check = Mock(wraps=getattr(scoring, "check_integrity"))
+    metric = Mock(wraps=register_named_locals)
+    monkeypatch.setattr(scoring, "inspect_project", inspection)
+    monkeypatch.setattr(scoring, "check_integrity", check)
+    monkeypatch.setattr(scoring, "register_named_locals", metric)
+    result = scoring.measure(workspace, run, binary, plan)
+    assert result.details["register_named_locals"] == 1
+    inspection.assert_called_once()
+    metric.assert_called_once()
+    assert metric.call_args.args[0] is check.call_args.args[3]
+    assert not metric.call_args.kwargs
+
+
+def test_failed_inspection_cannot_produce_a_zero_metric(
+    capture: tuple[Path, Path, DevBinary, RunPlan, dict[str, bool]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace, run, binary, plan, _ = capture
+    monkeypatch.setattr(
+        scoring, "inspect_project", Mock(side_effect=IntegrityError("Unchecked."))
+    )
+    metric = Mock(wraps=register_named_locals)
+    monkeypatch.setattr(scoring, "register_named_locals", metric)
+    with pytest.raises(IntegrityError, match="Unchecked"):
+        scoring.measure(workspace, run, binary, plan)
+    metric.assert_not_called()
