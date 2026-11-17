@@ -76,6 +76,7 @@ def test_submission_resumes_after_the_provider_reports_a_limit(
     monkeypatch.setattr(subprocess, "run", runner)
     broker = Mock()
     monkeypatch.setattr(subprocess, "Popen", broker)
+    monkeypatch.setenv("OPENAI_API_KEY", "synthetic-key")
     monkeypatch.setattr(
         "phoenix_eval.submission.guarded_command",
         lambda _, _repo, command, _profile, _allow: command,
@@ -101,6 +102,8 @@ def test_submission_resumes_after_the_provider_reports_a_limit(
         workspace / "runs/pipeline/case" / GUARD_PROBE
     )
     assert Path(first.kwargs["env"]["PYTHONPATH"]) == CHECKOUT
+    assert "OPENAI_API_KEY" not in first.kwargs["env"]
+    assert broker.call_args.kwargs["env"]["OPENAI_API_KEY"] == "synthetic-key"
     checkpoint = workspace / "runs/pipeline/case/run.json"
     checkpoint.write_text('{"budget_binary": 4000000000, "budget_run": 201000000000}')
     result = submit(

@@ -37,6 +37,7 @@ from phoenix_eval.m0 import SEED
 from phoenix_eval.platforms import verify_runtime
 from phoenix_eval.protection import (
     MODEL_FD_ENV,
+    MODEL_PROVIDER_ENV,
     REPLAY_ENV,
     REVISION_ENV,
     inherited_guard,
@@ -90,10 +91,10 @@ class _RecordedProvider:
         self.name = name
 
     def maximum_usage(self, request: Request) -> Usage:
-        raise AssertionError("Replay cannot reserve tokens.")
+        raise AssertionError("The pipeline cannot reserve tokens directly.")
 
     def complete(self, request: Request) -> Completion:
-        raise AssertionError("Replay cannot call a model.")
+        raise AssertionError("The pipeline cannot call a model directly.")
 
 
 def _dollars(value: str) -> int:
@@ -311,13 +312,16 @@ def _locked_run(
         selected: Provider = _RecordedProvider(previous["provider"])
         ledger = Ledger(source, budget)
     else:
-        selected = select_provider(
-            workspace,
-            directory,
-            binary_sha256=metadata.sha256,
-            cache_root=cache_root,
-            pipeline_version=pipeline_digest,
-        )
+        if guarded and (provider_name := os.environ.get(MODEL_PROVIDER_ENV)):
+            selected = _RecordedProvider(provider_name)
+        else:
+            selected = select_provider(
+                workspace,
+                directory,
+                binary_sha256=metadata.sha256,
+                cache_root=cache_root,
+                pipeline_version=pipeline_digest,
+            )
         ledger = Ledger(run, budget)
     if previous is not None and selected.name != previous["provider"]:
         raise ValueError("Resume requires the recorded model provider.")

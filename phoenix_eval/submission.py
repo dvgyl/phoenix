@@ -28,6 +28,7 @@ from phoenix_eval.protection import (
     GUARD_ENV,
     GUARD_PROBE,
     MODEL_FD_ENV,
+    MODEL_PROVIDER_ENV,
     REPLAY_ENV,
     guarded_command,
 )
@@ -444,8 +445,8 @@ def submit(
         "PYTHONPATH": str(CHECKOUT),
         "PYTHONDONTWRITEBYTECODE": "1",
     }
-    env.pop(REPLAY_ENV, None)
-    env.pop(MODEL_FD_ENV, None)
+    for name in (REPLAY_ENV, MODEL_FD_ENV, MODEL_PROVIDER_ENV):
+        env.pop(name, None)
     with (
         ExitStack() as stack,
         (directory / "pipeline.stdout").open("ab") as output,
@@ -479,6 +480,8 @@ def submit(
             )
             env[MODEL_FD_ENV] = str(descriptor)
             descriptors = (descriptor,)
+        key_present = bool(env.pop("OPENAI_API_KEY", None))
+        env[MODEL_PROVIDER_ENV] = "openai-responses" if key_present else "codex-exec"
         result = subprocess.run(
             command,
             cwd=cwd,
