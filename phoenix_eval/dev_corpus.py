@@ -786,6 +786,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         workspace = Path(os.environ["PHOENIX_ROOT"]).resolve()
+        if REPO != workspace / "phoenix":
+            raise ValueError("Build the development corpus from the main checkout.")
         corpus = REPO / "corpus_dev"
         names = args.programs or sorted(
             path.name for path in corpus.iterdir() if path.is_dir()

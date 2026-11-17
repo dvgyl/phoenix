@@ -1,4 +1,5 @@
 #!/bin/sh
 set -eu
 repo=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd -P)
+cd "$repo"
 exec uv run --locked --project "$repo" python -m phoenix_eval.dev_corpus "$@"

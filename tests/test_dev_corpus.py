@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import subprocess
 from dataclasses import asdict, replace
 from pathlib import Path
@@ -110,7 +111,7 @@ def test_missing_repeats_cannot_validate() -> None:
 
 @pytest.fixture
 def program(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    repo = tmp_path / "repo"
+    repo = tmp_path / "phoenix"
     target = repo / "corpus_dev/checksample"
     (target / "src").mkdir(parents=True)
     (target / "holdout").mkdir()
@@ -460,6 +461,40 @@ def test_matrix_keeps_invalid_twin_and_compiler_error_is_fatal(
     build.side_effect = WorkerError("compiler error")
     assert dc.main(["checksample"]) == 1
     assert dc.read_manifest(manifest) == ()
+
+
+def test_worker_checkout_cannot_write_the_manifest(
+    program: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    workspace, repo = program.parents[2], program.parents[1]
+    worktree = workspace / "worktrees/worker"
+    env = {
+        key: value for key, value in os.environ.items() if not key.startswith("GIT_")
+    }
+    for command in (
+        ("init", "-b", "main"),
+        (
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "--allow-empty",
+            "-m",
+            "test",
+        ),
+        ("worktree", "add", "--detach", str(worktree)),
+    ):
+        subprocess.run(
+            ("git", "-C", str(repo), *command), env=env, check=True, capture_output=True
+        )
+    manifest = workspace / "dev_bin/manifest.json"
+    manifest.parent.mkdir()
+    manifest.write_bytes(b'{"binaries": []}\n')
+    monkeypatch.setattr(dc, "REPO", worktree)
+    assert dc.main(["checksample"]) == 1
+    assert "main checkout" in capsys.readouterr().err
+    assert manifest.read_bytes() == b'{"binaries": []}\n'
 
 
 def test_incomplete_corpus_and_failed_validation_cannot_pass(
