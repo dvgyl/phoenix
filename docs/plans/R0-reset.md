@@ -26,8 +26,8 @@ Experiment budget: 3 experiments. Only steps 14 and 16 make experiments. Step 16
 - [x] Step 9a: Land the runtime model change with its tests. The review of `0cbf8f9` found no reproducible defect. Both models replied at the Standard tier. All 74 model and accounting tests and all 1105 full-check tests passed. Both worker images rebuilt from `6c18483`. Evidence: `$PHOENIX_ROOT/tmp/r0-restart-model-tests.log`, `r0-restart-step9a-check.log` and `r0-restart-worker-images.log`.
 - [x] Step 9b: Extend the pipeline denial. The synthetic checks cover the new paths and the permitted input and replay files. The real probe returned 648 denied reads with zero failures. The full check passed. The replacement branch passed its independent review and is on `main` at `234387e`. Evidence: `$PHOENIX_ROOT/tmp/r0-restart-step9b-authorized-probe.log` and `r0-restart-step9b-key-review.log`.
 - [x] Step 9c: Repeat the public smoke run with the new runtime model. All four builds matched all 7 development cases. The integrity check passed. The replay reproduced all 5 project files byte for byte. `run.json` records the current runtime model and the active pipeline profile. Evidence: `$PHOENIX_ROOT/runs/r0-smoke.json`.
-- [ ] Step 10: `scripts/build-dev-corpus` with the `linux/amd64` compilers (check: the manifest has 176 binaries). Stale: the first full build gave 22 programs, 176 binaries and 0 invalid twins (`$PHOENIX_ROOT/tmp/r0-corpus-build.log`). Then an interrupted full `--check` run reset the manifest, which now has 56 entries. Run `scripts/build-dev-corpus` again, without `--check`, after Step 9c. The manifest-writer guard is part of this step.
-- [ ] Step 10a: Validate each missing or stale program, one program at a time (check: `scripts/build-dev-corpus --check <program>` -> exit 0 for each of the 15 programs; the manifest still has 176 binaries after each program; the 7 valid validation records are reused)
+- [x] Step 10: Rebuild the development corpus with the `linux/amd64` compilers. The manifest contains 176 binaries from 22 programs and zero invalid twins. Only the main checkout can run the writer. The tests and the independent review passed. Evidence: `$PHOENIX_ROOT/tmp/r0-restart-step10.log` and `r0-restart-step10-review-2.log`.
+- [ ] Step 10a: Validate the 22 programs, one program at a time. The evaluator rejected all 7 saved records because Step 10 changed the validator fingerprint. Check: `scripts/build-dev-corpus --check <program>` exits 0 for each program and the manifest contains 176 binaries after each program.
 - [ ] Step 11: `phoenix_eval/run.py`, `scripts/loop`, `docs/SCOREBOARD.md`, `scripts/gate`, replay restore (check: `scripts/loop --probe --tier D0 --opt O0` -> exit 0, one row with `loop` = `probe` and `exp` = `-`, and 20 selected binaries); implementation committed as `06f20a1`; canonical publication and typed claims pass 393 related tests in `$PHOENIX_ROOT/tmp/r0-loop-reduction-worker.log`; the probe awaits Step 10a.
 - [ ] Step 11a: Bring `tools/adequacy.py` to the sampling, timeout, exclusion and case-minimum rules of `SPEC.md` section 10.6 (check: `uv run --locked pytest -q tests/test_adequacy.py` passes)
 - [ ] Step 12: Corpus acceptance: adequacy (check: `uv run --locked python tools/adequacy.py --summary` -> 22 programs at or above both thresholds under the current `SPEC.md` section 10.6; `corpus_dev/quick.txt` and `corpus_dev/accepted.json` exist); partial evidence from the earlier tool version: `driftstat` passes (60/62 branches, 221/243 mutants); `branchmark` passes (249/262 branches, 265/288 mutants, run `74eb878dd7fe4e6e9c5fbc2828f0053b`); `chromapath` fix round 1 passes all 8 validation builds with 518 cases and zero exclusions; its pilot was interrupted at the owner pause and needs a rerun. Seven programs have complete validation. Evidence is in `$PHOENIX_ROOT/tmp/r0-corpus-validation-resumed.log` and `$PHOENIX_ROOT/tmp/r0-chromapath-fix-1-validation.log`.
@@ -143,8 +143,8 @@ Keep this block current. A new session resumes from it.
 | Worker checkouts | `$PHOENIX_ROOT/worktrees/dev-fix-<program>` | `git worktree list --porcelain` |
 | Smoke and replay IDs | `r0-smoke-0bc2d530812b4f79af6a8ff99f4900b0`, `r0-replay-d4b9851e96b9440cbe1ec5336ba7c5dc` | Step 9c. Image IDs and command output: `$PHOENIX_ROOT/tmp/r0-restart-step9c-images.log` and `r0-restart-step9c.log`. |
 | Resize record | `$PHOENIX_ROOT/runs/r0-resize.json` | `scripts/resize-workspace --dry-run` |
-| Manifest | `<count>` of 176 binaries | `scripts/build-dev-corpus` |
-| Validation status | `<validated programs>` of 22 | `scripts/build-dev-corpus --check <program>` |
+| Manifest | 176 of 176 binaries. Zero invalid twins. | `scripts/build-dev-corpus` |
+| Validation status | 0 of 22 with the Step 10 validator. All seven earlier records are stale. | `scripts/build-dev-corpus --check <program>` |
 | Adequacy status | `<passing programs>` of 22, with run IDs | `uv run --locked python tools/adequacy.py <program>` |
 | Probe and quick rows | `<rows>` | Steps 11, 12a and 12b |
 
@@ -516,12 +516,13 @@ From the main checkout, run one program at a time:
 
 ```sh
 for p in niblace pairfold patchpanel prismcsv recordloom runepack skeinwire spanrank \
-         tariffgrid tilehash tokenlace unitforge velocalc weighbit wordweft; do
+         tariffgrid tilehash tokenlace unitforge velocalc weighbit wordweft \
+         branchmark chromapath driftstat fernconf gapmeter knotconf lumaquilt; do
   scripts/build-dev-corpus --check "$p" || echo "failed: $p"
 done
 ```
 
-1. Reuse the valid records of `branchmark`, `chromapath`, `driftstat`, `fernconf`, `gapmeter`, `knotconf` and `lumaquilt`. Validate one of them again only if its source, its cases or `tools.lock` changed.
+1. Reuse each record that the current evaluator accepts. The Step 10 guard changed the validator fingerprint. The evaluator rejected all seven earlier records.
 2. After each program, run the check command of Step 10. Expected: `176`.
 3. For a failed program, start a fix round of Step 12, item 3. Continue with the next program.
 
