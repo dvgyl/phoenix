@@ -5,7 +5,6 @@ from dataclasses import asdict
 from hashlib import sha256
 from math import isfinite
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import TypedDict, cast
 
 from phoenix.analyze import Analysis, DevelopmentCase, analyze
@@ -23,6 +22,7 @@ from phoenix.verify import (
     mismatch,
     verify_project,
 )
+from phoenix_eval.artifacts import atomic_bytes
 from phoenix_eval.build import BuildResult, ProjectSnapshot
 from phoenix_eval.docker import Engine, read_program
 from phoenix_eval.outcome import Outcome
@@ -90,14 +90,7 @@ def _package_metadata(
 
 
 def write_json(path: Path, value: object) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=path.parent, delete_on_close=False
-    ) as staged:
-        json.dump(value, staged, ensure_ascii=True, indent=2)
-        staged.write("\n")
-        staged.close()
-        Path(staged.name).replace(path)
+    atomic_bytes(path, (json.dumps(value, ensure_ascii=True, indent=2) + "\n").encode())
 
 
 def _read_analysis(path: Path) -> Analysis:

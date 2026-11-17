@@ -13,10 +13,12 @@ import tarfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import BinaryIO
 
 import pytest
 
 from phoenix_eval import run_archive as archive
+from phoenix_eval.artifacts import atomic_bytes
 
 
 @pytest.fixture
@@ -75,11 +77,137 @@ def test_round_trip_and_idempotence(workspace: Path) -> None:
     assert not primary.exists()
 
 
+def test_archive_version_one_layout(workspace: Path) -> None:
+    root = record(workspace, "dev-one")
+    expected = tree(root)
+    path = archive.archive_run(workspace, "dev-one")
+    index = json.loads((workspace / "runs/archive-index.json").read_bytes())
+    assert index == {
+        "version": 1,
+        "archives": {
+            "dev-one": {
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "roots": ["dev-one"],
+            }
+        },
+    }
+    with tarfile.open(path, "r:gz") as stream:
+        source = stream.extractfile("manifest.json")
+        assert source is not None
+        manifest = json.loads(source.read())
+        assert set(manifest) == {"version", "run_id", "roots", "entries"}
+        assert manifest["version"] == 1
+        assert manifest["run_id"] == "dev-one"
+        assert manifest["roots"] == ["dev-one"]
+        entries = manifest["entries"]
+        assert [item["path"] for item in entries] == sorted(
+            "dev-one" if name == "." else f"dev-one/{name}" for name in expected
+        )
+        assert stream.getnames() == [
+            "manifest.json",
+            *(f"payload/{item['path']}" for item in entries),
+        ]
+        for item in entries:
+            relative = Path(item["path"]).relative_to("dev-one").as_posix()
+            data, mode, mtime = expected[relative]
+            assert item == {
+                "path": item["path"],
+                "kind": "dir" if data is None else "file",
+                "mode": mode,
+                "mtime_ns": mtime,
+                "size": 0 if data is None else len(data),
+                "sha256": "" if data is None else hashlib.sha256(data).hexdigest(),
+            }
+
+
+def test_comparison_checks_bytes_after_matching_hashes(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    record(workspace, "dev-one")
+    restored = workspace / "restored"
+    shutil.copytree(workspace / "runs", restored)
+    changed = restored / "dev-one/bytes.bin"
+    info = changed.stat()
+    changed.write_bytes(b"x" * info.st_size)
+    os.utime(changed, ns=(info.st_atime_ns, info.st_mtime_ns))
+    monkeypatch.setattr(archive, "_digest", lambda path: "0" * 64)
+    with pytest.raises(ValueError, match="Restored file bytes differ"):
+        archive._compare(workspace / "runs", restored, ("dev-one",))
+
+
+@pytest.mark.parametrize("name", ["sealed-synthetic", "holdout_b", "m1-t0-test"])
+def test_protected_names_are_filtered_before_filesystem_access(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch, name: str
+) -> None:
+    root = record(workspace, "dev-one")
+    (root / name).mkdir()
+    rows = scoreboard(workspace, [(name, "full")])
+    original = Path.lstat
+    original_stat = Path.stat
+    original_iterdir = Path.iterdir
+
+    def guarded(path: Path) -> os.stat_result:
+        assert name not in path.parts
+        return original(path)
+
+    def guarded_stat(path: Path, *, follow_symlinks: bool = True) -> os.stat_result:
+        assert name not in path.parts
+        return original_stat(path, follow_symlinks=follow_symlinks)
+
+    def guarded_iterdir(path: Path) -> Iterator[Path]:
+        assert name not in path.parts
+        return original_iterdir(path)
+
+    monkeypatch.setattr(Path, "lstat", guarded)
+    monkeypatch.setattr(Path, "stat", guarded_stat)
+    monkeypatch.setattr(Path, "iterdir", guarded_iterdir)
+    with pytest.raises(ValueError, match="Protected"):
+        archive.archive_run(workspace, "dev-one")
+    with pytest.raises(ValueError, match="Protected"):
+        archive.archive_run(workspace / name, "dev-one")
+    assert archive.gc_candidates(workspace, rows) == ()
+
+
 def test_corrupt_archive_never_restores(workspace: Path) -> None:
     record(workspace, "dev-one")
     path = archive.archive_run(workspace, "dev-one")
     path.write_bytes(path.read_bytes() + b"corrupt")
     with pytest.raises(ValueError, match="SHA-256"):
+        archive.restore_run(workspace, "dev-one")
+    assert not (workspace / "runs/dev-one").exists()
+
+
+def test_archive_hash_is_checked_after_extraction(
+    workspace: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    record(workspace, "dev-one")
+    path = archive.archive_run(workspace, "dev-one")
+    extract = archive._extract_stream
+
+    def corrupt(stream: BinaryIO, destination: Path, run_id: str) -> tuple[str, ...]:
+        roots = extract(stream, destination, run_id)
+        with path.open("ab") as output:
+            output.write(b"changed after extraction")
+        return roots
+
+    monkeypatch.setattr(archive, "_extract_stream", corrupt)
+    with pytest.raises(ValueError, match="changed during extraction"):
+        archive.restore_run(workspace, "dev-one")
+    assert not (workspace / "runs/dev-one").exists()
+
+
+@pytest.mark.parametrize("registered", [False, True])
+def test_restore_requires_matching_index_roots(
+    workspace: Path, registered: bool
+) -> None:
+    if registered:
+        record(workspace, "dev-one")
+        archive.archive_run(workspace, "dev-one")
+        index = workspace / "runs/archive-index.json"
+        document = json.loads(index.read_bytes())
+        document["archives"]["dev-one"]["roots"].append("extra")
+        index.write_text(json.dumps(document))
+    with pytest.raises(ValueError, match="index roots differ|not registered"):
         archive.restore_run(workspace, "dev-one")
     assert not (workspace / "runs/dev-one").exists()
 
@@ -195,7 +323,7 @@ def test_interrupted_publication_keeps_source(
     def fail(path: Path, data: bytes) -> None:
         raise OSError("synthetic interruption")
 
-    monkeypatch.setattr(archive, "_atomic", fail)
+    monkeypatch.setattr(archive, "atomic_bytes", fail)
     with pytest.raises(OSError, match="interruption"):
         archive.archive_run(workspace, "dev-one")
     assert tree(root) == before
@@ -358,13 +486,13 @@ def test_publication_corruption_keeps_source(
 ) -> None:
     root = record(workspace, "dev-one")
     before = tree(root)
-    write = archive._atomic
+    write = atomic_bytes
 
     def corrupt(path: Path, data: bytes) -> None:
         write(path, data)
         (workspace / "runs/dev-one.tar.gz").write_bytes(b"corrupt after publication")
 
-    monkeypatch.setattr(archive, "_atomic", corrupt)
+    monkeypatch.setattr(archive, "atomic_bytes", corrupt)
     with pytest.raises(ValueError, match="published archive changed"):
         archive.archive_run(workspace, "dev-one")
     assert tree(root) == before

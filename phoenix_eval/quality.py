@@ -3,13 +3,13 @@
 import io
 import json
 import re
-import subprocess
 import tarfile
 from typing import cast
 
-from phoenix_eval.docker import Engine, docker_cli, freeze_images
+from phoenix_eval.docker import Engine, freeze_images
 from phoenix_eval.jobs import limited
 from phoenix_eval.provenance import worker_source_digest
+from phoenix_eval.toolchain import run_tool
 
 _TOKEN = re.compile(r'/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', re.S)
 _REGISTER = re.compile(
@@ -82,31 +82,20 @@ def register_named_locals(source: dict[str, bytes], *, image: str | None = None)
             stream.addfile(entry, io.BytesIO(data))
     count = 0
     for name in sorted(name for name in source if name.endswith(".c")):
-        result = subprocess.run(
-            (
-                *docker_cli(),
-                "run",
-                "--rm",
-                "-i",
-                "--pull=never",
-                "--platform=linux/arm64",
-                "--network=none",
-                "--read-only",
+        result = run_tool(
+            "arm64",
+            image,
+            "tar -xf -; clang -std=c11 -D_POSIX_C_SOURCE=200809L -Iinclude "
+            '-Xclang -ast-dump=json -fsyntax-only "$1"',
+            "quality",
+            name,
+            options=(
                 "--cap-drop=ALL",
                 "--pids-limit=32",
                 "--memory=1536m",
                 "--tmpfs=/work:rw,nosuid,nodev,size=64m",
-                "--workdir=/work",
-                "--entrypoint=/bin/sh",
-                image,
-                "-ec",
-                "tar -xf -; clang -std=c11 -D_POSIX_C_SOURCE=200809L -Iinclude "
-                '-Xclang -ast-dump=json -fsyntax-only "$1"',
-                "quality",
-                name,
             ),
             input=archive.getvalue(),
-            capture_output=True,
             timeout=60,
             check=True,
         )

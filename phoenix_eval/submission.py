@@ -10,9 +10,10 @@ import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import TemporaryDirectory
 from typing import Literal
 
+from phoenix_eval.artifacts import atomic_bytes
 from phoenix_eval.build import PROJECT_CMAKE, project_files
 from phoenix_eval.development import freeze_development
 from phoenix_eval.docker import read_program
@@ -48,16 +49,11 @@ class Submission:
 def write_report(
     path: Path, data: object, *, before_publish: Callable[[], None] | None = None
 ) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with NamedTemporaryFile(
-        dir=path.parent, mode="w", encoding="utf-8", delete_on_close=False
-    ) as stream:
-        json.dump(data, stream, ensure_ascii=True, indent=2, sort_keys=True)
-        stream.write("\n")
-        stream.close()
-        if before_publish is not None:
-            before_publish()
-        Path(stream.name).replace(path)
+    atomic_bytes(
+        path,
+        (json.dumps(data, ensure_ascii=True, indent=2, sort_keys=True) + "\n").encode(),
+        before_publish=before_publish,
+    )
 
 
 def source_digest(files: dict[str, bytes]) -> str:

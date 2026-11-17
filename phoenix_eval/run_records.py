@@ -13,9 +13,9 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import cast
 
+from phoenix_eval.artifacts import atomic_bytes
 from phoenix_eval.dev_corpus import DevBinary
 from phoenix_eval.model_ledger import (
     ModelEvent,
@@ -303,10 +303,7 @@ def capture_ledger(
     snapshot_path = run / f"{name}.jsonl"
     if snapshot_path.resolve() != snapshot_path:
         raise ValueError("Use a regular ledger snapshot path.")
-    with NamedTemporaryFile(dir=run, delete_on_close=False) as staged:
-        staged.write(content)
-        staged.close()
-        Path(staged.name).replace(snapshot_path)
+    atomic_bytes(snapshot_path, content)
     immutable(
         record,
         {"pipeline_run": pipeline, "bytes": len(content), "sha256": digest(content)},

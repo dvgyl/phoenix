@@ -1,15 +1,13 @@
 import re
-import subprocess
 import tarfile
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from uuid import uuid4
 
-from phoenix_eval.docker import Engine, docker_cli
+from phoenix_eval.docker import Engine
 from phoenix_eval.jobs import limited
-from phoenix_eval.toolchain import Compiler
+from phoenix_eval.toolchain import SOURCE_TOOL_OPTIONS, Compiler, ToolTimeout, run_tool
 
 _SOURCE_LIMIT = 4 * 1024 * 1024
 _EXECUTABLE_LIMIT = 16 * 1024 * 1024
@@ -114,51 +112,26 @@ def build_project(
     if engine is Engine.QEMU_X86_64:
         raise ValueError("Use a compiler image to build the program.")
     payload = project_archive(project)
-    name = f"phoenix-build-{uuid4().hex}"
-    docker = docker_cli()
-    command = (
-        *docker,
-        "run",
-        "--rm",
-        "--interactive",
-        "--pull=never",
-        "--network=none",
-        "--read-only",
-        "--cap-drop=ALL",
-        "--security-opt=no-new-privileges",
-        "--pids-limit=64",
-        "--memory=1536m",
-        "--memory-swap=1536m",
-        "--user=19704:19704",
-        "--tmpfs=/work:rw,exec,nosuid,nodev,size=256m,uid=19704,gid=19704,mode=0700",
-        "--workdir=/work",
-        "--env=TMPDIR=/work",
-        "--env=HOME=/nonexistent",
-        "--env=SOURCE_DATE_EPOCH=1794268800",
-        "--entrypoint=/bin/sh",
-        f"--platform=linux/{engine.platform}",
-        f"--name={name}",
-        image or f"phoenix-worker:{engine.platform}",
-        "-ec",
-        _BUILD_SCRIPT,
-        "build-project",
-        compiler,
-    )
     try:
-        finished = subprocess.run(
-            command,
+        finished = run_tool(
+            engine.platform,
+            image or f"phoenix-worker:{engine.platform}",
+            _BUILD_SCRIPT,
+            "build-project",
+            compiler,
+            options=(
+                *SOURCE_TOOL_OPTIONS,
+                "--pids-limit=64",
+                "--memory=1536m",
+                "--memory-swap=1536m",
+                "--tmpfs=/work:rw,exec,nosuid,nodev,size=256m,uid=19704,gid=19704,mode=0700",
+            ),
             input=payload,
-            capture_output=True,
             timeout=180,
             check=False,
+            timeout_error=ToolTimeout(),
         )
-    except subprocess.TimeoutExpired:
-        subprocess.run(
-            (*docker, "rm", "-f", name),
-            capture_output=True,
-            timeout=10,
-            check=False,
-        )
+    except ToolTimeout:
         return BuildResult(
             engine, compiler, None, 0, "The build exceeded its time limit."
         )

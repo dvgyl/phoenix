@@ -1,14 +1,14 @@
 import random
 import re
-import subprocess
 from dataclasses import dataclass, replace
 from pathlib import Path
 from struct import unpack_from
 
 from phoenix_eval.case import CaseResult, Invocation
-from phoenix_eval.docker import Engine, docker_cli, read_program, run_batch
+from phoenix_eval.docker import Engine, read_program, run_batch
 from phoenix_eval.jobs import limited
 from phoenix_eval.outcome import EntryKind, Outcome
+from phoenix_eval.toolchain import run_tool
 from phoenix_eval.trace import CodeTrace
 from phoenix_eval.wire import encode_invocation
 
@@ -93,27 +93,16 @@ def read_executable_bounds(program: bytes) -> tuple[int, int]:
 def inspect_x86(binary: Path | bytes, image: str | None = None) -> BlockInventory:
     program = read_program(binary)
     entry, link_start = read_executable_bounds(program)
-    listing = subprocess.run(
-        (
-            *docker_cli(),
-            "run",
-            "--rm",
-            "--interactive",
-            "--pull=never",
-            "--network=none",
-            "--read-only",
+    listing = run_tool(
+        "amd64",
+        image or "phoenix-worker:amd64",
+        "cat > program; objdump -d --no-show-raw-insn -j .text program; "
+        "readelf -wf program",
+        options=(
             "--pids-limit=32",
             "--tmpfs=/work:rw,nosuid,nodev,size=32m",
-            "--workdir=/work",
-            "--entrypoint=/bin/sh",
-            "--platform=linux/amd64",
-            image or "phoenix-worker:amd64",
-            "-ec",
-            "cat > program; objdump -d --no-show-raw-insn -j .text program; "
-            "readelf -wf program",
         ),
         input=program,
-        capture_output=True,
         timeout=60,
         check=True,
     )

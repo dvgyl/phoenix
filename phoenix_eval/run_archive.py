@@ -28,6 +28,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path, PurePosixPath
 from typing import BinaryIO
 
+from phoenix_eval.artifacts import atomic_bytes
+
 
 @dataclass(frozen=True)
 class ArchiveEntry:
@@ -41,13 +43,16 @@ class ArchiveEntry:
     sha256: str
 
 
+def _protected(value: str) -> bool:
+    value = value.lower()
+    return "sealed" in value or "holdout" in value or value.startswith("m1-t0-")
+
+
 def _run_id(value: object) -> str:
     if (
         not isinstance(value, str)
         or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", value) is None
-        or "sealed" in value.lower()
-        or "holdout" in value.lower()
-        or value.lower().startswith("m1-t0-")
+        or _protected(value)
     ):
         raise ValueError("Invalid or protected development run ID.")
     return value
@@ -60,25 +65,16 @@ def _relative(value: object) -> str:
     if any(part in {"", ".", ".."} or ":" in part for part in parts):
         raise ValueError("Invalid archive path.")
     _run_id(parts[0])
-    if any(
-        "sealed" in part.lower()
-        or "holdout" in part.lower()
-        or part.lower().startswith("m1-t0-")
-        for part in parts
-    ):
+    if any(_protected(part) for part in parts):
         raise ValueError("Protected archive path.")
     return value
 
 
-def _plain(path: Path, *, directory: bool = False) -> os.stat_result:
-    if any(
-        "sealed" in part.lower()
-        or "holdout" in part.lower()
-        or part.lower().startswith("m1-t0-")
-        for part in path.parts
-    ):
+def _plain(path: Path, *, directory: bool | None = False) -> os.stat_result:
+    if any(_protected(part) for part in path.parts):
         raise ValueError("Protected input path.")
     info = path.lstat()
+    directory = stat.S_ISDIR(info.st_mode) if directory is None else directory
     if directory:
         valid = stat.S_ISDIR(info.st_mode)
     else:
@@ -94,11 +90,7 @@ def _runs(workspace: Path) -> Path:
     if not workspace.is_absolute() or ".." in workspace.parts:
         raise ValueError("The workspace must be an absolute path without traversal.")
     for path in reversed((workspace, *workspace.parents)):
-        if (
-            "sealed" in path.name.lower()
-            or "holdout" in path.name.lower()
-            or path.name.lower().startswith("m1-t0-")
-        ):
+        if _protected(path.name):
             raise ValueError("Protected workspace path.")
         _plain(path, directory=True)
     runs = workspace / "runs"
@@ -122,11 +114,9 @@ def _lock(runs: Path) -> Iterator[None]:
 
 
 def _object(pairs: list[tuple[str, object]]) -> dict[str, object]:
-    result: dict[str, object] = {}
-    for key, value in pairs:
-        if key in result:
-            raise ValueError("Duplicate JSON key.")
-        result[key] = value
+    result = dict(pairs)
+    if len(result) != len(pairs):
+        raise ValueError("Duplicate JSON key.")
     return result
 
 
@@ -169,20 +159,6 @@ def _stream_hash(stream: BinaryIO) -> str:
     while chunk := stream.read(1024 * 1024):
         digest.update(chunk)
     return digest.hexdigest()
-
-
-def _atomic(path: Path, data: bytes) -> None:
-    descriptor, name = tempfile.mkstemp(prefix=".archive-write-", dir=path.parent)
-    temporary = Path(name)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(data)
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, path)
-        _sync(path.parent)
-    finally:
-        temporary.unlink(missing_ok=True)
 
 
 def _sync(path: Path) -> None:
@@ -283,11 +259,10 @@ def _terminal(runs: Path, run_id: str) -> None:
 def _inventory(base: Path, roots: tuple[str, ...]) -> tuple[ArchiveEntry, ...]:
     entries: list[ArchiveEntry] = []
 
-    def visit(path: Path) -> None:
+    def visit(path: Path, *, directory: bool | None = None) -> None:
         relative = _relative(path.relative_to(base).as_posix())
-        info = path.lstat()
+        info = _plain(path, directory=directory)
         directory = stat.S_ISDIR(info.st_mode)
-        _plain(path, directory=directory)
         entries.append(
             ArchiveEntry(
                 relative,
@@ -303,8 +278,7 @@ def _inventory(base: Path, roots: tuple[str, ...]) -> tuple[ArchiveEntry, ...]:
                 visit(child)
 
     for root in roots:
-        _plain(base / root, directory=True)
-        visit(base / root)
+        visit(base / root, directory=True)
     return tuple(sorted(entries, key=lambda entry: entry.path))
 
 
@@ -360,22 +334,27 @@ def _manifest(
 
 
 def _extract(
-    archive: Path, destination: Path, run_id: str, expected_hash: str
-) -> tuple[tuple[str, ...], tuple[ArchiveEntry, ...]]:
+    archive: Path, destination: Path, run_id: str, record: object
+) -> tuple[str, ...]:
+    if not isinstance(record, dict):
+        raise ValueError("The archive is not registered.")
+    expected_hash = _hash(record["sha256"])
     with _open(archive) as archive_bytes:
         if _stream_hash(archive_bytes) != expected_hash:
             raise ValueError("Archive SHA-256 mismatch.")
         archive_bytes.seek(0)
-        result = _extract_stream(archive_bytes, destination, run_id)
+        roots = _extract_stream(archive_bytes, destination, run_id)
         archive_bytes.seek(0)
         if _stream_hash(archive_bytes) != expected_hash:
             raise ValueError("The archive changed during extraction.")
-        return result
+        if list(roots) != record["roots"]:
+            raise ValueError("Archive index roots differ.")
+        return roots
 
 
 def _extract_stream(
     archive_bytes: BinaryIO, destination: Path, run_id: str
-) -> tuple[tuple[str, ...], tuple[ArchiveEntry, ...]]:
+) -> tuple[str, ...]:
     with tarfile.open(fileobj=archive_bytes, mode="r:gz") as stream:
         members = stream.getmembers()
         names: dict[str, tarfile.TarInfo] = {}
@@ -435,15 +414,17 @@ def _extract_stream(
     if _closure(destination, run_id) != roots:
         raise ValueError("Archive dependency closure differs.")
     _terminal(destination, run_id)
-    return roots, entries
+    return roots
 
 
 def _compare(left: Path, right: Path, roots: tuple[str, ...]) -> None:
-    if _inventory(left, roots) != _inventory(right, roots):
+    current = _inventory(left, roots)
+    expected = _inventory(right, roots)
+    if current != expected:
         raise ValueError(
             "Existing run or dependency changed; restore in a separate workspace."
         )
-    for entry in _inventory(right, roots):
+    for entry in expected:
         if entry.kind == "file":
             with (
                 _open(left / entry.path) as original,
@@ -454,18 +435,6 @@ def _compare(left: Path, right: Path, roots: tuple[str, ...]) -> None:
                         raise ValueError("Restored file bytes differ.")
                 if restored.read(1):
                     raise ValueError("Restored file bytes differ.")
-
-
-def _verified(
-    runs: Path, run_id: str, record: object, destination: Path
-) -> tuple[str, ...]:
-    if not isinstance(record, dict):
-        raise ValueError("The archive is not registered.")
-    archive = runs / f"{run_id}.tar.gz"
-    roots, _ = _extract(archive, destination, run_id, _hash(record["sha256"]))
-    if list(roots) != record["roots"]:
-        raise ValueError("Archive index roots differ.")
-    return roots
 
 
 def archive_run(workspace: Path, run_id: str) -> Path:
@@ -489,7 +458,7 @@ def _archive_run_locked(runs: Path, run_id: str) -> Path:
         archives = _index(runs)
         archive = runs / f"{run_id}.tar.gz"
         if run_id in archives:
-            roots = _verified(runs, run_id, archives[run_id], restored)
+            roots = _extract(archive, restored, run_id, archives[run_id])
             if not (runs / run_id).exists() and not (runs / run_id).is_symlink():
                 return archive
         else:
@@ -527,15 +496,16 @@ def _archive_run_locked(runs: Path, run_id: str) -> Path:
             with pending.open("rb") as content:
                 os.fsync(content.fileno())
             checksum = _digest(pending)
-            _extract(pending, restored, run_id, checksum)
+            snapshot = {"sha256": checksum, "roots": list(roots)}
+            _extract(pending, restored, run_id, snapshot)
             _compare(runs, restored, roots)
             if _digest(pending) != checksum:
                 raise ValueError("The archive changed during verification.")
-            archives[run_id] = {"sha256": checksum, "roots": list(roots)}
+            archives[run_id] = snapshot
             os.link(pending, archive)
             pending.unlink()
             _sync(runs)
-            _atomic(
+            atomic_bytes(
                 runs / "archive-index.json",
                 json.dumps(
                     {"version": 1, "archives": archives}, sort_keys=True
@@ -570,7 +540,9 @@ def restore_run(workspace: Path, run_id: str) -> Path:
     with _lock(runs), tempfile.TemporaryDirectory(prefix=".restore-", dir=runs) as name:
         temporary = Path(name)
         archives = _index(runs)
-        roots = _verified(runs, run_id, archives.get(run_id), temporary)
+        roots = _extract(
+            runs / f"{run_id}.tar.gz", temporary, run_id, archives.get(run_id)
+        )
         missing: list[str] = []
         for root in roots:
             path = runs / root
@@ -642,11 +614,7 @@ def gc_candidates(workspace: Path, scoreboard: Path) -> tuple[str, ...]:
                 return ()
             row = dict(zip(header, cells, strict=True))
             identifier = row["run_id"]
-            if (
-                "sealed" in identifier.lower()
-                or "holdout" in identifier.lower()
-                or identifier.lower().startswith("m1-t0-")
-            ):
+            if _protected(identifier):
                 continue
             identifier = _run_id(identifier)
             if row["corpus"] != "corpus_dev" or row["loop"] not in {

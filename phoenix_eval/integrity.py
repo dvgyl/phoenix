@@ -1,16 +1,14 @@
 import hashlib
 import json
 import re
-import subprocess
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from uuid import uuid4
 
 from phoenix_eval.build import ProjectSnapshot, snapshot_project
-from phoenix_eval.docker import docker_cli
 from phoenix_eval.elf import elf_sections
 from phoenix_eval.jobs import limited
+from phoenix_eval.toolchain import SOURCE_TOOL_OPTIONS, run_tool
 
 _TEXT_WINDOW = 64
 _MAX_TEXT = 512 * 1024
@@ -240,36 +238,13 @@ def inspect_project(
     artifact = translation_units[0]
     payload = snapshot.archive
     evidence = []
-    docker = docker_cli()
     for architecture, target in _TARGETS.items():
         image = images.get(architecture, "")
         if not re.fullmatch(r"sha256:[a-f0-9]{64}", image):
             raise IntegrityError("The source checker requires pinned image IDs.")
-        name = f"phoenix-c-check-{uuid4().hex}"
-        command = (
-            *docker,
-            "run",
-            "--rm",
-            "--interactive",
-            "--pull=never",
-            "--network=none",
-            "--read-only",
-            "--cap-drop=ALL",
-            "--security-opt=no-new-privileges",
-            "--pids-limit=32",
-            "--memory=768m",
-            "--memory-swap=768m",
-            "--user=19704:19704",
-            "--tmpfs=/work:rw,noexec,nosuid,nodev,size=64m,uid=19704,gid=19704,mode=0700",
-            "--workdir=/work",
-            "--env=TMPDIR=/work",
-            "--env=HOME=/nonexistent",
-            "--env=SOURCE_DATE_EPOCH=1794268800",
-            "--entrypoint=/bin/sh",
-            f"--platform=linux/{architecture}",
-            f"--name={name}",
+        result = run_tool(
+            architecture,
             image,
-            "-ec",
             'tar -xf -; status=0; /opt/phoenix/bin/phoenix-c-integrity "$@" '
             f"> evidence.json 2> checker.log || status=$?; "
             f'head -c {_EVIDENCE_LIMIT + 1} evidence.json; exit "$status"',
@@ -283,21 +258,20 @@ def inspect_project(
             "-Wall",
             "-Wextra",
             "-I/work/project/include",
-        )
-        try:
-            result = subprocess.run(
-                command, input=payload, capture_output=True, check=False, timeout=60
-            )
-        except subprocess.TimeoutExpired:
-            subprocess.run(
-                (*docker, "rm", "-f", name),
-                capture_output=True,
-                check=False,
-                timeout=10,
-            )
-            raise IntegrityError(
+            options=(
+                *SOURCE_TOOL_OPTIONS,
+                "--pids-limit=32",
+                "--memory=768m",
+                "--memory-swap=768m",
+                "--tmpfs=/work:rw,noexec,nosuid,nodev,size=64m,uid=19704,gid=19704,mode=0700",
+            ),
+            input=payload,
+            timeout=60,
+            check=False,
+            timeout_error=IntegrityError(
                 "The Clang source check exceeded its time limit."
-            ) from None
+            ),
+        )
         if len(result.stdout) > _EVIDENCE_LIMIT:
             raise IntegrityError("The Clang source check could not complete.")
         if result.returncode:

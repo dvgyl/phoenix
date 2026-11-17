@@ -4,10 +4,11 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from hashlib import sha256
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import TemporaryDirectory
 from typing import Literal
 
 from phoenix.jobs import file_lock
+from phoenix_eval.artifacts import atomic_bytes as atomic_bytes
 
 
 class CacheError(ValueError):
@@ -32,20 +33,6 @@ def stage_versions(
         "lift": identity_hash({"source": pipeline_version, "tools": tools}),
         "devset": identity_hash({"source": pipeline_version, "images": images}),
     }
-
-
-def atomic_bytes(path: Path, data: bytes) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with NamedTemporaryFile(dir=path.parent, delete=False) as stream:
-        temporary = Path(stream.name)
-        try:
-            stream.write(data)
-            stream.flush()
-            os.fsync(stream.fileno())
-            stream.close()
-            temporary.replace(path)
-        finally:
-            temporary.unlink(missing_ok=True)
 
 
 def read_entry(directory: Path, name: str, identity: object) -> bytes:

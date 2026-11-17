@@ -17,11 +17,11 @@ from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from statistics import median
-from tempfile import NamedTemporaryFile
 from typing import cast
 
 from phoenix_eval import run as evaluation
 from phoenix_eval import run_plan
+from phoenix_eval.artifacts import atomic_bytes
 from phoenix_eval.docker import WorkerError
 from phoenix_eval.run import Publication
 from phoenix_eval.run_records import RunPlan, Selection, _boolean, _string, _strings
@@ -67,21 +67,7 @@ def _encode(value: object) -> bytes:
 
 def _atomic(path: Path, content: bytes) -> None:
     _physical(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with NamedTemporaryFile(dir=path.parent, delete=False) as stream:
-        staged = Path(stream.name)
-        try:
-            stream.write(content)
-            stream.flush()
-            os.fsync(stream.fileno())
-            staged.replace(path)
-            descriptor = os.open(path.parent, os.O_RDONLY)
-            try:
-                os.fsync(descriptor)
-            finally:
-                os.close(descriptor)
-        finally:
-            staged.unlink(missing_ok=True)
+    atomic_bytes(path, content)
 
 
 def _immutable(path: Path, value: object) -> None:
