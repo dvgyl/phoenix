@@ -4,27 +4,7 @@ from typing import Protocol
 from phoenix.config import M1_EFFORT, M1_SCHEMA, ROLE_MODELS
 from phoenix_eval.model_ledger import TokenUsage, completion_charge
 
-
-@dataclass(frozen=True)
-class Usage:
-    input_tokens: int
-    cached_input_tokens: int
-    output_tokens: int
-
-    def __post_init__(self) -> None:
-        if (
-            any(
-                type(count) is not int
-                for count in (
-                    self.input_tokens,
-                    self.cached_input_tokens,
-                    self.output_tokens,
-                )
-            )
-            or not 0 <= self.cached_input_tokens <= self.input_tokens
-            or self.output_tokens < 0
-        ):
-            raise ValueError("The model returned invalid token counts.")
+Usage = TokenUsage
 
 
 @dataclass(frozen=True)
@@ -85,7 +65,4 @@ class Provider(Protocol):
 
 
 def cost_nanodollars(model: str, usage: Usage) -> int:
-    return completion_charge(
-        model,
-        TokenUsage(usage.input_tokens, usage.cached_input_tokens, usage.output_tokens),
-    )
+    return completion_charge(model, usage)

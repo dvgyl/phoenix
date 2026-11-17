@@ -18,7 +18,7 @@ from phoenix.llm.provider import (
 )
 from phoenix_eval.model_ledger import (
     ModelEvent,
-    TokenUsage,
+    ModelSummary,
     completion_charge,
     parse_event,
     read_events,
@@ -46,12 +46,7 @@ class ReplayMissing(ProviderError):
     pass
 
 
-@dataclass(frozen=True, slots=True)
-class LedgerSummary:
-    calls: int
-    usage: Usage
-    cost_nanodollars: int
-    unknown_cost_reservations: int
+LedgerSummary = ModelSummary
 
 
 def _append(stream: TextIO, event: dict[str, object]) -> None:
@@ -65,15 +60,11 @@ def _completion(event: ModelEvent) -> Completion:
     assert event.usage is not None and event.text is not None
     return Completion(
         event.text,
-        Usage(**asdict(event.usage)),
+        event.usage,
         str(event.request["model"]),
         cache_hit=event.cache_hit,
         cache_key=event.cache_key,
-        original_usage=(
-            Usage(**asdict(event.original_usage))
-            if event.original_usage is not None
-            else None
-        ),
+        original_usage=event.original_usage,
     )
 
 
@@ -94,13 +85,7 @@ class Ledger:
             return LedgerSummary(0, Usage(0, 0, 0), 0, 0)
         with self.path.open(encoding="utf-8") as stream:
             fcntl.flock(stream, fcntl.LOCK_SH)
-            summary = summarize(_read_events(stream), binary)
-        return LedgerSummary(
-            summary.calls,
-            Usage(**asdict(summary.usage)),
-            summary.cost_nanodollars,
-            summary.unknown_cost_reservations,
-        )
+            return summarize(_read_events(stream), binary)
 
     def call(
         self,
@@ -134,9 +119,7 @@ class Ledger:
             binary_used = sum(
                 event.cost_nanodollars for event in events if event.binary == binary
             )
-            reserved = completion_charge(
-                request.model, TokenUsage(**asdict(provider.maximum_usage(request)))
-            )
+            reserved = completion_charge(request.model, provider.maximum_usage(request))
             if (
                 used + reserved > self.budget.per_run
                 or binary_used + reserved > self.budget.per_binary
@@ -164,9 +147,7 @@ class Ledger:
             try:
                 completion = provider.complete(request)
                 try:
-                    cost = completion_charge(
-                        request.model, TokenUsage(**asdict(completion.usage))
-                    )
+                    cost = completion_charge(request.model, completion.usage)
                     terminal = {
                         **attempt,
                         "state": "completed" if cost <= reserved else "limit-exceeded",

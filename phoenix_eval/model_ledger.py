@@ -50,6 +50,12 @@ class TokenUsage:
     cached_input_tokens: int = 0
     output_tokens: int = 0
 
+    def __post_init__(self) -> None:
+        for count in (self.input_tokens, self.cached_input_tokens, self.output_tokens):
+            _integer(count)
+        if self.cached_input_tokens > self.input_tokens:
+            raise ValueError("The model returned invalid token counts.")
+
 
 @dataclass(frozen=True)
 class ModelSummary:
