@@ -13,7 +13,6 @@ import re
 import subprocess
 import sys
 import uuid
-from collections import Counter
 from collections.abc import Iterator
 from contextlib import ExitStack, contextmanager
 from dataclasses import asdict, dataclass
@@ -21,9 +20,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from statistics import median
 from tempfile import NamedTemporaryFile
-from typing import Protocol, cast
+from typing import TYPE_CHECKING, Protocol, cast
 
 from phoenix_eval.docker import WorkerError
+
+if TYPE_CHECKING:
+    from phoenix_eval.run import Publication
 
 HEADER = (
     "| row | run_id | commit | corpus | data hash | loop | cache | milestone | exp | "
@@ -140,118 +142,6 @@ def _pair(value: object) -> tuple[int, int]:
     ):
         raise ValueError("Invalid count or denominator.")
     return value[0], value[1]
-
-
-def _identity(record: dict[str, object]) -> tuple[str, ...]:
-    flags = record.get("flags")
-    if not isinstance(flags, list) or any(not isinstance(flag, str) for flag in flags):
-        raise ValueError("Invalid binary flags.")
-    levels = [level for level in LEVELS if f"-{level}" in flags]
-    if len(levels) != 1 or record.get("tier") not in TIERS:
-        raise ValueError("Invalid binary cell.")
-    return (
-        str(record["name"]),
-        str(record["tier"]),
-        str(record["compiler"]),
-        *flags,
-        _hash(record["sha256"]),
-    )
-
-
-def validate_score(
-    document: dict[str, object], plan: dict[str, object], run: Path
-) -> None:
-    """Check identities and fixed denominators against the recorded plan."""
-    config = _object(plan["configuration"])
-    for key in ("run_id", "corpus_hash", "heldout_hash"):
-        if document.get(key) != plan.get(key):
-            raise ValueError(f"The scoreboard differs from the plan: {key}")
-    for key in ("corpus_hash", "heldout_hash"):
-        _hash(document[key])
-    _hash(document["commit"], 40)
-    if (
-        document["commit"] != config["revision"]
-        or document.get("corpus") != "corpus_dev"
-    ):
-        raise ValueError("The scoreboard has a different commit or corpus.")
-    for key in ("row", "loop", "milestone", "experiment", "noise_ref"):
-        if document.get(key) != config.get(key):
-            raise ValueError(f"The scoreboard metadata differs: {key}")
-    if document.get("cache") != ("warm" if plan["llm_cache"] else "cold"):
-        raise ValueError("The scoreboard cache setting differs.")
-    selected = _records(plan["binaries"])
-    records = _records(document["binaries"])
-    roster = {_identity(item) for item in selected}
-    if len(roster) != len(selected) or len(records) != len(selected):
-        raise ValueError("The fixed denominator changed.")
-    if {_identity(item) for item in records} != roster:
-        raise ValueError("The binary identities changed.")
-    hashes, counts = _object(config["case_hashes"]), _object(config["case_counts"])
-    refs = _object(document["result_refs"])
-    keys = [str(record["task_key"]) for record in records]
-    if (
-        len(set(keys)) != len(keys)
-        or set(keys) != set(refs)
-        or set(keys) != set(hashes)
-        or set(keys) != set(counts)
-    ):
-        raise ValueError("The result references differ from the fixed denominator.")
-    cells: dict[str, dict[str, list[int]]] = {}
-    selection = _object(plan["selection"])
-    levels = cast(list[str], selection["levels"])
-    totals = [0, 0]
-    failures: Counter[str] = Counter()
-    stopped = False
-    for record, key in zip(records, keys, strict=True):
-        if not re.fullmatch(r"[A-Za-z0-9._-]+", key) or key in (".", ".."):
-            raise ValueError("Invalid result reference.")
-        if _hash(record["heldout_hash"]) != _hash(hashes[key]):
-            raise ValueError("The held-out identity changed.")
-        n, total = _pair(record["held_out_cases"])
-        if type(counts[key]) is not int or total != cast(int, counts[key]) * 4:
-            raise ValueError("The held-out denominator changed.")
-        success, pending = record.get("fully_successful"), record.get("pending", False)
-        categories = record.get("categories")
-        if (
-            type(success) is not bool
-            or type(pending) is not bool
-            or not isinstance(categories, list)
-            or any(not isinstance(item, str) for item in categories)
-        ):
-            raise ValueError("Invalid binary outcome.")
-        if success and (pending or categories or n != total or total == 0):
-            raise ValueError("An unfinished or failed binary cannot pass.")
-        if pending:
-            if refs[key] is not None or n != 0:
-                raise ValueError("An unfinished binary has a terminal result.")
-        else:
-            path = _physical(run / "results" / f"{key}.json")
-            if (
-                hashlib.sha256(path.read_bytes()).hexdigest() != _hash(refs[key])
-                or _read(path) != record
-            ):
-                raise ValueError("A terminal result changed.")
-        stopped |= bool(pending)
-        failures.update(categories)
-        totals[0] += n
-        totals[1] += total
-        tier = str(record["tier"])
-        cell = cells.setdefault(tier, {level: [0, 0] for level in levels})
-        level = next(
-            level for level in LEVELS if f"-{level}" in cast(list[str], record["flags"])
-        )
-        if level not in cell or tier not in cast(list[str], selection["tiers"]):
-            raise ValueError("A binary is outside the selected cells.")
-        cell[level][0] += success is True
-        cell[level][1] += 1
-    if document.get("success") != cells or document.get("held_out_cases") != totals:
-        raise ValueError("The aggregate counts differ from the fixed denominator.")
-    if document.get("failure_categories") != dict(failures) or document.get(
-        "integrity_failures"
-    ) != sum("integrity" in cast(list[str], item["categories"]) for item in records):
-        raise ValueError("The aggregate failure counts differ.")
-    if document.get("run_state") != ("stopped" if stopped else "complete"):
-        raise ValueError("The run state differs from its results.")
 
 
 def _number(value: object) -> str:
@@ -437,17 +327,17 @@ class Backend(Protocol):
         request: Request,
         metadata: dict[str, object],
     ) -> None: ...
-    def publish(self, workspace: Path, run_id: str) -> dict[str, object]: ...
     def noise_identity(self, workspace: Path) -> tuple[str, str]: ...
     def configuration_identity(self) -> dict[str, object]: ...
 
 
 def noise_document(
     run_id: str,
-    children: list[dict[str, object]],
+    publications: list[Publication],
     configuration_identity: dict[str, object],
 ) -> dict[str, object]:
     """Count tier flips on identical binaries and held-out cases."""
+    children = [publication.document for publication in publications]
     left, right = children
     for field in (
         "commit",
@@ -464,24 +354,36 @@ def noise_document(
     ):
         raise ValueError("Noise requires quick set 1 and the cold cache.")
 
-    def indexed(child: dict[str, object]) -> dict[tuple[str, ...], dict[str, object]]:
-        return {
-            (*_identity(item), _hash(item["heldout_hash"])): item
-            for item in _records(child["binaries"])
-        }
+    if any(
+        publication.plan.configuration.get("configuration_identity")
+        != configuration_identity
+        for publication in publications
+    ):
+        raise ValueError("Noise configuration identities changed.")
 
-    before, after = indexed(left), indexed(right)
-    if before.keys() != after.keys() or not before:
+    before, after = (
+        {result.binary: result for result in publication.results}
+        for publication in publications
+    )
+    if (
+        before.keys() != after.keys()
+        or not before
+        or any(
+            publications[0].plan.configuration[field]
+            != publications[1].plan.configuration[field]
+            for field in ("case_hashes", "case_counts")
+        )
+    ):
         raise ValueError("Noise binary or held-out identities changed.")
     counts: dict[str, list[int]] = {}
     audit = []
     for identity, old in before.items():
         new = after[identity]
-        outcomes = [old["fully_successful"], new["fully_successful"]]
-        count = counts.setdefault(str(old["tier"]), [0, 0])
+        outcomes = [old.fully_successful, new.fully_successful]
+        count = counts.setdefault(old.binary.tier, [0, 0])
         count[0] += outcomes[0] != outcomes[1]
         count[1] += 1
-        audit.append({**new, "noise_outcomes": outcomes})
+        audit.append({**new.record(), "noise_outcomes": outcomes})
     return {
         **right,
         "run_id": run_id,
@@ -678,40 +580,34 @@ class Loop:
             raise ValueError("Unknown loop request state.")
         return claim
 
-    def _child(self, run_id: str, claim: dict[str, object]) -> dict[str, object]:
-        run = _run(self.workspace, run_id)
-        if not (run / "plan.json").exists():
+    def _child(self, run_id: str, claim: dict[str, object]) -> Publication:
+        if not (_run(self.workspace, run_id) / "plan.json").exists():
             raise ValueError(
                 f"Run {run_id} has no fixed plan. Preserve the active-loop record."
             )
-        plan = _read(run / "plan.json")
-        if plan.get("run_id") != run_id:
-            raise ValueError("The fixed plan has a conflicting run ID.")
-        config = _object(plan["configuration"])
+        publication = cast(
+            "Publication",
+            importlib.import_module("phoenix_eval.run").publish(self.workspace, run_id),
+        )
+        plan = publication.plan
+        config = plan.configuration
         if config.get("revision") != claim["commit"] or any(
             config.get(key) != value
             for key, value in _object(claim["metadata"]).items()
         ):
             raise ValueError("The fixed plan differs from the loop allocation.")
-        request, selection = _object(claim["request"]), _object(plan["selection"])
-        expected = {
-            "corpus": "corpus_dev",
-            "tiers": request["tiers"],
-            "levels": request["levels"],
-            "quick": request["quick"] or request["kind"] in ("quick", "noise"),
-            "probe": request["kind"] == "probe",
-        }
-        if selection != expected or plan["llm_cache"] != request["llm_cache"]:
-            raise ValueError("The fixed selection differs from the loop request.")
-        document = _object(
-            json.loads(_encode(self.backend.publish(self.workspace, run_id)))
+        from phoenix_eval.run_records import Selection
+
+        request = _object(claim["request"])
+        expected = Selection(
+            tiers=tuple(cast(list[str], request["tiers"])),
+            levels=tuple(cast(list[str], request["levels"])),
+            quick=bool(request["quick"] or request["kind"] in ("quick", "noise")),
+            probe=request["kind"] == "probe",
         )
-        if document != _read(run / "scoreboard.json"):
-            raise ValueError(
-                "The returned scoreboard differs from its published record."
-            )
-        validate_score(document, plan, run)
-        return document
+        if plan.selection != expected or plan.llm_cache != request["llm_cache"]:
+            raise ValueError("The fixed selection differs from the loop request.")
+        return publication
 
     def _finish(self, claim: dict[str, object]) -> dict[str, object]:
         run_id = str(claim["run_id"])
@@ -721,6 +617,7 @@ class Loop:
             if dependencies != [f"{run_id}-a", f"{run_id}-b"]:
                 raise ValueError("Unknown noise dependency state.")
             left = self._child(str(dependencies[0]), claim)
+            plan = asdict(left.plan)
             pending = _run(self.workspace, str(dependencies[1]))
             if not (pending / "plan.json").exists():
                 pending.mkdir(parents=True, exist_ok=True)
@@ -731,9 +628,6 @@ class Loop:
                         for path in pending.iterdir()
                     ):
                         raise ValueError("Unknown unfinished noise child state.")
-                    plan = _read(
-                        _run(self.workspace, str(dependencies[0])) / "plan.json"
-                    )
                     # Both trials use this fixed selection. Recovery starts no work.
                     _immutable(
                         pending / "plan.json",
@@ -750,7 +644,8 @@ class Loop:
                         _run(self.workspace, f"{dependencies[1]}{suffix}").mkdir(
                             exist_ok=True
                         )
-            children = [left, self._child(str(dependencies[1]), claim)]
+            publications = [left, self._child(str(dependencies[1]), claim)]
+            children = [publication.document for publication in publications]
             snapshot = _read(run / "noise-identity.json")
             expected = [children[0]["corpus_hash"], children[0]["heldout_hash"]]
             identity = _object(_object(claim["metadata"])["configuration_identity"])
@@ -771,21 +666,18 @@ class Loop:
                 _immutable(verified, snapshot)
             elif _read(verified) != snapshot:
                 raise ValueError("The noise verification record changed.")
-            document = noise_document(run_id, children, identity)
+            document = noise_document(run_id, publications, identity)
             document["result_refs"] = {
-                child: hashlib.sha256(
-                    (_run(self.workspace, child) / "scoreboard.json").read_bytes()
-                ).hexdigest()
-                for child in cast(list[str], dependencies)
+                publication.plan.run_id: publication.sha256
+                for publication in publications
             }
-            plan = _read(_run(self.workspace, str(dependencies[0])) / "plan.json")
             _immutable(
                 run / "plan.json",
                 {**plan, "run_id": run_id, "dependencies": dependencies},
             )
             _immutable(run / "scoreboard.json", document)
         else:
-            document = self._child(run_id, claim)
+            document = self._child(run_id, claim).document
         append_row(self.scoreboard, document)
         return document
 
@@ -949,22 +841,6 @@ class Evaluator:
         importlib.import_module("phoenix_eval.run").evaluate(
             workspace, run_id, selection, request.llm_cache, metadata=metadata
         )
-
-    def publish(self, workspace: Path, run_id: str) -> dict[str, object]:
-        run = _run(workspace, run_id)
-        plan = importlib.import_module("phoenix_eval.run_records").RunPlan.load(
-            run / "plan.json"
-        )
-        with _physical(run / "evaluation.lock").open("a+b") as lock:
-            try:
-                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError as error:
-                raise ValueError(f"Evaluation run {run_id} is still active.") from error
-            return _object(
-                importlib.import_module("phoenix_eval.run").publish(
-                    workspace, run, plan
-                )
-            )
 
     def noise_identity(self, workspace: Path) -> tuple[str, str]:
         selection = importlib.import_module("phoenix_eval.run_records").Selection(

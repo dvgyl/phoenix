@@ -16,7 +16,7 @@ import subprocess
 import sys
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import cast
 
@@ -742,8 +742,15 @@ class Gate:
         planning = importlib.import_module("phoenix_eval.run_plan")
         evaluation = importlib.import_module("phoenix_eval.run")
         path = records.directory(self.workspace, row[1])
-        document = read(path / "scoreboard.json")
-        plan = read(path / "plan.json")
+        if row[5] == "noise":
+            document = read(path / "scoreboard.json")
+            typed_plan = records.RunPlan.load(path / "plan.json")
+        else:
+            publication = evaluation.publish(
+                self.workspace, row[1], require_existing=True
+            )
+            document, typed_plan = publication.document, publication.plan
+        plan = obj(json.loads(json.dumps(asdict(typed_plan))))
         require(
             document.get("milestone") == "R0" and document.get("loop") == row[5],
             "The evidence has a different milestone or loop kind.",
@@ -775,29 +782,21 @@ class Gate:
             refs = obj(document["result_refs"])
             require(len(refs) == 2, "Noise needs two child runs.")
             for child, expected in refs.items():
-                child_path = records.directory(self.workspace, child)
+                child_publication = evaluation.publish(
+                    self.workspace, child, require_existing=True
+                )
                 require(
-                    hashlib.sha256(content(child_path / "scoreboard.json")).hexdigest()
-                    == expected,
+                    child_publication.sha256 == expected,
                     "A noise child changed.",
                 )
-                child_doc = read(child_path / "scoreboard.json")
-                child_plan = read(child_path / "plan.json")
-                loop.validate_score(child_doc, child_plan, child_path)
                 require(
-                    child_doc["run_state"] == "complete",
+                    child_publication.document["run_state"] == "complete",
                     "A noise child did not complete.",
                 )
-                records.verify_ledger(self.workspace, child_path)
-                evaluation.publish(
-                    self.workspace,
-                    child_path,
-                    records.RunPlan.load(child_path / "plan.json"),
-                )
                 self.provenance(
-                    obj(child_plan["configuration"]), revision, current=False
+                    child_publication.plan.configuration, revision, current=False
                 )
-                children.append(child_doc)
+                children.append(child_publication)
             regenerated = obj(
                 loop.noise_document(
                     row[1], children, obj(document["configuration_identity"])
@@ -811,12 +810,7 @@ class Gate:
                 ),
                 "The noise aggregate changed.",
             )
-        else:
-            loop.validate_score(document, plan, path)
-            evaluation.publish(
-                self.workspace, path, records.RunPlan.load(path / "plan.json")
-            )
-        selection = records.RunPlan.load(path / "plan.json").selection
+        selection = typed_plan.selection
         selected, corpus_hash, heldout_hash = planning._selection(
             self.workspace, selection
         )
@@ -826,11 +820,7 @@ class Gate:
             "The evidence corpus is stale.",
         )
         require(
-            plan["binaries"]
-            == [
-                cast(dict[str, object], json.loads(json.dumps(vars(binary))))
-                for binary in selected
-            ],
+            typed_plan.binaries == selected,
             "The evidence selection is stale.",
         )
         return document, plan

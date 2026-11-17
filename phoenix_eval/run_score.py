@@ -5,54 +5,8 @@ from pathlib import Path
 from statistics import median, quantiles
 from typing import cast
 
-from phoenix_eval.model_ledger import ModelSummary, read_events, summarize
+from phoenix_eval.model_ledger import ModelSummary
 from phoenix_eval.run_records import BinaryResult, RunPlan
-
-
-def ledger_models(ledger: bytes) -> dict[str, object]:
-    return {
-        "runtime": sorted(
-            {
-                str(event.request["model"])
-                for event in read_events(ledger.decode().splitlines())
-            }
-        )
-    }
-
-
-def verify_scoreboard(
-    plan: RunPlan,
-    results: tuple[BinaryResult, ...],
-    ledger: bytes,
-    saved: dict[str, object],
-    root: Path,
-) -> None:
-    events = read_events(ledger.decode().splitlines())
-    expected = scoreboard(
-        plan,
-        results,
-        {event.binary: summarize(events, event.binary) for event in events},
-        elapsed=0,
-        free_gib=0,
-        peak_memory_gib=None,
-        peak_storage_gib=0,
-        root=root,
-    )
-    expected.update(models=ledger_models(ledger), row=plan.configuration.get("row"))
-    measured = {
-        "loop_minutes",
-        "peak_memory_gib",
-        "peak_storage_gib",
-        "free_storage_gib",
-        "source_lines",
-        "test_lines",
-    }
-    if any(
-        saved.get(key) != value
-        for key, value in expected.items()
-        if key not in measured
-    ):
-        raise ValueError("The published score differs from its fixed evidence.")
 
 
 def _distribution(values: list[float]) -> dict[str, float] | None:

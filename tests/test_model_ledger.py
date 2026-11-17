@@ -7,7 +7,8 @@ import pytest
 
 from phoenix.llm.ledger import Ledger
 from phoenix.llm.provider import Completion, Request, Usage
-from phoenix_eval.run_records import ledger_snapshot, verify_ledger
+from phoenix_eval.model_ledger import summarize
+from phoenix_eval.run_records import capture_ledger, read_ledger
 
 
 class Provider:
@@ -28,9 +29,9 @@ def publication(workspace: Path, text: str = "synthetic") -> tuple[Ledger, Path,
     ledger.call("case", Request("fixture"), Provider(text))
     run = workspace / "evaluation"
     run.mkdir()
-    content, costs = ledger_snapshot(workspace, run, "pipeline")
-    assert costs["case"].cost_nanodollars == 36_200
-    return ledger, run, content
+    snapshot = capture_ledger(workspace, run, "pipeline")
+    assert summarize(snapshot.events, "case").cost_nanodollars == 36_200
+    return ledger, run, snapshot.content
 
 
 def test_snapshot_hashes_complete_large_file(tmp_path: Path) -> None:
@@ -43,7 +44,7 @@ def test_snapshot_hashes_complete_large_file(tmp_path: Path) -> None:
         "sha256": sha256(content).hexdigest(),
     }
     assert "synthetic" not in (run / "published-ledger.json").read_text()
-    assert verify_ledger(tmp_path, run) == content
+    assert read_ledger(tmp_path, run).content == content
 
 
 @pytest.mark.parametrize("content", [b"{}", b"[]", b" " * 4097])
@@ -54,7 +55,7 @@ def test_malformed_events_cannot_be_published(tmp_path: Path, content: bytes) ->
     run = tmp_path / "evaluation"
     run.mkdir()
     with pytest.raises(ValueError):
-        ledger_snapshot(tmp_path, run, "pipeline")
+        capture_ledger(tmp_path, run, "pipeline")
     assert not (run / "published-ledger.json").exists()
 
 
@@ -76,10 +77,10 @@ def test_unsafe_ledger_paths_are_rejected(
     else:
         os.mkfifo(path)
     with pytest.raises(ValueError, match="symbolic link|regular file"):
-        verify_ledger(tmp_path, run)
+        read_ledger(tmp_path, run).content
     if target == "live":
         with pytest.raises(ValueError, match="symbolic link|regular file"):
-            ledger_snapshot(tmp_path, run, "pipeline")
+            capture_ledger(tmp_path, run, "pipeline")
 
 
 @pytest.mark.parametrize("target", ["live", "snapshot"])
@@ -98,9 +99,9 @@ def test_published_prefix_cannot_change_or_disappear(
     else:
         path.unlink()
     with pytest.raises(ValueError, match="changed|published prefix|missing"):
-        verify_ledger(tmp_path, run)
+        read_ledger(tmp_path, run).content
     with pytest.raises(ValueError):
-        ledger_snapshot(tmp_path, run, "pipeline")
+        capture_ledger(tmp_path, run, "pipeline")
 
 
 @pytest.mark.parametrize("field,value", [("bytes", 0), ("sha256", "0" * 64)])
@@ -113,4 +114,4 @@ def test_snapshot_metadata_must_match_published_bytes(
     identity[field] = value
     path.write_text(json.dumps(identity))
     with pytest.raises(ValueError, match="published model ledger changed"):
-        verify_ledger(tmp_path, run)
+        read_ledger(tmp_path, run).content

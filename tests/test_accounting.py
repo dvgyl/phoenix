@@ -7,8 +7,8 @@ import pytest
 from phoenix.config import ROLE_MODELS
 from phoenix.llm.ledger import Ledger
 from phoenix.llm.provider import Completion, ProviderError, Request, Usage
-from phoenix_eval.model_ledger import read_events, summarize
-from phoenix_eval.run_records import ledger_snapshot, verify_ledger
+from phoenix_eval.model_ledger import summarize
+from phoenix_eval.run_records import capture_ledger, read_ledger
 
 
 class Provider:
@@ -114,10 +114,10 @@ def test_crash_and_failed_attempts_keep_budget_reservations(tmp_path: Path) -> N
         ledger.call("case", request, Provider())
     run = tmp_path / "evaluation"
     run.mkdir()
-    content, costs = ledger_snapshot(tmp_path, run, "pipeline")
-    assert verify_ledger(tmp_path, run) == content
-    assert costs["case"].unknown_cost_reservations == 120_000
-    baseline = summarize(read_events(content.decode().splitlines()), "case-ghidra-raw")
+    snapshot = capture_ledger(tmp_path, run, "pipeline")
+    assert read_ledger(tmp_path, run) == snapshot
+    assert summarize(snapshot.events, "case").unknown_cost_reservations == 120_000
+    baseline = summarize(snapshot.events, "case-ghidra-raw")
     assert baseline.calls == 0
     assert baseline.cost_nanodollars == 0
     assert baseline.unknown_cost_reservations == 0
@@ -156,14 +156,14 @@ def test_published_summary_keeps_cost_when_valid_events_append(tmp_path: Path) -
     ledger.call("case", Request("synthetic"), Provider())
     run = tmp_path / "evaluation"
     run.mkdir()
-    prefix, costs = ledger_snapshot(tmp_path, run, "pipeline")
-    assert costs["case"].cost_nanodollars == 36_200
+    snapshot = capture_ledger(tmp_path, run, "pipeline")
+    prefix = snapshot.content
+    assert summarize(snapshot.events, "case").cost_nanodollars == 36_200
     ledger.call("other", Request("synthetic"), Provider())
-    assert verify_ledger(tmp_path, run) == prefix
-    saved, summaries = ledger_snapshot(tmp_path, run, "pipeline")
-    assert saved == prefix
-    assert summaries == costs
-    assert "other" not in summaries
+    assert read_ledger(tmp_path, run).content == prefix
+    saved = capture_ledger(tmp_path, run, "pipeline")
+    assert saved == snapshot
+    assert {event.binary for event in saved.events} == {"case"}
 
 
 @pytest.mark.parametrize(
@@ -237,11 +237,9 @@ def test_failed_measurement_includes_reservations_and_limit_charges(
     run = tmp_path / "evaluation"
     from dataclasses import asdict
 
-    from phoenix_eval.model_ledger import ModelSummary, TokenUsage
-
     run.mkdir()
-    _, costs = ledger_snapshot(tmp_path, run, "pipeline")
-    result = {"model": asdict(costs.get(key, ModelSummary(0, TokenUsage(), 0, 0)))}
+    snapshot = capture_ledger(tmp_path, run, "pipeline")
+    result = {"model": asdict(summarize(snapshot.events, key))}
     assert result["model"] == {
         "calls": 1 if mode == "exceeded" else 0,
         "usage": {
@@ -259,8 +257,9 @@ def test_replay_uses_independent_published_prefix(tmp_path: Path) -> None:
     ledger.call("case", Request("synthetic"), Provider())
     run = tmp_path / "evaluation"
     run.mkdir()
-    prefix, costs = ledger_snapshot(tmp_path, run, "pipeline")
-    assert costs["case"].cost_nanodollars == 36_200
+    snapshot = capture_ledger(tmp_path, run, "pipeline")
+    prefix = snapshot.content
+    assert summarize(snapshot.events, "case").cost_nanodollars == 36_200
     ledger.path.write_bytes(b"")
     (run / "published-ledger.jsonl").write_bytes(b"")
     (run / "published-ledger.json").write_text(
@@ -271,4 +270,4 @@ def test_replay_uses_independent_published_prefix(tmp_path: Path) -> None:
     replay = tmp_path / "replay"
     replay.mkdir()
     with pytest.raises(ValueError, match="published prefix"):
-        ledger_snapshot(tmp_path, replay, "pipeline", prefix=prefix)
+        capture_ledger(tmp_path, replay, "pipeline", prefix=prefix)

@@ -516,61 +516,82 @@ def test_deleted_dynamic_alias_in_test_code(repo: Path) -> None:
 @pytest.fixture
 def evidence_repo(
     repo: Path, monkeypatch: pytest.MonkeyPatch
-) -> tuple[gates.Gate, list[str], dict[str, object], list[str]]:
+) -> tuple[gates.Gate, list[str], dict[str, object]]:
     revision, config = provenance_fixture(repo)
     record = row(revision)
-    binary = SimpleNamespace(name="fixture", sha256="a" * 64)
-    document: dict[str, object] = {
-        "commit": revision,
-        "milestone": "R0",
+    from phoenix_eval import loop, run, run_plan
+    from phoenix_eval.dev_corpus import DevBinary
+    from phoenix_eval.run_binary import task_key
+    from phoenix_eval.run_records import (
+        BinaryResult,
+        RunPlan,
+        Selection,
+        immutable,
+        plan_record,
+        record_result,
+    )
+
+    binary = DevBinary(
+        "fixture", "D0", "gcc", ("-std=c11", "-O0", "-lm"), "a" * 64, "fixture", True
+    )
+    key = task_key(binary)
+    config = {
+        **config,
+        "row": 1,
         "loop": "full",
-        "run_state": "complete",
-        "corpus_hash": "b" * 64,
-        "heldout_hash": "c" * 64,
+        "milestone": "R0",
+        "experiment": [1, 3],
+        "noise_ref": None,
+        "case_counts": {key: 2},
+        "case_hashes": {key: "d" * 64},
     }
-    plan = {"configuration": config, "binaries": [vars(binary)]}
-    write(repo, "runs/run-1/scoreboard.json", json.dumps(document))
-    write(repo, "runs/run-1/plan.json", json.dumps(plan))
-    called: list[str] = []
-    selection = SimpleNamespace(quick=False)
-    modules = {
-        "phoenix_eval.loop": SimpleNamespace(
-            format_row=lambda _doc: "| " + " | ".join(record) + " |",
-            validate_score=lambda *_args: called.append("validate_score"),
+    plan = RunPlan(
+        "run-1",
+        Selection(tiers=("D0",), levels=("O0",)),
+        (binary,),
+        config,
+        "b" * 64,
+        "c" * 64,
+        True,
+        0,
+        ("run-1-p", "run-1-check"),
+    )
+    path = repo / "runs/run-1"
+    path.mkdir(parents=True)
+    immutable(path / "plan.json", plan_record(plan))
+    record_result(
+        path,
+        key,
+        BinaryResult(
+            binary, True, (), (8, 8), False, {"task_key": key, "heldout_hash": "d" * 64}
         ),
-        "phoenix_eval.run_records": SimpleNamespace(
-            directory=lambda workspace, run_id: workspace / "runs" / run_id,
-            RunPlan=SimpleNamespace(
-                load=lambda _path: SimpleNamespace(selection=selection)
-            ),
-        ),
-        "phoenix_eval.run_plan": SimpleNamespace(
-            _configuration=lambda _workspace: config,
-            _selection=lambda *_args: ((binary,), "b" * 64, "c" * 64),
-        ),
-        "phoenix_eval.run": SimpleNamespace(
-            publish=lambda *_args: called.append("publish")
-        ),
-    }
-    original = importlib.import_module
-
-    def module(name: str) -> object:
-        return modules[name] if name in modules else original(name)
-
-    monkeypatch.setattr(importlib, "import_module", module)
-    return gates.Gate(repo, repo), record, document, called
+    )
+    monkeypatch.setattr(run, "CHECKOUT", repo)
+    monkeypatch.setattr(run_plan, "_configuration", lambda _: config)
+    monkeypatch.setattr(
+        run_plan, "_selection", lambda *_: ((binary,), "b" * 64, "c" * 64)
+    )
+    document = run.publish(repo, "run-1").document
+    record = [cell.strip() for cell in loop.format_row(document).split("|")[1:-1]]
+    return gates.Gate(repo, repo), record, document
 
 
 @pytest.mark.parametrize("state", ["complete", "stopped"])
-def test_evidence_checks_actual_artifact_and_invokes_validators(
-    evidence_repo: tuple[gates.Gate, list[str], dict[str, object], list[str]],
+def test_evidence_checks_actual_artifact_with_real_verifier(
+    evidence_repo: tuple[gates.Gate, list[str], dict[str, object]],
     state: str,
 ) -> None:
-    gate, record, document, called = evidence_repo
-    document["run_state"] = state
-    write(gate.root, "runs/run-1/scoreboard.json", json.dumps(document))
+    from phoenix_eval import loop, run
+
+    gate, record, document = evidence_repo
+    if state == "stopped":
+        path = gate.root / "runs/run-1"
+        next((path / "results").glob("*.json")).unlink()
+        (path / "scoreboard.json").unlink()
+        document = run.publish(gate.workspace, "run-1").document
+        record = [cell.strip() for cell in loop.format_row(document).split("|")[1:-1]]
+    assert document["run_state"] == state
     assert gate.evidence(record)[0] == document
-    assert called == ["validate_score", "publish"]
 
 
 def test_rows_accept_the_loop_table_format(repo: Path) -> None:
@@ -606,11 +627,11 @@ def test_rows_accept_the_loop_table_format(repo: Path) -> None:
     ],
 )
 def test_evidence_rejects_changed_identity(
-    evidence_repo: tuple[gates.Gate, list[str], dict[str, object], list[str]],
+    evidence_repo: tuple[gates.Gate, list[str], dict[str, object]],
     field: str,
     value: object,
 ) -> None:
-    gate, record, document, _ = evidence_repo
+    gate, record, document = evidence_repo
     document[field] = value
     write(gate.root, "runs/run-1/scoreboard.json", json.dumps(document))
     with pytest.raises(ValueError):
@@ -618,13 +639,13 @@ def test_evidence_rejects_changed_identity(
 
 
 def test_evidence_rejects_changed_selection(
-    evidence_repo: tuple[gates.Gate, list[str], dict[str, object], list[str]],
+    evidence_repo: tuple[gates.Gate, list[str], dict[str, object]],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    gate, record, _, _ = evidence_repo
-    path = gate.root / "runs/run-1/plan.json"
-    plan = json.loads(path.read_text())
-    plan["binaries"] = []
-    path.write_text(json.dumps(plan))
+    from phoenix_eval import run_plan
+
+    gate, record, _ = evidence_repo
+    monkeypatch.setattr(run_plan, "_selection", lambda *_: ((), "b" * 64, "c" * 64))
     with pytest.raises(ValueError, match="selection is stale"):
         gate.evidence(record)
 
@@ -953,3 +974,27 @@ def test_corpus_checks_actual_inventory_and_invokes_validation(
         )
         assert checked.count("validated") == 176
         assert checked[-2:] == ["selection", "adequacy"]
+
+
+def test_evidence_requires_existing_evaluator_publication(
+    evidence_repo: tuple[gates.Gate, list[str], dict[str, object]],
+) -> None:
+    gate, record, _ = evidence_repo
+    path = gate.workspace / "runs/run-1/scoreboard.json"
+    path.unlink()
+    with pytest.raises(ValueError, match="scoreboard is missing"):
+        gate.evidence(record)
+    assert not path.exists()
+
+
+def test_evidence_verifies_aggregates_that_the_table_does_not_show(
+    evidence_repo: tuple[gates.Gate, list[str], dict[str, object]],
+) -> None:
+    from phoenix_eval.loop import format_row
+
+    gate, record, document = evidence_repo
+    document["program_success"] = {"D0": [999, 999]}
+    assert format_row(document).strip() == "| " + " | ".join(record) + " |"
+    write(gate.root, "runs/run-1/scoreboard.json", json.dumps(document))
+    with pytest.raises(ValueError, match="published score differs"):
+        gate.evidence(record)

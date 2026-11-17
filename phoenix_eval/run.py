@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from pathlib import Path
 from threading import Event
 from typing import cast
@@ -17,6 +17,7 @@ from phoenix_eval.dev_corpus import (
 )
 from phoenix_eval.docker import WorkerError
 from phoenix_eval.integrity import IntegrityError
+from phoenix_eval.model_ledger import summarize
 from phoenix_eval.provenance import (
     CHECKOUT,
 )
@@ -31,114 +32,94 @@ from phoenix_eval.run_records import (
     BinaryResult,
     RunPlan,
     Selection,
+    capture_ledger,
     digest,
     directory,
     evaluation_guard,
     immutable,
-    ledger_snapshot,
+    parse_json,
+    pending_result,
     plan_record,
-    read_json,
+    read_ledger,
+    read_results,
+    record_bytes,
     record_result,
-    verify_ledger,
 )
 from phoenix_eval.run_resources import Resources
-from phoenix_eval.run_score import ledger_models, scoreboard, verify_scoreboard
+from phoenix_eval.run_score import scoreboard
 from phoenix_eval.submission import EvaluationPending
 
 
-def _pending(binary: DevBinary, plan: RunPlan) -> BinaryResult:
-    key = task_key(binary)
-    count = cast(dict[str, int], plan.configuration["case_counts"])[key]
-    return BinaryResult(
-        binary,
-        False,
-        ("pipeline_error",),
-        (0, count * 4),
-        True,
-        {
-            "task_key": key,
-            "heldout_hash": cast(dict[str, str], plan.configuration["case_hashes"])[
-                key
-            ],
-            "dev_passed": False,
-        },
-    )
-
-
-def _read_results(
-    run: Path, plan: RunPlan, refs: dict[str, object] | None = None
-) -> tuple[BinaryResult, ...]:
-    results = []
-    for binary in plan.binaries:
-        key = task_key(binary)
-        path = run / "results" / f"{key}.json"
-        if refs is not None and refs[key] is None:
-            results.append(_pending(binary, plan))
-            continue
-        if path.exists():
-            if refs is not None and digest(path.read_bytes()) != refs[key]:
-                raise ValueError("A published terminal result changed.")
-            result = BinaryResult.parse(read_json(path))
-            if result.binary != binary or result.pending:
-                raise ValueError("The terminal result differs from the fixed roster.")
-            results.append(result)
-        else:
-            if refs is not None:
-                raise ValueError("A published terminal result is missing.")
-            results.append(_pending(binary, plan))
-    return tuple(results)
+@dataclass(frozen=True)
+class Publication:
+    plan: RunPlan
+    results: tuple[BinaryResult, ...]
+    document: dict[str, object]
+    sha256: str
 
 
 def publish(
+    workspace: Path, run_id: str, *, require_existing: bool = False
+) -> Publication:
+    run = directory(workspace, run_id)
+    try:
+        with evaluation_guard(workspace, run):
+            return _publish_locked(workspace, run, require_existing=require_existing)
+    except BlockingIOError as error:
+        raise ValueError(f"Evaluation run {run_id} is still active.") from error
+
+
+def _publish_locked(
     workspace: Path,
     run: Path,
-    plan: RunPlan,
     *,
+    require_existing: bool = False,
     elapsed: float | None = None,
     resources: Resources | None = None,
-) -> dict[str, object]:
+) -> Publication:
+    plan = RunPlan.load(run / "plan.json")
     published = run / "scoreboard.json"
-    if published.exists():
-        saved = read_json(published)
-        ledger = verify_ledger(workspace, run)
-        records = _read_results(
-            run, plan, cast(dict[str, object], saved["result_refs"])
-        )
-        verify_scoreboard(plan, records, ledger, saved, CHECKOUT)
-        return saved
-    records = _read_results(run, plan)
-    replay_plan = (
-        RunPlan.load(directory(workspace, plan.replay_of) / "plan.json")
-        if plan.replay_of
-        else None
+    if require_existing and not published.exists():
+        raise ValueError("The published scoreboard is missing.")
+    content = record_bytes(published) if published.exists() else None
+    saved = parse_json(content) if content is not None else None
+    refs = saved["result_refs"] if saved is not None else None
+    if saved is not None and not isinstance(refs, dict):
+        raise ValueError("The result references must be an object.")
+    records = read_results(run, plan, cast(dict[str, object] | None, refs))
+    source, prefix = plan, None
+    seen = {plan.run_id}
+    source_ledgers = []
+    while source.replay_of is not None:
+        if source.replay_of in seen:
+            raise ValueError("The replay plan dependencies contain a cycle.")
+        seen.add(source.replay_of)
+        source_run = directory(workspace, source.replay_of)
+        source = RunPlan.load(source_run / "plan.json")
+        source_ledgers.append(read_ledger(workspace, source_run))
+    for snapshot in source_ledgers:
+        if snapshot.pipeline != source.pipeline or (
+            prefix is not None and prefix != snapshot.content
+        ):
+            raise ValueError("The original replay ledger identity changed.")
+        prefix = snapshot.content
+    ledger = (
+        read_ledger(workspace, run)
+        if saved is not None
+        else capture_ledger(workspace, run, source.pipeline, prefix=prefix)
     )
-    prefix = (
-        verify_ledger(workspace, directory(workspace, replay_plan.run_id))
-        if replay_plan
-        else None
-    )
-    source_pipeline = (
-        str(
-            read_json(
-                directory(workspace, replay_plan.run_id) / "published-ledger.json"
-            )["pipeline_run"]
-        )
-        if replay_plan
-        else plan.pipeline
-    )
-    ledger, costs = ledger_snapshot(
-        workspace,
-        run,
-        source_pipeline,
-        prefix=prefix,
-    )
-    known = {task_key(binary) for binary in plan.binaries}
-    if not set(costs) <= known:
+    if ledger.pipeline != source.pipeline or (
+        prefix is not None and prefix != ledger.content
+    ):
+        raise ValueError("The published model ledger identity changed.")
+    keys = records.refs.keys()
+    if any(event.binary not in keys for event in ledger.events):
         raise ValueError("The model ledger includes a binary outside the fixed roster.")
+    costs = {key: summarize(ledger.events, key) for key in keys}
     storage = shutil.disk_usage(workspace)
     document = scoreboard(
         plan,
-        records,
+        records.results,
         costs,
         elapsed=elapsed if elapsed is not None else time.time() - plan.started,
         free_gib=storage.free / 2**30,
@@ -150,26 +131,39 @@ def publish(
         else storage.used / 2**30,
         root=CHECKOUT,
     )
-    document["models"] = ledger_models(ledger)
+    document["models"] = {
+        "runtime": sorted({str(event.request["model"]) for event in ledger.events})
+    }
     document["row"] = plan.configuration.get("row")
+    document["result_refs"] = records.refs
     document["resource_scope"] = (
         "Evaluator descendants and all active Docker containers. "
         "Storage is workspace usage."
     )
-    document["resource_samples"] = resources.samples if resources is not None else 0
-    document["resource_sample_errors"] = (
-        resources.failed_samples if resources is not None else 0
-    )
-    document["result_refs"] = {
-        task_key(binary): digest(
-            (run / "results" / f"{task_key(binary)}.json").read_bytes()
+    if saved is None:
+        document["resource_samples"] = resources.samples if resources is not None else 0
+        document["resource_sample_errors"] = (
+            resources.failed_samples if resources is not None else 0
         )
-        if (run / "results" / f"{task_key(binary)}.json").exists()
-        else None
-        for binary in plan.binaries
+        immutable(published, document)
+        content = record_bytes(published)
+        saved = parse_json(content)
+    measured = {
+        "loop_minutes",
+        "peak_memory_gib",
+        "peak_storage_gib",
+        "free_storage_gib",
+        "source_lines",
+        "test_lines",
     }
-    immutable(published, document)
-    return document
+    expected = {key: value for key, value in document.items() if key not in measured}
+    actual = {key: saved[key] for key in expected if key in saved}
+    if json.dumps(actual, sort_keys=True, allow_nan=False) != json.dumps(
+        expected, sort_keys=True, allow_nan=False
+    ):
+        raise ValueError("The published score differs from its fixed evidence.")
+    assert content is not None
+    return Publication(plan, records.results, saved, digest(content))
 
 
 def evaluate(
@@ -192,6 +186,7 @@ def evaluate(
         config = _configuration(workspace)
         path = run / "plan.json"
         replay = None
+        prior = None
         if path.exists():
             if not resume:
                 raise ValueError("Resume an existing evaluation run.")
@@ -206,9 +201,8 @@ def evaluate(
             if resume:
                 raise ValueError("The evaluation has no fixed run plan.")
             if replay_id is not None:
-                source = directory(workspace, replay_id)
-                replay = RunPlan.load(source / "plan.json")
-                prior = publish(workspace, source, replay)
+                prior = publish(workspace, replay_id)
+                replay = prior.plan
                 if any(
                     replay.configuration.get(name) != value
                     for name, value in config.items()
@@ -221,9 +215,6 @@ def evaluate(
                     replay.binaries,
                     replay.corpus_hash,
                     replay.heldout_hash,
-                )
-                _read_results(
-                    source, replay, cast(dict[str, object], prior["result_refs"])
                 )
             else:
                 binaries, binary_hash, case_hash = _selection(workspace, selection)
@@ -247,8 +238,8 @@ def evaluate(
                 selection,
                 binaries,
                 {
-                    **config,
                     **(metadata or {}),
+                    **config,
                     "case_counts": {key: value[0] for key, value in cases.items()},
                     "case_hashes": {key: value[1] for key, value in cases.items()},
                     "source_branch_coverage": adequacy_snapshot(
@@ -272,22 +263,16 @@ def evaluate(
         for dependency in (plan.pipeline, f"{plan.run_id}-check"):
             directory(workspace, dependency).mkdir(exist_ok=True)
         if plan.replay_of is not None:
-            replay = RunPlan.load(directory(workspace, plan.replay_of) / "plan.json")
+            if prior is None:
+                prior = publish(workspace, plan.replay_of)
+            replay = prior.plan
         if (run / "scoreboard.json").exists():
-            publish(workspace, run, plan)
+            _publish_locked(workspace, run)
         stop = Event()
         prior_records = {}
-        if replay is not None:
-            prior_score = publish(
-                workspace, directory(workspace, replay.run_id), replay
-            )
+        if prior is not None:
             prior_records = {
-                task_key(result.binary): result
-                for result in _read_results(
-                    directory(workspace, replay.run_id),
-                    replay,
-                    cast(dict[str, object], prior_score["result_refs"]),
-                )
+                task_key(result.binary): result for result in prior.results
             }
         resources = Resources(workspace)
         resources.start()
@@ -326,7 +311,7 @@ def evaluate(
                         if isinstance(error, subprocess.TimeoutExpired)
                         else "pipeline_error"
                     )
-                    pending = _pending(binary, plan)
+                    pending = pending_result(binary, plan)
                     result = replace(
                         pending,
                         pending=False,
@@ -357,14 +342,13 @@ def evaluate(
             stop.set()
         finally:
             resources.finish()
-            document = publish(
+            document = _publish_locked(
                 workspace,
                 run,
-                plan,
                 elapsed=time.monotonic() - started,
                 resources=resources,
-            )
-        current = _read_results(run, plan)
+            ).document
+        current = read_results(run, plan).results
         if [result.record() for result in current] != document["binaries"]:
             continuation = digest(
                 json.dumps(
@@ -378,8 +362,8 @@ def evaluate(
                     "binaries": [result.record() for result in current],
                 },
             )
-        if replay is not None:
-            original = publish(workspace, directory(workspace, replay.run_id), replay)
+        if prior is not None:
+            original = prior.document
             stable = (
                 "success",
                 "program_success",

@@ -8,14 +8,20 @@ import importlib
 import json
 import os
 import subprocess
-from collections import Counter
 from collections.abc import Callable
+from dataclasses import asdict
 from pathlib import Path
 from types import ModuleType
 from typing import cast
 
 import pytest
 
+from phoenix.config import ROLE_MODELS
+from phoenix.llm.ledger import Ledger
+from phoenix.llm.provider import Completion, Usage
+from phoenix.llm.provider import Request as ModelRequest
+from phoenix_eval import run as evaluation
+from phoenix_eval.dev_corpus import DevBinary
 from phoenix_eval.loop import (
     HEADER,
     Evaluator,
@@ -27,8 +33,18 @@ from phoenix_eval.loop import (
     noise_document,
     revision,
     table,
-    validate_score,
 )
+from phoenix_eval.run_binary import task_key
+
+
+class Provider:
+    name = "fixture"
+
+    def maximum_usage(self, request: ModelRequest) -> Usage:
+        return Usage(10, 0, 10)
+
+    def complete(self, request: ModelRequest) -> Completion:
+        return Completion("fixture", Usage(5, 0, 3), request.model)
 
 
 def digest(value: str) -> str:
@@ -64,7 +80,7 @@ class SyntheticBackend:
         self.calls: list[str] = []
         self.data = "data"
         self.heldout = "heldout"
-        self.models = {"runtime": "synthetic"}
+        self.models = {"runtime": ROLE_MODELS["runtime"]}
         self.effort = {"runtime": "default"}
         self.stop = False
         self.crash = False
@@ -94,16 +110,17 @@ class SyntheticBackend:
                 for compiler in ("gcc", "clang"):
                     for number in range(2):
                         index = len(binaries)
-                        key = f"binary-{index}"
-                        binary: dict[str, object] = {
-                            "name": f"sample-{tier}-{number}",
-                            "tier": tier,
-                            "compiler": compiler,
-                            "flags": ["-std=c11", f"-{level}"],
-                            "sha256": digest(
-                                f"{self.data}-{tier}-{level}-{compiler}-{number}"
-                            ),
-                        }
+                        entry = DevBinary(
+                            f"sample{tier.lower()}{number}",
+                            tier,
+                            compiler,
+                            ("-std=c11", f"-{level}", "-lm"),
+                            digest(f"{self.data}-{tier}-{level}-{compiler}-{number}"),
+                            "fixture",
+                            True,
+                        )
+                        binary = asdict(entry)
+                        key = task_key(entry)
                         binaries.append(binary)
                         counts[key] = 2
                         hashes[key] = digest(f"{self.heldout}-{binary['name']}")
@@ -148,95 +165,20 @@ class SyntheticBackend:
             },
         )
         for result in results[:1] if self.stop or self.crash else results:
-            write(run / "results" / f"{result['task_key']}.json", result)
+            key = str(result["task_key"])
+            Ledger(workspace / "runs" / f"{run_id}-p").call(
+                key, ModelRequest("fixture"), Provider()
+            )
+            write(run / "results" / f"{key}.json", result)
         self.after(run_id)
         if self.crash:
             raise RuntimeError("Synthetic interruption after selection.")
 
-    def publish(self, workspace: Path, run_id: str) -> dict[str, object]:
-        run = workspace / "runs" / run_id
-        if (run / "scoreboard.json").exists():
-            return read(run / "scoreboard.json")
-        plan = read(run / "plan.json")
-        config = cast(dict[str, object], plan["configuration"])
-        selection = cast(dict[str, object], plan["selection"])
-        binaries = cast(list[dict[str, object]], plan["binaries"])
-        records = []
-        refs: dict[str, str | None] = {}
-        success: dict[str, dict[str, list[int]]] = {}
-        categories: Counter[str] = Counter()
-        hashes = cast(dict[str, str], config["case_hashes"])
-        for index, binary in enumerate(binaries):
-            key = f"binary-{index}"
-            path = run / "results" / f"{key}.json"
-            refs[key] = (
-                hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
-            )
-            result = (
-                read(path)
-                if path.exists()
-                else {
-                    **binary,
-                    "task_key": key,
-                    "heldout_hash": hashes[key],
-                    "held_out_cases": [0, 8],
-                    "fully_successful": False,
-                    "categories": ["pipeline_error"],
-                    "pending": True,
-                }
-            )
-            records.append(result)
-            categories.update(cast(list[str], result["categories"]))
-            cells = success.setdefault(
-                str(binary["tier"]),
-                {str(level): [0, 0] for level in cast(list[str], selection["levels"])},
-            )
-            level = cast(list[str], binary["flags"])[1][1:]
-            cells[level][0] += result["fully_successful"] is True
-            cells[level][1] += 1
-        document: dict[str, object] = {
-            **{
-                key: config[key]
-                for key in ("row", "loop", "milestone", "experiment", "noise_ref")
-            },
-            "run_id": run_id,
-            "commit": config["revision"],
-            "corpus": "corpus_dev",
-            "corpus_hash": plan["corpus_hash"],
-            "heldout_hash": plan["heldout_hash"],
-            "run_state": "stopped"
-            if any(item["pending"] for item in records)
-            else "complete",
-            "cache": "warm" if plan["llm_cache"] else "cold",
-            "quick_set": 1 if selection["quick"] else None,
-            "success": success,
-            "binaries": records,
-            "result_refs": refs,
-            "held_out_cases": [
-                sum(cast(list[int], record["held_out_cases"])[0] for record in records),
-                len(records) * 8,
-            ],
-            "failure_categories": dict(categories),
-            "integrity_failures": 0,
-            "models": {"runtime": ["synthetic"]},
-            "maintainable": None,
-            "dev_edge_coverage_median": None,
-            "escape_rate": None,
-            "literal_mode_byte_share": None,
-            "goto_per_100_lines": None,
-            "cost_usd": {tier: {"median": 7, "q1": 7, "q3": 7} for tier in success},
-            "loop_minutes": 2,
-            "peak_memory_gib": 3,
-            "peak_storage_gib": 10,
-            "free_storage_gib": 27,
-            "noise": None,
-        }
-        write(run / "scoreboard.json", document)
-        return document
-
 
 @pytest.fixture
-def environment(tmp_path: Path) -> tuple[Loop, SyntheticBackend]:
+def environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[Loop, SyntheticBackend]:
     checkout = tmp_path / "checkout"
     checkout.mkdir()
     (checkout / "docs").mkdir()
@@ -249,6 +191,7 @@ def environment(tmp_path: Path) -> tuple[Loop, SyntheticBackend]:
     git(checkout, "config", "user.email", "synthetic@example.invalid")
     git(checkout, "add", ".")
     git(checkout, "commit", "-qm", "test: create synthetic repository")
+    monkeypatch.setattr(evaluation, "CHECKOUT", checkout)
     backend = SyntheticBackend(checkout)
     return Loop(tmp_path, checkout, backend), backend
 
@@ -298,9 +241,9 @@ def test_publication_is_idempotent_and_preserves_cost(
     assert (loop.workspace / "runs/same-id/scoreboard.json").read_bytes() == published
     assert document["experiment"] == [1, 3]
     assert cast(dict[str, object], document["cost_usd"])["D0"] == {
-        "median": 7,
-        "q1": 7,
-        "q3": 7,
+        "median": 0.00004,
+        "q1": 0.00004,
+        "q3": 0.00004,
     }
     plan = read(loop.workspace / "runs/same-id/plan.json")
     assert cast(dict[str, object], plan["configuration"])["label"] == "measured example"
@@ -508,10 +451,12 @@ def test_noise_rejects_different_frozen_binary_identity(
     environment: tuple[Loop, SyntheticBackend],
 ) -> None:
     loop, backend = environment
-    left = loop.execute(Request(kind="quick", llm_cache=False), "left")
-    right = loop.execute(Request(kind="quick", llm_cache=False), "right")
-    right["row"] = left["row"]
-    cast(list[dict[str, object]], right["binaries"])[0]["sha256"] = "e" * 64
+    loop.execute(Request(kind="quick", llm_cache=False), "left")
+    backend.data = "changed"
+    loop.execute(Request(kind="quick", llm_cache=False), "right")
+    left = evaluation.publish(loop.workspace, "left")
+    right = evaluation.publish(loop.workspace, "right")
+    right.document["row"] = left.document["row"]
     with pytest.raises(ValueError, match="identities changed"):
         noise_document("noise", [left, right], backend.configuration_identity())
 
@@ -587,18 +532,16 @@ def test_fixed_plan_run_id_cannot_change(
 
 def test_hash_validation_precedes_row_publication(
     environment: tuple[Loop, SyntheticBackend],
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     loop, backend = environment
-    publish = backend.publish
 
-    def corrupted(workspace: Path, run_id: str) -> dict[str, object]:
-        document = publish(workspace, run_id)
-        cast(dict[str, object], document["result_refs"])["binary-0"] = "f" * 64
-        write(workspace / "runs" / run_id / "scoreboard.json", document)
-        return document
+    def corrupted(run_id: str) -> None:
+        document = evaluation.publish(loop.workspace, run_id).document
+        refs = cast(dict[str, object], document["result_refs"])
+        refs[next(iter(refs))] = "f" * 64
+        write(loop.workspace / "runs" / run_id / "scoreboard.json", document)
 
-    monkeypatch.setattr(backend, "publish", corrupted)
+    backend.after = corrupted
     with pytest.raises(ValueError, match="terminal result changed"):
         loop.execute(Request(), "corrupt")
     assert not loop.scoreboard.exists()
@@ -607,22 +550,15 @@ def test_hash_validation_precedes_row_publication(
 
 def test_new_publication_normalizes_tuple_fields(
     environment: tuple[Loop, SyntheticBackend],
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     loop, backend = environment
     backend.crash = True
     with pytest.raises(RuntimeError):
         loop.execute(Request(), "stopped")
-    publish = backend.publish
-
-    def tuple_flags(workspace: Path, run_id: str) -> dict[str, object]:
-        document = publish(workspace, run_id)
-        for record in cast(list[dict[str, object]], document["binaries"]):
-            record["flags"] = tuple(cast(list[str], record["flags"]))
-        return document
-
-    monkeypatch.setattr(backend, "publish", tuple_flags)
     document = loop.execute(Request(), "stopped")
+    records = cast(list[dict[str, object]], document["binaries"])
+    assert all(isinstance(record["flags"], list) for record in records)
+    assert evaluation.publish(loop.workspace, "stopped").document == document
     assert document["run_state"] == "stopped"
     assert len(table(loop.scoreboard)[1]) == 1
     assert backend.calls == ["stopped"]
@@ -659,8 +595,8 @@ def test_corrupt_identity_or_denominator_is_rejected(
     loop, _ = environment
     document = loop.execute(Request(), "record")
     run = loop.workspace / "runs/record"
-    plan = read(run / "plan.json")
     records = cast(list[dict[str, object]], document["binaries"])
+    key = str(records[0]["task_key"])
     if corruption == "binary":
         records[0]["sha256"] = "f" * 64
     elif corruption == "heldout":
@@ -670,11 +606,12 @@ def test_corrupt_identity_or_denominator_is_rejected(
     elif corruption == "aggregate":
         document["success"] = {"D0": {"O0": [1, 1]}}
     elif corruption == "reference":
-        cast(dict[str, object], document["result_refs"])["binary-0"] = "f" * 64
+        cast(dict[str, object], document["result_refs"])[key] = "f" * 64
     else:
-        write(run / "results/binary-0.json", {**records[0], "extra": "changed"})
+        write(run / "results" / f"{key}.json", {**records[0], "extra": "changed"})
+    write(run / "scoreboard.json", document)
     with pytest.raises(ValueError):
-        validate_score(document, plan, run)
+        evaluation.publish(loop.workspace, "record")
 
 
 def test_workspace_lock_blocks_other_loop(

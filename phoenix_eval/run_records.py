@@ -5,6 +5,7 @@ from __future__ import annotations
 import fcntl
 import hashlib
 import json
+import math
 import os
 import re
 import stat
@@ -16,7 +17,11 @@ from tempfile import NamedTemporaryFile
 from typing import cast
 
 from phoenix_eval.dev_corpus import DevBinary
-from phoenix_eval.model_ledger import ModelSummary, _open_ledger, read_events, summarize
+from phoenix_eval.model_ledger import (
+    ModelEvent,
+    _open_ledger,
+    read_events,
+)
 from phoenix_eval.submission import write_report
 
 
@@ -35,10 +40,23 @@ def directory(workspace: Path, run_id: str) -> Path:
     return path
 
 
+def _missing_replay(workspace: Path, run_id: str | None) -> str | None:
+    seen = set()
+    while run_id is not None and run_id not in seen:
+        seen.add(run_id)
+        run = directory(workspace, run_id)
+        if not run.exists():
+            return run_id
+        run_id = RunPlan.load(run / "plan.json").replay_of
+    return None
+
+
 @contextmanager
 def evaluation_guard(
     workspace: Path, run: Path, replay_id: str | None = None
 ) -> Iterator[None]:
+    if replay_id is None and (run / "plan.json").exists():
+        replay_id = RunPlan.load(run / "plan.json").replay_of
     descriptors = []
     marker = run / ".active"
     active = False
@@ -54,11 +72,11 @@ def evaluation_guard(
                 raise ValueError("Use regular evaluation lock files.")
             fcntl.flock(descriptor, operation)
             if path.name == ".archive.lock" and replay_id is not None:
-                while not directory(workspace, replay_id).exists():
+                while (missing := _missing_replay(workspace, replay_id)) is not None:
                     fcntl.flock(descriptor, fcntl.LOCK_UN)
                     from phoenix_eval.run_archive import restore_run
 
-                    restore_run(workspace, replay_id)
+                    restore_run(workspace, missing)
                     fcntl.flock(descriptor, fcntl.LOCK_SH)
         if marker.resolve() != marker:
             raise ValueError("Use a regular active marker path.")
@@ -79,13 +97,21 @@ def evaluation_guard(
             os.close(descriptor)
 
 
-def read_json(path: Path) -> dict[str, object]:
+def record_bytes(path: Path) -> bytes:
     if path.resolve() != path or not path.is_file():
         raise ValueError("Use a regular run record.")
-    value = json.loads(path.read_bytes())
+    return path.read_bytes()
+
+
+def parse_json(content: bytes) -> dict[str, object]:
+    value = json.loads(content)
     if not isinstance(value, dict):
         raise ValueError("The run record must be a JSON object.")
     return cast(dict[str, object], value)
+
+
+def read_json(path: Path) -> dict[str, object]:
+    return parse_json(record_bytes(path))
 
 
 def immutable(path: Path, value: object) -> None:
@@ -183,7 +209,7 @@ class RunPlan:
         ):
             raise ValueError("The fixed run plan has invalid binaries or start time.")
         parsed = tuple(_binary(_mapping(item)) for item in binaries)
-        return cls(
+        plan = cls(
             _string(data["run_id"]),
             Selection(
                 _string(selection["corpus"]),
@@ -202,15 +228,66 @@ class RunPlan:
             _string(data["replay_of"]) if data["replay_of"] is not None else None,
         )
 
+        from phoenix_eval.run_binary import task_key
 
-def ledger_snapshot(
+        keys = {task_key(binary) for binary in plan.binaries}
+        identities = {
+            (binary.name, binary.tier, binary.compiler, binary.flags, binary.sha256)
+            for binary in plan.binaries
+        }
+        counts = _mapping(plan.configuration["case_counts"])
+        hashes = _mapping(plan.configuration["case_hashes"])
+        if (
+            plan.run_id != path.parent.name
+            or len(keys) != len(plan.binaries)
+            or len(identities) != len(plan.binaries)
+            or keys != counts.keys()
+            or keys != hashes.keys()
+            or any(type(count) is not int or count < 0 for count in counts.values())
+            or any(
+                binary.tier not in plan.selection.tiers
+                or binary.level not in plan.selection.levels
+                for binary in plan.binaries
+            )
+            or not math.isfinite(plan.started)
+        ):
+            raise ValueError("The fixed plan has a conflicting run ID or denominator.")
+        for value, length in (
+            (plan.corpus_hash, 64),
+            (plan.heldout_hash, 64),
+            (plan.configuration["revision"], 40),
+            *((value, 64) for value in hashes.values()),
+        ):
+            if not isinstance(value, str) or not re.fullmatch(
+                f"[0-9a-f]{{{length}}}", value
+            ):
+                raise ValueError("The fixed plan has an invalid hash.")
+        return plan
+
+
+@dataclass(frozen=True)
+class LedgerSnapshot:
+    pipeline: str
+    content: bytes
+    events: tuple[ModelEvent, ...]
+
+
+def capture_ledger(
     workspace: Path,
     run: Path,
     pipeline: str,
     *,
     name: str = "published-ledger",
     prefix: bytes | None = None,
-) -> tuple[bytes, dict[str, ModelSummary]]:
+) -> LedgerSnapshot:
+    record = run / f"{name}.json"
+    if record.exists():
+        snapshot = read_ledger(workspace, run, name=name)
+        if snapshot.pipeline != pipeline or (
+            prefix is not None and snapshot.content != prefix
+        ):
+            raise ValueError("The published model ledger identity changed.")
+        return snapshot
     live = directory(workspace, pipeline) / "llm.jsonl"
     content = b""
     descriptor = _open_ledger(live)
@@ -223,29 +300,23 @@ def ledger_snapshot(
             raise ValueError("The replay ledger lost its published prefix.")
         content = prefix
     events = read_events(content.decode("utf-8").splitlines())
-    snapshot = run / f"{name}.jsonl"
-    if (run / f"{name}.json").exists():
-        content = verify_ledger(workspace, run, name=name)
-        events = read_events(content.decode("utf-8").splitlines())
-    else:
-        if snapshot.resolve() != snapshot:
-            raise ValueError("Use a regular ledger snapshot path.")
-        with NamedTemporaryFile(dir=run, delete_on_close=False) as staged:
-            staged.write(content)
-            staged.close()
-            Path(staged.name).replace(snapshot)
+    snapshot_path = run / f"{name}.jsonl"
+    if snapshot_path.resolve() != snapshot_path:
+        raise ValueError("Use a regular ledger snapshot path.")
+    with NamedTemporaryFile(dir=run, delete_on_close=False) as staged:
+        staged.write(content)
+        staged.close()
+        Path(staged.name).replace(snapshot_path)
     immutable(
-        run / f"{name}.json",
+        record,
         {"pipeline_run": pipeline, "bytes": len(content), "sha256": digest(content)},
     )
-    return content, {
-        key: summarize(events, key) for key in {event.binary for event in events}
-    }
+    return LedgerSnapshot(pipeline, content, events)
 
 
-def verify_ledger(
+def read_ledger(
     workspace: Path, run: Path, *, name: str = "published-ledger"
-) -> bytes:
+) -> LedgerSnapshot:
     record = read_json(run / f"{name}.json")
     path = run / f"{name}.jsonl"
     descriptor = _open_ledger(path)
@@ -255,7 +326,8 @@ def verify_ledger(
         content = stream.read()
     if len(content) != record["bytes"] or digest(content) != record["sha256"]:
         raise ValueError("The published model ledger changed.")
-    live = directory(workspace, str(record["pipeline_run"])) / "llm.jsonl"
+    pipeline = _string(record["pipeline_run"])
+    live = directory(workspace, pipeline) / "llm.jsonl"
     descriptor = _open_ledger(live)
     if descriptor is not None:
         with os.fdopen(descriptor, "rb") as stream:
@@ -263,8 +335,9 @@ def verify_ledger(
                 raise ValueError("The live model ledger lost its published prefix.")
     elif content:
         raise ValueError("The original model ledger is missing.")
-    read_events(content.decode("utf-8").splitlines())
-    return content
+    return LedgerSnapshot(
+        pipeline, content, read_events(content.decode("utf-8").splitlines())
+    )
 
 
 @dataclass(frozen=True)
@@ -329,3 +402,71 @@ def record_result(run: Path, key: str, result: BinaryResult) -> None:
 
 def plan_record(plan: RunPlan) -> dict[str, object]:
     return cast(dict[str, object], asdict(plan))
+
+
+@dataclass(frozen=True)
+class ResultRecords:
+    results: tuple[BinaryResult, ...]
+    refs: dict[str, str | None]
+
+
+def pending_result(binary: DevBinary, plan: RunPlan) -> BinaryResult:
+    from phoenix_eval.run_binary import task_key
+
+    key = task_key(binary)
+    count = cast(dict[str, int], plan.configuration["case_counts"])[key]
+    return BinaryResult(
+        binary,
+        False,
+        ("pipeline_error",),
+        (0, count * 4),
+        True,
+        {
+            "task_key": key,
+            "heldout_hash": cast(dict[str, str], plan.configuration["case_hashes"])[
+                key
+            ],
+            "dev_passed": False,
+        },
+    )
+
+
+def read_results(
+    run: Path, plan: RunPlan, refs: dict[str, object] | None = None
+) -> ResultRecords:
+    from phoenix_eval.run_binary import task_key
+
+    results = []
+    references: dict[str, str | None] = {}
+    keys = {task_key(binary) for binary in plan.binaries}
+    if refs is not None and refs.keys() != keys:
+        raise ValueError("The result references differ from the fixed denominator.")
+    for binary in plan.binaries:
+        key = task_key(binary)
+        path = run / "results" / f"{key}.json"
+        if refs is not None and refs[key] is None:
+            result, reference = pending_result(binary, plan), None
+        elif path.exists():
+            content = record_bytes(path)
+            reference = digest(content)
+            if refs is not None and reference != refs[key]:
+                raise ValueError("A published terminal result changed.")
+            record = parse_json(content)
+            result = BinaryResult.parse(record)
+            if result.binary != binary or result.pending or "pending" not in record:
+                raise ValueError("The terminal result differs from the fixed roster.")
+            if (
+                result.details.get("task_key") != key
+                or result.details.get("heldout_hash")
+                != cast(dict[str, str], plan.configuration["case_hashes"])[key]
+                or result.held_out_cases[1]
+                != cast(dict[str, int], plan.configuration["case_counts"])[key] * 4
+            ):
+                raise ValueError("The terminal result differs from the fixed cases.")
+        else:
+            if refs is not None:
+                raise ValueError("A published terminal result is missing.")
+            result, reference = pending_result(binary, plan), None
+        results.append(result)
+        references[key] = reference
+    return ResultRecords(tuple(results), references)
