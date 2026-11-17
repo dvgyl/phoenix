@@ -100,17 +100,50 @@ These are published results and methods. They are not Phoenix results.
 | --- | --- | --- |
 | [PCodeTrans, arXiv 2603.14855v1](https://arxiv.org/html/2603.14855v1); [ASE 2026](https://conf.researchr.org/details/ase-2026/ase-2026-research-track/136/PCodeTrans-Translate-Decompiled-Pseudocode-to-Trace-Level-Equivalent-Source-Code) | Prior art for N1 and N7. Sections IV to VI describe function replacement and trace-guided repair. | Table I aggregates isolated function checks. It does not test a standalone project. The arXiv Linux results and the expanded conference scope are separate. |
 | [DecompileBench, ACL Findings 2025](https://aclanthology.org/2025.findings-acl.1194/) | Section 3.2.2 replaces a function inside the original program and compares runtime coverage profiles. Appendix D describes redirection. | Function checks do not establish Phoenix's whole-project success. |
-| [MirrorCode, arXiv 2606.30182v2](https://arxiv.org/html/2606.30182v2) | Rebuilds 25 programs with execute-only access and held-out tests. Reports a best score of 56%. | Section 2 defines its task scope and budget. Phoenix must run its own behavior-only baseline with the same runtime model and LLM budget. |
+| [MirrorCode, arXiv 2606.30182v2](https://arxiv.org/html/2606.30182v2) | Rebuilds 25 programs with execute-only access and held-out tests. Reports a best score of 56%. | Section 2 defines its task scope and budget. Phoenix must run its own behavior-only baseline under the comparison rules of `SPEC.md` section 11. |
 | [SRE-Bench, arXiv 2608.11469v2](https://arxiv.org/html/2608.11469v2) | Uses 19 private programs created for contamination-free reverse-engineering evaluation. | Includes protected binaries and analysis tasks beyond Phoenix v1. |
 | [REBench, arXiv 2604.27319v1](https://arxiv.org/html/2604.27319v1) | Evaluates types and names in stripped binaries. Section 4.6 reports weak type inference. | Type and name recovery do not establish behavioral success. |
 | [SCRIBE, arXiv 2605.02121v1](https://arxiv.org/html/2605.02121v1) | Recompiles decompiled code for binary patching. Section V-E reports an 18-person user study. | The patched program still uses the original binary. |
+
+### Related research for the claimed gap
+
+These entries support `SPEC.md` section 13. Verify each entry from the primary source before the final report cites it.
+
+| Work | Relevant evidence | Limit for the Phoenix comparison |
+| --- | --- | --- |
+| DecLLM (ISSTA 2025) | Reports whole-binary recompilation results, including unstripped Coreutils binaries. Counts: verify from the primary source before the final report. | Unstripped inputs; same architecture. |
+| Chisel (see the qualifications above) | 72.9% re-executability on stripped function variants; 79.8% across all variants. | Single functions. |
+| Recompilation Is Not Enough (see the qualifications above) | 91 of 104 Coreutils binaries pass its selected official tests plus smoke checks. | The gate is not the complete official suite. Public Coreutils has a contamination risk. |
+| [ProgramBench, arXiv 2605.03546](https://arxiv.org/abs/2605.03546) | Whole-program rebuilding scored with generated hidden tests. Results: verify from the primary source before the final report. | Input, architecture and test access: verify from the primary source before the final report. |
+| [No Bit Left Behind, arXiv 2609.16423](https://arxiv.org/html/2609.16423v1) | x86-64 to ARM64 cross-recompilation through LLVM intermediate representation. Results: verify from the primary source before the final report. | Output form and maintainability: verify from the primary source before the final report. |
+| [FoxDec](https://ssrg.ece.vt.edu/papers/sefm20.pdf) | Porting of recovered C to ARM, with user input. Results: verify from the primary source before the final report. | Needs user input. |
+
+### Property evidence
+
+`SPEC.md` section 13.2 uses this table. Each row gives the evidence for the four properties of that section: (1) whole-program reconstruction, (2) sealed evaluation with a post-cutoff human-written tier, (3) shown ARM64 portability, (4) a hidden behavioral oracle that needs no existing test suite. Fill each cell from the primary source before the final report. Give the literature search date in the report.
+
+| Work | (1) | (2) | (3) | (4) |
+| --- | --- | --- | --- | --- |
+| PCodeTrans | verify | verify | verify | verify |
+| DecompileBench | verify | verify | verify | verify |
+| MirrorCode | verify | verify | verify | verify |
+| DecLLM | verify | verify | verify | verify |
+| Chisel | verify | verify | verify | verify |
+| Recompilation Is Not Enough | verify | verify | verify | verify |
+| ProgramBench | verify | verify | verify | verify |
+| No Bit Left Behind | verify | verify | verify | verify |
+| FoxDec | verify | verify | verify | verify |
+| SRE-Bench | verify | verify | verify | verify |
 
 ### Evaluation boundary
 
 Phoenix's proposed contribution is the conjunction in SPEC.md section 2.2.
 It combines whole-program reconstruction, sealed post-cutoff evaluation,
 AArch64 portability, and a behavioral oracle with hidden evaluation inputs.
-A novelty claim requires further literature verification.
+The claim covers only the studies reviewed (`SPEC.md` section 13.2).
+Describe the Coreutils comparison as a public benchmark with a
+contamination risk. Claim a direct performance gain only on the same
+roster and test protocol.
 
 Phoenix-Bench uses fresh programs. Exclude HumanEval, ExeBench,
 decompile-bench, Chisel's cached cases, and known Coreutils-style research

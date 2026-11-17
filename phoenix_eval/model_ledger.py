@@ -87,12 +87,20 @@ def _integer(value: object) -> int:
     return value
 
 
+MODELS = ("gpt-6.1-sol", "gpt-6-astra", "gpt-6.2-sol", "gpt-6.2-astra")
+
+
 def completion_charge(model: str, usage: TokenUsage) -> int:
     for count in (usage.input_tokens, usage.cached_input_tokens, usage.output_tokens):
         _integer(count)
     if usage.cached_input_tokens > usage.input_tokens:
         raise ValueError("The model returned invalid token counts.")
-    rates = {"gpt-6.1-sol": (2000, 100, 10000), "gpt-6-astra": (10000, 500, 50000)}
+    rates = {
+        "gpt-6.1-sol": (2000, 100, 10000),
+        "gpt-6-astra": (10000, 500, 50000),
+        "gpt-6.2-sol": (2000, 100, 10000),
+        "gpt-6.2-astra": (8000, 400, 40000),
+    }
     input_rate, cache_rate, output_rate = rates[model]
     if usage.input_tokens > 272_000:
         input_rate *= 2
@@ -127,7 +135,7 @@ def parse_event(data: object) -> ModelEvent:
         if (
             not isinstance(request["prompt"], str)
             or not 1 <= len(request["prompt"].encode("utf-8")) <= 64_000
-            or request["model"] not in ("gpt-6.1-sol", "gpt-6-astra")
+            or request["model"] not in MODELS
             or not 1 <= _integer(request["max_output_tokens"]) <= 128_000
         ):
             raise ValueError

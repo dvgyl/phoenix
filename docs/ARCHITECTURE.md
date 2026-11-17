@@ -79,7 +79,7 @@ phoenix run --replay <run_id>
 phoenix kb export <kb.sqlite>
 ```
 
-The evaluator gives the cost cap (`SPEC.md` section 12.3) and the execution budget (section 5.3) for the tier. The default mode is the value `draft_mode` in `phoenix/config.py`. In a sealed run, the evaluator gives a runs root and an empty cache root under `sealed_runs/<run_id>/`.
+The evaluator gives the cost cap (`SPEC.md` section 12.3) and the execution budget (section 5.3) for the tier. The default mode is the value `draft_mode` in `phoenix/config.py`. In a sealed run, the evaluator gives a runs root and an empty cache root in a private work directory under `$PHOENIX_ROOT/sealed_work/`, never under `sealed_runs` (`SPEC.md` section 10.5).
 
 Each pipeline run writes `runs/<run_id>/<binary_sha256>/run.json`. It holds: the binary SHA-256, the run settings, the mode, each model used with its effort settings, the protection probe result (section 6.3), the stage list, the cost and the machine minutes.
 
@@ -202,7 +202,8 @@ Locations outside the repository, under `$PHOENIX_ROOT`:
 | `dev_bin/<program>/<compiler>-<level>/` | Built `corpus_dev` binaries and twins, and `dev_bin/manifest.json`. |
 | `sealed/`, `holdout/` | Sealed-A. |
 | `sealed_b/`, `holdout_b/` | Sealed-B. |
-| `sealed_runs/<run_id>/` | Sealed evaluation runs. |
+| `sealed_runs/<run_id>/` | Sealed evaluation records. Only `phoenix-eval` reads or writes them. |
+| `sealed_work/<opaque id>/` | Private work directory of one binary and arm of a sealed run. The evaluator deletes it after the import (`SPEC.md` section 10.5). |
 | `cache/phoenix/` | Stage caches and the LLM response cache (section 14.3). |
 | `slots/` | Lock files of the global concurrency budget (section 14.1). |
 
@@ -280,7 +281,7 @@ Resolution (`kb/claims.py`, `resolve(subject, attr)`):
 Rules:
 
 - **Supersession.** When a stage writes a new claim with the same subject, attribute and source as its own earlier claim, the earlier claim becomes `superseded`.
-- **Promotion.** Only a passing transplant check promotes. For each claim that the check depends on, the pipeline adds a `test_verified` claim with the same value. The check depends on: the signature claims of each replaced function and of its callees, the type claims of each type that the replaced drafts use, and the type claims of each global that they reference. The new claim records the source hash of each draft in the check and the dev-set hash. A whole-program pass promotes no claim.
+- **Promotion.** Only a passing transplant check promotes. A pass shows only that the selected observations matched for the tested calls (section 7.1). For each claim that the check depends on, the pipeline adds a `test_verified` claim with the same value only when independent evidence distinguishes that value from a plausible alternative. The other claims keep their earlier rank. The check depends on: the signature claims of each replaced function and of its callees, the type claims of each type that the replaced drafts use, and the type claims of each global that they reference. The new claim records the source hash of each draft in the check and the dev-set hash. A whole-program pass promotes no claim.
 - **Invalidation.** When a source hash in `depends_on` changes, or the dev-set hash changes, the `test_verified` claim becomes `stale`.
 - **Refutation.** Row 3 of the repair decision table (section 5.7) refutes a claim. The refutation records its evidence: the failing set, the source hashes of its drafts and the failing case. If a source hash in that evidence changes, the refutation is reversed and the claim becomes `active` again.
 
@@ -541,7 +542,11 @@ The failing path is the set of functions that the failing case executes. From R3
 
 Counterexample format: the minimized case (argv, stdin of 256 bytes at most, file tree), the expected and the actual first different bytes, and the `obs_funcio` rows of the suspect for that case (from R3).
 
-`repair.fix(kb, suspect, counterexample) -> Draft` calls the draft loop with the counterexample as feedback. One repair round handles one suspect. Limits:
+`repair.fix(kb, suspect, counterexample) -> Draft` calls the draft loop with the counterexample as feedback. One repair round handles one suspect.
+
+**Whole-program repair** (the second path of the R1 repair comparison, `docs/ROADMAP.md` R1). The repair step gets a minimized dev-case mismatch, the implicated feature, and the functions and shared data on the failing path. It keeps the dev counterexamples across rounds. It keeps the best candidate that passes the build and integrity checks and keeps each earlier dev pass. The stronger path of the comparison becomes the R2 control.
+
+Limits:
 
 - at most 12 repair rounds for each binary, or the cost cap;
 - a round that does not increase the count of passing dev cases or the Theseus fraction is a failed round;
@@ -604,7 +609,7 @@ A change to the launcher or the profile needs the review of AGENTS.md section 8 
 PROFILES: dict[str, Profile]      # "pipeline", "engineer", "dev-author", "corpus-author", "evaluator"
 def guarded_command(workspace: Path, repo: Path, command: tuple[str, ...], profile: str,
                     allow: tuple[Path, ...] = ()) -> tuple[str, ...]
-# allow: paths that the profile permits in a denied class, for example the sealed run directory of one binary
+# allow: paths that the profile permits in a denied class, for example the input copy and the run directory of one pipeline run
 def inherited_guard(workspace: Path) -> bool
 ```
 
@@ -613,6 +618,7 @@ def inherited_guard(workspace: Path) -> bool
 - `scripts/launch-role <role> -- <command>` calls `guarded_command`.
 - The prompt category also covers `cache/phoenix` and public `runs`. These paths hold cached prompts and model ledgers. Both Author profiles deny access.
 - The development category also covers `adequacy_runs`. Its requests hold development source and held-out inputs. The pipeline and Corpus Author profiles deny access.
+- The `pipeline` profile denies the classes of `SPEC.md` section 10.5: the whole `corpus_dev` tree of each checkout, the git object stores and history of each checkout, each binary under `dev_bin`, held-out data, earlier evaluation records under `runs` and `adequacy_runs`, `sealed_runs` and `sealed_work`. The `allow` argument gives only the input copy and the current run directory (in a sealed run, the private work directory). `tests/test_protection.py` proves each denial with synthetic fixtures.
 - The pipeline run creates a probe file in its run directory and puts the probe path in `PHOENIX_PIPELINE_GUARD`. The profile denies the probe. `inherited_guard` confirms the denial. `run.json` records `{"profile": "pipeline", "probe_denied": true}`. The evaluator requires this record (`SPEC.md` section 2.2, condition 4).
 - The rules apply to the main checkout and to each registered worktree under `$PHOENIX_ROOT/worktrees/` (from `git worktree list --porcelain`). Each repository path pattern, for example `corpus_dev/*/src` or `phoenix/devset`, becomes one rule for each checkout. `guarded_command` generates the profile at each launch, so a new worktree is covered.
 - `tests/test_protection.py` checks the generated policy of each profile with a temporary layout. The layout has a main checkout and a worker checkout.
@@ -634,6 +640,8 @@ def theseus(kb: KB, cases: list[TestCase]) -> TheseusResult
 # TheseusResult: passing_set, minimal_failing_sets, replaced_bytes, reached_bytes,
 #                original_code_bytes, original_data_bytes, fraction, dev_set_hash
 ```
+
+Meaning of a pass. A transplant pass shows that the selected observations matched for the tested calls and cases. It is not proof that the function behaves as the original on all inputs. For each level, report the reached, eligible, patched and passing function counts on a fixed truth set.
 
 ### 7.2 Binding
 
@@ -790,16 +798,18 @@ Jump tables stay inside their functions. Ghidra recovers them as `switch` statem
 - An untyped object in `.rodata` becomes `static const`. An untyped object in `.data` or `.bss` stays writable: never `const`.
 - Each untyped object keeps its alignment with `_Alignas(n)`.
 - An untyped object without pointer slots becomes `unsigned char name[N]`.
-- An untyped object with pointer slots becomes a structure of byte arrays and pointer members, one pointer member for each slot: `void *` for a `global` target, and the resolved function-pointer type for a `function` or `import` target. `_Static_assert(offsetof(...) == ...)` lines check the layout. If a pointer slot offset is not a multiple of 8, the pipeline stops with `pipeline_error` and the reason `unaligned_pointer_slot`.
+- An untyped object with pointer slots becomes a structure of byte arrays and pointer members, one pointer member for each slot: `void *` for a `global` target, and the resolved function-pointer type for a `function` or `import` target. `_Static_assert(offsetof(...) == ...)` lines check the layout. If a pointer slot offset is not a multiple of 8, the untyped fallback cannot hold the slot. Report the object, and the binary fails with the reason `unaligned_pointer_slot` (section 8.4).
 - The bytes of a fallback object never contain an absolute address of the original. Each pointer slot is symbolic.
 - The report lists each untyped object above 256 bytes.
 
 ### 8.4 Byte check (from R1)
 
-After `assemble`, build the project for x86-64 with symbols. For each emitted object, read its bytes from the built executable after relocation. Compare them with the original bytes:
+After `assemble`, build the project for x86-64 with symbols. Compare each emitted object with the original:
 
-- Each byte outside a pointer slot is equal.
-- Each pointer slot points to the emitted object and offset that correspond to the original target.
+- Read the non-pointer bytes from the symbol-bearing build. Each byte outside a pointer slot is equal to the original byte.
+- Verify each pointer slot by its symbol, its relocation target and its offset. The slot points to the emitted object and offset that correspond to the original target.
+- If a supported slot cannot be resolved from the file (for example, in a position-independent executable), verify it with a runtime check in the container.
+- The untyped fallback of section 8.3 is accepted only if it keeps each required byte and each symbolic pointer. If neither the typed emission nor the fallback works, report the object. The binary fails.
 
 A mismatch gives the repair suspect "data object" (row 4b of the decision table) and counts as a data-caused failure.
 
@@ -906,17 +916,19 @@ The evaluator is sound. Change only the items in this table. Each change needs t
 |---|---|---|
 | Window rule (`SPEC.md` section 9, rule 1a and 1b): check source literals and initializers, and the non-executable data sections of the built executables without the C runtime ranges. Do not check the built code sections. Add an honest fixture where machine code from the same compiler equals the original. | `phoenix_eval/integrity.py`, `tests/test_integrity.py` | R0 |
 | Protected path list and role profiles (section 6.3). | `phoenix_eval/protection.py` | R0 |
+| Pipeline denial of the whole `corpus_dev` tree, git object stores and history, sibling `dev_bin` binaries, held-out data and earlier evaluation records, with synthetic denial fixtures (`SPEC.md` section 10.5). Before the next reconstruction. | `phoenix_eval/protection.py`, `tests/test_protection.py` | R0 |
+| Rescore of captured projects with two checker versions: `phoenix-eval rescore` scores the same captured projects and builds with the integrity checker before and after the window fix, and exports the count of binaries whose only change is the window decision. | `phoenix_eval/`, `tests/test_run.py` | R0 |
 | `phoenix_eval/run.py` replaces `m1.py` and `m2.py`. It evaluates `corpus_dev` and writes `scoreboard.json`. After the selection is fixed, it records each selected binary and writes a scoreboard even if the execution stops. It restores archived runs for `--replay`. `phoenix-eval probe` runs the real-directory protection checks. | `phoenix_eval/run.py`, `phoenix_eval/__main__.py` | R0 |
-| The sealed corpus mode of `phoenix_eval/run.py`: it writes sealed runs only to `sealed_runs/` and exports only the aggregate scoreboard of a sealed run. `scripts/loop sealed-pre` and `scripts/loop sealed-import`. Before Sealed-A run 1. | `phoenix_eval/run.py`, `scripts/loop` | R2 |
+| The sealed corpus mode of `phoenix_eval/run.py`: it stages each binary in a private work directory under `sealed_work/`, gives model access only through the evaluator broker, denies other network access, imports the project and ledger into `sealed_runs/`, deletes the work copy, and exports only the aggregate scoreboard of a sealed run (`SPEC.md` section 10.5). `scripts/loop sealed-pre` writes the preregistration manifest hash. `scripts/loop sealed-import`. A synthetic-material test of the flow passes before Sealed-A run 1. | `phoenix_eval/run.py`, `phoenix_eval/protection.py`, `scripts/loop` | R2 |
 | Remove the function-name roster rule, the control-flow count limit, the ban on indirect calls, the single translation unit rule and the rule that rejects each literal that is absent from the original data. | `phoenix_eval/integrity.py`, `containers/c-integrity.cc` | R1 (first) |
-| Accept `src/*.c` and `include/*.h` with the canonical CMake template (`canonical_cmake(files)`). | `phoenix_eval/submission.py`, `phoenix_eval/build.py` | R1 (first) |
+| Accept `src/*.c` and `include/*.h` with the canonical CMake template (`canonical_cmake(files)`). Reject a submitted `CMakeLists.txt` that differs from the template. Validate the package against the versioned schemas, and build the delivered package offline in all four configurations (`SPEC.md` section 8.3). | `phoenix_eval/submission.py`, `phoenix_eval/build.py` | R1 (first) |
 | Typed storage evidence for structures, unions, pointer initializers (target and offset) and function pointer tables. The constant-table rule compares only non-pointer bytes. | `containers/c-integrity.cc`, `phoenix_eval/integrity.py` | R1 (first) |
 | Approved call list: add `raise`, `getopt_long`, the C11 `<math.h>` functions, and each other C11 or POSIX.1-2008 function that a `corpus_dev` program uses. Keep `abort`. Never add the functions that `SPEC.md` section 9, rule 5 names. | `phoenix_eval/integrity.py` | R1 (first) |
 | Emulator-shape check (rule 1c) and the executable-memory rule (rule 1d). | `containers/c-integrity.cc`, `phoenix_eval/integrity.py` | R1 (first) |
 | Oracle pinning: one QEMU `-cpu` model and one `GLIBC_TUNABLES` mask from `tools.lock`. | `phoenix_eval/worker.py`, `containers/prepare-runtime.sh`, `tools.lock` | R1 |
 | Platform capabilities (section 13). Linux protection with `bwrap`. | `phoenix_eval/platforms.py`, `phoenix_eval/protection.py` | R1 |
 | Edge coverage (`SPEC.md` section 2.4): plugin, wire format, collector and reader change together. | `containers/code-coverage.c`, `phoenix_eval/coverage.py`, `phoenix_eval/wire.py` | R1 |
-| Maintainability metrics from the submitted source: register-named locals and `goto` density (R0); non-default type share, literal-mode byte share from `origin_map.json` and glibc-internal symbols (R1). | `phoenix_eval/quality.py` | R0, R1 |
+| Maintainability metrics from the submitted source: register-named locals and `goto` density (R0); non-default type share, literal-mode byte share from `origin_map.json` and glibc-internal symbols (R1). From R1, the evaluator-owned inputs of `SPEC.md` section 2.7: frozen inventory, origin-map check, pinned formatter. | `phoenix_eval/quality.py` | R0, R1 |
 | Edit-task harness (`SPEC.md` section 10.8). | `phoenix_eval/edit_tasks.py` | R5 |
 
 Fixtures for the first R1 items: end-to-end projects with multiple source files, helpers, structures, pointer initializers and indirect calls pass. The cheat suite fails. The honest suite passes.
@@ -1000,7 +1012,7 @@ All experiments run on `corpus_dev`. "Baseline" is the scoreboard row before the
 ### 15.2 Accepted techniques
 
 **N1. Function transplant with a register-preserving thunk.**
-- H: An in-process check of one function against the original gives an exact oracle for each function at each optimization level.
+- H: An in-process check of one function against the original gives a strong per-function check at each optimization level. A pass covers only the selected observations of the tested calls (section 7.1).
 - Prior art: [PCodeTrans](https://arxiv.org/html/2603.14855v1) and [DecompileBench](https://aclanthology.org/2025.findings-acl.1194/) already check functions inside the original program. Phoenix adds the register-preserving thunk, register and shadow-stack handling, negative transplants, and the use of the check to build a standalone project (section 7).
 - E: The thunk fixture suite. Then the truth transplant on `corpus_dev` at `-O0`, `-O2` and `-Os`. Then the draft loop in `transplant` mode against `compile_only` mode on D1 `-O2`.
 - M: Truth transplant rate. Binary success rate on D1 `-O2`. Repair rounds for each binary.
@@ -1026,6 +1038,7 @@ All experiments run on `corpus_dev`. "Baseline" is the scoreboard row before the
 
 **N13. Mutant-adequate dev set.**
 - H: A surviving mutant of the reconstruction marks behavior that the dev set does not check. An input that separates the mutant from the reconstruction is a case of the kind that the hidden set holds. The original decides which behavior is correct.
+- Pilot bound (R3): for each binary, at most 32 mutants, 20,000 candidate executions and 4 generator calls in total, inside the cost cap. A small fixed allowance keeps oracle-checked boundary cases and counterexamples that add no edge. Measure fully successful binaries, escape counts on a fixed eligible cohort and cold cost before the bound increases.
 - E: After the project matches the full dev set, `devset/mutants.py` applies the fixed operator set of `SPEC.md` section 10.6 to the functions that the dev set executes (at most 300 mutants for each binary, recorded seed). Build the reconstruction and each mutant natively for ARM64. Run the dev set on each mutant. For each surviving mutant, search for a separating input: run `mutate.py` on the native builds (at most 20,000 native runs for each mutant), then one LLM generator call with the mutant diff. Run each separating input on the original (step 5 of section 5.3). If the reconstruction matches, add the case to the dev set. If it does not match, the case is a counterexample for `repair` (decision table row 4).
 - The native runs stay inside the Linux containers (AGENTS.md section 4 Hard rules). The technique uses only the binary and the project of the same run (principle 5).
 - M: Escape rate on D1 and D2. Counterexamples found for each binary. Mutation score of the dev set against the reconstruction.
@@ -1084,7 +1097,7 @@ These items have no kill criterion. They are requirements.
 - Requirement: data objects come only from section bytes, relocations and resolved types (section 8). The LLM never writes an initializer.
 - Check: the byte check of section 8.4 passes for each emitted object of each `corpus_dev` binary.
 - Metric: count of binaries with a data-caused failure. Integrity failures caused by data.
-- Fallback for one object: the untyped emission of section 8.3. It is always available.
+- Fallback for one object: the untyped emission of section 8.3, only when the byte check of section 8.4 accepts it. Otherwise the binary fails.
 
 **N10. Import normalization table and arithmetic helpers.**
 - Requirement: section 9.

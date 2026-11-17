@@ -61,12 +61,17 @@ The owner is away. Nobody will answer a question.
 
 1. **Sealing.** Never open, list, copy or hash the contents of
    `$PHOENIX_ROOT/sealed`, `$PHOENIX_ROOT/holdout`, `$PHOENIX_ROOT/sealed_b`,
-   `$PHOENIX_ROOT/holdout_b` or `$PHOENIX_ROOT/sealed_runs`. Only the Corpus
-   Author and `phoenix-eval` read sealed corpus contents. Only the Corpus
-   Author writes the sealed corpus directories and the hash lines of
-   `docs/corpus_commitments.md`. Only `phoenix-eval` reads or writes
-   `sealed_runs`. `phoenix-eval` exports the aggregate `scoreboard.json` of a
-   sealed run. You receive that export and nothing more.
+   `$PHOENIX_ROOT/holdout_b`, `$PHOENIX_ROOT/sealed_runs` or
+   `$PHOENIX_ROOT/sealed_work`. Only the Corpus Author and `phoenix-eval`
+   read sealed corpus contents. Only the Corpus Author writes the sealed
+   corpus directories and the hash lines of `docs/corpus_commitments.md`.
+   Only `phoenix-eval` reads or writes `sealed_runs`. The pipeline gets only
+   a private work directory outside `sealed_runs` (`SPEC.md` section 10.5).
+   `phoenix-eval` exports the aggregate `scoreboard.json` of a sealed run.
+   After the final authorized scored use of a sealed set, the Corpus Author
+   publishes its archives and `phoenix-eval` verifies the hashes. You
+   receive the aggregate export, the publication links and the
+   hash-verification status, and nothing more.
 2. **No tuning on hidden data.** Never change code because of one sealed
    failure. Sealed results give aggregate numbers and failure categories only.
    The pipeline never reads `corpus_dev/*/src`.
@@ -114,13 +119,16 @@ Do these steps at the start of each session and after each context compaction:
 
 This table is the only place in the documents that names a model. To change
 a model, change this table and the same key in `phoenix/config.py` (milestone
-R0 creates that file). Then run one quick loop before other work.
+R0 creates that file). Then run one quick loop before other work. If the
+quick set does not exist yet, repeat the public smoke run first, and run the
+quick loop as soon as `corpus_dev/accepted.json` and `corpus_dev/quick.txt`
+exist (R0 ExecPlan, steps 9c and 12a).
 
 | Role name | Current model | Access |
 |---|---|---|
-| lead model | `gpt-6.1-sol` | Codex CLI |
-| strongest available model | `gpt-6-astra` | Codex CLI |
-| runtime model (inside the pipeline) | `gpt-6.1-sol` | `codex exec` or the OpenAI Responses API |
+| lead model | `gpt-6.2-sol` | Codex CLI |
+| strongest available model | `gpt-6.2-astra` | Codex CLI |
+| runtime model (inside the pipeline) | `gpt-6.2-sol` | `codex exec` or the OpenAI Responses API |
 
 A model is available when a `codex exec` call with that model returns a
 response. Test this one time in each session. If the strongest available
@@ -128,16 +136,22 @@ model is not available, the lead model does its work at `xhigh` effort in a
 new session. Write one line in `docs/LOG.md`. Do not change the runtime
 model after the tag `v1-freeze`.
 
+The lead model does all work by default: planning, code, tests, reviews,
+corpus work and runs. The strongest available model only gives advice: it
+answers hard abstract design and reasoning questions (the Architect), and it
+advises when the lead model is stuck (section 6.4). It does not write code
+on `main` and it does not make decisions.
+
 ### 6.2 Roles
 
 | Role | Model | Work |
 |---|---|---|
 | Lead | lead model | Owns the plan, the repository, the scoreboard and each merge. Writes most code. Makes each decision. |
-| Architect | strongest available model | Answers one hard design question in one response. The lead decides. |
-| Reviewer | strongest available model | Reviews critical changes (section 8). Writes the integrity challenge fixtures. |
+| Architect | strongest available model | Answers one hard design or reasoning question in one response, and gives the stuck advice of section 6.4. The lead decides. |
+| Reviewer | lead model, new session | Reviews critical changes (section 8). Writes the integrity challenge fixtures. Never shares a session with the author of the change. |
 | Worker | lead model | Does one bounded task with a written input and a written output. |
 | Dev Author | lead model at `high` | Writes `corpus_dev` programs, their held-out sets and edit tasks. Never opens sealed directories. |
-| Corpus Author | strongest available model, fresh session | Writes and seals Sealed-B and maintains Sealed-A. Never shares source or held-out data with another role. Never reads `corpus_dev` or pipeline prompts. |
+| Corpus Author | lead model, fresh session | Writes and seals Sealed-B and maintains Sealed-A. Never shares source or held-out data with another role. Never reads `corpus_dev` or pipeline prompts. |
 
 ### 6.3 Reasoning effort
 
@@ -154,6 +168,23 @@ Select the effort from the task. Do not use the maximum effort by default.
 
 The runtime model effort inside the pipeline is set per task in
 `docs/ARCHITECTURE.md` and `phoenix/config.py`.
+
+### 6.4 When the lead model is stuck
+
+The lead model is stuck when one of these conditions is true:
+
+1. A failure resisted two fixes.
+2. A declared design of an enabling item failed one acceptance attempt.
+3. A work item has two flat rows (section 9).
+4. The lead cannot name the next step of the current ExecPlan.
+
+Then ask the Architect one question, before the next attempt:
+`codex exec -m <strongest available model> -c model_reasoning_effort=xhigh -c service_tier=default --sandbox read-only "<question>"`.
+Give the goal, the evidence (commands, outputs, diffs, rows), what you tried,
+and the decision that you must make. Ask for one recommendation with its
+reason. Take one answer. Then decide, write one line in `docs/LOG.md`, and
+continue. Ask at most one stuck question for each work item and each
+experiment. Do not wait for advice when a condition is not true.
 
 ## 7. Delegation
 
@@ -193,9 +224,9 @@ changing now.
   shows the defect. An opinion does not block.
 - A review is one response. If it has no blocking item, merge.
 - Start a review with this command (put the model of section 6.1 in it):
-  `git diff main...<branch> | codex exec -m <strongest available model> -c model_reasoning_effort=high -c service_tier=default --sandbox read-only "Review this diff of Phoenix critical code. Report only defects that you show with a failing test or a command. One response."`
-  If the strongest available model is not available, use the lead model at
-  `xhigh` in a new session.
+  `git diff main...<branch> | codex exec -m <lead model> -c model_reasoning_effort=high -c service_tier=default --sandbox read-only "Review this diff of Phoenix critical code. Report only defects that you show with a failing test or a command. One response."`
+  The command starts a new session, so the Reviewer does not share the
+  context of the author.
 - The Reviewer is not available only when no `codex exec` session starts.
   Then a critical change (first row of the table) stays on its branch. It
   never merges without review. Continue with other work.
@@ -293,7 +324,7 @@ Free storage: <GiB>. Spend since last update: <USD>. Total spend: <USD>.
 - Make small commits with Conventional Commits prefixes (`feat:`, `fix:`,
   `test:`, `docs:`, `refactor:`, `chore:`). Each commit passes `scripts/check`.
 - Tag each milestone when it ends: `r0`, `r1`, and so on. The tag message
-  holds the final scoreboard row.
+  holds the final full-loop row of the scoreboard.
 - Push `main` and the milestone tags to `origin` after each milestone tag and
   at the end of each work session. Never force-push. Never push `archive/*`
   refs. If a push fails, retry one time, then continue and write one line in

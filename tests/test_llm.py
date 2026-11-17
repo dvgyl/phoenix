@@ -133,7 +133,7 @@ def test_responses_request_uses_standard_without_tools(
                 {
                     "status": "completed",
                     "service_tier": "default",
-                    "model": "gpt-6.1-sol",
+                    "model": ROLE_MODELS["runtime"],
                     "output": [
                         {
                             "type": "message",

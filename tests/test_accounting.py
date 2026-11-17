@@ -138,9 +138,9 @@ def test_shared_charges_match_provider_contract(model: str, inputs: int) -> None
     ("model", "inputs", "cached", "outputs", "expected"),
     (
         (ROLE_MODELS["runtime"], 100, 20, 10, 262_000),
-        (ROLE_MODELS["strongest"], 100, 20, 10, 1_310_000),
+        (ROLE_MODELS["strongest"], 100, 20, 10, 1_048_000),
         (ROLE_MODELS["runtime"], 272_001, 1_000, 100, 1_085_704_000),
-        (ROLE_MODELS["strongest"], 272_001, 1_000, 100, 5_428_520_000),
+        (ROLE_MODELS["strongest"], 272_001, 1_000, 100, 4_342_816_000),
     ),
 )
 def test_recorded_token_rates(

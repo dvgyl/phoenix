@@ -9,7 +9,7 @@ Main metric: the D0 `-O0` binary success rate (`SPEC.md` section 2.3) with the M
 - Value now: not measured. `corpus_dev` does not exist yet.
 - Gate value: 80% or more (`docs/ROADMAP.md`, R0).
 
-Experiment budget: 3 experiments. Only steps 14 and 16 make experiments. Step 16 has the third experiment as its reserve. A plan never extends a budget (AGENTS.md section 10 Milestones and ExecPlans).
+Experiment budget: 3 experiments. Only steps 14 and 16 make experiments. Step 16 has the third experiment as its reserve: a fix of a demonstrated defect, or a declared cold replication when no defect remains (`docs/ROADMAP.md` section 7, rule 6). A plan never extends a budget (AGENTS.md section 10 Milestones and ExecPlans).
 
 ## Progress
 
@@ -23,15 +23,24 @@ Experiment budget: 3 experiments. Only steps 14 and 16 make experiments. Step 16
 - [x] Step 7: Salvage: restore, change and delete (check: imports -> exit 0; deleted-module search -> no matches; `./scripts/check` -> exit 0, 783 passed and 25 skipped; evidence `$PHOENIX_ROOT/tmp/r0-salvage-check.log`)
 - [x] Step 8: Create `phoenix/config.py` (check: both model identifiers occur only in `phoenix/config.py`; price tuples match the evaluator; 108 targeted tests passed; strict type check passed; evidence `$PHOENIX_ROOT/tmp/r0-config-tests.log`)
 - [x] Step 9: Smoke run of the M1 path on `corpus_public/bitstats.c` (check: `$PHOENIX_ROOT/runs/r0-smoke.json` -> dev pass rate 1.0, integrity passed, all project files byte-identical, `"replay_identical": true`; run `r0-smoke-85594d46f285453883b5954d37c0a9fe`, replay `r0-replay-352b75aa4ca34aefb53a70d46dfdf26f`, commit `7a43189`)
-- [ ] Step 10: `scripts/build-dev-corpus` with the `linux/amd64` compilers (check: the manifest has 176 binaries). Stale: the first full build gave 22 programs, 176 binaries and 0 invalid twins (`$PHOENIX_ROOT/tmp/r0-corpus-build.log`). Then an interrupted full `--check` run reset the manifest, which now has 56 entries. Run `scripts/build-dev-corpus` again before the Step 11 probe.
-- [ ] Step 11: `phoenix_eval/run.py`, `scripts/loop`, `docs/SCOREBOARD.md`, `scripts/gate`, replay restore (check: `scripts/loop --probe --tier D0 --opt O0` -> exit 0 and one row with `loop` = `probe` and `exp` = `-`); implementation committed as `06f20a1`; canonical publication and typed claims pass 393 related tests in `$PHOENIX_ROOT/tmp/r0-loop-reduction-worker.log`; the probe awaits valid held-out cases for the manifest.
-- [ ] Step 12: Corpus acceptance: held-out validation and adequacy pilot (check: `scripts/build-dev-corpus --check` -> exit 0; `uv run --locked python tools/adequacy.py --summary` -> 22 programs at or above both thresholds; `corpus_dev/accepted.json` exists); partial evidence: `driftstat` passes (60/62 branches, 221/243 mutants); `branchmark` passes (249/262 branches, 265/288 mutants, run `74eb878dd7fe4e6e9c5fbc2828f0053b`); `chromapath` fix round 1 passes all 8 validation builds with 518 cases and zero exclusions; its pilot was interrupted at the owner pause and needs a rerun. Seven programs have complete validation. Evidence is in `$PHOENIX_ROOT/tmp/r0-corpus-validation-resumed.log` and `$PHOENIX_ROOT/tmp/r0-chromapath-fix-1-validation.log`.
-- [ ] Step 13: R0 bootstrap acceptance (check: `scripts/gate R0-bootstrap` -> `R0-bootstrap: PASS`; declared design: 1 of 3; gate attempts used: 0)
-- [ ] Step 14: Experiment 1: the M1 path baseline on D0 and D1, immediately after step 13 (check: a row with `exp` = `1/3`)
-- [ ] Step 15: Noise measurement on the commit of experiment 1 (check: `scripts/loop noise` -> one row with `loop` = `noise`)
-- [ ] Step 16: Integrity window fix, fixtures, review, experiment 2 (check: `uv run --locked pytest -q tests/test_integrity.py` -> all pass; a row with `exp` = `2/3`)
+- [ ] Step 9a: Land the runtime model change with its tests (check: the review of AGENTS.md section 8 has no blocking item; `uv run --locked pytest -q tests/test_accounting.py tests/test_llm.py` passes; `git status --short phoenix phoenix_eval tests AGENTS.md` prints nothing; worker images rebuilt) Partial: the model mapping, prices and tests are committed with the owner's model-change commit; the critical review by the lead model found no reproducible defect. Open: rebuild both worker images.
+- [ ] Step 9b: Extend the pipeline denial (check: `uv run --locked pytest -q tests/test_protection.py` passes with a synthetic fixture for each new class; `uv run --locked phoenix-eval probe` prints only `denied=true`)
+- [ ] Step 9c: Repeat the Step 9 public smoke run with the new runtime model (check: `$PHOENIX_ROOT/runs/r0-smoke.json` -> dev pass rate 1.0 and `"replay_identical": true`; `run.json` names the runtime model of AGENTS.md section 6.1)
+- [ ] Step 10: `scripts/build-dev-corpus` with the `linux/amd64` compilers (check: the manifest has 176 binaries). Stale: the first full build gave 22 programs, 176 binaries and 0 invalid twins (`$PHOENIX_ROOT/tmp/r0-corpus-build.log`). Then an interrupted full `--check` run reset the manifest, which now has 56 entries. Run `scripts/build-dev-corpus` again, without `--check`, after Step 9c. The manifest-writer guard is part of this step.
+- [ ] Step 10a: Validate each missing or stale program, one program at a time (check: `scripts/build-dev-corpus --check <program>` -> exit 0 for each of the 15 programs; the manifest still has 176 binaries after each program; the 7 valid validation records are reused)
+- [ ] Step 11: `phoenix_eval/run.py`, `scripts/loop`, `docs/SCOREBOARD.md`, `scripts/gate`, replay restore (check: `scripts/loop --probe --tier D0 --opt O0` -> exit 0, one row with `loop` = `probe` and `exp` = `-`, and 20 selected binaries); implementation committed as `06f20a1`; canonical publication and typed claims pass 393 related tests in `$PHOENIX_ROOT/tmp/r0-loop-reduction-worker.log`; the probe awaits Step 10a.
+- [ ] Step 11a: Bring `tools/adequacy.py` to the sampling, timeout, exclusion and case-minimum rules of `SPEC.md` section 10.6 (check: `uv run --locked pytest -q tests/test_adequacy.py` passes)
+- [ ] Step 12: Corpus acceptance: adequacy (check: `uv run --locked python tools/adequacy.py --summary` -> 22 programs at or above both thresholds under the current `SPEC.md` section 10.6; `corpus_dev/quick.txt` and `corpus_dev/accepted.json` exist); partial evidence from the earlier tool version: `driftstat` passes (60/62 branches, 221/243 mutants); `branchmark` passes (249/262 branches, 265/288 mutants, run `74eb878dd7fe4e6e9c5fbc2828f0053b`); `chromapath` fix round 1 passes all 8 validation builds with 518 cases and zero exclusions; its pilot was interrupted at the owner pause and needs a rerun. Seven programs have complete validation. Evidence is in `$PHOENIX_ROOT/tmp/r0-corpus-validation-resumed.log` and `$PHOENIX_ROOT/tmp/r0-chromapath-fix-1-validation.log`.
+- [ ] Step 12a: Model-change quick loop (check: `scripts/loop --quick --label "model change"` -> one row with `loop` = `quick`)
+- [ ] Step 12b: Repeat the D0 `-O0` probe if a corpus hash changed after Step 11 (check: a probe row with the hashes of `corpus_dev/accepted.json` and 20 selected binaries, or one `docs/LOG.md` line that says both hashes are unchanged)
+- [ ] Step 13: R0 bootstrap acceptance (check: `scripts/gate R0-bootstrap` -> `R0-bootstrap: PASS`; declared design: 1 of 3 for the whole item; gate attempts used: 0)
+- [ ] Step 13a: Commit the accepted corpus, the quick set and the baseline settings (check: `git status --short corpus_dev phoenix phoenix_eval` prints nothing)
+- [ ] Step 14: Experiment 1: the M1 path baseline on D0 and D1, immediately after step 13a (check: a row with `exp` = `1/3`)
+- [ ] Step 15: Noise measurement at the same `HEAD` as experiment 1, then one commit of both rows and `docs/STATUS.md` (check: `scripts/loop noise` -> one row with `loop` = `noise` and the commit of experiment 1)
+- [ ] Step 16: Integrity window fix, fixtures, review, rescore, experiment 2 (check: `uv run --locked pytest -q tests/test_integrity.py` -> all pass; `PHOENIX_COMPILER_INTEGRITY_ARCHES=amd64,arm64 uv run --locked pytest -q tests/test_integrity_window_challenge.py` -> each pinned case executed and passed; `$PHOENIX_ROOT/runs/r0-window-rescore.json` exists; a row with `exp` = `2/3`)
 - [ ] Step 17: Mechanical gates of `scripts/check` (check: `uv run --locked pytest -q tests/test_check_gates.py` -> all pass)
-- [ ] Step 18: R0 gate and tag (check: `scripts/gate R0` -> `R0 gate: PASS`; `git tag -l r0` -> `r0`)
+- [ ] Step 17a: Gate changes for the main-metric line, condition 5 and condition 6 (check: `uv run --locked pytest -q tests/test_check_gates.py` -> all pass, with the new cases of Step 17a)
+- [ ] Step 18: R0 gate and tag (check: `scripts/gate R0` exits 0 and the last line is `R0 gate: PASS` or the `R0 metric missed` line of Step 17a; `git tag -l r0` -> `r0`; the tag message holds the final full-loop row)
 
 ## Pause checkpoint (2026-11-17)
 
@@ -65,20 +74,12 @@ The saved aggregate state is in
 - No full-loop, noise or sealed run was started. The experiment count is 0.
   The bootstrap design is 1 of 3. Its gate has not been attempted.
 
-Resume the remaining validation from the main checkout:
-
-```sh
-source "/Volumes/Extreme Pro/Phoenix/env.sh"
-cd "$PHOENIX_ROOT/phoenix"
-scripts/build-dev-corpus --check niblace pairfold patchpanel prismcsv recordloom runepack skeinwire spanrank tariffgrid tilehash tokenlace unitforge velocalc weighbit wordweft
-uv run --locked python tools/adequacy.py chromapath
-```
-
-Then finish the missing adequacy reports. Keep the current verified reports.
-Complete Step 11's real probe and Step 12's acceptance. Run the baseline
-immediately after bootstrap acceptance, then noise on the same commit.
-Continue the Progress sequence. The run directories and container images
-remain on the external workspace under `PHOENIX_ROOT`.
+The 15 programs without validation are: `niblace`, `pairfold`,
+`patchpanel`, `prismcsv`, `recordloom`, `runepack`, `skeinwire`, `spanrank`,
+`tariffgrid`, `tilehash`, `tokenlace`, `unitforge`, `velocalc`, `weighbit`
+and `wordweft`. Step 10a validates them one at a time. Resume with the
+"Restart block" and the Progress order. The run directories and container
+images remain on the external workspace under `PHOENIX_ROOT`.
 
 ## Owner review after the pause
 
@@ -88,25 +89,67 @@ lines are review rounds or source-size cuts. Six commits removed only
 219 lines. This is the stall pattern of the work before the restart.
 These rules apply until the row of experiment 1 exists:
 
-1. Code freeze. Change code only when a check of steps 10 to 15 fails,
-   or when a Dev Author fix round needs a corpus change.
+1. Code freeze. Change code only when a check of steps 9a to 15 fails,
+   when a Dev Author fix round needs a corpus change, or for this allowed
+   work:
+   - Step 9a: the runtime model change in `phoenix/config.py`,
+     `phoenix_eval/model_ledger.py` and their tests.
+   - Step 9b: the pipeline denial in `phoenix_eval/protection.py` and
+     `tests/test_protection.py`.
+   - Step 10: the manifest-writer guard in `phoenix_eval/dev_corpus.py`.
+   - Step 11a: the adequacy rules in `tools/adequacy.py` and
+     `tools/adequacy_support.py`.
+   - Step 16: the window fix, the challenge fixtures and the rescore
+     command.
+   - Step 17a: the gate changes in `scripts/check_gates.py`: the
+     main-metric line, warm timing (condition 5) and the window challenge
+     run (condition 6).
 2. Do no work whose only purpose is to remove source lines. The R0 limit
    is now fewer than 11000 nonblank lines. The limit of 15000 for all
    milestones is unchanged.
 3. Do not merge `wip/r0-local-name-evidence` (`879d612`) in R0. Step 16
    uses the saved fixture patch on main.
 4. Run the corpus fix rounds in parallel: at most 4 Dev Author workers at
-   one time, one program for each worker (AGENTS.md section 7). The lead
-   runs validation and adequacy for the next program while the workers
-   write cases.
-5. Order: Step 10 rebuild, Step 11 probe, Step 12 acceptance, Step 13
-   bootstrap, Step 14 experiment 1, Step 15 noise. Then steps 16 to 18.
-   Step 17 code exists already. Connect `scripts/check_gates.py` to
-   `scripts/check` only at Step 17.
+   one time (AGENTS.md section 7). Each worker has one program, its own
+   branch `dev-fix-<program>` and its own worktree
+   `$PHOENIX_ROOT/worktrees/dev-fix-<program>`. Workers never run
+   `scripts/build-dev-corpus`. The lead is the only writer of
+   `$PHOENIX_ROOT/dev_bin/manifest.json`. The lead reads each diff and runs
+   the official acceptance commands from the main checkout.
+5. Order: Step 9a model change, Step 9b denial, Step 9c smoke run, Step 10
+   manifest rebuild, Step 10a validation, Step 11 D0 `-O0` probe, Step 11a
+   adequacy tool, Step 12 adequacy and acceptance files, Step 12a quick
+   loop, Step 12b repeated probe, Step 13 bootstrap, Step 13a commit,
+   Step 14 experiment 1, Step 15 noise and one commit of both rows. Then
+   steps 16 to 18. Step 17 code exists already. Connect
+   `scripts/check_gates.py` to `scripts/check` only at Step 17.
+6. The bootstrap item has one count of 3 declared designs
+   (`docs/ROADMAP.md`, R0, "Rules for the bootstrap count").
 
 The R0 gate condition for the main metric is unchanged. If the main metric
 is below 80% after the experiment budget, `docs/ROADMAP.md` section 7
-item 6 applies, and `scripts/check_gates.py` implements that rule.
+rule 6 applies, and `scripts/check_gates.py` implements that rule
+(Step 17a).
+
+## Restart block
+
+Keep this block current. A new session resumes from it.
+
+| Item | Value | Restore or regeneration command |
+|---|---|---|
+| Clean commit | `<commit after Step 9a>` | `git status --short` prints nothing; `git log -1 --format=%H` |
+| Models and roles | the table of AGENTS.md section 6.1; Reviewer: lead model, new session | `grep -n -A6 '^| Role name' AGENTS.md` |
+| Image IDs | `phoenix-worker:amd64`, `phoenix-worker:arm64`, integrity images: `<image IDs>` | `./scripts/build-images worker amd64 && ./scripts/build-images worker arm64`; `./scripts/build-images integrity amd64 && ./scripts/build-images integrity arm64` |
+| Worker checkouts | `$PHOENIX_ROOT/worktrees/dev-fix-<program>` | `git worktree list --porcelain` |
+| Smoke and replay IDs | `<Step 9c run ID>`, `<Step 9c replay ID>` | Step 9c commands |
+| Resize record | `$PHOENIX_ROOT/runs/r0-resize.json` | `scripts/resize-workspace --dry-run` |
+| Manifest | `<count>` of 176 binaries | `scripts/build-dev-corpus` |
+| Validation status | `<validated programs>` of 22 | `scripts/build-dev-corpus --check <program>` |
+| Adequacy status | `<passing programs>` of 22, with run IDs | `uv run --locked python tools/adequacy.py <program>` |
+| Probe and quick rows | `<rows>` | Steps 11, 12a and 12b |
+
+Before reuse, verify the public smoke replay and each saved adequacy report
+against its raw artifacts. Regenerate only missing or stale evidence.
 
 ## Surprises and Discoveries
 
@@ -161,22 +204,22 @@ Terms that this plan uses beyond `docs/ARCHITECTURE.md`:
 
 - "M1 path" is the pipeline as it was at commit `6897e47`.
 - "Reference worktree" is a worktree of that commit at `$PHOENIX_ROOT/worktrees/m1-reference`.
-- "Bootstrap item" is the R0 enabling item of steps 4 to 12. Its acceptance command is `scripts/gate R0-bootstrap`.
+- "Bootstrap item" is the R0 enabling item of steps 4 to 12b. Its acceptance command is `scripts/gate R0-bootstrap`.
 
 ## Plan of Work
 
-The sequence follows `docs/ROADMAP.md`, R0. Storage and protection come first. The salvage comes next. The Dev Author writes batch 1 in parallel from step 6. The corpus is accepted before experiment 1. Then the M1 path gives the first row before any new subsystem.
+The sequence follows `docs/ROADMAP.md`, R0. Storage and protection come first. The salvage comes next. The Dev Author writes batch 1 in parallel from step 6. The corpus is accepted before experiment 1, in the order of "Owner review after the pause", item 5. Then the M1 path gives the first row before any new subsystem.
 
 | Item | Steps | Metric | Expected result | Limit |
 |---|---|---|---|---|
 | Storage | 1 to 3 | free GiB | 15 GiB or more free; resize record | 3 attempts |
-| Bootstrap item (enabling): protection, salvage, corpus build, batch 1 with validation and adequacy, evaluation loop | 4 to 13 | bootstrap checks passed | `scripts/gate R0-bootstrap` -> PASS | 3 acceptance attempts |
+| Bootstrap item (enabling): protection, salvage, corpus build, batch 1 with validation and adequacy, evaluation loop | 4 to 13a | bootstrap checks passed | `scripts/gate R0-bootstrap` -> PASS | 3 declared designs for the whole item |
 | Baseline | 14 | D0 `-O0` success | measured (M1 reached 85% on sealed T0 `-O0`) | experiment 1 |
-| Noise | 15 | flip rate for each cell | recorded | no experiment |
-| Integrity fix | 16 | D0 `-O0` success | a gain of up to the count of experiment-1 binaries whose only integrity category is `embedded_text` | experiments 2 and 3 |
-| Mechanical gates | 17 | gate tests | all pass | 3 attempts |
+| Noise | 15 | flip rate for each tier | recorded | no experiment |
+| Integrity fix | 16 | D0 `-O0` success; rescore count | a gain of up to the count of experiment-1 binaries whose only integrity category is `embedded_text` | experiments 2 and 3 |
+| Mechanical gates | 17 and 17a | gate tests | all pass | 3 attempts |
 
-Inside the bootstrap item, each program of batch 1 has at most 2 rounds of fixes. Then the Dev Author replaces it.
+Inside the bootstrap item, each program of batch 1 has at most 2 rounds of fixes. Then the Dev Author replaces it. A replacement does not reset the bootstrap count.
 
 Critical code in this plan needs the review of AGENTS.md section 8 Review before it merges: `phoenix_eval/protection.py`, `phoenix_eval/submission.py`, `phoenix_eval/run.py`, `phoenix_eval/integrity.py`, `phoenix_eval/quality.py`, `scripts/launch-role` and the scoring part of `scripts/loop`. Start the review when each change is ready. Continue with other steps while the review runs.
 
@@ -236,7 +279,7 @@ Change `phoenix_eval/protection.py` to the interface in "Interfaces and Dependen
 | dev-set code and prompts | `<checkout>/phoenix/analyze`, `<checkout>/phoenix/devset`, `<checkout>/phoenix/generate/prompts` | `dev-author`, `corpus-author` |
 | corpus sources | `<checkout>/corpus_dev` | `corpus-author` |
 
-`<checkout>` is the main checkout `$PHOENIX_ROOT/phoenix` and each registered worktree under `$PHOENIX_ROOT/worktrees/` (from `git worktree list --porcelain`). Generate one rule for each copy, at each launch. The `allow` argument of `guarded_command` permits named paths inside a denied class. A sealed run (from R2) uses it to give the `pipeline` profile its own run directory `sealed_runs/<run_id>/<binary_sha256>/`. The `evaluator` profile denies nothing. Remove the macOS-only check for the policy generation, but keep `sandbox-exec` as the only mechanism in R0. R1 adds `bwrap` for Linux.
+`<checkout>` is the main checkout `$PHOENIX_ROOT/phoenix` and each registered worktree under `$PHOENIX_ROOT/worktrees/` (from `git worktree list --porcelain`). Generate one rule for each copy, at each launch. The `allow` argument of `guarded_command` permits named paths inside a denied class. A sealed run (from R2) uses it to give the `pipeline` profile only its own private work directory under `$PHOENIX_ROOT/sealed_work/` (`SPEC.md` section 10.5). Step 9b extends the `pipeline` denial. The `evaluator` profile denies nothing. Remove the macOS-only check for the policy generation, but keep `sandbox-exec` as the only mechanism in R0. R1 adds `bwrap` for Linux.
 
 Migrate each caller of `guarded_command` and its tests in the same change:
 
@@ -314,7 +357,7 @@ Files for each program `<name>`:
 
 - `corpus_dev/<name>/src/*.c` (and `*.h` if needed).
 - `corpus_dev/<name>/holdout/gen.py`: a held-out generator with a fixed seed. It uses knowledge of the source. It writes `corpus_dev/<name>/holdout/cases.jsonl`: one JSON object for each line with the fields `args`, `stdin`, `tree` and `environment`, in the format that `phoenix_eval.corpus` reads.
-- At least 100 cases for D0 and 200 cases for D1. Include error cases: bad options, missing files and malformed input.
+- At least 100 distinct valid cases for each D0 binary and 200 for each D1 binary (`SPEC.md` section 10.6). Include error cases: bad options, missing files and malformed input.
 - `corpus_dev/<name>/meta.json`: `name`, `tier`, `lines`, `files`, `category`, `features`, `heldout_cases`, `heldout_seed`.
 
 Acceptance (step 12): `scripts/build-dev-corpus --check <name>` passes for each program, and `tools/adequacy.py <name>` meets the thresholds of `SPEC.md` section 10.6. If a program fails, fix the program or the generator. Do at most 2 rounds of fixes for each program. Then replace the program (step 12 gives the limit).
@@ -399,6 +442,41 @@ uv run --locked phoenix run --replay "$smoke"
 
 Expected: `phoenix-eval m0` prints the path of its report and exits 0. `phoenix run` exits 0 and prints the project path. The report shows a dev-set pass rate of 100%. `diff -r` between the project of the run and the project of the replay prints nothing. Write `$PHOENIX_ROOT/runs/r0-smoke.json` with `run_id`, `dev_pass_rate` and `replay_identical`.
 
+### Step 9a: land the runtime model change
+
+The working tree holds the model change of AGENTS.md section 6.1: `phoenix/config.py`, `phoenix_eval/model_ledger.py`, `tests/test_accounting.py` and `tests/test_llm.py`.
+
+1. Verify that a `codex exec` call with each model of AGENTS.md section 6.1 returns a response at the Standard service tier.
+2. Start the review of AGENTS.md section 8 for the `phoenix_eval/model_ledger.py` change.
+3. Run `uv run --locked pytest -q tests/test_accounting.py tests/test_llm.py`. Expected: all pass.
+4. Run `./scripts/check`. Expected: exit 0.
+5. Commit the model change, its tests and `AGENTS.md` in one commit on `main`.
+6. Rebuild the worker images with the command of step 6.
+
+Check: `git status --short phoenix phoenix_eval tests AGENTS.md` prints nothing. `grep -rn -e '<runtime model id>' -e '<strongest model id>' phoenix` lists only `phoenix/config.py`.
+
+### Step 9b: pipeline denial
+
+Change `phoenix_eval/protection.py`. The `pipeline` profile denies each class of `SPEC.md` section 10.5:
+
+1. The whole `<checkout>/corpus_dev` tree of each checkout, not only `src`, `holdout` and `tasks`.
+2. The git object stores and history of each checkout: `<checkout>/.git` and the common git directory of each worktree.
+3. `$PHOENIX_ROOT/dev_bin`, except the input copy in the pipeline run directory.
+4. Earlier evaluation records: `$PHOENIX_ROOT/runs` and `$PHOENIX_ROOT/adequacy_runs`, except the current pipeline run directory (through `allow`).
+5. `$PHOENIX_ROOT/sealed_work`, for the R2 staging flow.
+
+Extend `tests/test_protection.py` with one synthetic fixture for each class: a shared case generator at the root of `corpus_dev`, a git object, a sibling binary under `dev_bin`, a held-out file and an earlier run record. Each fixture is denied in the main checkout and in a worker checkout. The input copy and the current run directory stay readable.
+
+This is critical code. Start the review of AGENTS.md section 8.
+
+Check: `uv run --locked pytest -q tests/test_protection.py tests/test_submission.py tests/test_submission_recovery.py tests/test_llm.py` passes. `uv run --locked phoenix-eval probe` prints only `denied=true`, and its output has a line for each new class.
+
+### Step 9c: smoke run with the new runtime model
+
+Run the commands of Step 9 again after Steps 9a and 9b. This is the next reconstruction. Steps 9a and 9b must pass first.
+
+Check: `$PHOENIX_ROOT/runs/r0-smoke.json` shows `dev_pass_rate` 1.0 and `"replay_identical": true`. The `run.json` of the run names the runtime model of AGENTS.md section 6.1. Write the run ID and the replay ID in the "Restart block".
+
 ### Step 10: `scripts/build-dev-corpus`
 
 The corpus builds use `phoenix-worker:amd64` from step 6. It holds the pinned `linux/amd64` compilers. Check the image first:
@@ -421,7 +499,28 @@ Write `scripts/build-dev-corpus [--check] [<program> ...]`. For each program and
 
 With `--check`, also validate each held-out case with the procedure of `SPEC.md` section 10.6, through the evaluator worker. Build the true source for this validation with the canonical flags of `SPEC.md` section 7.2. Write the excluded case numbers to `corpus_dev/<name>/holdout/excluded.json`. Exit non-zero if more than 5% of the cases of a binary are excluded.
 
-Check: `uv run --locked python -c "import json,os; m=json.load(open(os.environ['PHOENIX_ROOT']+'/dev_bin/manifest.json')); print(len(m['binaries']), sum(not b['twin_valid'] for b in m['binaries']))"` prints `176` and the count of invalid twins.
+Manifest-writer guard. Change `phoenix_eval/dev_corpus.py`: `scripts/build-dev-corpus` exits non-zero before it writes `$PHOENIX_ROOT/dev_bin/manifest.json` when its checkout is not `$PHOENIX_ROOT/phoenix`. Add a test to `tests/test_dev_corpus.py` that runs it from a temporary worktree and expects the exit and an unchanged manifest.
+
+Run `scripts/build-dev-corpus` without `--check` and without program names.
+
+Check: `uv run --locked python -c "import json,os; m=json.load(open(os.environ['PHOENIX_ROOT']+'/dev_bin/manifest.json')); print(len(m['binaries']), sum(not b['twin_valid'] for b in m['binaries']))"` prints `176` and the count of invalid twins. `uv run --locked pytest -q tests/test_dev_corpus.py` passes.
+
+### Step 10a: validation of each missing or stale program
+
+From the main checkout, run one program at a time:
+
+```sh
+for p in niblace pairfold patchpanel prismcsv recordloom runepack skeinwire spanrank \
+         tariffgrid tilehash tokenlace unitforge velocalc weighbit wordweft; do
+  scripts/build-dev-corpus --check "$p" || echo "failed: $p"
+done
+```
+
+1. Reuse the valid records of `branchmark`, `chromapath`, `driftstat`, `fernconf`, `gapmeter`, `knotconf` and `lumaquilt`. Validate one of them again only if its source, its cases or `tools.lock` changed.
+2. After each program, run the check command of Step 10. Expected: `176`.
+3. For a failed program, start a fix round of Step 12, item 3. Continue with the next program.
+
+Check: each of the 22 programs has `corpus_dev/<program>/holdout/excluded.json`, and `scripts/build-dev-corpus --check <program>` exited 0 for each program.
 
 ### Step 11: evaluation loop
 
@@ -451,19 +550,47 @@ Write `scripts/gate` with the targets `R0-bootstrap`, `R0` and `--enabling <name
 
 Write `tests/test_run.py`: a fixture project that passes, one that fails one case on ARM64 only, one with an integrity failure, a stopped run that still writes its row, and a replay that restores an archived run.
 
-Check: `scripts/loop --probe --tier D0 --opt O0` exits 0. `tail -1 docs/SCOREBOARD.md` shows a row with `loop` = `probe` and `exp` = `-`. `uv run --locked pytest -q tests/test_run.py` passes.
+Check: `scripts/loop --probe --tier D0 --opt O0` exits 0 after Step 10a. `tail -1 docs/SCOREBOARD.md` shows a row with `loop` = `probe` and `exp` = `-`. The run selects 20 binaries (10 D0 programs x 2 compilers at `-O0`). `uv run --locked pytest -q tests/test_run.py` passes. Record the corpus and held-out hashes of the row.
+
+### Step 11a: adequacy rules
+
+Change `tools/adequacy.py` and `tools/adequacy_support.py` to the procedure of `SPEC.md` section 10.6:
+
+1. Enumerate the distinct mutants. Use all if there are 300 or fewer. Otherwise sample 300 without replacement with a seed that is committed before the sampling.
+2. Set each time limit to 10 times the median of three runs of the original. Count a timeout as a kill only after a repeat under the same limit confirms it and the original passes under that limit. Count an unstable result as unresolved.
+3. Accept at most 20 survivor exclusions for each program, across its scored variants. Each needs a semantic proof, an independent review record and the 1,000-case search.
+4. Write the raw score and the triaged score. A zero denominator fails.
+5. `--summary` also checks 100 distinct valid cases for each D0 binary, 200 for each D1 binary, and the 5% exclusion cap against the complete candidate set.
+
+Check: `uv run --locked pytest -q tests/test_adequacy.py` passes, with a test for each of items 1 to 5.
 
 ### Step 12: corpus acceptance
 
-Merge the batch of the Dev Author after its acceptance (AGENTS.md section 7 Delegation). Then:
+Merge each fix branch of the Dev Author after its acceptance (AGENTS.md section 7 Delegation). Then:
 
-1. Run `scripts/build-dev-corpus` and `scripts/build-dev-corpus --check`.
-2. Write `tools/adequacy.py <program> [--seed N]` with the procedure of `SPEC.md` section 10.6. Run it in `phoenix-worker:amd64`. First try `mull` for the Clang version of `tools.lock` one time. If it does not run, use the project source mutator: find the operator locations with `clang -Xclang -ast-dump=json`, and apply the fixed operator set as text replacements. Record the selected mutator in `docs/DECISIONS.md` (a tool decision). The tool writes `corpus_dev/<program>/adequacy.json`.
-3. Run it on the 22 programs. For each program below a threshold, start a fix round: a new Dev Author session with the command of step 6 and the prompt `Read corpus_dev/<name>/adequacy.json. Add held-out cases or fix the program. Commit on branch dev-corpus-1.` Do at most 2 fix rounds for each program. Then replace the program, at most one time. If the replacement also fails after 2 rounds, write the kind of the program in `docs/LOG.md` and write a program of a different kind. Repeat items 1 and 2 for each changed program.
+1. For each changed program, run `scripts/build-dev-corpus --check <program>` from the main checkout. Never run a full `--check`.
+2. `tools/adequacy.py <program> [--seed N]` follows the procedure of `SPEC.md` section 10.6 (Step 11a). Run it in `phoenix-worker:amd64`. The selected mutator is recorded in `docs/DECISIONS.md` (a tool decision). The tool writes `corpus_dev/<program>/adequacy.json`.
+3. Run it on the 22 programs. Run again each earlier report that the old tool version made. For each program below a threshold, start a fix round: a new Dev Author worker on its own branch and worktree, with the command of step 6 and these changes: `git worktree add -b dev-fix-<name> "$PHOENIX_ROOT/worktrees/dev-fix-<name>" main`, `-C "$PHOENIX_ROOT/worktrees/dev-fix-<name>"`, and the prompt `Read corpus_dev/<name>/adequacy.json. Add held-out cases or fix the program. Do not run scripts/build-dev-corpus. Commit on branch dev-fix-<name>.` Do at most 2 fix rounds for each program. Then replace the program, at most one time. If the replacement also fails after 2 rounds, write the kind of the program in `docs/LOG.md` and write a program of a different kind. Repeat items 1 and 2 for each changed program.
 4. Write `corpus_dev/quick.txt` with quick set version 1 (`docs/ROADMAP.md` section 5).
 5. Write `corpus_dev/accepted.json` with `corpus_hash` and `heldout_hash`. Each later row records the same two hashes. After any later change of the corpus, repeat items 1 to 5 and `scripts/loop noise` before a comparison (`docs/ROADMAP.md` section 6.1).
 
-Check: `scripts/build-dev-corpus --check` exits 0. `uv run --locked python tools/adequacy.py --summary` prints 22 programs at or above both thresholds.
+Check: `scripts/build-dev-corpus --check <program>` exited 0 for each of the 22 programs. `uv run --locked python tools/adequacy.py --summary` prints 22 programs at or above both thresholds. The manifest has 176 binaries.
+
+### Step 12a: model-change quick loop
+
+Run this step as soon as `corpus_dev/accepted.json` and `corpus_dev/quick.txt` exist. AGENTS.md section 6.1 requires one quick loop after a model change.
+
+```sh
+scripts/loop --quick --label "model change"
+```
+
+Check: one row with `loop` = `quick` and the hashes of `corpus_dev/accepted.json`.
+
+### Step 12b: repeated probe
+
+Compare the hashes of `corpus_dev/accepted.json` with the hashes of the Step 11 probe row. If either hash differs, run the Step 11 probe command again.
+
+Check: a probe row with the accepted hashes and 20 selected binaries, or one `docs/LOG.md` line that says both hashes are unchanged.
 
 ### Step 13: bootstrap acceptance
 
@@ -471,11 +598,24 @@ Check: `scripts/build-dev-corpus --check` exits 0. `uv run --locked python tools
 scripts/gate R0-bootstrap
 ```
 
-The bootstrap item has 3 acceptance attempts. An attempt is one declared design (`docs/ROADMAP.md` section 1). Before each attempt, write `attempt <n> of 3: <design>` in `docs/LOG.md`. Each declared attempt that fails is one attempt. Test runs during the work are not attempts. Write the count in the "Progress" line. If the third attempt fails, write each failing check that only the owner can fix under `BLOCKED ON OWNER` in `docs/STATUS.md`. For each other failing check, revert the code of that part (AGENTS.md section 9 Anti-stall rules), write one line in the Decision Log, and rebuild that part with a new design. The new design gets 3 new acceptance attempts.
+The bootstrap item has one count of 3 declared designs for the whole item (`docs/ROADMAP.md`, R0, "Rules for the bootstrap count"). A revert, a rename or a replacement never resets the count.
+
+1. Before each design, write `attempt <n> of 3: <design>; failing check: <check>; command: scripts/gate R0-bootstrap; scope: <files>` in `docs/LOG.md`.
+2. Test runs during the work are not attempts. Each declared design that fails counts one time. Write the count in the "Progress" line.
+3. After the first failed design, ask the Architect one question (AGENTS.md section 6.4).
+4. After the third failed design, write `R0 incomplete` in `docs/STATUS.md`, with the failing check and its evidence. Cite the Architect advice of item 3. Ask a new Architect question only if the bootstrap item has not used its one question.
+5. Write one `BLOCKED ON OWNER` line in `docs/STATUS.md`: "approve a new bootstrap budget or the proposed design change".
+6. Continue the independent work that needs no measurement. Never start Step 14 without a real pass of `scripts/gate R0-bootstrap`.
+
+### Step 13a: commit the accepted corpus
+
+Commit `corpus_dev/` (with `accepted.json` and `quick.txt`), the baseline settings and the Progress lines in one commit. Do not change `phoenix/` or `phoenix_eval/` between this commit and Step 15.
+
+Check: `git status --short corpus_dev phoenix phoenix_eval` prints nothing.
 
 ### Step 14: experiment 1
 
-Run this step immediately after the bootstrap acceptance. Before the run, write the work-item line in `docs/LOG.md` (AGENTS.md section 9 Anti-stall rules).
+Run this step immediately after Step 13a. Before the run, write the work-item line in `docs/LOG.md` (AGENTS.md section 9 Anti-stall rules). Declare the metric population: the D0 `-O0` cell (`docs/ROADMAP.md` section 6.1, rule 3). Do not commit the row yet.
 
 ```sh
 scripts/loop --tier D0,D1 --opt O0,O2,Os --label "M1 path baseline"
@@ -485,13 +625,16 @@ Expected: a row with `exp` = `1/3`, `mode` = `m1`, the hashes of `corpus_dev/acc
 
 ### Step 15: noise measurement
 
-On the same commit as experiment 1:
+At the same `HEAD` as experiment 1, before any commit:
 
 ```sh
+test "$(git rev-parse HEAD)" = "<commit of the experiment-1 row>"
 scripts/loop noise
+git add docs/SCOREBOARD.md docs/STATUS.md
+git commit -m "docs: record R0 experiment 1 and noise"
 ```
 
-Expected: one row with `loop` = `noise` and the flips of each cell. Later rows set `noise_ref` to this row.
+Expected: one row with `loop` = `noise`, the commit of experiment 1 and the flips of each tier. One commit holds both rows and the status update. Later rows set `noise_ref` to this row. If the work stops between the two runs, run `scripts/loop noise` at the recorded commit of experiment 1.
 
 ### Step 16: integrity window fix
 
@@ -506,13 +649,30 @@ Add fixtures:
 - `tests/test_integrity.py`, unit level with synthetic ELF files: a built `.text` that equals the original passes; a window in a built `.rodata` fails with `embedded_text`; a window in a storage record fails with `embedded_text`.
 - `tests/test_compiler_integrity.py`, end to end with the pinned compilers: the original is a fixture C program built with GCC at `-O0` and stripped. The honest reconstruction is the same source with renamed functions. It passes. A cheat that holds 64 original `.text` bytes in a `static const unsigned char` array fails. A cheat that holds them in a writable array fails.
 
-Start the review with the review command of AGENTS.md section 8 Review. After the merge, run experiment 2:
+Apply the saved challenge patch: `git apply docs/plans/R0-integrity-window-fixtures.patch`. It adds `tests/test_integrity_window_challenge.py`.
+
+Add the rescore command (`docs/ARCHITECTURE.md` section 12): `phoenix-eval rescore <run_id> --out <file>`. It runs no pipeline. It scores the captured projects and builds of the run with the integrity checker before and after the window fix. It writes, for each binary, both verdicts, and the count of binaries whose only change is the window decision. Add a case to `tests/test_run.py`.
+
+Checks before the merge:
+
+1. `uv run --locked pytest -q tests/test_integrity.py tests/test_compiler_integrity.py tests/test_run.py` passes.
+2. `PHOENIX_COMPILER_INTEGRITY_ARCHES=amd64,arm64 uv run --locked pytest -q -rs tests/test_integrity_window_challenge.py` passes, and its output shows no skipped case. Record the image IDs and the test counts in `docs/LOG.md`.
+3. Keep the window fix when the honest fixtures and the cheat fixtures pass.
+
+Start the review with the review command of AGENTS.md section 8 Review. After the merge, rescore the experiment-1 captures, then run experiment 2:
 
 ```sh
+uv run --locked phoenix-eval rescore <experiment-1 run_id> --out "$PHOENIX_ROOT/runs/r0-window-rescore.json"
 scripts/loop --tier D0,D1 --opt O0,O2,Os --label "integrity window fix"
 ```
 
-Compare rows 1 and 2 with the rule of `docs/ROADMAP.md` section 6.1. Expected: the D0 `-O0` value increases by up to the count of experiment-1 binaries whose only integrity category was `embedded_text`. Experiment 3 is the reserve for a fix of this item.
+Compare rows 1 and 2 with the rule of `docs/ROADMAP.md` section 6.1. Report the rescore count beside the comparison. Expected: the D0 `-O0` value increases by up to the count of experiment-1 binaries whose only integrity category was `embedded_text`.
+
+Experiment 3 is the reserve. If a defect of this item remains, use it for the fix. If D0 `-O0` stays below 80% and no defect remains, use it for a declared cold replication of the full matrix on the same code:
+
+```sh
+scripts/loop --tier D0,D1 --opt O0,O2,Os --llm-cache off --label "R0 cold replication"
+```
 
 ### Step 17: mechanical gates
 
@@ -533,14 +693,31 @@ Write `tests/test_check_gates.py` with a temporary git repository for gates 1 an
 
 Check: `uv run --locked pytest -q tests/test_check_gates.py` passes. `time ./scripts/check` shows less than 5 minutes (performance requirement).
 
+### Step 17a: gate changes
+
+Change the `R0` target in `scripts/check_gates.py`. This is critical code (the gate decides the milestone result). Start the review of AGENTS.md section 8.
+
+1. **Main-metric line.** When `docs/ROADMAP.md` section 7, rule 6 applies (3 experiments used and D0 `-O0` below 0.80), print `[missed] 1 main metric: R0 metric missed: success D0 O0 = <value> (gate 0.80, gap <points> points)`. Never print `[pass]` or `PASS` for that line. The last line is then `R0 gate: R0 metric missed; other conditions PASS`. Exit 0 only when each other line is `[pass]`.
+2. **Condition 5.** Accept a warm time only when a priming row of the same selection, commit and image IDs comes first, each selected binary reached scoring, and the stage-cache hit count equals the count of cached stages. Otherwise the line fails.
+3. **Condition 6.** Also run `PHOENIX_COMPILER_INTEGRITY_ARCHES=amd64,arm64 uv run --locked pytest -q -rs tests/test_integrity_window_challenge.py`. Fail the line if a pinned case is skipped or does not run.
+
+Add one case to `tests/test_check_gates.py` for each of items 1 to 3: a missed metric after 3 experiments, a warm row without a priming row, and a skipped challenge case.
+
+Check: `uv run --locked pytest -q tests/test_check_gates.py` passes.
+
 ### Step 18: gate and tag
 
 ```sh
+scripts/loop --probe --tier D0 --opt O0 --label "R0 performance priming"
 scripts/loop --probe --tier D0 --opt O0 --label "R0 performance"
+scripts/loop --probe --quick --label "R0 quick performance priming"
 scripts/loop --probe --quick --label "R0 quick performance"
 scripts/gate R0
-git tag -a r0 -m "$(tail -1 docs/SCOREBOARD.md)"
+row=$(awk -F'|' '$7 ~ /^ *full *$/' docs/SCOREBOARD.md | tail -1)
+git tag -a r0 -m "$row"
 ```
+
+The tag message holds the final full-loop row, not a probe row (AGENTS.md section 12).
 
 Then push as AGENTS.md section 12 Git states.
 
@@ -567,14 +744,14 @@ R0-bootstrap: PASS
 [pass] 3 noise row for quick set 1
 [pass] 4 scripts/check exit 0 in <minutes> min (limit 5)
 [pass] 5 probe loop D0 O0 warm in <minutes> min (limit 30); probe quick loop <minutes> min (limit 20)
-[pass] 6 protection and integrity tests
+[pass] 6 protection and integrity tests; window challenge on amd64 and arm64, 0 skipped
 [pass] 7 free <GiB> GiB (limit 15); resize record <status: dry_run_ok, ok or blocked_on_owner>
 [pass] 8 source lines <n> (limit 11000); no reference to a deleted module
 [pass] 9 corpus_dev 22 programs: meta, held-out validation, 8 builds, twins (<n> invalid), adequacy
 R0 gate: PASS
 ```
 
-Each gate exits 0 only when each line is `[pass]`. The time limits in lines 4 and 5 are performance requirements of scripts.
+Each gate exits 0 only when each line is `[pass]`. One exception: when `docs/ROADMAP.md` section 7, rule 6 applies, line 1 is `[missed] 1 main metric: R0 metric missed: ...` and the last line is `R0 gate: R0 metric missed; other conditions PASS` (Step 17a). The time limits in lines 4 and 5 are performance requirements of scripts.
 
 Read the scoreboard row this way: `tier 0` holds D0 as `O0 a/b; O2 c/d; Os e/f`. The main metric cell states the value and the gate. `exp` shows the experiment count of 3, or `-` for a probe, quick or noise row. `data hash` shows the corpus and held-out hashes. If the budget is used and the gate fails, apply `docs/ROADMAP.md` section 7.
 
@@ -586,7 +763,8 @@ Read the scoreboard row this way: `tier 0` holds D0 as `O0 a/b; O2 c/d; Os e/f`.
 - Each salvage step is a set of git operations. To return to the state before a step, run `git checkout <start commit> -- <paths>` with the commit of step 0. The tag `archive/pre-restart` holds each deleted file. The tags `archive/branch/<name>` hold the old branch tips.
 - `scripts/build-dev-corpus` writes the same bytes for the same source and `tools.lock`. Run it again after each change of a program.
 - After the selection is fixed, the evaluator records each selected binary and writes a row even if the execution stops. Each binary that did not complete stays a failure in the denominator. An experiment counts one time. Resume the same run where possible. A retry never erases its failures or its cost.
-- The Dev Author works on the branch `dev-corpus-1`. A failed round changes nothing on `main`.
+- The Dev Author works on the branch `dev-corpus-1`. Each fix round works on its own branch `dev-fix-<program>`. A failed round changes nothing on `main`.
+- `scripts/build-dev-corpus --check <program>` replaces only the entries of that program. A full run without program names resets the manifest. Never run a full `--check` to resume validation.
 
 ## Interfaces and Dependencies
 
@@ -631,6 +809,7 @@ phoenix-eval probe
 phoenix-eval run --corpus corpus_dev --tier <tiers> --opt <levels> [--quick] [--probe] [--llm-cache on|off] --run-id <id>
 phoenix-eval run --resume <run_id>
 phoenix-eval --replay <run_id>
+phoenix-eval rescore <run_id> --out <file>        # step 16
 scripts/loop [--tier ...] [--opt ...] [--quick] [--probe] [--llm-cache on|off] [--label <text>]
 scripts/loop noise                             # sealed-pre and sealed-import come in R2
 scripts/gate R0-bootstrap | scripts/gate R0 | scripts/gate --enabling <name>
