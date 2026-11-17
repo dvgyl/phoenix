@@ -1152,12 +1152,13 @@ class Gate:
         def size() -> str:
             count = source_lines(self.root)
             require(
-                count < 9000,
-                f"R0 source has {count} lines; it must have fewer than 9000.",
+                count < 11000,
+                f"R0 source has {count} lines; it must have fewer than 11000.",
             )
             deleted_modules(self.root)
             return (
-                f"8 source lines {count} (limit 9000); no reference to a deleted module"
+                f"8 source lines {count} (limit 11000); "
+                "no reference to a deleted module"
             )
 
         conditions: list[tuple[str, Callable[[], str | None]]] = [

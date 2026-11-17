@@ -744,7 +744,7 @@ def test_budget_exception_keeps_other_conditions_strict(
     monkeypatch.setattr(gates.Gate, "command", command)
     monkeypatch.setattr(gates.Gate, "corpus", corpus)
     monkeypatch.setattr(
-        gates, "source_lines", lambda _root: 9000 if failed == "size" else 100
+        gates, "source_lines", lambda _root: 11000 if failed == "size" else 100
     )
     original_import = importlib.import_module
     fake_records = SimpleNamespace(

@@ -84,7 +84,7 @@ Experiment 1 runs immediately after the bootstrap acceptance.
 5. `scripts/loop --probe --tier D0 --opt O0` with a warm cache exits 0. Performance requirement: it ends in less than 30 minutes. `scripts/loop --probe --quick` with a warm cache ends in less than 20 minutes (performance requirement).
 6. `uv run --locked pytest -q tests/test_protection.py tests/test_integrity.py` passes. It includes the honest fixture where machine code from the same compiler equals the original, and the cheat fixtures.
 7. The workspace image has 15 GiB or more free. `$PHOENIX_ROOT/runs/r0-resize.json` exists with the status `dry_run_ok`, `ok` or `blocked_on_owner`.
-8. The pipeline and evaluator source has fewer than 9,000 lines. No file refers to a deleted module.
+8. The pipeline and evaluator source has fewer than 11,000 lines. No file refers to a deleted module.
 9. `corpus_dev` has 22 programs. Each has `meta.json`, a validated held-out set, 8 builds with twins, and an `adequacy.json` that meets the thresholds of `SPEC.md` section 10.6. The gate reports the count of invalid twins.
 
 **The next milestone needs:** the M1-path rows as the baseline, the noise threshold, the accepted batch 1 and the protection profiles.

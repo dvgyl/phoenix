@@ -23,7 +23,7 @@ Experiment budget: 3 experiments. Only steps 14 and 16 make experiments. Step 16
 - [x] Step 7: Salvage: restore, change and delete (check: imports -> exit 0; deleted-module search -> no matches; `./scripts/check` -> exit 0, 783 passed and 25 skipped; evidence `$PHOENIX_ROOT/tmp/r0-salvage-check.log`)
 - [x] Step 8: Create `phoenix/config.py` (check: both model identifiers occur only in `phoenix/config.py`; price tuples match the evaluator; 108 targeted tests passed; strict type check passed; evidence `$PHOENIX_ROOT/tmp/r0-config-tests.log`)
 - [x] Step 9: Smoke run of the M1 path on `corpus_public/bitstats.c` (check: `$PHOENIX_ROOT/runs/r0-smoke.json` -> dev pass rate 1.0, integrity passed, all project files byte-identical, `"replay_identical": true`; run `r0-smoke-85594d46f285453883b5954d37c0a9fe`, replay `r0-replay-352b75aa4ca34aefb53a70d46dfdf26f`, commit `7a43189`)
-- [x] Step 10: `scripts/build-dev-corpus` with the `linux/amd64` compilers (check: exit 0; 22 programs, 176 binaries, 0 invalid twins; evidence `$PHOENIX_ROOT/tmp/r0-corpus-build.log`; held-out validation remains Step 12)
+- [ ] Step 10: `scripts/build-dev-corpus` with the `linux/amd64` compilers (check: the manifest has 176 binaries). Stale: the first full build gave 22 programs, 176 binaries and 0 invalid twins (`$PHOENIX_ROOT/tmp/r0-corpus-build.log`). Then an interrupted full `--check` run reset the manifest, which now has 56 entries. Run `scripts/build-dev-corpus` again before the Step 11 probe.
 - [ ] Step 11: `phoenix_eval/run.py`, `scripts/loop`, `docs/SCOREBOARD.md`, `scripts/gate`, replay restore (check: `scripts/loop --probe --tier D0 --opt O0` -> exit 0 and one row with `loop` = `probe` and `exp` = `-`); implementation committed as `06f20a1`; canonical publication and typed claims pass 393 related tests in `$PHOENIX_ROOT/tmp/r0-loop-reduction-worker.log`; the probe awaits valid held-out cases for the manifest.
 - [ ] Step 12: Corpus acceptance: held-out validation and adequacy pilot (check: `scripts/build-dev-corpus --check` -> exit 0; `uv run --locked python tools/adequacy.py --summary` -> 22 programs at or above both thresholds; `corpus_dev/accepted.json` exists); partial evidence: `driftstat` passes (60/62 branches, 221/243 mutants); `branchmark` passes (249/262 branches, 265/288 mutants, run `74eb878dd7fe4e6e9c5fbc2828f0053b`); `chromapath` fix round 1 passes all 8 validation builds with 518 cases and zero exclusions; its pilot was interrupted at the owner pause and needs a rerun. Seven programs have complete validation. Evidence is in `$PHOENIX_ROOT/tmp/r0-corpus-validation-resumed.log` and `$PHOENIX_ROOT/tmp/r0-chromapath-fix-1-validation.log`.
 - [ ] Step 13: R0 bootstrap acceptance (check: `scripts/gate R0-bootstrap` -> `R0-bootstrap: PASS`; declared design: 1 of 3; gate attempts used: 0)
@@ -60,8 +60,8 @@ The saved aggregate state is in
   `R0-integrity-window-fixtures.patch`. `git apply --check` passes on main.
   The patch is not active. Apply it at Step 16 and adapt evidence fields
   if the compiler-name prototype is merged.
-- Python source has 10638 nonblank lines. R0 requires fewer than 9000.
-  The source gap is 1639 lines. No target has changed.
+- Python source has 10638 nonblank lines. The owner review changed the R0
+  limit to fewer than 11000 (see "Owner review after the pause").
 - No full-loop, noise or sealed run was started. The experiment count is 0.
   The bootstrap design is 1 of 3. Its gate has not been attempted.
 
@@ -79,6 +79,34 @@ Complete Step 11's real probe and Step 12's acceptance. Run the baseline
 immediately after bootstrap acceptance, then noise on the same commit.
 Continue the Progress sequence. The run directories and container images
 remain on the external workspace under `PHOENIX_ROOT`.
+
+## Owner review after the pause
+
+An owner review of the commits from `1a3716c` to `08ed17f` found that
+17 commits gave 0 scoreboard rows. About half of the new `docs/LOG.md`
+lines are review rounds or source-size cuts. Six commits removed only
+219 lines. This is the stall pattern of the work before the restart.
+These rules apply until the row of experiment 1 exists:
+
+1. Code freeze. Change code only when a check of steps 10 to 15 fails,
+   or when a Dev Author fix round needs a corpus change.
+2. Do no work whose only purpose is to remove source lines. The R0 limit
+   is now fewer than 11000 nonblank lines. The limit of 15000 for all
+   milestones is unchanged.
+3. Do not merge `wip/r0-local-name-evidence` (`879d612`) in R0. Step 16
+   uses the saved fixture patch on main.
+4. Run the corpus fix rounds in parallel: at most 4 Dev Author workers at
+   one time, one program for each worker (AGENTS.md section 7). The lead
+   runs validation and adequacy for the next program while the workers
+   write cases.
+5. Order: Step 10 rebuild, Step 11 probe, Step 12 acceptance, Step 13
+   bootstrap, Step 14 experiment 1, Step 15 noise. Then steps 16 to 18.
+   Step 17 code exists already. Connect `scripts/check_gates.py` to
+   `scripts/check` only at Step 17.
+
+The R0 gate condition for the main metric is unchanged. If the main metric
+is below 80% after the experiment budget, `docs/ROADMAP.md` section 7
+item 6 applies, and `scripts/check_gates.py` implements that rule.
 
 ## Surprises and Discoveries
 
@@ -104,6 +132,7 @@ remain on the external workspace under `PHOENIX_ROOT`.
 - Bundle the R0 prerequisites into one bootstrap enabling item (step 13). Reason: no success number exists before the protection, the salvage, the corpus and the loop are ready. AGENTS.md section 9 Anti-stall rules counts this bootstrap as one enabling item.
 - Use `phoenix-worker:amd64` for the corpus builds. Reason: it holds the pinned `linux/amd64` compilers. Alternative not selected: a second `linux/amd64` build of the `toolchain` stage.
 - The evaluator copies each release binary into the pipeline run directory. Reason: the `pipeline` profile then denies each sealed path without an exception. Alternative not selected: keep the `release` exception of the current `guarded_command`.
+- Owner decision: the R0 source limit is fewer than 11000 nonblank lines, not 9000. Reason: the in-scope evaluation loop, archive recovery and protection code put the source at 10638, and the cuts toward 9000 used six commits for 219 lines with no measurement. Alternative not selected: keep 9000 and continue the size cuts before experiment 1.
 - The stale-row gate counts an enabling item's acceptance run as its measurement. Reason: `docs/ROADMAP.md` gives enabling items their own acceptance test instead of a scoreboard row. If AGENTS.md section 9 Anti-stall rules gives another mechanism, use that mechanism and add one line here.
 
 ## Outcomes and Retrospective
@@ -540,7 +569,7 @@ R0-bootstrap: PASS
 [pass] 5 probe loop D0 O0 warm in <minutes> min (limit 30); probe quick loop <minutes> min (limit 20)
 [pass] 6 protection and integrity tests
 [pass] 7 free <GiB> GiB (limit 15); resize record <status: dry_run_ok, ok or blocked_on_owner>
-[pass] 8 source lines <n> (limit 9000); no reference to a deleted module
+[pass] 8 source lines <n> (limit 11000); no reference to a deleted module
 [pass] 9 corpus_dev 22 programs: meta, held-out validation, 8 builds, twins (<n> invalid), adequacy
 R0 gate: PASS
 ```
