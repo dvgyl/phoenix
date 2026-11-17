@@ -71,6 +71,7 @@ def layout(
         ("prompts", "cache/phoenix/llm"),
         ("prompts", "runs/public_pipeline"),
         ("development", "dev_bin/example/gcc-O0/p.twin"),
+        ("development", "adequacy_runs/example"),
     ):
         path = root / relative
         if not relative.endswith(".twin"):

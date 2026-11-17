@@ -84,6 +84,7 @@ def protected_paths(workspace: Path, repo: Path) -> tuple[ProtectedPath, ...]:
     add("prompts", workspace, "cache/phoenix")
     add("prompts", workspace, "runs")
     add("development", workspace, "dev_bin/*/*/*.twin")
+    add("development", workspace, "adequacy_runs")
     for checkout in _checkouts(workspace, repo):
         for name in ("src", "holdout", "tasks"):
             add("development", checkout, f"corpus_dev/*/{name}")
